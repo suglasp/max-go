@@ -58,7 +58,7 @@ https://github.com/suglasp/max-go
 
 max-go is only the 'game engine'.\
 It requires the data files of the original game (`MAX.RES`, `*.WRL`, `*.WAV`, `*.FLC`, ...).\
-You can buy M.A.X. on [GOG.com](https://www.gog.com/game/m_a_x_m_a_x_2) or [Steam](https://store.steampowered.com/app/2338394/MAX_MAX_2/),\
+You can buy M.A.X. on [GOG.com](https://www.gog.com/game/m_a_x_m_a_x_2) or [Steam](https://store.steampowered.com/app/615250/MAX_Mechanized_Assault__Exploration/),\
 then point `data_dir` in `max-go.json` at the installed game folder or copy over the data files so they reside next to the max-go binary.\
 The max-go port is self contained, meaning savegame data, screenshots, and game data can all be placed in one folder, in order to run and play the game.
 
