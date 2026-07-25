@@ -22,7 +22,7 @@ Before you ask, yes, I made use of LLM's to help me assist in porting and writin
 
 M.A.X. COPYRIGHT (C) 1996 Interplay Productions. All Rights Reserved.
 
-This project or code has no affilation with Interplay or the current M.A.X. IP Holder!\
+This project or code has no affiliation with Interplay or the current M.A.X. IP Holder!\
 The project is pure a free time reverse engineering project of the 1996 MS-Dos game M.A.X. (Mechanized Assault & Exploration).
 
 
@@ -30,7 +30,7 @@ The project is pure a free time reverse engineering project of the 1996 MS-Dos g
 The Golang M.A.X. port tries to stick as much as possible close to the Vanilla M.A.X. gameplay experience.
 
 
-Except, a few Quality Of Life (QOL) improvements where added:
+Except, a few Quality Of Life (QOL) improvements were added:
 - Mouse scrollwheel, zooms in and out
 - Grouping of units is not locked to 1..4 groups, but standard RTS 1..9 groups
 - F2 recalls a special Debug menu (only when Debug is enabled in max-go.json)
@@ -42,7 +42,7 @@ Except, a few Quality Of Life (QOL) improvements where added:
 - max-restool (unpack or repack MAX.RES or other RES files if you want -- modding support)
 - max-convert (converts game assets to bmp, png, wav or txt -- images, sprites, fonts, music, animations and movies)
 - max-settings tool (edits the max-go.json using a tool)
-- Vanilla Easteregg's are preserved (Waldo and rusted C&C Harvester)
+- Vanilla easter eggs are preserved (Waldo and rusted C&C Harvester)
 - Support for widescreen mode
 
 
@@ -81,7 +81,7 @@ max-go comes with several addon utilities:
 ## max-go Documenting
 
 During the porting process, we tried to document each file format M.A.X. uses.\
-The files are stored in markdown under [docs/](docs/) folder.
+The files are stored in markdown in the [docs/](docs/) folder.
 
 
 ## max-go Building and running
@@ -151,7 +151,7 @@ Log lines are buffered in memory and written to disk every `log_buffer_lines` li
 
 ## max-go Extras
 
-The first steps where taken to implement a build-in map editor. But it's far from complete.
+The first steps were taken to implement a build-in map editor. But it's far from complete.
 
 
 ## max-go License
@@ -160,7 +160,7 @@ The original Go source code in this repository is available under the MIT Licens
 M.A.X.: Mechanized Assault & Exploration and its original assets are copyrighted by Interplay Entertainment.\
 This project is an independent reimplementation and is not affiliated with or endorsed by Interplay.\
 The MIT License applies only to the original source code in this repository. It does not cover the original game or its assets.\
-Note: Dependancy libraries are shipped with their own license file.
+Note: Dependency libraries are shipped with their own license file.
 
 ## Example screenshots of the M.A.X. Go port
 
