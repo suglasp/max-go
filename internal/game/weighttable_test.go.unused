@@ -1,0 +1,128 @@
+// weighttable_test.go tests weighted unit selection and table operations.
+// Suglasp
+// github.com/suglasp/max-go
+//
+// Licensed under the MIT License. See MIT.md file in the project root for full license information.
+package game
+
+import (
+	"testing"
+
+	"github.com/suglasp/max-go/internal/assets"
+)
+
+func TestWeightTableEntries(t *testing.T) {
+	var table WeightTable
+	table.Add(assets.Tank, 3)
+	table.PushBack(UnitWeight{Type: assets.Scout, Weight: 5})
+
+	if got := table.Count(); got != 2 {
+		t.Fatalf("Count = %d, want 2", got)
+	}
+	if got := table.At(0); got != (UnitWeight{Type: assets.Tank, Weight: 3}) {
+		t.Errorf("At(0) = %+v, want Tank/3", got)
+	}
+	if got := table.At(1); got != (UnitWeight{Type: assets.Scout, Weight: 5}) {
+		t.Errorf("At(1) = %+v, want Scout/5", got)
+	}
+
+	other := WeightTable{}
+	other.Add(assets.Engineer, 7)
+	other.Add(assets.Tank, 2)
+	table.Merge(other)
+
+	want := []UnitWeight{
+		{Type: assets.Tank, Weight: 3},
+		{Type: assets.Scout, Weight: 5},
+		{Type: assets.Engineer, Weight: 7},
+		{Type: assets.Tank, Weight: 2},
+	}
+	if got := table.Count(); got != len(want) {
+		t.Fatalf("merged Count = %d, want %d", got, len(want))
+	}
+	for i, w := range want {
+		if got := table.At(i); got != w {
+			t.Errorf("merged At(%d) = %+v, want %+v", i, got, w)
+		}
+	}
+
+	table.Clear()
+	if got := table.Count(); got != 0 {
+		t.Errorf("Count after Clear = %d, want 0", got)
+	}
+}
+
+func TestWeightTableDisableCompactAndWeight(t *testing.T) {
+	var table WeightTable
+	table.Add(assets.Tank, 3)
+	table.Add(assets.Scout, 5)
+	table.Add(assets.Engineer, 0)
+	table.Add(assets.Tank, 2)
+
+	table.Disable(1)
+	if got := table.Count(); got != 4 {
+		t.Fatalf("Count after Disable = %d, want 4", got)
+	}
+	if got := table.At(1); got != (UnitWeight{Type: assets.Scout, Weight: 0}) {
+		t.Errorf("disabled entry = %+v, want Scout/0", got)
+	}
+	if got := table.Weight(assets.Tank); got != 5 {
+		t.Errorf("Weight(Tank) = %d, want 5", got)
+	}
+	if got := table.Weight(assets.Scout); got != 0 {
+		t.Errorf("Weight(Scout) = %d, want 0", got)
+	}
+	if got := table.Weight(assets.Bomber); got != 0 {
+		t.Errorf("Weight(absent Bomber) = %d, want 0", got)
+	}
+
+	table.Disable(-1)
+	table.Disable(99)
+	table.Compact()
+
+	want := []UnitWeight{
+		{Type: assets.Tank, Weight: 3},
+		{Type: assets.Tank, Weight: 2},
+	}
+	if got := table.Count(); got != len(want) {
+		t.Fatalf("Count after Compact = %d, want %d", got, len(want))
+	}
+	for i, w := range want {
+		if got := table.At(i); got != w {
+			t.Errorf("compact At(%d) = %+v, want %+v", i, got, w)
+		}
+	}
+}
+
+func TestWeightTableRoll(t *testing.T) {
+	table := WeightTable{}
+	table.Add(assets.Tank, 3)
+	table.Add(assets.Scout, 5)
+	table.Add(assets.Engineer, 7)
+
+	r := NewRandomizer(0x12345678)
+	if got := table.Roll(r); got != assets.Engineer {
+		t.Fatalf("Roll(seed 0x12345678) = %s, want %s", got.Tag(), assets.Engineer.Tag())
+	}
+
+	only := WeightTable{}
+	only.Add(assets.Tank, 0)
+	only.Add(assets.Scout, 42)
+	only.Add(assets.Engineer, 0)
+	for seed := uint32(0); seed < 4; seed++ {
+		if got := only.Roll(NewRandomizer(seed)); got != assets.Scout {
+			t.Errorf("one weighted entry seed %d = %s, want %s", seed, got.Tag(), assets.Scout.Tag())
+		}
+	}
+
+	var empty WeightTable
+	if got := empty.Roll(NewRandomizer(1)); got != assets.UnitType(0) {
+		t.Errorf("empty Roll = %s, want zero unit type", got.Tag())
+	}
+	zero := WeightTable{}
+	zero.Add(assets.Tank, 0)
+	zero.Add(assets.Scout, 0)
+	if got := zero.Roll(NewRandomizer(1)); got != assets.UnitType(0) {
+		t.Errorf("all-zero Roll = %s, want zero unit type", got.Tag())
+	}
+}
