@@ -1,0 +1,106 @@
+// weighttable.go provides ordered weighted selection for unit types.
+// Suglasp
+// github.com/suglasp/max-go
+//
+// Licensed under the MIT License. See MIT.md file in the project root for full license information.
+package game
+
+import "github.com/suglasp/max-go/internal/assets"
+
+// UnitWeight is one weighted unit type entry.
+//
+// C++ ported : weighttable.hpp - UnitWeight
+type UnitWeight struct {
+	Type   assets.UnitType
+	Weight uint16
+}
+
+// WeightTable is an ordered list of weighted unit types to roll from (no team/buildability layer).
+//
+// C++ ported : weighttable.cpp - WeightTable
+type WeightTable struct {
+	entries []UnitWeight
+}
+
+// Add appends a unit type and weight. The caller performs buildability filtering.
+func (t *WeightTable) Add(typ assets.UnitType, weight uint16) {
+	t.entries = append(t.entries, UnitWeight{Type: typ, Weight: weight})
+}
+
+// PushBack appends a prebuilt weighted entry.
+func (t *WeightTable) PushBack(w UnitWeight) {
+	t.entries = append(t.entries, w)
+}
+
+// Disable marks entry i inactive while preserving table order.
+func (t *WeightTable) Disable(i int) {
+	if i < 0 || i >= len(t.entries) {
+		return
+	}
+	t.entries[i].Weight = 0
+}
+
+// Compact removes inactive entries while preserving order.
+func (t *WeightTable) Compact() {
+	out := t.entries[:0]
+	for _, entry := range t.entries {
+		if entry.Weight != 0 {
+			out = append(out, entry)
+		}
+	}
+	t.entries = out
+}
+
+// Clear removes all entries from the table.
+func (t *WeightTable) Clear() {
+	t.entries = nil
+}
+
+// Count returns the number of entries, including disabled zero weight entries.
+func (t *WeightTable) Count() int {
+	return len(t.entries)
+}
+
+// At returns the entry at index i.
+func (t *WeightTable) At(i int) UnitWeight {
+	return t.entries[i]
+}
+
+// Weight returns the total weight for typ, or 0 when typ is absent.
+func (t *WeightTable) Weight(typ assets.UnitType) int {
+	total := 0
+	for _, entry := range t.entries {
+		if entry.Type == typ {
+			total += int(entry.Weight)
+		}
+	}
+	return total
+}
+
+// Merge appends all entries from other, preserving their order.
+func (t *WeightTable) Merge(other WeightTable) {
+	t.entries = append(t.entries, other.entries...)
+}
+
+// Roll returns a weighted random unit type using r, or the zero unit type when
+// the table is empty or has no positive weights.
+func (t *WeightTable) Roll(r *Randomizer) assets.UnitType {
+	total := 0
+	for _, entry := range t.entries {
+		total += int(entry.Weight)
+	}
+	if total <= 0 {
+		return assets.UnitType(0)
+	}
+	if r == nil {
+		r = randomizer
+	}
+	roll := r.Generate(total)
+	for _, entry := range t.entries {
+		roll -= int(entry.Weight)
+		if roll < 0 {
+			return entry.Type
+		}
+	}
+	return assets.UnitType(0)
+}

@@ -1,0 +1,69 @@
+{
+  "data_dir": "",
+  "language": "en-us",
+  "audio": {
+    "backend": "default",
+    "soloud_backend": "auto",
+    "music_volume": 100,
+    "sfx_volume": 100,
+    "voice_volume": 50,
+    "music_enabled": true,
+    "sfx_enabled": true,
+    "voice_enabled": true
+  },
+  "video": {
+    "fullscreen": false,
+    "window_scale": 2,
+    "brightness": 3,
+    "widescreen": "auto",
+    "popup_vanilla_look": true
+  },
+  "player": {
+    "name": "Player 1",
+    "clan": 7
+  },
+  "game": {
+    "intro_movie": true,
+    "auto_save": true,
+    "world": 0,
+    "turn_timer": 180,
+    "end_turn": 40,
+    "start_gold": 200,
+    "play_mode": 1,
+    "victory_type": 0,
+    "victory_limit": 100,
+    "opponent": 2,
+    "raw_resource": 1,
+    "fuel_resource": 1,
+    "gold_resource": 1,
+    "alien_derelicts": 0,
+    "last_campaign": 0
+  },
+  "preferences": {
+    "effects": true,
+    "click_scroll": false,
+    "quick_scroll": 16,
+    "fast_movement": true,
+    "follow_unit": false,
+    "auto_select": false,
+    "enemy_halt": true
+  },
+  "debug": {
+    "menu": false,
+    "console": false,
+    "log_file": false,
+    "log_buffer_lines": 100
+  },
+  "keybinds": {
+    "end_turn": "Enter",
+    "find": "F",
+    "grid": "G",
+    "help": "?",
+    "menu": "Escape",
+    "options": "O",
+    "status": "S",
+    "survey": "R",
+    "zoom_in": "=",
+    "zoom_out": "-"
+  }
+}
