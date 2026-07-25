@@ -43,6 +43,7 @@ Except, a few Quality Of Life (QOL) improvements where added:
 - max-convert (converts game assets to bmp, png, wav or txt -- images, sprites, fonts, music, animations and movies)
 - max-settings tool (edits the max-go.json using a tool)
 - Vanilla Easteregg's are preserved (Waldo and rusted C&C Harvester)
+- Support for widescreen mode
 
 
 ## Source repository
