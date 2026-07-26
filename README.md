@@ -9,7 +9,7 @@ A Go port of Interplay's **M.A.X.: Mechanized Assault & Exploration**, the 1996 
 ## The Project
 
 This project targets the single-player mode of vanilla M.A.X. and make it work on modern OS versions for x86-64.\
-Game logic is derived from observed vanilla gameplay and reference C++ behaviour.\
+Game logic is derived from observed vanilla gameplay and reference C++ behaviour of other online M.A.X. ports.\
 max-go reimplements M.A.X. in Go on top of [Ebitengine](https://ebitengine.org/).\
 It does not depend on SDL and avoids CGO for its libraries.\
 Audio can use Oto, SoLoud, or miniaudio through wrapper libraries.\

@@ -32,13 +32,11 @@ func TestPrintUsageMatchesLaunchFlags(t *testing.T) {
 		}
 	})
 
-	for _, want := range []string{
+	want := []string{
 		"max-go -random -npc 3 -difficulty 3 -derilicts common",
 		"max-go -screenshot <file>",
 		"max-go -mve <file> [-screenshot <file>]",
 		"max-go -flic <file> [-screenshot <file>]",
-		"max-go -emulate <screen> [-screenshot <file>]",
-		"max-go -emulate sprite:<tag> [-screenshot <file>]",
 		"-mve <file>",
 		"-difficulty <0..5>",
 		"-npc <1..3>",
@@ -56,23 +54,28 @@ func TestPrintUsageMatchesLaunchFlags(t *testing.T) {
 		"-fullscreen",
 		"-debug",
 		"-reset",
-		"planetselect",
-		"newgame",
-		"multiplayer",
-		"gameconfig",
-		"chooseplayer",
-		"clanselect",
-		"mapview",
-		"drawmap",
-		"game",
-		"shadow",
-		"build",
-		"sprite:<tag>",
 		"-mve exits after movie playback",
 		"-flic exits after animation playback",
-	} {
-		if !strings.Contains(text, want) {
-			t.Errorf("usage output missing %q", want)
+	}
+
+	// -emulate is registered and documented only in a DEBUG_GAME build, so its two usage
+	// lines and the screen names it lists belong to that build alone. A release build must
+	// not advertise the developer surface at all, which the negative check below pins.
+	emulateOnly := []string{
+		"max-go -emulate <screen> [-screenshot <file>]",
+		"max-go -emulate sprite:<tag> [-screenshot <file>]",
+		"planetselect", "newgame", "multiplayer", "gameconfig", "chooseplayer",
+		"clanselect", "mapview", "drawmap", "shadow", "build", "sprite:<tag>",
+	}
+	if DEBUG_GAME {
+		want = append(want, emulateOnly...)
+	} else if strings.Contains(text, "-emulate") {
+		t.Error("a release build (DEBUG_GAME false) must not document -emulate in its usage")
+	}
+
+	for _, w := range want {
+		if !strings.Contains(text, w) {
+			t.Errorf("usage output missing %q", w)
 		}
 	}
 	for _, old := range []string{

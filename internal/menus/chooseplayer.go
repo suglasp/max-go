@@ -163,7 +163,7 @@ func (m *choosePlayerMenu) buildWidgets() error {
 	for team := 0; team < game.TeamCount; team++ {
 		group := []gnw.ButtonID{m.typeBtns[team], m.typeBtns[4+team], m.typeBtns[8+team]}
 		ctx.Sys.GroupRadioButtons(group, nil)
-		ctx.Sys.SetRestState(m.typeBtns[typeColumn(params.Teams[team].Type)*4+team], true)
+		m.setTypeRestState(team, true)
 	}
 
 	// Clan buttons with the team's clan logo; teams that are not human get the
@@ -211,9 +211,11 @@ func (m *choosePlayerMenu) handleKey(key int) (int, bool, error) {
 		if newType == game.TeamPlayer && isSinglePlayer {
 			for other := 0; other < game.TeamCount; other++ {
 				if other != team && params.Teams[other].Type == game.TeamPlayer {
-					old := params.Teams[team].Type
-					params.Teams[other].Type = old
-					ctx.Sys.SetRestState(m.typeBtns[typeColumn(old)*4+other], true)
+					// Release the displaced team's Human button BEFORE its type changes,
+					// then press the new one after. Both halves are required.
+					m.setTypeRestState(other, false)
+					params.Teams[other].Type = params.Teams[team].Type
+					m.setTypeRestState(other, true)
 					// The displaced computer team needs a disabled clan button.
 					if err := m.rebuildClanButton(other); err != nil {
 						return cpCancel, true, err
@@ -279,6 +281,17 @@ func (m *choosePlayerMenu) rebuildClanButton(team int) error {
 	}
 	m.clanBtns[team] = bid
 	return nil
+}
+
+// setTypeRestState forces the button of the team's CURRENT type up or down. A caller that
+// changes a team's type calls it twice: false before the change to release the old column,
+// true after it to press the new one. Both halves are needed because SetRestState moves only
+// the button it is given, so releasing is never implied. Skip the release and the row keeps
+// two buttons lit while its radio group's checked count drifts above the one it allows.
+//
+// C++: ChoosePlayerMenu::ButtonSetState (chooseplayermenu.cpp)
+func (m *choosePlayerMenu) setTypeRestState(team int, down bool) {
+	m.ctx.Sys.SetRestState(m.typeBtns[typeColumn(m.params.Teams[team].Type)*4+team], down)
 }
 
 // typeColumn maps a team type to its button column.
