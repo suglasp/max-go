@@ -3,13 +3,14 @@
 A Go port of Interplay's **M.A.X.: Mechanized Assault & Exploration**, the 1996 turn based strategy game by Interplay Productions.
 
 
+Screenshot of max-go splashscreen:
 <img src="./max-logo.png" width="1710" height="992">
 
 
 ## The Project
 
 This project targets the single-player mode of vanilla M.A.X. and make it work on modern OS versions for x86-64.\
-Game logic is derived from observed vanilla gameplay and reference C++ behaviour of other online M.A.X. ports.\
+Game logic is derived from observed vanilla gameplay and reference C++ behaviour of an other online M.A.X. port.\
 max-go reimplements M.A.X. in Go on top of [Ebitengine](https://ebitengine.org/).\
 It does not depend on SDL and avoids CGO for its libraries.\
 Audio can use Oto, SoLoud, or miniaudio through wrapper libraries.\
@@ -30,6 +31,7 @@ The project is pure a free time reverse engineering project of the 1996 MS-Dos g
 
 
 ## Vanilla M.A.X.
+
 The Golang M.A.X. port tries to stick as much as possible close to the Vanilla M.A.X. gameplay experience.
 
 
@@ -157,13 +159,23 @@ Log lines are buffered in memory and written to disk every `log_buffer_lines` li
 The first steps were taken to implement a build-in map editor. But it's far from complete.
 
 
-## max-go License
+## max-go Code License
 
 The original Go source code in this repository is available under the MIT License.\
 M.A.X.: Mechanized Assault & Exploration and its original assets are copyrighted by Interplay Entertainment.\
 This project is an independent reimplementation and is not affiliated with or endorsed by Interplay.\
 The MIT License applies only to the original source code in this repository. It does not cover the original game or its assets.\
 Note: Dependency libraries are shipped with their own license file.
+
+
+## tributes
+
+[Golang](https://go.dev/)\
+[Ebitengine](https://ebitengine.org/)\
+[Klei1984 port](https://github.com/klei1984/max)\
+[SoLoud](https://solhsa.com/soloud/)\
+[miniaudio](https://miniaud.io/)
+
 
 ## Example screenshots of the M.A.X. Go port
 
