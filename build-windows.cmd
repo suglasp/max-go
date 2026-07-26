@@ -41,10 +41,13 @@ copy /Y "%WORKDIR%README.md" "%WORKDIR%build\" > nul
 REM The port's own UI string file; the game expects it beside the executable.
 copy /Y "%WORKDIR%lang-en-us.ini" "%WORKDIR%build\" > nul
 
-REM The settings template. build\ is pure output, so it is refreshed every build: the
-REM player's live settings live in bin\max-go.json and are never touched from here. The
-REM legacy settings.json is still read if a player has one, but it is no longer shipped.
+REM The settings template. build\ is pure output, so it is refreshed every build
+REM the player's live settings live in bin\max-go.json and are never touched from here.
+REM The (beta) legacy settings.json is still read if a player has one, but it is no longer shipped.
 copy /Y "%WORKDIR%max-go.json" "%WORKDIR%build\max-go.json" > nul
+
+REM The release version stamp. It ships beside the binary so a player can tell which build they have without launching the game.
+copy /Y "%WORKDIR%version" "%WORKDIR%build\" > nul
 
 
 REM Check dependancies
@@ -52,8 +55,12 @@ for %%F in ("%WORKDIR%dependencies\soloud-bin\*.dll") do if exist "%%~fF" copy /
 for %%F in ("%WORKDIR%dependencies\miniaudio-bin\*.dll") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
 for %%F in ("%WORKDIR%dependencies\soloud-bin\*.so") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
 for %%F in ("%WORKDIR%dependencies\miniaudio-bin\*.so") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
-for %%F in ("%WORKDIR%dependencies\miniaudio-bin\*-LICENSE.*") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
-for %%F in ("%WORKDIR%dependencies\miniaudio-bin\*-LICENSE.*") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
+REM License and readme files for the bundled audio libraries.
+REM Both must ship: redistribute both binaries, so both attributions travel with them.
+REM The second line used to be a duplicate of the miniaudio glob, which left soloud-LICENSE behind.
+for %%F in ("%WORKDIR%dependencies\miniaudio-bin\*-LICENSE*") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
+for %%F in ("%WORKDIR%dependencies\soloud-bin\*-LICENSE*") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
+for %%F in ("%WORKDIR%dependencies\soloud-bin\*-readme*") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
 if "%MAX_GO_BUILD_ONLY%"=="1" (
     popd
     exit /b 0
