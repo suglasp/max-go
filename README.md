@@ -3,10 +3,6 @@
 A Go port of Interplay's **M.A.X.: Mechanized Assault & Exploration**, the 1996 turn based strategy game by Interplay Productions.
 
 
-Screenshot of max-go splashscreen:
-<img src="./max-logo.png" width="1710" height="992">
-
-
 ## The Project
 
 This project targets the single-player mode of vanilla M.A.X. and make it work on modern OS versions for x86-64.\
@@ -175,10 +171,3 @@ Note: Dependency libraries are shipped with their own license file.
 [Klei1984 port](https://github.com/klei1984/max)\
 [SoLoud](https://solhsa.com/soloud/)\
 [miniaudio](https://miniaud.io/)
-
-
-## Example screenshots of the M.A.X. Go port
-
-<img src="./screenshot1-menu.png" width="1710" height="992">\
-<img src="./screenshot2-game.png" width="1710" height="992">\
-<img src="./screenshot3-game.png" width="1710" height="992">
