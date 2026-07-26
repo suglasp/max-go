@@ -8,19 +8,22 @@ A Go port of Interplay's **M.A.X.: Mechanized Assault & Exploration**, the 1996 
 
 ## The Project
 
-This project targets the single-player mode of vanilla M.A.X.\
+This project targets the single-player mode of vanilla M.A.X. and make it work on modern OS versions for x86-64.\
 Game logic is derived from observed vanilla gameplay and reference C++ behaviour.\
 max-go reimplements M.A.X. in Go on top of [Ebitengine](https://ebitengine.org/).\
 It does not depend on SDL and avoids CGO for its libraries.\
-Audio can use Oto, SoLoud, or miniaudio through wrapper libraries.
+Audio can use Oto, SoLoud, or miniaudio through wrapper libraries.\
+The compiled versions of SoLoud and miniaudio are shipped with the release, including their licenses.
 
-During the project, I made use of Claude Max (Opus and Fable) and Codex (GPT Sol) to learn and test the capabilities to work with AI in a large code base.\
-Before you ask, yes, I made use of LLM's to help me assist in porting and writing code in this codebase.
+
+During the project, I've made some use of Claude Max (Opus/Fable) and Codex to learn and test the capabilities to work with AI in a large code base.\
+Before you ask : Yes, LLM's where used to assist in porting pieces of code in this codebase.
 
 
 ## Original M.A.X. (I call it Vanilla), is not my idea
 
 M.A.X. COPYRIGHT (C) 1996 Interplay Productions. All Rights Reserved.
+
 
 This project or code has no affiliation with Interplay or the current M.A.X. IP Holder!\
 The project is pure a free time reverse engineering project of the 1996 MS-Dos game M.A.X. (Mechanized Assault & Exploration).
@@ -43,7 +46,7 @@ Except, a few Quality Of Life (QOL) improvements were added:
 - max-convert (converts game assets to bmp, png, wav or txt -- images, sprites, fonts, music, animations and movies)
 - max-settings tool (edits the max-go.json using a tool)
 - Vanilla easter eggs are preserved (Waldo and rusted C&C Harvester)
-- Support for widescreen mode
+- Support for widescreen mode (16:9) and the vanilla screen mode (4:3)
 
 
 ## Source repository
