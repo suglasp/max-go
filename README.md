@@ -2,6 +2,8 @@
 
 A Go port of Interplay's **M.A.X.: Mechanized Assault & Exploration**, the 1996 turn based strategy game by Interplay Productions.
 
+<img src="./max-lavender.png" width="1710" height="962">
+
 
 ## The Project
 
