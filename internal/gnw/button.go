@@ -262,6 +262,15 @@ func (s *System) ButtonChecked(bid ButtonID) bool {
 	return false
 }
 
+// ButtonDisabled reports whether a button ignores input. A missing button counts as
+// disabled: nothing can click what is not there.
+func (s *System) ButtonDisabled(bid ButtonID) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	b := s.findButton(bid)
+	return b == nil || b.flags&buttonDisabled != 0
+}
+
 // SetButtonToggle makes a sticky button uncheckable; a real toggle checkbox
 // rather than a radio member. It clears the ButtonNoUncheck flag that the
 // sticky button helpers default on, so a second click releases it.
