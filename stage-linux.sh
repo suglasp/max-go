@@ -29,6 +29,7 @@ if [[ -d "$build_dir" ]]; then
   cp -f "$build_dir"/libsoloud* "$bin_dir/" 2>/dev/null || true
   cp -f "$build_dir"/libminiaudio* "$bin_dir/" 2>/dev/null || true
   cp -f "$build_dir/README.md" "$bin_dir/" 2>/dev/null || true
+  cp -f "$build_dir/max-lavender.png" "$bin_dir/" 2>/dev/null || true
   
   # The port's own UI string file; the game expects it beside the executable.
   cp -f "$build_dir/lang-en-us.ini" "$bin_dir/" 2>/dev/null || true

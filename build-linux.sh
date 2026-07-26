@@ -117,6 +117,7 @@ write_help "$build_dir/max-settings-help.txt" "$build_dir/max-settings$exe" -h
 echo
 echo "Copying documentation ..."
 cp -f "$script_dir/README.md" "$build_dir/"
+cp -f "$script_dir/max-lavender.png" "$build_dir/"
 
 echo
 echo "Copying configuration files ..."

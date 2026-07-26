@@ -22,6 +22,7 @@ copy /Y "%WORKDIR%build\max-*-help.txt" "%WORKDIR%bin\" > nul
 copy /Y "%WORKDIR%build\soloud_x64.dll" "%WORKDIR%bin\" > nul
 copy /Y "%WORKDIR%build\miniaudio_x64.dll" "%WORKDIR%bin\" > nul
 copy /Y "%WORKDIR%build\README.md" "%WORKDIR%bin\" > nul
+copy /Y "%WORKDIR%build\max-lavender.png" "%WORKDIR%bin\" > nul
 REM The port's own UI string file; the game expects it beside the executable.
 copy /Y "%WORKDIR%build\lang-en-us.ini" "%WORKDIR%bin\" > nul
 REM The release version stamp, refreshed every stage so bin\ never reports a stale build.

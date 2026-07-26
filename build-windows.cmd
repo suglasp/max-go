@@ -37,6 +37,7 @@ echo Writing CLI help ...
 echo.
 echo Copying documentation ...
 copy /Y "%WORKDIR%README.md" "%WORKDIR%build\" > nul
+copy /Y "%WORKDIR%max-lavender.png" "%WORKDIR%build\" > nul
 
 REM The port's own UI string file; the game expects it beside the executable.
 copy /Y "%WORKDIR%lang-en-us.ini" "%WORKDIR%build\" > nul
