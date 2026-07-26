@@ -32,10 +32,17 @@ if [[ -d "$build_dir" ]]; then
   
   # The port's own UI string file; the game expects it beside the executable.
   cp -f "$build_dir/lang-en-us.ini" "$bin_dir/" 2>/dev/null || true
-  
-  # Seed the settings template only into a fresh bin: the player's live settings are
-  # bin/max-go.json (the game runs from bin/ and writes them there), so a stage must
-  # never overwrite it. The legacy settings.json is still READ if a player has one
+
+  # The release version stamp, refreshed every stage so bin/ never reports a stale build.
+  cp -f "$build_dir/version" "$bin_dir/" 2>/dev/null || true
+
+  # Attribution for the bundled audio libraries: it must sit beside the binaries we ship.
+  cp -f "$build_dir"/*-LICENSE* "$bin_dir/" 2>/dev/null || true
+  cp -f "$build_dir"/*-readme* "$bin_dir/" 2>/dev/null || true
+
+  # Seed the settings template only into a fresh bin.
+  # the player's live settings are bin/max-go.json (the game runs from bin/ and writes them there),
+  # so a stage must never overwrite it. The legacy settings.json is still READ if a player has one
   # (max-go.json wins), but it is no longer shipped, so nothing seeds it here.
   if [[ ! -f "$bin_dir/max-go.json" ]]; then
     cp -f "$build_dir/max-go.json" "$bin_dir/max-go.json" 2>/dev/null || true

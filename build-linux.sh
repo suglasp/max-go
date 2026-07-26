@@ -123,10 +123,13 @@ echo "Copying configuration files ..."
 # The port's own UI string file; the game expects it beside the executable.
 cp -f "$script_dir/lang-en-us.ini" "$build_dir/"
 
-# The settings template. build/ is pure output, so it is refreshed every build: the
-# player's live settings live in bin/max-go.json and are never touched from here. The
-# legacy settings.json is still read if a player has one, but it is no longer shipped.
+# The settings template. build/ is pure output, so it is refreshed every build:
+# the player's live settings live in bin/max-go.json and are never touched from here.
+# The (beta) legacy settings.json is still read if a player has one, but it is no longer shipped.
 cp -f "$script_dir/max-go.json" "$build_dir/"
+
+# The release version stamp. It ships beside the binary so a player can tell which build they have without launching the game.
+cp -f "$script_dir/version" "$build_dir/"
 
 
 # Copy any SoLoud / miniaudio shared libraries into the build folder.
@@ -136,7 +139,7 @@ if ((${#soloud_files[@]} > 0)); then
   cp -f "${soloud_files[@]}" "$build_dir/"
 fi
 
-miniaudio_files=("$script_dir"/dependencies/miniaudio-bin/*.so)
+miniaudio_files=("$script_dir"/dependencies/miniaudio-bin/*.so "$script_dir"/dependencies/miniaudio-bin/*-LICENSE*)
 if ((${#miniaudio_files[@]} > 0)); then
   cp -f "${miniaudio_files[@]}" "$build_dir/"
 fi
