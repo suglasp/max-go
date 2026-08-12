@@ -97,8 +97,9 @@ go build -o bin/ ./cmd/max-go
 ./bin/max-go
 ```
 
-The convenience scripts build the game and tools, write CLI help files, copy the `lang-en-us.ini` UI strings file and the SoLoud and miniaudio native libraries from `dependencies/soloud-bin/` and `dependencies/miniaudio-bin/`,\
-and then launch the game:
+The convenience scripts build the game and tools, write CLI help files, and copy `lang-en-us.ini` plus the SoLoud and miniaudio native libraries from `dependencies/soloud-bin/` and `dependencies/miniaudio-bin/`.\
+Each platform uses its own build folder (`build/windows-x64/` or `build/linux-x64/`). The stage step copies the native platform's build into `bin/`.\
+Each build packs its completed platform folders into `release/` as `max-go-<version>-<platform>.zip` or `.tar.zst`:
 
 ```
 build-windows.cmd
@@ -118,7 +119,8 @@ run-windows.cmd
 ./run-linux.sh
 ```
 
-Set `MAX_GO_BUILD_ONLY=1` before running either script to build the artifacts without launching the game.\
+Set `MAX_GO_BUILD_ONLY=1` before running either script to skip release archives.\
+Linux cross-builds the complete Windows release. Windows cross-builds the three Linux utilities; the Linux game build requires CGO and X11 headers.\
 Build dependency layout is documented in [docs/build/dependencies.md](docs/build/dependencies.md).
 
 

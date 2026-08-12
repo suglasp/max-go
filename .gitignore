@@ -3,6 +3,9 @@
 /bin/
 /build/
 
+# Build scripts write release archives here. They are published separately from the repository.
+/release/
+
 # Build outputs at the repo root (root only; do not match cmd/max-go/)
 /max-go
 /max-go.exe
@@ -32,6 +35,9 @@ max-go.log
 # case-insensitively; lowercase variants listed for Linux checkouts).
 *.PY
 *.PS1
+# Windows matches these patterns case-insensitively, so they also ignore lowercase .py and .ps1 files.
+# The Linux tarball packer remains tracked because the release build uses it.
+!/pack-linux-tar.py
 *.RES
 *.WRL
 *.PAL

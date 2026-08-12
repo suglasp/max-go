@@ -5,7 +5,9 @@ set -euo pipefail
 # Suglasp
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-build_dir="$script_dir/build"
+
+# Stage the Linux build into bin/, which is the folder the game runs from.
+build_dir="$script_dir/build/linux-x64"
 bin_dir="$script_dir/bin"
 
 #if [[ -t 1 && -n "${TERM:-}" ]] && command -v clear >/dev/null 2>&1; then

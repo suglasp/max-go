@@ -15,7 +15,42 @@ The old workspace local path `../soloud_20200207 - goport/go-port` is not requir
 
 ## Build Scripts
 
-There are two steps: build (compiles to `build\`) and stage (copies the runnable set into `bin\`).
+There are two steps: build (compiles to a per platform folder under `build\`) and stage (copies the runnable set into `bin\`).
+
+Each platform keeps its own output folder, so a Windows and a Linux build can sit side by side.
+Both scripts also build what they can for the other platform:
+
+| Script | Native | Cross built |
+|------|---------|---------|
+| `build-windows.cmd` | `build\windows-x64\`, game + utilities | `build\linux-x64\`, **utilities only** |
+| `build-linux.sh` | `build/linux-x64/`, game + utilities | `build/windows-x64/`, game + utilities |
+
+Ebitengine's Windows build is pure Go, so Linux can cross-build it with `GOOS=windows CGO_ENABLED=0`.
+Its Linux build uses X11 and OpenGL through CGO, so Linux `max-go` needs a Linux host or a full cross toolchain with the X11 headers.
+The three utilities are pure Go on both platforms and always cross build.
+
+`build-linux.sh` under MSYS or Git Bash on Windows builds Windows natively and skips the cross step.
+The stage scripts read the folder for the platform they run on and copy it into `bin\`, which is the native folder you actually run from.
+
+### Release archives
+
+Each build packs what it has into `release/`, named after the first line of the `version` file:
+
+| Archive | From |
+|------|---------|
+| `max-go-<version>-windows-x64.zip` | `build/windows-x64/` |
+| `max-go-<version>-linux-x64.tar.zst` | `build/linux-x64/` |
+
+An archive is written only when its folder contains the game binary.
+On Windows that means the Linux tarball is skipped until you build `max-go` on a Linux host and copy the folder back.
+On Linux, packing uses `zip` and `zstd`; a missing tool is reported and skipped.
+On Windows the Linux tarball is written by `pack-linux-tar.py` instead of `tar.exe`, so it needs `python` on PATH.
+`tar.exe` reads permissions from the filesystem. NTFS has no execute bit, so its archives unpack binaries without executable permissions.
+The packer sets `0755` on the executables and the shared libraries and `0644` on everything else, with uid and gid `0`.
+Set `MAX_GO_BUILD_ONLY=1` to build without packing.
+
+The native output folder is cleared before its build so stale files do not enter an archive.
+The cross-built folder preserves files the running script cannot regenerate; only the other platform's audio libraries are cleared.
 
 Windows:
 
@@ -41,16 +76,17 @@ Both build scripts build:
 The build scripts write CLI help text files and copy the native libraries from `dependencies/soloud-bin/` and `dependencies/miniaudio-bin/`,
 `README.md`,
 `lang-en-us.ini`,
-and `max-go.json` into `build\`.
+and `max-go.json` into the platform folder.
 The stage scripts then copy the built executables,
 help text,
 native libraries,
 `README.md`,
+`max-lavender.png`,
 `lang-en-us.ini`,
 and (only if `bin\max-go.json` doesn't already exist,
-so a live settings file is never clobbered) `max-go.json` from `build\` into `bin\` - `bin\` is the folder to actually run from.
+so a live settings file is never clobbered) `max-go.json` from `build\windows-x64\` or `build/linux-x64/` into `bin\` - `bin\` is the folder to actually run from.
 
-To build artifacts without launching the game:
+To build the artifacts without packing release archives:
 
 ```bat
 set MAX_GO_BUILD_ONLY=1

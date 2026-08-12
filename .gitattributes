@@ -1,0 +1,12 @@
+# Keep text files in LF. CRLF makes gofmt rewrite Go files and prevents shell scripts from running on Linux.
+* text=auto eol=lf
+
+# Batch files keep CRLF, because cmd.exe reads a script by byte offset and an LF-only file can break goto.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Keep these binary assets out of line-ending conversion.
+*.png binary
+*.ico binary
+*.dll binary
+*.so binary

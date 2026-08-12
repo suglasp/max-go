@@ -5,71 +5,166 @@ REM   note : We target only 64 bit OS.
 REM make sure go.exe in the PATH env var to be found!
 REM Suglasp
 
+REM Keep GOOS and GOARCH local to this script.
+setlocal
 set GOARCH=amd64
+set CGO_ENABLED=0
 set "WORKDIR=%~dp0"
 
-REM Anchor to the script's own folder so the relative ./cmd/... package paths and
-REM the -o build/ output resolve correctly no matter where the script is launched from.
+REM Keep each platform in its own build folder so Windows and Linux outputs coexist.
+set "BUILDDIR=%WORKDIR%build\windows-x64"
+set "LINUXDIR=%WORKDIR%build\linux-x64"
+set "PACKDIR=%WORKDIR%build\pack"
+set "RELEASEDIR=%WORKDIR%release"
+
+REM Resolve relative package paths from this script's folder.
 pushd "%WORKDIR%"
+
+REM The first version-file line names the release archives.
+set "VERSION=0.0.0"
+for /f "usebackq delims=" %%V in ("%WORKDIR%version") do (
+    set "VERSION=%%V"
+    goto GOTVERSION
+)
+:GOTVERSION
+set "WINNAME=max-go-%VERSION%-windows-x64"
+set "LINUXNAME=max-go-%VERSION%-linux-x64"
 
 echo.
 echo Prepping Go ...
 go mod tidy
-if not exist "%WORKDIR%build" mkdir "%WORKDIR%build"
+
+REM Rebuild the Windows output folder so stale files cannot enter a release archive.
+REM Keep Linux game files produced on a Linux host, but remove Windows DLLs from that folder.
+if exist "%BUILDDIR%" rmdir /S /Q "%BUILDDIR%"
+mkdir "%BUILDDIR%"
+if not exist "%LINUXDIR%" mkdir "%LINUXDIR%"
+del /Q "%LINUXDIR%\*.dll" 2> nul
 
 echo.
-echo Building M.A.X. in Golang ...
-go build -o build/ ./cmd/max-go
+echo Building M.A.X. for Windows x64 ...
+set GOOS=windows
+go build -o "%BUILDDIR%/" ./cmd/max-go
+if errorlevel 1 goto FAIL
 
 echo.
-echo Building M.A.X. utilities ...
-go build -o build/ ./cmd/max-restool
-go build -o build/ ./cmd/max-convert
-go build -o build/ ./cmd/max-settings
+echo Building M.A.X. utilities for Windows x64 ...
+go build -o "%BUILDDIR%/" ./cmd/max-restool
+if errorlevel 1 goto FAIL
+go build -o "%BUILDDIR%/" ./cmd/max-convert
+if errorlevel 1 goto FAIL
+go build -o "%BUILDDIR%/" ./cmd/max-settings
+if errorlevel 1 goto FAIL
+
+REM Linux game builds require CGO with X11 and OpenGL, so Windows cross-builds only the utilities.
+REM The utilities are pure Go on both platforms.
+echo.
+echo Cross building M.A.X. utilities for Linux x64 ...
+set GOOS=linux
+go build -o "%LINUXDIR%/" ./cmd/max-restool
+if errorlevel 1 goto FAIL
+go build -o "%LINUXDIR%/" ./cmd/max-convert
+if errorlevel 1 goto FAIL
+go build -o "%LINUXDIR%/" ./cmd/max-settings
+if errorlevel 1 goto FAIL
+
+REM Restore the host platform before running the Windows binaries for help text.
+set GOOS=
 
 echo.
 echo Writing CLI help ...
-"%WORKDIR%build\max-go.exe" -h > "%WORKDIR%build\max-go-help.txt" 2>&1
-"%WORKDIR%build\max-restool.exe" help > "%WORKDIR%build\max-restool-help.txt" 2>&1
-"%WORKDIR%build\max-convert.exe" help > "%WORKDIR%build\max-convert-help.txt" 2>&1
-"%WORKDIR%build\max-settings.exe" -h > "%WORKDIR%build\max-settings-help.txt" 2>&1
+REM Generate Windows help text here. Linux help text must be generated on Linux.
+"%BUILDDIR%\max-go.exe" -h > "%BUILDDIR%\max-go-help.txt" 2>&1
+"%BUILDDIR%\max-restool.exe" help > "%BUILDDIR%\max-restool-help.txt" 2>&1
+"%BUILDDIR%\max-convert.exe" help > "%BUILDDIR%\max-convert-help.txt" 2>&1
+"%BUILDDIR%\max-settings.exe" -h > "%BUILDDIR%\max-settings-help.txt" 2>&1
 
 echo.
 echo Copying documentation ...
-copy /Y "%WORKDIR%README.md" "%WORKDIR%build\" > nul
-copy /Y "%WORKDIR%max-lavender.png" "%WORKDIR%build\" > nul
+call :PAYLOAD "%BUILDDIR%"
+call :PAYLOAD "%LINUXDIR%"
 
-REM The port's own UI string file; the game expects it beside the executable.
-copy /Y "%WORKDIR%lang-en-us.ini" "%WORKDIR%build\" > nul
+REM Copy the matching native audio libraries so each archive contains only its platform's files.
+for %%F in ("%WORKDIR%dependencies\soloud-bin\*.dll") do if exist "%%~fF" copy /Y "%%~fF" "%BUILDDIR%\" > nul
+for %%F in ("%WORKDIR%dependencies\miniaudio-bin\*.dll") do if exist "%%~fF" copy /Y "%%~fF" "%BUILDDIR%\" > nul
+for %%F in ("%WORKDIR%dependencies\soloud-bin\*_x64.so") do if exist "%%~fF" copy /Y "%%~fF" "%LINUXDIR%\" > nul
+for %%F in ("%WORKDIR%dependencies\miniaudio-bin\*_x64.so") do if exist "%%~fF" copy /Y "%%~fF" "%LINUXDIR%\" > nul
 
-REM The settings template. build\ is pure output, so it is refreshed every build
-REM the player's live settings live in bin\max-go.json and are never touched from here.
-REM The (beta) legacy settings.json is still read if a player has one, but it is no longer shipped.
-copy /Y "%WORKDIR%max-go.json" "%WORKDIR%build\max-go.json" > nul
-
-REM The release version stamp. It ships beside the binary so a player can tell which build they have without launching the game.
-copy /Y "%WORKDIR%version" "%WORKDIR%build\" > nul
-
-
-REM Check dependancies
-for %%F in ("%WORKDIR%dependencies\soloud-bin\*.dll") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
-for %%F in ("%WORKDIR%dependencies\miniaudio-bin\*.dll") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
-for %%F in ("%WORKDIR%dependencies\soloud-bin\*.so") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
-for %%F in ("%WORKDIR%dependencies\miniaudio-bin\*.so") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
-REM License and readme files for the bundled audio libraries.
-REM Both must ship: redistribute both binaries, so both attributions travel with them.
-REM The second line used to be a duplicate of the miniaudio glob, which left soloud-LICENSE behind.
-for %%F in ("%WORKDIR%dependencies\miniaudio-bin\*-LICENSE*") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
-for %%F in ("%WORKDIR%dependencies\soloud-bin\*-LICENSE*") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
-for %%F in ("%WORKDIR%dependencies\soloud-bin\*-readme*") do if exist "%%~fF" copy /Y "%%~fF" "%WORKDIR%build\" > nul
-if "%MAX_GO_BUILD_ONLY%"=="1" (
-    popd
-    exit /b 0
-)
+if "%MAX_GO_BUILD_ONLY%"=="1" goto DONE
 
 echo.
+echo Packing release archives ...
+if not exist "%RELEASEDIR%" mkdir "%RELEASEDIR%"
+if exist "%PACKDIR%" rmdir /S /Q "%PACKDIR%"
+mkdir "%PACKDIR%"
+
+REM Copy under the release name so each archive unpacks into one folder.
+REM Compress-Archive replaces the ZIP only after it creates the new archive.
+xcopy /E /I /Q /Y "%BUILDDIR%" "%PACKDIR%\%WINNAME%" > nul
+powershell -NoProfile -Command "Compress-Archive -Path '%PACKDIR%\%WINNAME%' -DestinationPath '%RELEASEDIR%\%WINNAME%.zip' -Force"
+if errorlevel 1 goto FAIL
+
+REM Pack the Linux folder only when it contains the game binary.
+REM pack-linux-tar.py writes Unix modes because NTFS does not store executable bits.
+if exist "%LINUXDIR%\max-go" (
+    python "%WORKDIR%pack-linux-tar.py" "%LINUXDIR%" "%RELEASEDIR%\%LINUXNAME%.tar.zst" "%LINUXNAME%"
+    if errorlevel 1 goto FAILTAR
+) else (
+    echo   Linux archive skipped, build\linux-x64\max-go is not there.
+    echo   Build it on a Linux host with build-linux.sh, copy the folder back, then
+    echo   run this script again to pack it.
+)
+goto PACKED
+
+:FAILTAR
+echo   Linux archive FAILED. It needs python on PATH, because tar.exe cannot store
+echo   the Unix execute bit and the unpacked binaries would not run. Any previous
+echo   archive was left untouched.
+
+:PACKED
+rmdir /S /Q "%PACKDIR%"
+
+:DONE
+echo.
 echo ---------------------------------
+echo Built:
+echo   build\windows-x64  (game + utilities)
+echo   build\linux-x64    (utilities only)
+echo.
+echo Packed into release\ (skipped with MAX_GO_BUILD_ONLY=1).
+echo.
 echo Start stage-windows.cmd to stage.
 echo.
 
 popd
+endlocal
+exit /b 0
+
+REM Copy the common release payload.
+:PAYLOAD
+copy /Y "%WORKDIR%README.md" "%~1\" > nul
+copy /Y "%WORKDIR%max-lavender.png" "%~1\" > nul
+
+REM The game loads its UI strings from beside the executable.
+copy /Y "%WORKDIR%lang-en-us.ini" "%~1\" > nul
+
+REM Refresh the build-only settings template. Live settings remain in bin\max-go.json.
+REM The game still reads a legacy settings.json when present, but releases do not ship one.
+copy /Y "%WORKDIR%max-go.json" "%~1\max-go.json" > nul
+
+REM Ship the version stamp beside the executable.
+copy /Y "%WORKDIR%version" "%~1\" > nul
+
+REM Ship license and readme files for the bundled audio libraries.
+for %%F in ("%WORKDIR%dependencies\miniaudio-bin\*-LICENSE*") do if exist "%%~fF" copy /Y "%%~fF" "%~1\" > nul
+for %%F in ("%WORKDIR%dependencies\soloud-bin\*-LICENSE*") do if exist "%%~fF" copy /Y "%%~fF" "%~1\" > nul
+for %%F in ("%WORKDIR%dependencies\soloud-bin\*-readme*") do if exist "%%~fF" copy /Y "%%~fF" "%~1\" > nul
+goto :eof
+
+:FAIL
+set GOOS=
+echo.
+echo Build failed.
+popd
+endlocal
+exit /b 1
