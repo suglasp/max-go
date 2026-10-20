@@ -82,7 +82,7 @@ func TestFactoryQueueDeleteSelected(t *testing.T) {
 		}
 	}
 
-	queue, ok = deleteFactoryQueueAt(queue, 99)
+	_, ok = deleteFactoryQueueAt(queue, 99)
 	if ok {
 		t.Fatal("out-of-range delete returned true")
 	}

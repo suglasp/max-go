@@ -2077,7 +2077,7 @@ func TestStrategyForClan(t *testing.T) {
 // default Average tier the positive scores are Defensive/Missiles/Air/Sea/Tank/
 // Combined; the first (lowest index) is Defensive.
 func TestAIHookPassesComputerTurn(t *testing.T) {
-	defer restoreStrategyRoll(strategyRoll)
+	defer restoreStrategyRoll(strategyRoll)()
 	strategyRoll = func(int) int { return 0 } // pick the first positively scored strategy
 
 	const w, h = 8, 8
@@ -2296,7 +2296,7 @@ func TestScoreStrategiesArchipelago(t *testing.T) {
 // TestPickStrategyWeightedAndDiversifies checks the weighted roll, sibling
 // diversification, and the empty table fallback to Random.
 func TestPickStrategyWeightedAndDiversifies(t *testing.T) {
-	defer restoreStrategyRoll(strategyRoll)
+	defer restoreStrategyRoll(strategyRoll)()
 
 	var scores [strategyCount]int
 	scores[StrategyAir] = 3
