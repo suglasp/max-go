@@ -38,6 +38,33 @@ func TestUpgradeCostMonotonic(t *testing.T) {
 	}
 }
 
+// TestUpgradeCostVanillaPrices checks first step prices against the vanilla DOS Buy Upgrade
+// screen (retail ATTRIBS bases, no research). Speed and ammo pin the klei 23/08/26 factors.
+func TestUpgradeCostVanillaPrices(t *testing.T) {
+	cases := []struct {
+		name      string
+		attribute Attrib
+		base      int
+		want      int
+	}{
+		{"scout attack", AttribAttack, 12, 8},
+		{"scout shots", AttribRounds, 1, 720},
+		{"scout range", AttribRange, 3, 61},
+		{"scout ammo", AttribAmmo, 10, 5},
+		{"scout speed", AttribSpeed, 12, 8},
+		{"tank ammo", AttribAmmo, 14, 3},
+		{"tank speed", AttribSpeed, 6, 8},
+		{"tank armor", AttribArmor, 10, 5},
+		{"surveyor scan", AttribScan, 3, 61},
+		{"depot hits", AttribHits, 56, 4},
+	}
+	for _, c := range cases {
+		if got := UpgradeCost(c.attribute, c.base, 0, c.base); got != c.want {
+			t.Errorf("%s: UpgradeCost(base=%d) = %d, want %d", c.name, c.base, got, c.want)
+		}
+	}
+}
+
 // TestUpgradeResearchFactorDiscount checks research makes an upgrade cheaper.
 func TestUpgradeResearchFactorDiscount(t *testing.T) {
 	base := 20
