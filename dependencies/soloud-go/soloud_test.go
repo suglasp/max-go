@@ -7,14 +7,29 @@ package soloud
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
-// TestSmoke exercises the binding against the DLL in ../bin with the silent NOSOUND backend.
+// testLibPath is the library the smoke test loads: SOLOUD_DLL if set, otherwise the build the
+// repo ships in ../soloud-bin (the Linux file is libsoloud_x64.so, as the game names it).
+func testLibPath() string {
+	if path := os.Getenv("SOLOUD_DLL"); path != "" {
+		return path
+	}
+	name := defaultLibName()
+	if runtime.GOOS == "linux" {
+		name = "libsoloud_x64.so"
+	}
+	return filepath.Join("..", "soloud-bin", name)
+}
+
+// TestSmoke exercises the binding against the shipped library with the silent NOSOUND backend.
 // It covers integer, float32, float64, bool, string, and []byte argument and return paths.
 func TestSmoke(t *testing.T) {
-	dll := filepath.Join("..", "bin", defaultLibName())
+	dll := testLibPath()
 	if err := LoadPath(dll); err != nil {
 		t.Fatalf("LoadPath(%q): %v", dll, err)
 	}

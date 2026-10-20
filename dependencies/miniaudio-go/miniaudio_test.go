@@ -7,16 +7,17 @@ package miniaudio
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
 // loadForTest loads the wrapper library and skips the test when it is not built.
-// Set MINIAUDIO_DLL to override the default bin/ location.
+// The default is the build the repo ships in ../miniaudio-bin; set MINIAUDIO_DLL to override it.
 func loadForTest(t *testing.T) {
 	t.Helper()
 	path := os.Getenv("MINIAUDIO_DLL")
 	if path == "" {
-		path = "bin/" + defaultLibName()
+		path = filepath.Join("..", "miniaudio-bin", defaultLibName())
 	}
 	if _, err := os.Stat(path); err != nil {
 		t.Skipf("wrapper library not built (%s); run capi/build_windows.sh or build_linux.sh", path)

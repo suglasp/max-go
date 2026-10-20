@@ -70,20 +70,20 @@ func (p *moviePCMPlayer) queue(samples []int16) {
 	stream.Write(data)
 }
 
-// stop closes the stream and player and releases the device.
+// stop halts the player before closing its stream, then drops both so the device is released.
 func (p *moviePCMPlayer) stop() {
 	if p == nil {
 		return
 	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	if p.player != nil {
+		p.player.PauseAndStopReading()
+		p.player = nil
+	}
 	if p.stream != nil {
 		p.stream.Close()
 		p.stream = nil
-	}
-	if p.player != nil {
-		p.player.Close()
-		p.player = nil
 	}
 	p.phase = 0
 }

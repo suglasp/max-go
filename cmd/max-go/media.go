@@ -51,8 +51,9 @@ func runMovieDebug(p *platform.Platform, cfg settings.Settings, name string) err
 	}
 
 	if audioPlayer != nil {
-		defer audioPlayer.Close()
+		// Deferred calls run last first: the player stops reading before its stream closes.
 		defer audioStream.Close()
+		defer audioPlayer.PauseAndStopReading()
 	}
 
 	frames, decErr, done, producerDone := startMovieDecoder(mv, audioStream, format)

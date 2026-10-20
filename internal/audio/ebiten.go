@@ -66,13 +66,14 @@ func NewEbitenBackendChecked() (*EbitenBackend, error) {
 	return b, nil
 }
 
-// probe creates and closes a tiny player to verify the native audio device.
+// probe creates and stops a tiny player to verify the native audio device.
 func (b *EbitenBackend) probe() error {
 	player, err := context().NewPlayer(bytes.NewReader(make([]byte, 4)))
 	if err != nil {
 		return fmt.Errorf("audio: ebiten/oto init: %w", err)
 	}
-	return player.Close()
+	player.PauseAndStopReading()
+	return nil
 }
 
 // PlayMusic streams a music file from disk (17 MB tracks are not loaded whole).
@@ -117,7 +118,7 @@ func (b *EbitenBackend) StopMusic() {
 // stopMusicLocked closes the current music player while b.mu is held.
 func (b *EbitenBackend) stopMusicLocked() {
 	if b.music != nil {
-		b.music.Close()
+		b.music.PauseAndStopReading()
 		b.music = nil
 	}
 	if b.musicFile != nil {
@@ -186,7 +187,7 @@ func (b *EbitenBackend) PlaySfx(path string, volume, pan float64) error {
 		if p.IsPlaying() {
 			kept = append(kept, p)
 		} else {
-			p.Close()
+			p.PauseAndStopReading()
 		}
 	}
 	b.sfxPlayers = append(kept, player)
@@ -419,7 +420,7 @@ func (h *ebitenSfxHandle) Stop() {
 		return
 	}
 	if _, live := h.b.sfxHeld[h.player]; live {
-		h.player.Close()
+		h.player.PauseAndStopReading()
 		delete(h.b.sfxHeld, h.player)
 	}
 	h.player = nil
@@ -433,7 +434,7 @@ func (b *EbitenBackend) PlayVoice(path string, volume float64) error {
 	}
 	b.mu.Lock()
 	if b.voice != nil {
-		b.voice.Close()
+		b.voice.PauseAndStopReading()
 	}
 	player, err := context().NewPlayer(bytes.NewReader(data))
 	if err != nil {
@@ -463,15 +464,15 @@ func (b *EbitenBackend) StopAll() {
 	defer b.mu.Unlock()
 	b.stopMusicLocked()
 	if b.voice != nil {
-		b.voice.Close()
+		b.voice.PauseAndStopReading()
 		b.voice = nil
 	}
 	for _, p := range b.sfxPlayers {
-		p.Close()
+		p.PauseAndStopReading()
 	}
 	b.sfxPlayers = nil
 	for p := range b.sfxHeld {
-		p.Close()
+		p.PauseAndStopReading()
 	}
 	b.sfxHeld = nil
 }
