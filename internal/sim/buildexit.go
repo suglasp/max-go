@@ -322,7 +322,8 @@ func (g *Game) clearBuildReady(builder *game.UnitInfo) {
 	if br != nil && br.Factory {
 		return // a factory was never in a build pose; nothing to reset on it
 	}
-	if builder.Order == game.OrderBuild && builder.State == game.OrderStateUnitReady {
+	// Key on the pose, not the order: a popup order (Sentry) on the parked builder must not strand it in the build pose.
+	if builder.Building {
 		// Rebucket the builder around EndBuildPose: remove its complete construction footprint, clear the pose to restore its 1x1 footprint, then add it again.
 		// Reversing this order leaves stale entries in the completed site's other cells. C++ releases every reserved footprint cell when a UNIT_READY builder exits.
 		rebucket := g.Units != nil && g.Units.Cells != nil
