@@ -119,7 +119,7 @@ an unpassed flag leaves this saved value untouched).
 | `raw_resource` | int | `1` | Map raw-material richness, `0/1/2` = Poor/Medium/Rich. CLI `-raw`. |
 | `fuel_resource` | int | `1` | Map fuel richness, `0/1/2` = Poor/Medium/Rich. CLI `-fuel`. |
 | `gold_resource` | int | `1` | Map gold richness, `0/1/2` = Poor/Medium/Rich. CLI `-gold`. |
-| `alien_derelicts` | int | `0` | Neutral alien derelict density on the map. CLI `-derilicts`/`-derelicts` (`Rare`/`Common`). |
+| `alien_derelicts` | int | `0` | Neutral alien derelict density on the map. CLI `-derelicts` (`Rare`/`Common`). |
 | `last_campaign` | int | `1` | One-based number of unlocked campaign missions (campaign progression). |
 
 ## `preferences`

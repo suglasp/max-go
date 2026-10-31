@@ -15,7 +15,7 @@ echo.
 echo Running M.A.X. ...
 if not exist "%WORKDIR%bin\max-go.exe" goto FAILEXE
 if not exist "%WORKDIR%bin\max.res" goto FAILDATA
-"%WORKDIR%bin\max-go.exe" -random -difficulty 1 -npc 1 -derilicts common
+"%WORKDIR%bin\max-go.exe" -random -difficulty 1 -npc 1 -derelicts common
 goto EXIT
 
 :FAILEXE

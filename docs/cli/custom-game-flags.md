@@ -23,8 +23,7 @@ The value parser is case insensitive for named options and normalizes accepted v
 | `-raw` | string | `Medium` | `Poor`, `Medium`, `Rich` | `-raw Rich` | Raw resource density, `settings["raw_resource"]`. |
 | `-fuel` | string | `Medium` | `Poor`, `Medium`, `Rich` | `-fuel Poor` | Fuel resource density, `settings["fuel_resource"]`. |
 | `-gold` | string | `Medium` | `Poor`, `Medium`, `Rich` | `-gold Medium` | Gold resource density, `settings["gold_resource"]`. |
-| `-derilicts` | string | `""` | `""`, `Rare`, `Common` | `-derilicts Common` | Alien derelict density, `settings["alien_derelicts"]`. |
-| `-derelicts` | string | `""` | `""`, `Rare`, `Common` | `-derelicts Rare` | Alias of `-derilicts`; normalized into the same field. |
+| `-derelicts` | string | `""` | `""`, `Rare`, `Common` | `-derelicts Common` | Alien derelict density, `settings["alien_derelicts"]`. |
 | `-startcredit` | string | `""` | `""`, `Low`, `Limited`, `Normal`, `High`, `TooMuch` | `-startcredit Normal` | Starting cargo credits, `settings["start_gold"]`. |
 | `-credit` | string | `""` | `""`, `Low`, `Limited`, `Normal`, `High`, `TooMuch` | `-credit Normal` | Alias of `-startcredit`; normalized into the same field. |
 

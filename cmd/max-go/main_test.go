@@ -33,7 +33,7 @@ func TestPrintUsageMatchesLaunchFlags(t *testing.T) {
 	})
 
 	want := []string{
-		"max-go -random -npc 3 -difficulty 3 -derilicts common",
+		"max-go -random -npc 3 -difficulty 3 -derelicts common",
 		"max-go -screenshot <file>",
 		"max-go -mve <file> [-screenshot <file>]",
 		"max-go -flic <file> [-screenshot <file>]",
@@ -115,7 +115,6 @@ func TestDefineLaunchFlagsRegistersCustomFlags(t *testing.T) {
 		"raw",
 		"fuel",
 		"gold",
-		"derilicts",
 		"derelicts",
 		"startcredit",
 		"credit",

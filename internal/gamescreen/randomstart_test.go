@@ -7,9 +7,12 @@ package gamescreen
 
 import (
 	"math/rand"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/suglasp/max-go/internal/game"
+	"github.com/suglasp/max-go/internal/landmass"
 	"github.com/suglasp/max-go/internal/world"
 )
 
@@ -69,5 +72,56 @@ func TestLandingSpotPrefersInterior(t *testing.T) {
 	s := &Screen{wmap: &world.Map{Preview: world.Preview{W: w, H: h}, Surface: surf}}
 	if got := s.landingSpot(cells, rand.New(rand.NewSource(1))); got.X != 5 || got.Y != 5 {
 		t.Errorf("landingSpot = (%d,%d), want the interior (5,5)", got.X, got.Y)
+	}
+}
+
+// TestStartRoomNeeded pins the land a team needs: the landing force (5 tiles of start buildings + 11 units) plus
+// 5 percent of the map's land.
+func TestStartRoomNeeded(t *testing.T) {
+	if got := landingTiles(); got != 16 {
+		t.Errorf("landingTiles() = %d, want 16", got)
+	}
+	if got := startRoomNeeded(2553); got != 16+127 {
+		t.Errorf("startRoomNeeded(2553) = %d, want 143 (GREEN_5)", got)
+	}
+}
+
+// TestStartSpotsHaveRoomOnRetailMaps lands 2 to 4 teams on every retail map with many seeds: each spot must sit on
+// an island holding the needed land, unless the map has no such island at all.
+func TestStartSpotsHaveRoomOnRetailMaps(t *testing.T) {
+	dir := os.Getenv("MAX_DATA_DIR")
+	if dir == "" {
+		t.Skip("game data not found (set MAX_DATA_DIR)")
+	}
+	files, _ := filepath.Glob(filepath.Join(dir, "*.WRL"))
+	if len(files) == 0 {
+		t.Skip("no .WRL maps in MAX_DATA_DIR")
+	}
+	for _, f := range files {
+		m, err := world.LoadMap(f)
+		if err != nil {
+			t.Fatalf("%s: %v", filepath.Base(f), err)
+		}
+		s := &Screen{wmap: m}
+		roomy := s.islandsWithRoom(landmass.Find(m))
+		if len(roomy) == 0 {
+			t.Errorf("%s: no island has room for a base", filepath.Base(f))
+			continue
+		}
+		island := make(map[game.Point]bool)
+		for _, c := range roomy {
+			for _, p := range c.Cells {
+				island[p] = true
+			}
+		}
+		for teams := 2; teams <= 4; teams++ {
+			for seed := int64(0); seed < 25; seed++ {
+				for i, p := range s.chooseStartSpots(teams, rand.New(rand.NewSource(seed))) {
+					if !island[p] {
+						t.Errorf("%s teams=%d seed=%d: team %d lands at (%d,%d), off every island with room", filepath.Base(f), teams, seed, i, p.X, p.Y)
+					}
+				}
+			}
+		}
 	}
 }

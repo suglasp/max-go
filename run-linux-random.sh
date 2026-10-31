@@ -29,7 +29,7 @@ if [[ ! -f "$bin_dir/max.res" ]]; then
   exit 1
 fi
 
-"$bin_dir/max-go" -random -difficulty 1 -npc 1 -derilicts common
+"$bin_dir/max-go" -random -difficulty 1 -npc 1 -derelicts common
 
 echo
 echo "END RUN."

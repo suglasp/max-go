@@ -78,21 +78,21 @@ func TestCustomFlagsDefaultsValidate(t *testing.T) {
 	}
 }
 
-func TestCustomFlagsDerilictsAlias(t *testing.T) {
-	for _, name := range []string{"derilicts", "derelicts"} {
-		t.Run(name, func(t *testing.T) {
-			fs := flag.NewFlagSet("custom", flag.ContinueOnError)
-			cf := registerCustomFlags(fs)
-			if err := fs.Parse([]string{"-" + name, "rare"}); err != nil {
-				t.Fatalf("Parse: %v", err)
-			}
-			if err := ValidateCustomFlags(cf); err != nil {
-				t.Fatalf("ValidateCustomFlags: %v", err)
-			}
-			if got := *cf.Derelicts; got != "Rare" {
-				t.Errorf("Derelicts = %q, want Rare", got)
-			}
-		})
+// TestCustomFlagsDerelicts checks -derelicts parses and normalises, and that the misspelled -derilicts is gone.
+func TestCustomFlagsDerelicts(t *testing.T) {
+	fs := flag.NewFlagSet("custom", flag.ContinueOnError)
+	cf := registerCustomFlags(fs)
+	if fs.Lookup("derilicts") != nil {
+		t.Error("the misspelled -derilicts flag is still registered")
+	}
+	if err := fs.Parse([]string{"-derelicts", "rare"}); err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if err := ValidateCustomFlags(cf); err != nil {
+		t.Fatalf("ValidateCustomFlags: %v", err)
+	}
+	if got := *cf.Derelicts; got != "Rare" {
+		t.Errorf("Derelicts = %q, want Rare", got)
 	}
 }
 
@@ -126,7 +126,7 @@ func TestApplyCustomGameFlags(t *testing.T) {
 		"-raw", "rich",
 		"-fuel", "poor",
 		"-gold", "medium",
-		"-derilicts", "common",
+		"-derelicts", "common",
 		"-simultane",
 	}
 	if err := fs.Parse(args); err != nil {
@@ -253,7 +253,7 @@ func TestCustomFlagsInvalidValues(t *testing.T) {
 		{"raw", []string{"-raw", "Dense"}, "Poor, Medium, Rich"},
 		{"fuel", []string{"-fuel", "Dense"}, "Poor, Medium, Rich"},
 		{"gold", []string{"-gold", "Dense"}, "Poor, Medium, Rich"},
-		{"derilicts", []string{"-derilicts", "Many"}, `"", None, Rare, Common`},
+		{"derelicts", []string{"-derelicts", "Many"}, `"", None, Rare, Common`},
 		{"startcredit", []string{"-startcredit", "Unlimited"}, `"", Low, Limited, Normal, High, TooMuch`},
 	}
 	for _, tt := range tests {

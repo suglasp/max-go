@@ -7,6 +7,7 @@ package gamescreen
 
 import (
 	"math/rand"
+	"sort"
 
 	"github.com/suglasp/max-go/internal/access"
 	"github.com/suglasp/max-go/internal/assets"
@@ -111,11 +112,54 @@ const (
 	startEngineerRaw    = economy.StartEngineerCargo
 )
 
-// randomMinIsland is the smallest island (in land cells) considered large
-// enough to host a team's starting base with room to spare. Sized for the full
-// random roster (base buildings + ~13 mobile units) plus a landing margin, so a
-// team does not start cramped on a tiny island.
-const randomMinIsland = 48
+// startBuildRoomPercent is the build room a team needs on its island, as a share of the map's land tiles,
+// so a map with more land asks for a bigger base site.
+const startBuildRoomPercent = 5
+
+// landingTiles counts the tiles the landing force covers: the start buildings' footprints plus one tile per unit
+// of the largest random roster.
+func landingTiles() int {
+	tiles := len(baseRoster) + len(randomExtraRoster)
+	for _, b := range startBuildings {
+		tiles += build.Footprint(b.flags) * build.Footprint(b.flags)
+	}
+	return tiles
+}
+
+// startRoomNeeded returns the land tiles a team's island must hold: the landing force plus startBuildRoomPercent
+// of the map's land (mapLand).
+func startRoomNeeded(mapLand int) int {
+	return landingTiles() + mapLand*startBuildRoomPercent/100
+}
+
+// islandLand counts an island's land tiles; coast tiles do not count as room to build.
+func (s *Screen) islandLand(c landmass.Component) int {
+	land := 0
+	for _, p := range c.Cells {
+		if s.wmap.SurfaceAt(p.X, p.Y)&world.SurfaceLand != 0 {
+			land++
+		}
+	}
+	return land
+}
+
+// islandsWithRoom keeps the islands holding the land a team needs on this map, largest first.
+func (s *Screen) islandsWithRoom(comps []landmass.Component) []landmass.Component {
+	lands := make([]int, len(comps))
+	mapLand := 0
+	for i, c := range comps {
+		lands[i] = s.islandLand(c)
+		mapLand += lands[i]
+	}
+	need := startRoomNeeded(mapLand)
+	var out []landmass.Component
+	for i, c := range comps {
+		if lands[i] >= need {
+			out = append(out, c)
+		}
+	}
+	return out
+}
 
 // baseSearchRadius bounds how far deployStartBase looks outward from the chosen
 // landing spot for a valid building site or unit cell.
@@ -265,13 +309,13 @@ func randomRoster(rng *rand.Rand) []unitSpec {
 	return roster
 }
 
-// chooseStartSpots picks k distinct team landing spots: one per large enough island
-// when the map has at least k of them, otherwise it splits the available land into k
-// bands so the teams still start apart. C++: the scenario setup's per team start
-// position pick.
+// chooseStartSpots picks k distinct team landing spots: one per island with room for a base
+// when the map has at least k of them, otherwise it splits those islands' land (or all land
+// when none has the room) into k bands so the teams still start apart. C++: the scenario
+// setup's per team start position pick.
 func (s *Screen) chooseStartSpots(k int, rng *rand.Rand) []game.Point {
 	spots := make([]game.Point, k)
-	islands := landmass.LargeEnough(landmass.Find(s.wmap), randomMinIsland)
+	islands := s.islandsWithRoom(landmass.Find(s.wmap))
 
 	if len(islands) >= k {
 		perm := rng.Perm(len(islands)) // k distinct islands, chosen at random
@@ -283,9 +327,12 @@ func (s *Screen) chooseStartSpots(k int, rng *rand.Rand) []game.Point {
 		return spots
 	}
 
-	// Not enough distinct islands: split the available land into k bands so teams
-	// still start apart (covers a single island and the landlocked map fallback).
-	cells := s.landCells()
+	// Not enough distinct islands: split the land of the roomy islands into k bands so teams
+	// still start apart and never on an islet (covers a single continent); all land when none has the room.
+	cells := roomyCells(islands)
+	if len(cells) == 0 {
+		cells = s.landCells()
+	}
 
 	if len(cells) == 0 {
 		return spots // degenerate: no land at all
@@ -698,6 +745,22 @@ func (s *Screen) landCells() []game.Point {
 		}
 	}
 
+	return cells
+}
+
+// roomyCells returns every cell of the given islands in row order (top to bottom, then left to right),
+// so splitting the list into bands splits the land spatially, as landCells does.
+func roomyCells(islands []landmass.Component) []game.Point {
+	var cells []game.Point
+	for _, c := range islands {
+		cells = append(cells, c.Cells...)
+	}
+	sort.Slice(cells, func(i, j int) bool {
+		if cells[i].Y != cells[j].Y {
+			return cells[i].Y < cells[j].Y
+		}
+		return cells[i].X < cells[j].X
+	})
 	return cells
 }
 

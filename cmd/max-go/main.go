@@ -379,7 +379,7 @@ func printUsage(w io.Writer, exe string, fs *flag.FlagSet) {
   %[1]s -flic <file> [-screenshot <file>]
   %[1]s -mission <file> [-screenshot <file>]  // load a .TRA/.SCE/.CAM/.MPS mission directly
   %[1]s -save <slot> [-screenshot <file>]     // load a saved game slot directly
-  %[1]s -random -npc 3 -difficulty 3 -derilicts common  // random game, 3 AI opponents, average difficulty, common derelicts
+  %[1]s -random -npc 3 -difficulty 3 -derelicts common  // random game, 3 AI opponents, average difficulty, common derelicts
 `, exe)
 	// The -mapeditor usage entry stays commented out until the user gated ME7 editor ships.
 	// The flag itself already works:
@@ -467,7 +467,7 @@ Menu screens:
 
   -random - Custom game flags
       -turnlimit/-turns, -endturn, -score, -duration, -turnbased,
-      -simultane, -raw, -fuel, -gold, -derilicts/-derelicts,
+      -simultane, -raw, -fuel, -gold, -derelicts,
 	  and -startcredit/-credit mirror the Custom Game setup screen.
 
 `)
@@ -544,7 +544,7 @@ func flagValueHint(name string) string {
 	case "raw", "fuel", "gold":
 		return " <Poor|Medium|Rich>"
 
-	case "derilicts", "derelicts":
+	case "derelicts":
 		return " <Rare|Common>"
 
 	case "startcredit", "credit":

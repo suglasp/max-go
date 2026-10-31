@@ -107,7 +107,7 @@ The custom game launch flags (`-turnlimit`/`-turns`,
 `-duration`,
 `-turnbased`/`-simultane`,
 `-raw`/`-fuel`/`-gold`,
-`-derilicts`/`-derelicts`,
+`-derelicts`,
 `-startcredit`/`-credit`) are NOT gated - `registerCustomFlags` runs unconditionally and their `-help` block prints in every build,
 `DEBUG_GAME` or not.
 

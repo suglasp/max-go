@@ -46,8 +46,7 @@ func registerCustomFlags(fs *flag.FlagSet) *CustomGameFlags {
 	flags.Raw = fs.String("raw", "Medium", "custom game raw density: Poor, Medium, Rich")
 	flags.Fuel = fs.String("fuel", "Medium", "custom game fuel density: Poor, Medium, Rich")
 	flags.Gold = fs.String("gold", "Medium", "custom game gold density: Poor, Medium, Rich")
-	flags.Derelicts = fs.String("derilicts", "", "custom game alien derelict density: none, Rare, Common")
-	fs.StringVar(flags.Derelicts, "derelicts", "", "alias of -derilicts")
+	flags.Derelicts = fs.String("derelicts", "", "custom game alien derelict density: none, Rare, Common")
 	flags.StartCredit = fs.String("startcredit", "", "custom game starting credits: none, Low, Limited, Normal, High, TooMuch")
 	fs.StringVar(flags.StartCredit, "credit", "", "alias of -startcredit")
 	return flags
@@ -86,7 +85,7 @@ func ValidateCustomFlags(flags *CustomGameFlags) error {
 	if err := validateChoice(flags.Gold, "gold", "Poor", "Medium", "Rich"); err != nil {
 		return err
 	}
-	if err := validateChoice(flags.Derelicts, "derilicts", "", "None", "Rare", "Common"); err != nil {
+	if err := validateChoice(flags.Derelicts, "derelicts", "", "None", "Rare", "Common"); err != nil {
 		return err
 	}
 	if err := validateChoice(flags.StartCredit, "startcredit", "", "Low", "Limited", "Normal", "High", "TooMuch"); err != nil {
@@ -141,7 +140,7 @@ func applyCustomGameFlags(g *settings.Game, cf *CustomGameFlags, provided map[st
 		}
 	}
 
-	// -derilicts / -derelicts: neutral alien derelict density.
+	// -derelicts: neutral alien derelict density.
 	if s := strings.TrimSpace(stringValue(cf.Derelicts)); s != "" {
 		g.AlienDerelicts = resourceDensity(s)
 	}
