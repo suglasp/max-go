@@ -392,6 +392,11 @@ func jumpToUnitBench(ctx *menus.Context, name string, noMovie bool) (bool, error
 		// "Submarine detected!" cue (V_F201), NOT the generic "Enemy detected!".
 		err = runGameScreen(ctx, 0, gameScreenSubmarine, noMovie)
 
+	case "navalfire":
+		// World 0 (SNOW_1): three player ships vs static enemy Corvettes (AI off). Land between blocks the
+		// shot; open water and a friendly ship between do not (klei 23/08/26 naval line of fire).
+		err = runGameScreen(ctx, 0, gameScreenNavalFire, noMovie)
+
 	case "air":
 		// World 0 gives the player a bomber and tanks. Land makes the bomber
 		// immobile, blocking, and vulnerable. Take Off returns it to the air.

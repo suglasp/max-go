@@ -159,6 +159,9 @@ func applyGameScreenMode(scr *gamescreen.Screen, ctx *menus.Context, mode gameSc
 	case gameScreenSubmarine:
 		scr.DeploySubmarineBench() // -emulate submarine: a friendly AWAC + Corvette reveal an enemy sub
 
+	case gameScreenNavalFire:
+		scr.DeployNavalFireBench() // -emulate navalfire: ships cannot fire across land
+
 	}
 }
 
@@ -492,6 +495,7 @@ const (
 	gameScreenAliens
 	gameScreenLevelUp
 	gameScreenSubmarine
+	gameScreenNavalFire
 )
 
 // runGameScreenShadow is the unit shadow inspection view (-emulate shadow):
