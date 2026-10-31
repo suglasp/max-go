@@ -107,30 +107,33 @@ func (s *Screen) commitTurn() {
 	s.beginNextTeam()
 }
 
-// maybeWarnGameEnd shows "Notice: Game will end in 10 turns!" once, ten turns before a Duration game's cap for a human player. openMenuScreen pauses the clock and swallows the closing click.
-// C++ ported : menu.cpp:590-595 - DialogMenu_Menu(_(4556)) at
-// turn_counter == victory_limit-10 with humans present.
+// maybeWarnGameEnd shows "Notice: Game will end in 10 turns!" once, at the start of turn limit-9 of a Duration game. openMenuScreen pauses the clock and swallows the closing click.
 func (s *Screen) maybeWarnGameEnd() {
-	if s.game.VictoryType != winloss.VictoryDuration || s.game.VictoryLimit <= 0 {
-		return
-	}
-
-	if s.game.State.TurnCounter != s.game.VictoryLimit-10 {
-		return
-	}
-
-	player := s.game.State.PlayerTeam
-
-	if player < 0 || player >= game.TeamCount || s.game.State.Teams[player].Type != game.TeamPlayer {
-		return // Attract demos and AI benches have no human team.
-	}
-
-	if s.hooks.messageFn == nil {
+	if !s.gameEndWarningDue() || s.hooks.messageFn == nil {
 		return
 	}
 
 	text := s.lang.Get("4556", "Notice: Game will end in 10 turns!")
 	s.openMenuScreen(func() { s.hooks.messageFn(text) }, false)
+}
+
+// gameEndWarningDue reports whether this turn opens the last ten of a Duration game (turns limit-9 to limit)
+// for a human player. It runs after AdvanceTurn, so the counter is already the new turn.
+// C++ ported : game_manager.cpp - GameManager_UpdateGui, DialogMenu_Menu(_(4556)) at
+// GameManager_TurnCounter == victory_limit-9 (klei 23/08/26; was menu.cpp limit-10 BEFORE the increment).
+func (s *Screen) gameEndWarningDue() bool {
+	if s.game.VictoryType != winloss.VictoryDuration || s.game.VictoryLimit <= 0 {
+		return false
+	}
+
+	if s.game.State.TurnCounter != s.game.VictoryLimit-9 {
+		return false
+	}
+
+	player := s.game.State.PlayerTeam
+
+	// Attract demos and AI benches have no human team.
+	return player >= 0 && player < game.TeamCount && s.game.State.Teams[player].Type == game.TeamPlayer
 }
 
 // endTurnSettleMaxMS caps the End Turn settle wait. ResolveMovement completes any remaining movement after the cap.
@@ -143,7 +146,7 @@ const endTurnSettleMaxMS = 8000
 func (s *Screen) beginNextTeam() {
 	if s.game.State.AllFinished() {
 		s.game.AdvanceTurn()
-		s.maybeWarnGameEnd()     // Duration game: "Notice: Game will end in 10 turns!" at limit-10
+		s.maybeWarnGameEnd()     // Duration game: "Notice: Game will end in 10 turns!" at the start of turn limit-9
 		s.announceLeaderChange() // "<colour> team has the most Ecospheres!" when the lead changes hands
 	}
 

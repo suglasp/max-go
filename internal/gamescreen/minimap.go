@@ -10,7 +10,6 @@ import (
 	"sort"
 
 	"github.com/suglasp/max-go/internal/assets"
-	"github.com/suglasp/max-go/internal/build"
 	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/gfx"
@@ -120,15 +119,23 @@ func (s *Screen) drawMinimapUnits(dst *gfx.Buffer, mmW, mmH int) {
 	}
 }
 
-// stampUnit fills the unit's footprint on the minimap with its team colour:
-// cell (GridX, GridY) spanning Footprint cells, scaled to minimap pixels,
-// at least one pixel. No outline, pure team colour pixels.
+// stampUnit fills a 2x2 cell blip on the minimap with the unit's team colour, scaled to minimap pixels, at
+// least one pixel. In the 2X minimap view a unit that is not a building is one cell. A 2x2 blip at the right
+// or bottom edge shifts inward to stay on the map. No outline, pure team colour pixels.
+// C++ ported : drawmap.cpp - DrawMap_RenderMiniMapUnitList (klei 23/08/26; was a 2x2 blip for buildings only)
 func (s *Screen) stampUnit(dst *gfx.Buffer, u *game.UnitInfo, mmW, mmH int) {
-	fp := build.Footprint(u.Flags)
-	startX := u.GridX * mmW / s.wmap.W
-	startY := u.GridY * mmH / s.wmap.H
-	endX := (u.GridX + fp) * mmW / s.wmap.W
-	endY := (u.GridY + fp) * mmH / s.wmap.H
+	cells := minimapBlipCells(u, s.minimap.minimap2x)
+	gridX, gridY := u.GridX, u.GridY
+
+	if cells == 2 {
+		gridX = min(gridX, s.wmap.W-2)
+		gridY = min(gridY, s.wmap.H-2)
+	}
+
+	startX := gridX * mmW / s.wmap.W
+	startY := gridY * mmH / s.wmap.H
+	endX := (gridX + cells) * mmW / s.wmap.W
+	endY := (gridY + cells) * mmH / s.wmap.H
 
 	if endX <= startX {
 		endX = startX + 1
@@ -403,4 +410,14 @@ func (s *Screen) recenterFromMinimap(mx, my int) {
 
 	vw, vh := viewSize(MainMap)
 	s.camera.scrollX, s.camera.scrollY = centerScroll(cellX, cellY, s.r.Zoom(), vw, vh)
+}
+
+// minimapBlipCells is the blip size in cells: 2 for every unit (as the DOS minimap shows), 1 for a unit that
+// is not a building while the minimap is in its 2X view.
+func minimapBlipCells(u *game.UnitInfo, zoom2x bool) int {
+	if zoom2x && !u.Flags.Has(game.FlagBuilding) {
+		return 1
+	}
+
+	return 2
 }

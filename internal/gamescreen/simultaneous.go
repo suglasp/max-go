@@ -123,7 +123,7 @@ func (s *Screen) commitSimTurn() {
 	}
 
 	s.game.AdvanceTurn()
-	s.maybeWarnGameEnd()     // Duration game: "Notice: Game will end in 10 turns!" at limit-10
+	s.maybeWarnGameEnd()     // Duration game: "Notice: Game will end in 10 turns!" at the start of turn limit-9
 	s.announceLeaderChange() // "<colour> team has the most Ecospheres!" when the lead changes hands
 	s.beginSimRound()
 }

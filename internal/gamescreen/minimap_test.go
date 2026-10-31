@@ -259,3 +259,40 @@ func TestMinimapOrderConsumesWithoutSelection(t *testing.T) {
 		t.Error("a minimap right-click with no selection should still be consumed")
 	}
 }
+
+// TestMinimapBlipSize checks klei 23/08/26 DrawMap_RenderMiniMapUnitList (and the DOS minimap): every unit is
+// a 2x2 cell blip, a unit that is not a building is 1 cell in the 2X view, and an edge blip shifts inward.
+func TestMinimapBlipSize(t *testing.T) {
+	s, _ := newClickScreen(t)
+	w, h := s.wmap.W, s.wmap.H // one minimap pixel per cell
+
+	stamp := func(flags game.Flags, gridX, gridY int, zoom2x bool) (int, int, int) {
+		s.minimap.minimap2x = zoom2x
+		u := &game.UnitInfo{Team: 0, GridX: gridX, GridY: gridY, Flags: flags}
+		dst := gfx.New(w, h)
+		s.stampUnit(dst, u, w, h)
+		n, minX, minY := 0, w, h
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				if dst.At(x, y) != 0 {
+					n++
+					minX, minY = min(minX, x), min(minY, y)
+				}
+			}
+		}
+		return n, minX, minY
+	}
+
+	if n, _, _ := stamp(game.FlagMobileLandUnit, 5, 5, false); n != 4 {
+		t.Errorf("mobile unit blip = %d pixels, want 4 (2x2)", n)
+	}
+	if n, _, _ := stamp(game.FlagMobileLandUnit, 5, 5, true); n != 1 {
+		t.Errorf("mobile unit blip in the 2X view = %d pixels, want 1", n)
+	}
+	if n, _, _ := stamp(game.FlagBuilding|game.FlagStationary, 5, 5, true); n != 4 {
+		t.Errorf("building blip in the 2X view = %d pixels, want 4", n)
+	}
+	if n, x, y := stamp(game.FlagMobileLandUnit, w-1, h-1, false); n != 4 || x != w-2 || y != h-2 {
+		t.Errorf("corner blip = %d pixels from (%d,%d), want 4 from (%d,%d)", n, x, y, w-2, h-2)
+	}
+}
