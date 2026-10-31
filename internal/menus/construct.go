@@ -22,7 +22,8 @@ import (
 	"github.com/suglasp/max-go/internal/units"
 )
 
-// CONBUILD lets a Constructor or Engineer choose a buildable type. It shows the portrait, stats, X1/X2/X4 rates, cost, and build list; Constructors build 2x2 structures and Engineers build 1x1 structures.
+// CONBUILD lets a Constructor or Engineer choose a buildable type. It shows the portrait, stats, X1/X2/X4
+// rates, cost, and build list; Constructors build 2x2 structures and Engineers build 1x1 structures.
 //
 // DEVIATIONS (carried over): the per unit description text is a placeholder (the
 // real strings need the unit data to lang key map, like the cargo/upgrade screens);

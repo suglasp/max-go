@@ -28,7 +28,8 @@ type minimapState struct {
 	minimapDragOX, minimapDragOY int         // frozen source origin captured on the press edge
 }
 
-// dotColor returns a team's minimap dot colour. Teams outside the configured range use yellow. C++: HASH_TEAM_* -> COLOR_* mapping.
+// dotColor returns a team's minimap dot colour. Teams outside the configured range use yellow. C++:
+// HASH_TEAM_* -> COLOR_* mapping.
 func (s *Screen) dotColor(team int) uint8 {
 	if team >= 0 && team < len(s.minimap.minimapDots) && s.minimap.minimapDots[team] != 0 {
 		return s.minimap.minimapDots[team]
@@ -44,7 +45,8 @@ func isCombatUnit(u *game.UnitInfo) bool {
 	return u.Values != nil && u.Values.Get(game.AttribAttack) > 0
 }
 
-// isDefenseBuilding reports whether u is a stationary armed structure. It gates the Sentry popup toggle and default Sentry deploy behaviour.
+// isDefenseBuilding reports whether u is a stationary armed structure. It gates the Sentry popup toggle and
+// default Sentry deploy behaviour.
 func isDefenseBuilding(u *game.UnitInfo) bool {
 	return u != nil && u.Flags.Has(game.FlagStationary) && isCombatUnit(u)
 }
@@ -74,11 +76,13 @@ func (s *Screen) drawMinimap(buf *gfx.Buffer) {
 	}
 }
 
-// drawMinimapUnits stamps visible units as team-coloured footprint blocks. It uses the human fog view so computer turns cannot reveal their units; disabling fog reveals every unit.
+// drawMinimapUnits stamps visible units as team-coloured footprint blocks. It uses the human fog view so
+// computer turns cannot reveal their units; disabling fog reveals every unit.
 func (s *Screen) drawMinimapUnits(dst *gfx.Buffer, mmW, mmH int) {
 	viewer := s.fogTeam // the human's view, same team the main map fog uses
 	view := s.game.Vis.Team(viewer)
-	// Draw a stable order to prevent overlapping colours flickering. Buildings come first, then mobile units, with IDs breaking ties.
+	// Draw a stable order to prevent overlapping colours flickering. Buildings come first, then mobile units,
+	// with IDs breaking ties.
 	order := s.game.Units.Units()
 	sort.SliceStable(order, func(i, j int) bool {
 		mi, mj := isMobileUnit(order[i]), isMobileUnit(order[j])
@@ -191,7 +195,8 @@ func (s *Screen) minimap2xOrigin(mmW, mmH int) (int, int) {
 	return ox, oy
 }
 
-// minimapCellAt maps a minimap click to a map cell and inverts the 2X overview transform when needed. It returns false outside the minimap.
+// minimapCellAt maps a minimap click to a map cell and inverts the 2X overview transform when needed. It
+// returns false outside the minimap.
 func (s *Screen) minimapCellAt(mx, my int) (int, int, bool) {
 	if !s.minimap.minimap2x {
 		return minimapCell(mx, my, s.wmap.W, s.wmap.H)
@@ -202,7 +207,8 @@ func (s *Screen) minimapCellAt(mx, my int) (int, int, bool) {
 	return s.minimapCellAtOrigin(mx, my, ox, oy)
 }
 
-// minimapCellAtOrigin maps a 2X click with a supplied overview origin. Drag recenter freezes that origin at press time so the target cell remains stable.
+// minimapCellAtOrigin maps a 2X click with a supplied overview origin. Drag recenter freezes that origin at
+// press time so the target cell remains stable.
 func (s *Screen) minimapCellAtOrigin(mx, my, ox, oy int) (int, int, bool) {
 	if mx < Minimap.ULX || mx > Minimap.LRX || my < Minimap.ULY || my > Minimap.LRY {
 		return 0, 0, false // not on the minimap
@@ -313,7 +319,8 @@ func (s *Screen) handleMinimapZoomControls(mouse platform.MouseState) bool {
 	return false
 }
 
-// minimapOrder sends a selected active mobile unit to a right-clicked minimap cell. It uses orderMoveTo and the 2X-aware minimap mapping; clicks inside the minimap are always consumed.
+// minimapOrder sends a selected active mobile unit to a right-clicked minimap cell. It uses orderMoveTo and
+// the 2X-aware minimap mapping; clicks inside the minimap are always consumed.
 //
 // C++ ported : game_manager.cpp - WINDOW_MINIMAP right release sets ORDER_MOVE to
 // the minimap cell when GameManager_GetWindowCursor is CURSOR_UNIT_GO / CURSOR_WAY.

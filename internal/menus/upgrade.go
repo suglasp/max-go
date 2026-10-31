@@ -20,7 +20,8 @@ import (
 	unitspr "github.com/suglasp/max-go/internal/units"
 )
 
-// UPGRADE lets the player buy permanent per-attribute upgrades with team gold. Done commits changes; Cancel or Escape restores values and gold. It is centred under the game palette.
+// UPGRADE lets the player buy permanent per-attribute upgrades with team gold. Done commits changes; Cancel
+// or Escape restores values and gold. It is centred under the game palette.
 //
 // C++: upgrademenu.cpp/abstractupgrademenu.cpp - UpgradeMenu.
 

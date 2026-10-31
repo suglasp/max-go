@@ -34,7 +34,8 @@ func (s *Screen) SetEndTurnTimer(seconds int) {
 // already left leaves the turn as it is - and an untimed turn gains the countdown it
 // never had, which is exactly what the setting is for.
 //
-// The reference implementation arms the grace on frame one when computer teams queue no orders, reducing the fresh timer to min(endturn, remaining).
+// The reference implementation arms the grace on frame one when computer teams queue no orders, reducing the
+// fresh timer to min(endturn, remaining).
 //
 // C++ ported : game_manager.cpp:882 - GameManager_HandleTurnTimer
 // (timer_setting = min(endturn, GameManager_TurnTimerValue) -> UpdateTurnTimer(true, ...))
@@ -60,7 +61,8 @@ func (s *Screen) armEndTurnGrace() {
 
 	grace := s.turnFlow.endTurnSeconds
 
-	// The reference implementation floors the countdown at 15 seconds while computer teams still finish their work, so end_turn values below 15 cannot immediately end a turn.
+	// The reference implementation floors the countdown at 15 seconds while computer teams still finish their
+	// work, so end_turn values below 15 cannot immediately end a turn.
 	if grace < 15 {
 		grace = 15
 	}

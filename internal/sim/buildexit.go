@@ -342,15 +342,18 @@ func (g *Game) clearBuildReady(builder *game.UnitInfo) {
 	}
 	// Key on the pose, not the order: a popup order (Sentry) on the parked builder must not strand it in the build pose.
 	if builder.Building {
-		// Rebucket the builder around EndBuildPose: remove its complete construction footprint, clear the pose to restore its 1x1 footprint, then add it again.
-		// Reversing this order leaves stale entries in the completed site's other cells. C++ releases every reserved footprint cell when a UNIT_READY builder exits.
+		// Rebucket the builder around EndBuildPose: remove its complete construction footprint, clear the pose to
+		// restore its 1x1 footprint, then add it again.
+		// Reversing this order leaves stale entries in the completed site's other cells. C++ releases every
+		// reserved footprint cell when a UNIT_READY builder exits.
 		rebucket := g.Units != nil && g.Units.Cells != nil
 		if rebucket {
 			g.Units.Cells.Remove(builder) // drop the whole build site footprint
 		}
 		builder.EndBuildPose()
 		builder.State = game.OrderStateExecutingOrder
-		// The parked sprite is centered on the construction footprint while the hash uses its corner cell. Reset the pixel position before exit movement to avoid a snap across the site.
+		// The parked sprite is centered on the construction footprint while the hash uses its corner cell. Reset
+		// the pixel position before exit movement to avoid a snap across the site.
 		builder.SetPosition(builder.GridX, builder.GridY)
 		if rebucket {
 			g.Units.Cells.Add(builder) // add again at the single resting cell

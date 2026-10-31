@@ -26,7 +26,8 @@ import (
 	"github.com/suglasp/max-go/internal/world"
 )
 
-// runGameScreen loads a world and enters the game screen with its FRAMEPIC panel, map, and minimap. It returns to the menu loop on Escape.
+// runGameScreen loads a world and enters the game screen with its FRAMEPIC panel, map, and minimap. It
+// returns to the menu loop on Escape.
 func runGameScreen(ctx *menus.Context, worldIdx int, mode gameScreenMode, noMovie bool) error {
 	name, err := ctx.Lib.ReadString(menus.WorldTag(worldIdx))
 	if err != nil {
@@ -63,7 +64,8 @@ func runGameScreen(ctx *menus.Context, worldIdx int, mode gameScreenMode, noMovi
 	return nil
 }
 
-// applyGameScreenMode prepares one -emulate bench by placing units, setting debug state, or opening the requested game-over screen. Plain mode does nothing.
+// applyGameScreenMode prepares one -emulate bench by placing units, setting debug state, or opening the
+// requested game-over screen. Plain mode does nothing.
 func applyGameScreenMode(scr *gamescreen.Screen, ctx *menus.Context, mode gameScreenMode) {
 	switch mode {
 	case gameScreenDeath:
@@ -168,7 +170,8 @@ func applyGameScreenMode(scr *gamescreen.Screen, ctx *menus.Context, mode gameSc
 	}
 }
 
-// buildGameScreen loads a .WRL map and wires its panel art, portraits, attributes, and menu hooks. New games and loaded games share this setup.
+// buildGameScreen loads a .WRL map and wires its panel art, portraits, attributes, and menu hooks. New games
+// and loaded games share this setup.
 func buildGameScreen(ctx *menus.Context, mapFile string) (*gamescreen.Screen, error) {
 	m, err := world.LoadMap(filepath.Join(ctx.DataDir, mapFile))
 
@@ -230,7 +233,8 @@ func buildGameScreen(ctx *menus.Context, mapFile string) (*gamescreen.Screen, er
 
 	scr.SetShowAStarPath(showAStarPath) // -set-a-star debug: draw the white A* path
 
-	// Let an in game load swap to a save's own world when it was made on a different map (otherwise the restored units land on the wrong terrain).
+	// Let an in game load swap to a save's own world when it was made on a different map (otherwise the restored
+	// units land on the wrong terrain).
 	scr.SetWorldReloader(func(name string) (*world.Map, error) {
 		return world.LoadMap(filepath.Join(ctx.DataDir, strings.TrimSpace(name)))
 	})
@@ -264,7 +268,8 @@ func applyLivePrefs(scr *gamescreen.Screen, ctx *menus.Context) {
 	})
 }
 
-// wireMenuCallbacks installs the hooks that open popups, full-screen menus, and help mode over a running game. The setters only store functions, so their order does not matter.
+// wireMenuCallbacks installs the hooks that open popups, full-screen menus, and help mode over a running
+// game. The setters only store functions, so their order does not matter.
 func wireMenuCallbacks(scr *gamescreen.Screen, ctx *menus.Context) {
 	scr.SetOptionsFunc(func() error { // O / PREFERENCES (centred in the viewport)
 		err := menus.RunOptions(ctx, gamescreen.MainMap)
@@ -393,7 +398,8 @@ func gameMusicForMap(mapFile string) string {
 }
 
 // loadGameFromMainMenu opens the Load Game screen and, on a chosen slot, loads that save's map,
-// restores the game into it and runs it. C++: menu.cpp load path -> SaveLoadMenu_MenuLoop(.., false) -> GameManager_LoadGame.
+// restores the game into it and runs it. C++: menu.cpp load path -> SaveLoadMenu_MenuLoop(.., false) ->
+// GameManager_LoadGame.
 func loadGameFromMainMenu(ctx *menus.Context) error {
 	baseDir := ctx.Plat.BaseDir()
 	chosen := -1
@@ -507,7 +513,8 @@ const (
 )
 
 // runGameScreenShadow is the unit shadow inspection view (-emulate shadow):
-// 1:1 zoom, one constructor on land, no fog, for visually checking the unit ground shadow render against the original (brightness level 5).
+// 1:1 zoom, one constructor on land, no fog, for visually checking the unit ground shadow render against the
+// original (brightness level 5).
 func runGameScreenShadow(ctx *menus.Context, worldIdx int) error {
 	name, err := ctx.Lib.ReadString(menus.WorldTag(worldIdx))
 
@@ -549,14 +556,16 @@ func runGameScreenShadow(ctx *menus.Context, worldIdx int) error {
 	return scr.Run()
 }
 
-// These values record explicitly supplied Custom Game flags for the quick-start benches. Unset flags leave each bench at its default.
+// These values record explicitly supplied Custom Game flags for the quick-start benches. Unset flags leave
+// each bench at its default.
 var (
 	benchResourceLevels  *[3]int // -raw/-fuel/-gold as 0/1/2 levels; nil = default allocator params
 	benchStartGold       = -1    // -startcredit gold amount; negative = no reserve
 	benchVictoryProvided bool    // -score or -duration was passed: a real victory outranks endless
 )
 
-// applyBenchCustomFlags applies explicit Custom Game flags to the random benches before RandomStart or RandomStart2 reads them. The custom emulate bench keeps its fixed setup.
+// applyBenchCustomFlags applies explicit Custom Game flags to the random benches before RandomStart or
+// RandomStart2 reads them. The custom emulate bench keeps its fixed setup.
 func applyBenchCustomFlags(scr *gamescreen.Screen, ctx *menus.Context) {
 	if benchResourceLevels != nil {
 		scr.SetResourceLevels(benchResourceLevels[0], benchResourceLevels[1], benchResourceLevels[2])

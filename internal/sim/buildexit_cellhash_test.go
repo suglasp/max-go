@@ -13,7 +13,8 @@ import (
 	"github.com/suglasp/max-go/internal/game"
 )
 
-// TestBuildExitClearsStaleCellHash verifies that a constructor leaving a completed 2x2 site is removed from all four footprint cells.
+// TestBuildExitClearsStaleCellHash verifies that a constructor leaving a completed 2x2 site is removed from
+// all four footprint cells.
 // The hash must remove the posed 2x2 footprint before the builder returns to its 1x1 mobile footprint.
 func TestBuildExitClearsStaleCellHash(t *testing.T) {
 	g := newGame(t, 24, 24)
@@ -61,7 +62,8 @@ func TestBuildExitClearsStaleCellHash(t *testing.T) {
 	}
 }
 
-// TestBuildExitAfterSentryEndsPose verifies that a parked builder whose order was changed by the popup (Sentry on, then off) still leaves its build pose on exit.
+// TestBuildExitAfterSentryEndsPose verifies that a parked builder whose order was changed by the popup
+// (Sentry on, then off) still leaves its build pose on exit.
 // A kept pose made the screen slide the sprite back onto the finished building while the unit stood beside it.
 func TestBuildExitAfterSentryEndsPose(t *testing.T) {
 	cases := []struct {

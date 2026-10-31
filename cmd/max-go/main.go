@@ -54,7 +54,8 @@ type launchFlags struct {
 	override   *OverrideFlags
 }
 
-// main parses launch flags, loads settings, builds the platform, then starts a debug player, the GNW demo, or the main menu.
+// main parses launch flags, loads settings, builds the platform, then starts a debug player, the GNW demo, or
+// the main menu.
 func main() {
 	// parse CLI flags
 	flags := defineLaunchFlags(flag.CommandLine)
@@ -163,7 +164,8 @@ func loadLaunchSettings(flags launchFlags) (settings.Settings, string, string) {
 	})
 	applyCustomGameFlags(&cfg.Game, flags.custom, customProvided)
 
-	// Quick-start benches use explicitly supplied Custom Game flags. Read the flag values rather than cfg.Game so saved setup values cannot leak into a bench.
+	// Quick-start benches use explicitly supplied Custom Game flags. Read the flag values rather than cfg.Game
+	// so saved setup values cannot leak into a bench.
 	if customProvided["raw"] || customProvided["fuel"] || customProvided["gold"] {
 		benchResourceLevels = &[3]int{
 			resourceDensity(stringValue(flags.custom.Raw)),
@@ -298,7 +300,8 @@ func runApp(p *platform.Platform, cfg *settings.Settings, cfgPath string, fontSe
 	return err
 }
 
-// menuJumpName maps quick-start flags to the name runMainMenu accepts. Bootstrap reuses it so first-run launches keep their target.
+// menuJumpName maps quick-start flags to the name runMainMenu accepts. Bootstrap reuses it so first-run
+// launches keep their target.
 func menuJumpName(flags launchFlags) string {
 	name := *flags.emulate
 	if *flags.random && name == "" {

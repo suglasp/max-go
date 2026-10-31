@@ -62,7 +62,8 @@ func (s *Screen) resumeTurnClock(before, after uint64) {
 	}
 }
 
-// turnID names one interactive turn: the round and the team playing it. Round numbers start at 1, so the zero value means no turn.
+// turnID names one interactive turn: the round and the team playing it. Round numbers start at 1, so the zero
+// value means no turn.
 type turnID struct {
 	round int
 	team  int
@@ -76,10 +77,13 @@ func (s *Screen) currentTurn() turnID {
 	return turnID{round: s.game.State.TurnCounter, team: s.game.State.ActiveTeam}
 }
 
-// shouldWarnTimeLow reports whether the "time low" voice should fire: once per turn, the first time the clock shows 20s or less on a configured timer over 20s.
-// The latch is keyed on the turn, not on turnStart, so a modal pause or the End Turn grace (which both move turnStart) never fire it again.
+// shouldWarnTimeLow reports whether the "time low" voice should fire: once per turn, the first time the clock
+// shows 20s or less on a configured timer over 20s.
+// The latch is keyed on the turn, not on turnStart, so a modal pause or the End Turn grace (which both move
+// turnStart) never fire it again.
 //
-// C++ ported : game_manager.cpp - GameManager_DrawTurnTimer (the GameManager_IsTurnTimerActive latch, re armed at turn start only)
+// C++ ported : game_manager.cpp - GameManager_DrawTurnTimer (the GameManager_IsTurnTimerActive latch, re
+// armed at turn start only)
 func (s *Screen) shouldWarnTimeLow(remaining int) bool {
 	turn := s.currentTurn()
 	if s.turnFlow.fullTurnSeconds <= 20 || remaining > 20 || s.turnFlow.timeWarnedTurn == turn {
@@ -119,7 +123,8 @@ const defaultTurnSeconds = 180
 // of simultaneous play, and ends the turn automatically when the clock reaches zero.
 // C++: GameManager_DrawTurnTimer + GameManager_HandleTurnTimer.
 func (s *Screen) tickTurnClock() {
-	// Announcer warns once per turn at 20s left; a clock the End Turn grace cut straight below 20s gets the more urgent line.
+	// Announcer warns once per turn at 20s left; a clock the End Turn grace cut straight below 20s gets the more
+	// urgent line.
 	// C++: GameManager_DrawTurnTimer (V_F273 at exactly 20s, else V_F275).
 	if remaining := s.turnRemaining(); s.turnFlow.handover == -1 && !s.gameOver && s.siteSelect == nil && s.camera.landingStep == 0 && !s.debugMenu.dbgMenuOpen && !s.orderInput.popupOpen && !s.turnFlow.aiTurn && s.shouldWarnTimeLow(remaining) {
 		if voice, ok := s.timeWarnVoice(remaining); ok {

@@ -74,7 +74,8 @@ func TestAIGrowsBase(t *testing.T) {
 	}
 }
 
-// TestAIDefersUnfundedDetachedBuild verifies that an empty constructor without access to a base pool waits for raw material before starting a detached build.
+// TestAIDefersUnfundedDetachedBuild verifies that an empty constructor without access to a base pool waits
+// for raw material before starting a detached build.
 func TestAIDefersUnfundedDetachedBuild(t *testing.T) {
 	const w, h = 12, 12
 	mgr := units.NewManager()
@@ -456,7 +457,8 @@ func TestAIStopsRawStorageAtCap(t *testing.T) {
 	}
 }
 
-// TestStorageCapScalesWithDifficulty verifies that a hard AI stops adding dumps at a lower per-cargo capacity than an average AI.
+// TestStorageCapScalesWithDifficulty verifies that a hard AI stops adding dumps at a lower per-cargo capacity
+// than an average AI.
 func TestStorageCapScalesWithDifficulty(t *testing.T) {
 	setDifficulty(t, OpponentClueless)
 	clueless := aiStorageCap
@@ -490,7 +492,8 @@ func newProduceManager(g *sim.Game, team int) *taskProduceUnits {
 }
 
 // TestAIBuildsSurveyorWhenMissing checks the recon needs demand: a team with an
-// idle Light Plant and no Surveyor produces one. The Surveyor is absent from balanced factory rosters, so this restores lost reconnaissance.
+// idle Light Plant and no Surveyor produces one. The Surveyor is absent from balanced factory rosters, so
+// this restores lost reconnaissance.
 func TestAIBuildsSurveyorWhenMissing(t *testing.T) {
 	const w, h = 16, 16
 	mgr := units.NewManager()
@@ -2712,7 +2715,8 @@ func TestAIConnectorRunMergesComplexes(t *testing.T) {
 	}
 }
 
-// TestAIConnectorFundedFromPrimaryPool verifies that an empty engineer completes a connector run by drawing pooled material from the adjacent stocked complex.
+// TestAIConnectorFundedFromPrimaryPool verifies that an empty engineer completes a connector run by drawing
+// pooled material from the adjacent stocked complex.
 func TestAIConnectorFundedFromPrimaryPool(t *testing.T) {
 	const w, h = 24, 24
 	mgr := units.NewManager()

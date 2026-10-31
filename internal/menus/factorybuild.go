@@ -22,7 +22,8 @@ import (
 	"github.com/suglasp/max-go/internal/units"
 )
 
-// FACBUILD lets a stationary factory edit its mobile-unit build queue. It shares CONBUILD's layout and adds queue, Add, Delete, and Repeat controls.
+// FACBUILD lets a stationary factory edit its mobile-unit build queue. It shares CONBUILD's layout and adds
+// queue, Add, Delete, and Repeat controls.
 //
 // DEVIATIONS: description text is a placeholder and Help is a stub. Queue rows show
 // each unit's BASE turns (remaining turns of the head unit live in the sim). AI

@@ -30,7 +30,8 @@ const (
 	cargoChrome = 0x05 // COLOR_CHROME_YELLOW (the orange separator lines)
 )
 
-// CARGOPIC shows the buyable roster, purchased mission supplies, and selected unit details. Buy spends gold and Delete refunds it.
+// CARGOPIC shows the buyable roster, purchased mission supplies, and selected unit details. Buy spends gold
+// and Delete refunds it.
 
 // unitPortrait maps a unit type to its large P_* portrait BIG image, shown in the top
 // left preview of the cargo/upgrade screens. Covers buildings and units; a type with no
@@ -45,7 +46,8 @@ var unitPortrait = map[assets.UnitType]string{
 	assets.LightPlt: "P_LGHTPL", assets.LandPlt: "P_HVYPLT",
 	assets.AirPlt: "P_AIRPLT", assets.Habitat: "P_HABITA", assets.Research: "P_RESEAR",
 	assets.Greenhse: "P_GREENH", assets.RecCentr: "P_RECCTR", assets.TrainHal: "P_TRNHLL",
-	// SUPRTPLT is the alien Life Support artifact despite its enum name; its right-click image is P_LIFESP rather than P_SUPRTP.
+	// SUPRTPLT is the alien Life Support artifact despite its enum name; its right-click image is P_LIFESP
+	// rather than P_SUPRTP.
 	assets.SuprtPlt: "P_LIFESP",
 	assets.WtrPltfm: "P_WATER", assets.GunTurrt: "P_GUNTUR", assets.AntiAir: "P_FXAA",
 	assets.ArtyTrrt: "P_ARTYTR", assets.AntiMssl: "P_FXROCK", assets.Block: "P_BLOCK",
@@ -123,7 +125,8 @@ type cargoMenu struct {
 	dbl menuDoubleClick
 }
 
-// RunCargo edits a CARGOPIC loadout in place. Done commits changes; Cancel or Escape restores the entry state and returns ErrCancelled.
+// RunCargo edits a CARGOPIC loadout in place. Done commits changes; Cancel or Escape restores the entry state
+// and returns ErrCancelled.
 func RunCargo(ctx *Context, lo *CargoLoadout) error {
 	pic, err := ctx.loadBig("CARGOPIC")
 	if err != nil {

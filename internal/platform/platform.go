@@ -1,4 +1,5 @@
-// platform.go : Ebitengine shell: 640x480 8-bit screen, RGBA conversion, GNW key input, mouse tracking, and screenshot support.
+// platform.go : Ebitengine shell: 640x480 8-bit screen, RGBA conversion, GNW key input, mouse tracking, and
+// screenshot support.
 // Suglasp
 // github.com/suglasp/max-go
 //
@@ -257,7 +258,8 @@ func (p *Platform) Widescreen() bool {
 	return p.wide
 }
 
-// SetLogicalSize switches between the 640x480 menu and 854x480 game resolutions. It preserves the buffer pointer, replaces its pixels, and does nothing
+// SetLogicalSize switches between the 640x480 menu and 854x480 game resolutions. It preserves the buffer
+// pointer, replaces its pixels, and does nothing
 // when the requested size is already active.
 func (p *Platform) SetLogicalSize(width, height int) {
 	p.mu.Lock()
@@ -347,7 +349,8 @@ func (p *Platform) Mouse() MouseState {
 	return p.mouse
 }
 
-// quantizeWheel adds a wheel delta to the carried remainder and returns the whole notches, so trackpad fractions add up instead of truncating to zero.
+// quantizeWheel adds a wheel delta to the carried remainder and returns the whole notches, so trackpad
+// fractions add up instead of truncating to zero.
 //
 // C++ ported : mouse.c - mouse_quantize_wheel_axis
 func quantizeWheel(delta float64, remainder *float64) int {
@@ -400,7 +403,8 @@ func (p *Platform) Update() error {
 		}
 	}
 
-	// F3 toggles the FPS overlay, F10 cycles brightness, and F11 toggles fullscreen. These keys do not enter the game input queue.
+	// F3 toggles the FPS overlay, F10 cycles brightness, and F11 toggles fullscreen. These keys do not enter the
+	// game input queue.
 	if inpututil.IsKeyJustPressed(ebiten.KeyF3) {
 		p.fpsShow = !p.fpsShow
 		dbg.Printf("fps overlay: %v", p.fpsShow)
@@ -450,7 +454,8 @@ func (p *Platform) pollKeyboard() {
 	}
 }
 
-// pollWindowClose converts each window-close edge into one Escape input, allowing the active screen to confirm, back out, or quit normally.
+// pollWindowClose converts each window-close edge into one Escape input, allowing the active screen to
+// confirm, back out, or quit normally.
 func (p *Platform) pollWindowClose() {
 	closing := ebiten.IsWindowBeingClosed()
 	if closing && !p.prevClosing {

@@ -48,7 +48,8 @@ func (s *Screen) endTurn() {
 		return // not the human's turn; the computer is still moving
 	}
 
-	// A unit still sliding when End Turn is pressed reaches its stopping point before commit. ResolveMovement fast-forwards remaining movement, so the idle loop finishes the animation first.
+	// A unit still sliding when End Turn is pressed reaches its stopping point before commit. ResolveMovement
+	// fast-forwards remaining movement, so the idle loop finishes the animation first.
 	if s.game.ActiveOrders() > 0 {
 		if !s.turnFlow.endTurnSettling {
 			s.turnFlow.endTurnSettling = true
@@ -107,7 +108,8 @@ func (s *Screen) commitTurn() {
 	s.beginNextTeam()
 }
 
-// maybeWarnGameEnd shows "Notice: Game will end in 10 turns!" once, at the start of turn limit-9 of a Duration game. openMenuScreen pauses the clock and swallows the closing click.
+// maybeWarnGameEnd shows "Notice: Game will end in 10 turns!" once, at the start of turn limit-9 of a
+// Duration game. openMenuScreen pauses the clock and swallows the closing click.
 func (s *Screen) maybeWarnGameEnd() {
 	if !s.gameEndWarningDue() || s.hooks.messageFn == nil {
 		return
@@ -206,7 +208,8 @@ func (s *Screen) goLiveForHuman(next int) {
 	s.game.State.PlayerTeam = next
 	s.clearSelectionForNewTurn(next)
 
-	// A new turn opens on the full time budget. Loading may resume a partially spent turn, but later turns use the configured budget.
+	// A new turn opens on the full time budget. Loading may resume a partially spent turn, but later turns use
+	// the configured budget.
 	if s.turnFlow.fullTurnSeconds > 0 {
 		s.turnFlow.turnSeconds = s.turnFlow.fullTurnSeconds
 	}
@@ -491,7 +494,8 @@ func (s *Screen) finishActiveTurn() bool {
 	dbg.Printf("turn %d : %s end %s", s.game.State.TurnCounter, s.teamName(active), formatClock(elapsed))
 	s.syncResearchOrders(active) // idle research centres with no allocated topic so they draw no power
 
-	// Economy and construction run once per team at turn start (BeginTeamTurn / announceTurnStart). They do not run again here.
+	// Economy and construction run once per team at turn start (BeginTeamTurn / announceTurnStart). They do not
+	// run again here.
 	s.advanceResearch(active) // a turn of research; level ups upgrade the team's units
 	s.game.EndTeamTurn(active)
 

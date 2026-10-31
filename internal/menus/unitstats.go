@@ -20,7 +20,8 @@ import (
 	"github.com/suglasp/max-go/internal/units"
 )
 
-// STATS is the full-screen unit information panel opened by right-click. It shows the portrait, name, description, and attribute gauges.
+// STATS is the full-screen unit information panel opened by right-click. It shows the portrait, name,
+// description, and attribute gauges.
 //
 // DEVIATIONS (carried over, shared with the cargo/construct screens): the per unit
 // description text is a placeholder; the real strings need the unit data to

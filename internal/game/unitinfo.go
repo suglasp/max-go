@@ -22,7 +22,8 @@ const mapTileSize = 64
 // C++ ported : enums.hpp - UnitAngleType
 const AngleCount = 8
 
-// AirAltMax is the drawn altitude of a hovering air unit. Its shadow sits one tile down-right; a landed unit is at zero and transitions glide between both states.
+// AirAltMax is the drawn altitude of a hovering air unit. Its shadow sits one tile down-right; a landed unit
+// is at zero and transitions glide between both states.
 const AirAltMax = 8
 
 // BridgeRaiseMax is a bridge's fully raised level: its body sheet has 5 frames, so
@@ -155,7 +156,8 @@ func (u *UnitInfo) SetPosition(gridX, gridY int) {
 	}
 }
 
-// StartBuildPose puts a mobile builder into its build pose at the footprint centre. Constructors build 2x2 sites and Engineers build 1x1 sites.
+// StartBuildPose puts a mobile builder into its build pose at the footprint centre. Constructors build 2x2
+// sites and Engineers build 1x1 sites.
 //
 // C++ ported : unitinfo.cpp - UnitInfo::StartBuilding / PositionInTape
 func (u *UnitInfo) StartBuildPose(gx, gy, footprint int) {
@@ -222,7 +224,8 @@ func (u *UnitInfo) EndBuildPose() {
 	}
 }
 
-// BeginBuildLeave ends the build pose and slides the builder back to its cell. A 2x2 builder faces outward before leaving.
+// BeginBuildLeave ends the build pose and slides the builder back to its cell. A 2x2 builder faces outward
+// before leaving.
 func (u *UnitInfo) BeginBuildLeave(footprint int) {
 	u.Building = false
 	u.BuildFootprint = 0
@@ -323,7 +326,8 @@ func (u *UnitInfo) TurnToward(target uint8) bool {
 	return true
 }
 
-// FiringAngle returns the 16-step clockwise firing direction toward an offset. Missile sprites use the same 16-frame heading.
+// FiringAngle returns the 16-step clockwise firing direction toward an offset. Missile sprites use the same
+// 16-frame heading.
 // An axis needs a 4:1 ratio (klei 23/08/26, was 2:1), so shallow angles take the in between frames.
 // C++ ported : units_manager.cpp - UnitsManager_GetFiringAngle
 func FiringAngle(dx, dy int) int {
@@ -612,7 +616,8 @@ func (u *UnitInfo) ClampShotsToSpeed() {
 	}
 }
 
-// GetExperience returns the displayed veterancy level from raw experience. It drives Commando disable and steal success and duration.
+// GetExperience returns the displayed veterancy level from raw experience. It drives Commando disable and
+// steal success and duration.
 func (u *UnitInfo) GetExperience() int {
 	lvl := int(math.Floor(math.Sqrt(float64(u.Experience*10)))) - 2
 	if lvl < 0 {

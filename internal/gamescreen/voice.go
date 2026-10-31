@@ -55,7 +55,8 @@ type announcerState struct {
 // records who leads without announcing it.
 const announcerNoLeader = -2
 
-// resetAnnouncerForLoad clears queued lines and rebuilds one-shot latches from the restored board. Existing colonies, visible enemies, and full stores stay quiet after loading.
+// resetAnnouncerForLoad clears queued lines and rebuilds one-shot latches from the restored board. Existing
+// colonies, visible enemies, and full stores stay quiet after loading.
 func (s *Screen) resetAnnouncerForLoad() {
 	a := &s.announcer
 	a.voiceQueue = nil // stale "team ended turn" lines must not play into the new game
@@ -206,7 +207,8 @@ func (s *Screen) speak(v queuedVoice, now uint64) {
 	s.announcer.voiceFn(v.tag)
 }
 
-// playVoiceForced bypasses the cross-voice speaking window for a direct player-action acknowledgement. Per-state cooldowns still apply.
+// playVoiceForced bypasses the cross-voice speaking window for a direct player-action acknowledgement.
+// Per-state cooldowns still apply.
 func (s *Screen) playVoiceForced(state voiceState) {
 	if s.announcer.voiceFn == nil || state < 0 || state >= vsStateCount {
 		return

@@ -69,7 +69,8 @@ func (g *Game) attackAt(attacker *game.UnitInfo, cx, cy int, force bool) (combat
 	return res, ok
 }
 
-// Damage is a non-fatal instant attack hit. The screen drains it each frame for impact, sound, banner, and status voice; missile and mine hits use
+// Damage is a non-fatal instant attack hit. The screen drains it each frame for impact, sound, banner, and
+// status voice; missile and mine hits use
 // their own events, while kills queue a Casualty.
 // C++ ported : game_manager.cpp - GameManager_NotifyEvent case 1 (the unit->hits
 // branch: the fd20 "%s under attack!" banner plus the V_M229 status voice).

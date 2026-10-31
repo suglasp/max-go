@@ -125,7 +125,8 @@ func ReadManifest(dir string) ([]ManifestEntry, error) {
 }
 */
 
-// Pack writes a RES0 archive from dir. A manifest preserves tag order and filenames; without one, files are sorted and their names become normalized tags.
+// Pack writes a RES0 archive from dir. A manifest preserves tag order and filenames; without one, files are
+// sorted and their names become normalized tags.
 func Pack(dir, outPath string) error {
 	manifest, err := readManifest(filepath.Join(dir, manifestName))
 	if err != nil {

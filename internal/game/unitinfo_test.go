@@ -134,7 +134,8 @@ func TestTargetAngle(t *testing.T) {
 }
 
 func TestFiringAngle(t *testing.T) {
-	// Sixteen headings, 0=N clockwise; an axis needs a 4:1 ratio (klei 23/08/26), so 4:1 itself takes the in between frame.
+	// Sixteen headings, 0=N clockwise; an axis needs a 4:1 ratio (klei 23/08/26), so 4:1 itself takes the in
+	// between frame.
 	for _, c := range []struct {
 		dx, dy int
 		want   int
