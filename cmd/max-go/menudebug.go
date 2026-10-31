@@ -397,6 +397,11 @@ func jumpToUnitBench(ctx *menus.Context, name string, noMovie bool) (bool, error
 		// shot; open water and a friendly ship between do not (klei 23/08/26 naval line of fire).
 		err = runGameScreen(ctx, 0, gameScreenNavalFire, noMovie)
 
+	case "parkedbuild":
+		// World 0 (SNOW_1): a Constructor and an Engineer parked on the buildings they just finished. Load the
+		// Constructor with the Air Transport (its Depot unfolds), force fire the Engineer (its turret is lost).
+		err = runGameScreen(ctx, 0, gameScreenParkedBuild, noMovie)
+
 	case "air":
 		// World 0 gives the player a bomber and tanks. Land makes the bomber
 		// immobile, blocking, and vulnerable. Take Off returns it to the air.

@@ -162,6 +162,9 @@ func applyGameScreenMode(scr *gamescreen.Screen, ctx *menus.Context, mode gameSc
 	case gameScreenNavalFire:
 		scr.DeployNavalFireBench() // -emulate navalfire: ships cannot fire across land
 
+	case gameScreenParkedBuild:
+		scr.DeployParkedBuildBench() // -emulate parkedbuild: a parked builder loaded or killed releases / loses its building
+
 	}
 }
 
@@ -496,6 +499,7 @@ const (
 	gameScreenLevelUp
 	gameScreenSubmarine
 	gameScreenNavalFire
+	gameScreenParkedBuild
 )
 
 // runGameScreenShadow is the unit shadow inspection view (-emulate shadow):
