@@ -129,3 +129,110 @@ func turretProduct() *game.UnitInfo {
 	prod.Values.Set(game.AttribHits, 30)
 	return prod
 }
+
+// parkedBuilderCases are the two builder sizes a finished building parks on (as in step 1433).
+var parkedBuilderCases = []struct {
+	name    string
+	builder func(g *Game) *game.UnitInfo
+	product func() *game.UnitInfo
+}{
+	{"constructor 2x2", func(g *Game) *game.UnitInfo { return constructorAt(g, 0, 7, 8) }, miningProduct},
+	{"engineer 1x1", func(g *Game) *game.UnitInfo { return engineerAt(g, 0, 8, 8) }, turretProduct},
+}
+
+// parkOnFinishedBuilding builds a one turn product at (8,8) and returns the parked builder and its hidden building.
+func parkOnFinishedBuilding(t *testing.T, g *Game, builder func(g *Game) *game.UnitInfo, product func() *game.UnitInfo) (*game.UnitInfo, *game.UnitInfo) {
+	t.Helper()
+	b := builder(g)
+	g.StartBuild(b, product(), 8, 8, 1)
+	g.BeginTeamTurn(0)
+	if !g.IsBuildReady(b) {
+		t.Fatal("builder is not build-ready after finishing the structure")
+	}
+	bld := g.buildReady[b].Building
+	if bld == nil || !bld.HiddenUntilExpand {
+		t.Fatal("the finished building is not parked hidden behind its builder")
+	}
+	return b, bld
+}
+
+// TestLoadParkedBuilderReleasesBuilding checks klei 23/08/26 UnitsManager_BuildingReady: a builder stored in a
+// transport no longer blocks its finished building, which unfolds at once; the builder leaves its build pose.
+func TestLoadParkedBuilderReleasesBuilding(t *testing.T) {
+	for _, tc := range parkedBuilderCases {
+		t.Run(tc.name, func(t *testing.T) {
+			g := newGame(t, 24, 24)
+			g.Resources = economy.NewResourceMap(24, 24)
+			b, bld := parkOnFinishedBuilding(t, g, tc.builder, tc.product)
+
+			air := game.NewUnitInfo(assets.AirTrans, 0, 1, 0)
+			air.Flags = game.FlagMobileAirUnit | game.FlagHovering | game.FlagSelectable
+			air.Values = &game.UnitValues{}
+			air.Values.Set(game.AttribStorage, 3)
+			air.InitState()
+			g.Units.Deploy(air, b.GridX, b.GridY-1)
+
+			if !g.LoadUnit(air, b) {
+				t.Fatal("the air transport refused the parked builder")
+			}
+			if bld.HiddenUntilExpand {
+				t.Error("the finished building stayed hidden after its builder was loaded")
+			}
+			released := false
+			for _, r := range g.ReleasedExpansions() {
+				released = released || r == bld
+			}
+			if !released {
+				t.Error("the finished building was not queued to unfold")
+			}
+			if g.IsBuildReady(b) || b.Building {
+				t.Errorf("the loaded builder kept its build state (ready=%v pose=%v)", g.IsBuildReady(b), b.Building)
+			}
+			for dy := 0; dy < 2; dy++ {
+				for dx := 0; dx < 2; dx++ {
+					for _, u := range g.Units.Cells.At(8+dx, 8+dy) {
+						if u == b {
+							t.Errorf("the loaded builder is still hashed at (%d,%d)", 8+dx, 8+dy)
+						}
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestDestroyParkedBuilderLosesBuilding checks klei UnitsManager_BuildingReady with a dead parent inside the
+// bounds: the never shown building goes with its builder, slab and all, without a casualty tally or rubble.
+func TestDestroyParkedBuilderLosesBuilding(t *testing.T) {
+	for _, tc := range parkedBuilderCases {
+		t.Run(tc.name, func(t *testing.T) {
+			g := newGame(t, 24, 24)
+			g.Resources = economy.NewResourceMap(24, 24)
+			b, bld := parkOnFinishedBuilding(t, g, tc.builder, tc.product)
+			lostBefore := g.TeamStats[0].BuildingsLost
+
+			g.DestroyUnit(b)
+
+			if g.Units.ByID.Get(bld.ID) != nil {
+				t.Error("the hidden building survived its builder")
+			}
+			for _, u := range g.Units.Units() {
+				if u == bld {
+					t.Error("the hidden building is still in the unit list")
+				}
+			}
+			for dy := 0; dy < 2; dy++ {
+				for dx := 0; dx < 2; dx++ {
+					for _, u := range g.Units.Cells.At(8+dx, 8+dy) {
+						if u.Flags.Has(game.FlagGroundCover) || u == bld {
+							t.Errorf("%v left on the lost site at (%d,%d)", u.Type, 8+dx, 8+dy)
+						}
+					}
+				}
+			}
+			if g.TeamStats[0].BuildingsLost != lostBefore {
+				t.Errorf("the never shown building counted as a lost building (%d -> %d)", lostBefore, g.TeamStats[0].BuildingsLost)
+			}
+		})
+	}
+}

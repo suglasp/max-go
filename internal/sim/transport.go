@@ -201,6 +201,7 @@ func (g *Game) LoadUnit(container, passenger *game.UnitInfo) bool {
 	}
 	g.cancel(passenger)
 	delete(g.pending, passenger)
+	g.releaseParkedBuilding(passenger) // a builder still parked on its finished building lets it unfold
 	g.Units.Remove(passenger)
 	passenger.Parent = container
 	container.Carried = append(container.Carried, passenger)

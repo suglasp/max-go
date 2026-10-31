@@ -98,6 +98,25 @@ func purgeCarriedResidue(g *Game, u *game.UnitInfo) {
 // C++ ported : unitinfo.cpp - UnitInfo::Destroy
 func (g *Game) DestroyUnit(u *game.UnitInfo) {
 	g.recordLoss(u) // remember where a mobile unit died so the AI shies off the spot
+
+	// A builder killed while parked on its finished building takes the never shown
+	// building with it, slab and all: no casualty tally, no rubble.
+	// C++ ported : units_manager.cpp - UnitsManager_BuildingReady, dead parent inside the bounds
+	if br := g.buildReady[u]; br != nil && !br.Factory && br.Building != nil && br.Building.HiddenUntilExpand {
+		g.purgeUnit(br.Building)
+		g.Units.Remove(br.Building)
+	}
+
+	g.purgeUnit(u)
+	g.recordCasualty(u) // score screen tally (buildings / units lost, incl. any carried)
+	g.recordRubble(u)   // leave debris where it stood (a Bulldozer can later clear it)
+	g.Units.Remove(u)
+}
+
+// purgeUnit clears every sim reference to a unit that is leaving the game: orders,
+// pursuit, spotted memory, routes, build records, its slabs, build orders on its cells
+// and its complex. The caller removes the unit itself and does any bookkeeping.
+func (g *Game) purgeUnit(u *game.UnitInfo) {
 	g.cancel(u)
 	g.dropPursuitOf(u)         // any unit chasing this one drops its dangling pursuit pointer
 	g.forgetSpotted(u)         // and every team forgets it (no chasing a ghost cell)
@@ -158,8 +177,4 @@ func (g *Game) DestroyUnit(u *game.UnitInfo) {
 		g.syncComplexes()
 		dbg.Printf("destroy: building type=%d team=%d left complex %d (complex workers before: housed=%d drawn=%d); economy reconciles next turn", u.Type, u.Team, c.ID, housedBefore, drawnBefore)
 	}
-
-	g.recordCasualty(u) // score screen tally (buildings / units lost, incl. any carried)
-	g.recordRubble(u)   // leave debris where it stood (a Bulldozer can later clear it)
-	g.Units.Remove(u)
 }

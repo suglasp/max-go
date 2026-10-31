@@ -225,7 +225,9 @@ func (m *MoveOrder) Tick() MoveStatus {
 // calculateStep sets the velocity ramp for entering a cell of the given
 // cost and debits the unit's speed budget for the turn. It returns false (and
 // zeroes the remaining speed) when the unit cannot afford the step this
-// turn. Diagonal steps cost (cost*3)/2, matching the pathfinder.
+// turn. Diagonal steps cost (cost*3)/2, matching the pathfinder. An unaffordable
+// step adds the leftover speed to the banked move fraction (klei 23/08/26; it used
+// to overwrite it).
 //
 // C++ ported : paths.cpp - Paths_CalculateStep. The shots clamp
 // (ClampShotsToSpeed) is ported. Omitted versus the original (this is a turn
@@ -256,7 +258,7 @@ func calculateStep(u *game.UnitInfo, cost int, diagonal, fast bool) bool {
 
 	normalized := (cost + 3) / 4
 	if normalized > u.Speed {
-		u.MoveFraction = u.Speed * 4
+		u.MoveFraction += u.Speed * 4
 		u.Speed = 0
 		return false
 	}

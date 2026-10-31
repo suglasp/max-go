@@ -284,6 +284,24 @@ func (g *Game) armExpand(builder *game.UnitInfo) {
 	g.pendingExpand[br.Building] = builder
 }
 
+// releaseParkedBuilding frees the finished building of a builder that is leaving the map
+// while still parked on it (loaded into a transport): the building is revealed and
+// unfolds at once, and the builder leaves its build pose. It must run while the builder
+// is still in the cell hash, so the pose ends with a clean rebucket.
+// C++ ported : units_manager.cpp - UnitsManager_BuildingReady (klei 23/08/26: a stored
+// builder no longer blocks the site)
+func (g *Game) releaseParkedBuilding(builder *game.UnitInfo) {
+	br := g.buildReady[builder]
+	if br == nil || br.Factory {
+		return
+	}
+	if bld := br.Building; bld != nil && bld.Hits > 0 && bld.HiddenUntilExpand {
+		bld.HiddenUntilExpand = false
+		g.expandReleased = append(g.expandReleased, bld)
+	}
+	g.clearBuildReady(builder)
+}
+
 // updateExpansions releases a building to unfold once its builder has cleared the
 // building's footprint (or the builder is gone). Called each frame from Tick.
 func (g *Game) updateExpansions() {

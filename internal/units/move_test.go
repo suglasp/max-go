@@ -160,6 +160,23 @@ func TestCalculateStepSpeedBudget(t *testing.T) {
 	}
 }
 
+// TestCalculateStepBanksLeftoverSpeed checks klei 23/08/26 Paths_CalculateStep: an unaffordable step ADDS the
+// leftover speed (x4) to the banked move_fraction instead of overwriting it, and spends the speed.
+func TestCalculateStepBanksLeftoverSpeed(t *testing.T) {
+	// Cost 12 straight, 2 already banked: 10 left, normalized 3, more than the 1 speed point.
+	u := newTank(t, nil, 1, 0, 0, 0)
+	u.MoveFraction = 2
+	if calculateStep(u, 12, false, false) {
+		t.Fatal("expected the step to be unaffordable")
+	}
+	if u.MoveFraction != 6 {
+		t.Errorf("move_fraction = %d, want 6 (2 banked + 1 speed x4)", u.MoveFraction)
+	}
+	if u.Speed != 0 {
+		t.Errorf("speed = %d, want 0 after the failed step", u.Speed)
+	}
+}
+
 // TestCalculateStepClampsShots locks the move side of the shared move/fire budget:
 // a unit with 2 rounds and 8 speed that spends one Clear step (cost 4 -> 1 speed,
 // 8->7) no longer has the budget for both shots, so its shot count clamps from
