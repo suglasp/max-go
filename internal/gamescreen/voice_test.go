@@ -10,6 +10,7 @@ import (
 
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/game"
+	"github.com/suglasp/max-go/internal/sim"
 )
 
 // TestSentryUnitOrderVoiceIsBlendedPool checks a healthy mobile unit on guard maps to
@@ -172,11 +173,22 @@ func TestInWorldReloadPlaysVoice(t *testing.T) {
 	}
 }
 
-// TestShouldWarnTimeLow checks the turn low warning latch: it fires once when the
-// clock drops to 20s on a budget over 20s, rearms on a new turn (turnStart), and
-// never fires on a short budget (<=20s).
+// timeWarnScreen builds a screen in round 1 of a two team game with the given configured turn timer.
+func timeWarnScreen(fullTurnSeconds int) *Screen {
+	p := &game.StartParams{}
+	p.Teams[0].Type = game.TeamPlayer
+	p.Teams[1].Type = game.TeamComputer
+	st := game.NewGameState(p)
+	st.TurnCounter = 1
+	st.ActiveTeam = 0
+	return &Screen{game: &sim.Game{State: st}, turnFlow: turnFlowState{turnSeconds: fullTurnSeconds, fullTurnSeconds: fullTurnSeconds, turnStart: 1000}}
+}
+
+// TestShouldWarnTimeLow checks the turn low warning latch: it fires once per turn when the clock shows 20s or
+// less on a configured timer over 20s, a modal pause or the End Turn grace (both move turnStart) never fire it
+// again, a new turn re arms it, and a configured timer of 20s or less never warns.
 func TestShouldWarnTimeLow(t *testing.T) {
-	s := &Screen{turnFlow: turnFlowState{turnSeconds: 180, turnStart: 1000}}
+	s := timeWarnScreen(180)
 	if s.shouldWarnTimeLow(21) {
 		t.Error("warned above the 20s threshold")
 	}
@@ -186,13 +198,36 @@ func TestShouldWarnTimeLow(t *testing.T) {
 	if s.shouldWarnTimeLow(15) {
 		t.Error("warned twice in the same turn (latch failed)")
 	}
-	s.turnFlow.turnStart = 2000 // a new turn rearms the warning
-	if !s.shouldWarnTimeLow(20) {
-		t.Error("did not re-warn on a new turn")
+	s.resumeTurnClock(5000, 9000) // a blocking modal was open for 4s: turnStart moves
+	if s.shouldWarnTimeLow(14) {
+		t.Error("a closed modal fired the warning again in the same turn")
 	}
-	short := &Screen{turnFlow: turnFlowState{turnSeconds: 20, turnStart: 1}}
-	if short.shouldWarnTimeLow(5) {
-		t.Error("a budget of 20s or less must never warn")
+	s.turnFlow.turnSeconds, s.turnFlow.turnStart = 15, 20000 // the End Turn grace cut the running clock
+	if s.shouldWarnTimeLow(15) {
+		t.Error("the End Turn grace fired the warning again in the same turn")
+	}
+	s.game.State.TurnCounter = 2 // a new turn re arms the warning
+	if !s.shouldWarnTimeLow(20) {
+		t.Error("did not warn again on a new turn")
+	}
+	if short := timeWarnScreen(20); short.shouldWarnTimeLow(5) {
+		t.Error("a configured timer of 20s or less must never warn")
+	}
+}
+
+// TestTimeWarnVoice checks the klei line choice: "20 seconds to end turn" when the clock ticks through 20s,
+// "about to run out of time" when it jumped below 20s, and silence for a team that already ended its turn.
+func TestTimeWarnVoice(t *testing.T) {
+	s := timeWarnScreen(180)
+	if v, ok := s.timeWarnVoice(20); !ok || v != vsTimeWarn {
+		t.Errorf("20s left: got %v %v, want vsTimeWarn", v, ok)
+	}
+	if v, ok := s.timeWarnVoice(15); !ok || v != vsGraceWarn {
+		t.Errorf("clock cut to 15s: got %v %v, want vsGraceWarn", v, ok)
+	}
+	s.game.State.Teams[0].FinishedTurn = true
+	if _, ok := s.timeWarnVoice(15); ok {
+		t.Error("a team that already ended its turn must not hear the run out of time line")
 	}
 }
 

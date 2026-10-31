@@ -34,7 +34,7 @@ type turnFlowState struct {
 	endTurnSeconds  int          // End Turn grace: seconds left once the opponents are done (0 = off, simultaneous only)
 	graceArmed      bool         // the grace countdown has already been applied this round
 	turnStart       uint64       // tick the current interactive turn began
-	timeWarnedTurn  uint64       // turnStart the "time low" voice last warned for (a fresh turn re arms it)
+	timeWarnedTurn  turnID       // the turn the "time low" voice last warned for (zero = none yet; a fresh turn re arms it)
 	heartbeat       atomic.Int64 // unix nano start of the current Run() iteration (AI turn hang watchdog)
 	wdInAITurn      atomic.Bool  // whether the current frame is animating a computer turn (watchdog)
 	wdModalDepth    atomic.Int32 // open blocking modal count, so the stall watchdog ignores a parked modal loop

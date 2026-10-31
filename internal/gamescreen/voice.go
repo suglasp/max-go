@@ -34,6 +34,8 @@ type announcerState struct {
 	lastVoiceMS       uint64               // last time any voice line played
 	lastVoicePriority int                  // priority of the currently speaking line
 	voiceQueue        []queuedVoice        // serialised announcer lines (played one at a time)
+	pendingVoice      queuedVoice          // the one line waiting for the speaking voice to finish (klei's single voice job)
+	hasPendingVoice   bool                 // pendingVoice holds a line
 	voicePlayingFn    func() bool          // whether a voice is still audible; nil = fixed spacing (tests)
 	clock             func() uint64        // voice timing source; platform.Ticks when nil (tests override)
 	lastBeginKey      int                  // turn+team the "Begin!" line last announced (-1 = none yet)
@@ -57,6 +59,7 @@ const announcerNoLeader = -2
 func (s *Screen) resetAnnouncerForLoad() {
 	a := &s.announcer
 	a.voiceQueue = nil // stale "team ended turn" lines must not play into the new game
+	a.hasPendingVoice = false
 	a.lastBeginKey = -1
 	a.pointsLeader = announcerNoLeader // reseeded (silently) at the restored game's first round close
 	a.hasSpottedEnemy = false          // F1 recenters only on a spot made IN this game
@@ -146,22 +149,61 @@ func (s *Screen) playVoice(state voiceState) {
 		return
 	}
 
-	// Do not let a lower priority line cut a higher priority one still playing.
-	if s.announcer.lastVoiceMS != 0 && now-s.announcer.lastVoiceMS < voiceSpeakWindowMS && line.priority < s.announcer.lastVoicePriority {
-		return
-	}
-
 	tag := line.tags[0]
 
 	if len(line.tags) > 1 {
 		tag = line.tags[rand.Intn(len(line.tags))]
 	}
 
+	// With a playing query wired, a line never cuts the one still speaking: it waits in the pending slot.
+	if s.announcer.voicePlayingFn != nil {
+		s.announcer.voiceLastMS[state] = now
+		s.speakOrHold(queuedVoice{tag: tag, priority: line.priority, desc: line.name}, now)
+		return
+	}
+
+	// No playing query (tests): do not let a lower priority line cut a higher priority one still playing.
+	if s.announcer.lastVoiceMS != 0 && now-s.announcer.lastVoiceMS < voiceSpeakWindowMS && line.priority < s.announcer.lastVoicePriority {
+		return
+	}
+
 	s.announcer.voiceLastMS[state] = now
+	s.speak(queuedVoice{tag: tag, priority: line.priority, desc: line.name}, now)
+}
+
+// voiceBusy reports whether a voice line is still audible. A clip that started under voiceQueueMinGapMS ago
+// counts as audible, since the channel may not report it yet.
+func (s *Screen) voiceBusy(now uint64) bool {
+	if s.announcer.voicePlayingFn == nil {
+		return false
+	}
+	if s.announcer.lastVoiceMS != 0 && now-s.announcer.lastVoiceMS < voiceQueueMinGapMS {
+		return true
+	}
+	return s.announcer.voicePlayingFn()
+}
+
+// speakOrHold plays v now when the voice channel is free. Otherwise v waits in the single pending slot,
+// replacing a waiting line of the same or lower priority; a lower priority v is dropped.
+//
+// C++ ported : sound_manager.cpp - SoundManager::PlayVoice (one voice job, replaced when priority >= its own)
+// and SoundManager::ProcessJob (a voice job waits while the voice still plays).
+func (s *Screen) speakOrHold(v queuedVoice, now uint64) {
+	if !s.voiceBusy(now) {
+		s.speak(v, now)
+		return
+	}
+	if !s.announcer.hasPendingVoice || v.priority >= s.announcer.pendingVoice.priority {
+		s.announcer.pendingVoice, s.announcer.hasPendingVoice = v, true
+	}
+}
+
+// speak starts v on the voice channel and records it as the speaking line.
+func (s *Screen) speak(v queuedVoice, now uint64) {
 	s.announcer.lastVoiceMS = now
-	s.announcer.lastVoicePriority = line.priority
-	dbg.Printf("voice (%s) : %s", tag, line.name)
-	s.announcer.voiceFn(tag)
+	s.announcer.lastVoicePriority = v.priority
+	dbg.Printf("voice (%s) : %s", v.tag, v.desc)
+	s.announcer.voiceFn(v.tag)
 }
 
 // playVoiceForced bypasses the cross-voice speaking window for a direct player-action acknowledgement. Per-state cooldowns still apply.
@@ -205,14 +247,16 @@ func (s *Screen) playVoiceTag(tag string, priority int, desc string) {
 
 	now := s.now()
 
+	if s.announcer.voicePlayingFn != nil {
+		s.speakOrHold(queuedVoice{tag: tag, priority: priority, desc: desc}, now)
+		return
+	}
+
 	if s.announcer.lastVoiceMS != 0 && now-s.announcer.lastVoiceMS < voiceSpeakWindowMS && priority < s.announcer.lastVoicePriority {
 		return
 	}
 
-	s.announcer.lastVoiceMS = now
-	s.announcer.lastVoicePriority = priority
-	dbg.Printf("voice (%s) : %s", tag, desc)
-	s.announcer.voiceFn(tag)
+	s.speak(queuedVoice{tag: tag, priority: priority, desc: desc}, now)
 }
 
 // voiceQueueMax caps the backlog so a long fast AI streak cannot pile up stale
@@ -242,11 +286,20 @@ func (s *Screen) enqueueVoiceTag(tag string, priority int, desc string) {
 // quickly. Holds the next line until the channel is free (voicePlayingFn), or a fixed
 // fallback spacing when no such query is wired. Called once per frame.
 func (s *Screen) tickVoiceQueue() {
-	if len(s.announcer.voiceQueue) == 0 {
+	now := s.now()
+
+	// The pending line goes first, once the speaking one has finished; the queue waits behind it.
+	if s.announcer.hasPendingVoice {
+		if !s.voiceBusy(now) {
+			s.announcer.hasPendingVoice = false
+			s.speak(s.announcer.pendingVoice, now)
+		}
 		return
 	}
 
-	now := s.now()
+	if len(s.announcer.voiceQueue) == 0 {
+		return
+	}
 
 	// The spacing only applies AFTER an earlier line played (lastVoiceMS != 0); the
 	// very first queued line plays straight away.

@@ -62,16 +62,47 @@ func (s *Screen) resumeTurnClock(before, after uint64) {
 	}
 }
 
-// shouldWarnTimeLow reports whether the "time low" voice should fire, latched to
-// once per turn (keyed on turnStart). Fires when remaining drops to <=20s from a
-// budget over 20s. C++: GameManager_IsTurnTimerActive latch.
+// turnID names one interactive turn: the round and the team playing it. Round numbers start at 1, so the zero value means no turn.
+type turnID struct {
+	round int
+	team  int
+}
+
+// currentTurn returns the turn being played, or the zero turnID before a game is attached.
+func (s *Screen) currentTurn() turnID {
+	if s.game == nil || s.game.State == nil {
+		return turnID{}
+	}
+	return turnID{round: s.game.State.TurnCounter, team: s.game.State.ActiveTeam}
+}
+
+// shouldWarnTimeLow reports whether the "time low" voice should fire: once per turn, the first time the clock shows 20s or less on a configured timer over 20s.
+// The latch is keyed on the turn, not on turnStart, so a modal pause or the End Turn grace (which both move turnStart) never fire it again.
+//
+// C++ ported : game_manager.cpp - GameManager_DrawTurnTimer (the GameManager_IsTurnTimerActive latch, re armed at turn start only)
 func (s *Screen) shouldWarnTimeLow(remaining int) bool {
-	if s.turnFlow.turnSeconds <= 20 || remaining > 20 || s.turnFlow.timeWarnedTurn == s.turnFlow.turnStart {
+	turn := s.currentTurn()
+	if s.turnFlow.fullTurnSeconds <= 20 || remaining > 20 || s.turnFlow.timeWarnedTurn == turn {
 		return false
 	}
 
-	s.turnFlow.timeWarnedTurn = s.turnFlow.turnStart
+	s.turnFlow.timeWarnedTurn = turn
 	return true
+}
+
+// timeWarnVoice picks the "time low" line: "20 seconds to end turn" when the clock ticks through 20s,
+// "about to run out of time" when it jumped below 20s (the End Turn grace cut it short). A team that already
+// ended its turn hears neither. C++ ported : game_manager.cpp - GameManager_DrawTurnTimer (V_F273 / V_F275).
+func (s *Screen) timeWarnVoice(remaining int) (voiceState, bool) {
+	if remaining == 20 {
+		return vsTimeWarn, true
+	}
+	if s.game != nil && s.game.State != nil {
+		if team := s.game.State.ActiveTeam; team >= 0 && team < len(s.game.State.Teams) && s.game.State.Teams[team].FinishedTurn {
+			return 0, false
+		}
+	}
+	return vsGraceWarn, true
 }
 
 // formatClock renders a whole second duration as mm:ss, matching the
@@ -88,15 +119,11 @@ const defaultTurnSeconds = 180
 // of simultaneous play, and ends the turn automatically when the clock reaches zero.
 // C++: GameManager_DrawTurnTimer + GameManager_HandleTurnTimer.
 func (s *Screen) tickTurnClock() {
-	// Announcer warns once at 20s left. Racing the End Turn GRACE period (the
-	// opponents are done and the clock was cut to it) is its own, more urgent line:
-	// "You are about to run out of time!" instead of "20 seconds left".
-	// C++: GameManager_DrawTurnTimer (V_F273, and V_F275 on the paused/waiting clock).
-	if s.turnFlow.handover == -1 && !s.gameOver && s.siteSelect == nil && s.camera.landingStep == 0 && !s.debugMenu.dbgMenuOpen && !s.orderInput.popupOpen && !s.turnFlow.aiTurn && s.shouldWarnTimeLow(s.turnRemaining()) {
-		if s.turnFlow.graceArmed {
-			s.playVoice(vsGraceWarn)
-		} else {
-			s.playVoice(vsTimeWarn)
+	// Announcer warns once per turn at 20s left; a clock the End Turn grace cut straight below 20s gets the more urgent line.
+	// C++: GameManager_DrawTurnTimer (V_F273 at exactly 20s, else V_F275).
+	if remaining := s.turnRemaining(); s.turnFlow.handover == -1 && !s.gameOver && s.siteSelect == nil && s.camera.landingStep == 0 && !s.debugMenu.dbgMenuOpen && !s.orderInput.popupOpen && !s.turnFlow.aiTurn && s.shouldWarnTimeLow(remaining) {
+		if voice, ok := s.timeWarnVoice(remaining); ok {
+			s.playVoice(voice)
 		}
 	}
 

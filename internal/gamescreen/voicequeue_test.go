@@ -114,3 +114,49 @@ func TestVoiceQueueFallbackSpacing(t *testing.T) {
 		t.Fatalf("second line did not play after the fallback spacing: %v", played)
 	}
 }
+
+// TestVoiceWaitsForSpeakingLine verifies klei's single voice job: a line never cuts the one still speaking.
+// It waits in the pending slot and plays once the channel frees; a later line of the same or higher priority
+// replaces the waiting one, and a lower priority line is dropped.
+func TestVoiceWaitsForSpeakingLine(t *testing.T) {
+	var played []string
+	now := uint64(10000)
+	playing := false
+
+	s := &Screen{}
+	s.announcer.voiceFn = func(tag string) { played = append(played, tag); playing = true }
+	s.announcer.voicePlayingFn = func() bool { return playing }
+	s.announcer.clock = func() uint64 { return now }
+
+	s.playVoiceTag("V_F070", 40, "enemy detected")
+	if len(played) != 1 {
+		t.Fatalf("the first line on a free channel should play at once, played %v", played)
+	}
+
+	// A higher priority line arrives while the first one speaks: it must wait, not cut it.
+	now += 1000
+	s.playVoiceTag("V_F273", 45, "time warning")
+	if len(played) != 1 || !s.announcer.hasPendingVoice {
+		t.Fatalf("a line cut the speaking one: played %v pending=%v", played, s.announcer.hasPendingVoice)
+	}
+
+	// A lower priority line is dropped; the waiting line stays.
+	s.playVoiceTag("V_F160", 10, "low")
+	if s.announcer.pendingVoice.tag != "V_F273" {
+		t.Fatalf("a lower priority line replaced the waiting one: %q", s.announcer.pendingVoice.tag)
+	}
+
+	// Still speaking: nothing new plays.
+	now += 1000
+	s.tickVoiceQueue()
+	if len(played) != 1 {
+		t.Fatalf("the waiting line played over the speaking one: %v", played)
+	}
+
+	// The channel frees: the waiting line plays next.
+	playing = false
+	s.tickVoiceQueue()
+	if len(played) != 2 || played[1] != "V_F273" || s.announcer.hasPendingVoice {
+		t.Fatalf("after the channel freed: played %v pending=%v, want the waiting V_F273", played, s.announcer.hasPendingVoice)
+	}
+}

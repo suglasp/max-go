@@ -190,5 +190,5 @@ func (s *Screen) applyTurnClock(secondsLeft int) {
 
 	s.turnFlow.turnSeconds = secondsLeft
 	s.turnFlow.turnStart = platform.Ticks()
-	s.turnFlow.timeWarnedTurn = 0 // let the "time low" warning fire again on the remainder
+	s.turnFlow.timeWarnedTurn = turnID{} // a loaded turn warns again on its remainder (klei re arms at the load turn start)
 }

@@ -74,7 +74,6 @@ func (s *Screen) armEndTurnGrace() {
 
 	s.turnFlow.turnSeconds = grace
 	s.turnFlow.turnStart = platform.Ticks()
-	s.turnFlow.timeWarnedTurn = 0 // let the "time low" warning fire again for the grace
 	s.turnFlow.graceArmed = true
 
 	s.showMessage(fmt.Sprintf("Opponents have ended their turn. %d seconds left.", grace))
