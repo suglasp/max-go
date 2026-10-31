@@ -124,11 +124,14 @@ func (s *Screen) unitPopupItems(u *game.UnitInfo) []popupItem {
 func (s *Screen) buildingPopupItems(u *game.UnitInfo) []popupItem {
 	var items []popupItem
 	on := u.Order == game.OrderPowerOn
+	// Generators and the Gold Refinery offer Power Off unless explicitly powered off.
+	// C++ ported : units_manager.cpp - UnitsManager_Popup_InitPowerGenerators / InitGoldRefinery
+	running := u.Order != game.OrderPowerOff
 
 	switch {
 	case u.Type == assets.PowerStn || u.Type == assets.PowGen:
 		// Power generators: just power on/off. C++: InitPowerGenerators.
-		items = append(items, s.powerItem(u, on))
+		items = append(items, s.powerItem(u, running))
 
 	case u.Type == assets.MiningSt:
 		// Mining station: Allocate (while powered) + power off; power on while off.
@@ -174,7 +177,7 @@ func (s *Screen) buildingPopupItems(u *game.UnitInfo) []popupItem {
 			}})
 		}
 
-		items = append(items, s.powerItem(u, on))
+		items = append(items, s.powerItem(u, running))
 
 	case isServiceBuilding(u.Type):
 		items = s.serviceBuildingItems(u, items)

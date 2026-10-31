@@ -86,6 +86,9 @@ func (g *Game) canInfiltrate(c, target *game.UnitInfo, steal bool) bool {
 	if !target.Flags.Has(game.FlagElectronicUnit) {
 		return false // organic units (infantry/commando) cannot be disabled/stolen
 	}
+	if busyOrDying(target) {
+		return false
+	}
 	if targetInAir(target) {
 		return false
 	}
@@ -103,6 +106,17 @@ func (g *Game) canInfiltrate(c, target *game.UnitInfo, steal bool) bool {
 		return false // already disabled
 	}
 	return true
+}
+
+// busyOrDying reports a target a commando cannot infiltrate: one transforming, firing, exploding or being destroyed.
+//
+// C++ ported : game_manager.cpp - GameManager_IsValidDisableTarget / GameManager_IsValidStealTarget
+func busyOrDying(target *game.UnitInfo) bool {
+	switch target.Order {
+	case game.OrderTransform, game.OrderFire, game.OrderExplode:
+		return true
+	}
+	return target.State == game.OrderStateDestroy
 }
 
 // CanDisable reports whether the commando may disable target right now.

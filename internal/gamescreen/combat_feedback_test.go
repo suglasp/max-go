@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
+	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
 	"github.com/suglasp/max-go/internal/world"
@@ -318,6 +319,78 @@ func TestReactionBetweenComputerTeamsIsNotNarrated(t *testing.T) {
 
 	if len(*played) == 0 {
 		t.Error("the player's own reaction fire must still speak the announcer cue")
+	}
+}
+
+// TestReactionVoiceOnlyForUnseenUnselectedShooter checks the klei 23/08/26 gate: the reaction fire voice
+// plays only when the player's shooter is neither selected nor on screen. The banner always shows.
+func TestReactionVoiceOnlyForUnseenUnselectedShooter(t *testing.T) {
+	cases := []struct {
+		name      string
+		offScreen bool
+		selected  bool
+		wantVoice bool
+	}{
+		{"on screen", false, false, false},
+		{"selected, off screen", true, true, false},
+		{"unseen and not selected", true, false, true},
+	}
+	for _, tc := range cases {
+		s, g, played := newRaidScreen(t)
+		s.r = drawmap.New(s.wmap)
+		turret := reactionTurret(g, 0, 22, 5, 5)
+		mover := reactionMover(g, 1, 23, 11, 5)
+		if tc.offScreen {
+			s.camera.scrollX = 20 * s.r.Zoom() // well past the 16 cell map
+		}
+		if tc.selected {
+			s.selected = turret
+		}
+		driveIntoReaction(t, g, mover, 8, 5)
+
+		s.tickReactions()
+
+		if _, ok, _ := s.bannerText(); !ok {
+			t.Errorf("%s: the player's reaction must always post the banner", tc.name)
+		}
+		if gotVoice := len(*played) > 0; gotVoice != tc.wantVoice {
+			t.Errorf("%s: voice played = %v, want %v (lines %v)", tc.name, gotVoice, tc.wantVoice, *played)
+		}
+	}
+}
+
+// TestUnitInsideMapView checks the viewport test: any part of the unit's cell counts, and a building
+// covers 2x2 cells.
+func TestUnitInsideMapView(t *testing.T) {
+	m := &world.Map{Surface: make([]uint8, 64*64)}
+	m.W, m.H = 64, 64
+	s := &Screen{wmap: m, r: drawmap.New(m)}
+	zoom := s.r.Zoom()
+	vw, _ := viewSize(MainMap)
+
+	unit := game.NewUnitInfo(assets.Tank, 0, 1, 0)
+	building := game.NewUnitInfo(assets.LightPlt, 0, 2, 0)
+	building.Flags = game.FlagBuilding | game.FlagStationary
+
+	cases := []struct {
+		name    string
+		u       *game.UnitInfo
+		cellX   int
+		scrollX int
+		want    bool
+	}{
+		{"unit at the view origin", unit, 0, 0, true},
+		{"unit right of the view", unit, vw/zoom + 2, 0, false},
+		{"unit just scrolled off the left edge", unit, 5, 6 * zoom, false},
+		{"building half past the left edge", building, 5, 6 * zoom, true},
+		{"building fully past the left edge", building, 5, 7 * zoom, false},
+	}
+	for _, tc := range cases {
+		tc.u.GridX, tc.u.GridY = tc.cellX, 1
+		s.camera.scrollX, s.camera.scrollY = tc.scrollX, 0
+		if got := s.unitInsideMapView(tc.u); got != tc.want {
+			t.Errorf("%s: unitInsideMapView = %v, want %v", tc.name, got, tc.want)
+		}
 	}
 }
 

@@ -178,6 +178,36 @@ func TestInfiltrateEligibility(t *testing.T) {
 	}
 }
 
+// TestInfiltrateRejectsBusyOrDyingTarget checks klei's shared disable/steal rejections: a target that is
+// transforming, firing, exploding or being destroyed cannot be infiltrated.
+func TestInfiltrateRejectsBusyOrDyingTarget(t *testing.T) {
+	cases := []struct {
+		name  string
+		order game.Order
+		state game.OrderState
+	}{
+		{"transforming", game.OrderTransform, game.OrderStateInit},
+		{"firing", game.OrderFire, game.OrderStateInit},
+		{"exploding", game.OrderExplode, game.OrderStateInit},
+		{"being destroyed", game.OrderAwait, game.OrderStateDestroy},
+	}
+	for _, tc := range cases {
+		g := newGame(t, 12, 12)
+		c := addCommando(g, 0, 1, 1)
+		target := addElectronicEnemy(g, 1, 2, 1, 8, 0)
+		if !g.CanDisable(c, target) || !g.CanSteal(c, target) {
+			t.Fatalf("%s: the idle baseline target must be disable and steal eligible", tc.name)
+		}
+		target.Order, target.State = tc.order, tc.state
+		if g.CanDisable(c, target) {
+			t.Errorf("%s: a %s target must not be disabled", tc.name, tc.name)
+		}
+		if g.CanSteal(c, target) {
+			t.Errorf("%s: a %s target must not be stolen", tc.name, tc.name)
+		}
+	}
+}
+
 func TestInfiltrateMissExposesCommando(t *testing.T) {
 	g := newGame(t, 8, 8)
 	c := addCommando(g, 0, 1, 1)

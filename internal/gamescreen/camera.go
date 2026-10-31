@@ -150,6 +150,29 @@ func (s *Screen) applyCameraBookmarks(marks []saveload.CameraBookmarkSnapshot) {
 	}
 }
 
+// unitInsideMapView reports whether any part of u (2x2 for a building) shows in the main viewport.
+//
+// C++ ported : game_manager.cpp - GameManager_IsInsideMapView
+func (s *Screen) unitInsideMapView(u *game.UnitInfo) bool {
+	if s.r == nil {
+		return false // no map view (headless): nothing is on screen
+	}
+	zoom := s.r.Zoom()
+	if zoom <= 0 {
+		return false
+	}
+
+	size := zoom
+	if u.Flags.Has(game.FlagBuilding) {
+		size = 2 * zoom
+	}
+
+	vw, vh := viewSize(MainMap)
+	x := u.GridX*zoom - s.camera.scrollX
+	y := u.GridY*zoom - s.camera.scrollY
+	return x+size > 0 && x < vw && y+size > 0 && y < vh
+}
+
 // viewCenterCell returns the map cell at the centre of the main viewport. It is the inverse of centerScroll and is used for camera bookmarks.
 func (s *Screen) viewCenterCell() (cellX, cellY int) {
 	zoom := s.r.Zoom()

@@ -55,8 +55,10 @@ func loadMarkerFrame(lib units.Reader, tag string) *sprites.MultiFrame {
 	return f
 }
 
-// buildMarkFrameMS is the BLDMRK frame duration. The original advances markers every two game ticks, about 83 ms at 24 fps.
-const buildMarkFrameMS = 84
+// buildMarkFrameMS is the BLDMRK frame duration. The original advances markers every three game ticks, 125 ms at 24 fps.
+//
+// C++ ported : drawmap.cpp - DrawMap_RenderBuildMarker (DrawMap_BuildMMarkDelayCounter = 3)
+const buildMarkFrameMS = 125
 
 // buildMarkFrame returns the current animation frame index for the cycling exit
 // markers, or -1 when no marker art is loaded.

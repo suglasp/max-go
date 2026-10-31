@@ -306,8 +306,10 @@ func (s *Screen) tickReactions() {
 
 		s.showMessage(displayName(r.Reactor.Type) + " reacts to enemy " + displayName(r.Mover.Type))
 
-		// Only a player-owned reactor triggers the announcer cue; its cooldown combines a multi-unit sweep.
-		if s.isHumanTeam(r.Reactor.Team) {
+		// The announcer cue is for a player reactor the player cannot see fire: not selected and off screen.
+		// Its cooldown combines a multi-unit sweep.
+		// C++ ported : units_manager.cpp - UnitsManager_CheckReaction (V_M250/V_F251)
+		if s.isHumanTeam(r.Reactor.Team) && r.Reactor != s.selected && !s.unitInsideMapView(r.Reactor) {
 			s.playVoice(vsReactionFire)
 		}
 	}
