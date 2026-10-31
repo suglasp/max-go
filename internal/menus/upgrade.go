@@ -58,11 +58,10 @@ type upgradeMenu struct {
 	startGold int
 	snaps     []upgradeSnap
 
-	filter   upgradeFilter
-	visible  []*game.UpgradeUnit // filtered view of units
-	sel      int
-	scroll   int
-	descMode bool // Description checkbox: overlay the unit's description on the portrait
+	filter  upgradeFilter
+	visible []*game.UpgradeUnit // filtered view of units
+	sel     int
+	scroll  int
 
 	win gnw.WinID
 	oy  int // window top edge, to map mouse clicks into list rows
@@ -224,7 +223,8 @@ func (m *upgradeMenu) buildWidgets() []gnw.ButtonID {
 	mkPlate(357, "BLDCAN_U", "BLDCAN_D", ctx.text("c6aa", "Cancel"), 1002, "NCANC0")
 	// Description checkbox (sticky) next to the "Description" label.
 	if b, e := ctx.imageButton(win, 292, 264, "BLDDES_U", "BLDDES_D", "", 0, 0, true, 1200); e == nil {
-		ctx.Sys.SetButtonToggle(b) // a real toggle: a second click releases it
+		ctx.Sys.SetButtonToggle(b)                    // a real toggle: a second click releases it
+		ctx.Sys.SetRestState(b, unitDescriptionShown) // shared by the build and upgrade menus, starts on
 		ctx.registerButtonSfx(b, "KCARG0")
 		buttons = append(buttons, b)
 	}
@@ -274,7 +274,7 @@ func (m *upgradeMenu) handleKey(key int) (done, commit bool) {
 	case key == 1001 || key == '?':
 		Help(ctx, "UPGRADES_SETUP")
 	case key == 1200: // Description checkbox: toggle the portrait text overlay
-		m.descMode = !m.descMode
+		unitDescriptionShown = !unitDescriptionShown // C++: button_description_rest_state is one static for all menus
 		m.drawDetail()
 	case key == 1100: // scroll up
 		if m.scroll > 0 {
@@ -492,12 +492,9 @@ func (m *upgradeMenu) drawPortrait(buf *gfx.Buffer, u *game.UpgradeUnit) {
 			bw, bh := min(big.W, 300), min(big.H, 240)
 			buf.Sub(11, 13, bw, bh).Copy(big.Sub(0, 0, bw, bh))
 		}
-		// Description checkbox: overlay the unit's description over the portrait
-		// (PLACEHOLDER text: real per unit descriptions need the unit data
-		// loader). C++: AbstractUpgradeMenu::DrawUnitInfo (GNW_TEXT_OUTLINE|0xA2).
-		if m.descMode {
-			desc := fmt.Sprintf("This is a %s. (unit description text is not wired "+
-				"yet - it comes from the unit data in MAX.RES / lang_english.ini)", m.visible[m.sel].Name)
+		// Description checkbox: overlay the unit's description over the portrait.
+		// C++: AbstractUpgradeMenu::DrawUnitInfo (GNW_TEXT_OUTLINE|0xA2).
+		if desc := m.ctx.unitDescription(u.Type); desc != "" {
 			for i, ln := range wrapText(m.f5, desc, 280) {
 				blitInBox(buf, m.f5, ln, 21, 21+i*(m.f5.Height+2), 280, m.f5.Height+2, cargoTan|fonts.FlagOutline, false)
 			}

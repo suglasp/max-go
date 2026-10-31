@@ -5,16 +5,14 @@
 //
 // Licensed under the MIT License. See MIT.md file in the project root for full license information.
 //
-// Package assets reads ATTRIBS, CLANATRB, and language strings from lang-en-us.ini.
+// Package assets reads ATTRIBS, CLANATRB, the language strings and the unit description keys (LANG.RES, or a
+// loose lang-<code>.ini override).
 package assets
 
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
-	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -324,15 +322,16 @@ func ParseLanguage(data []byte) (Strings, error) {
 
 // Assets bundles the loaded data tables.
 type Assets struct {
-	Attribs []UnitAttributes // indexed by UnitType
-	Clans   []Clan
-	Strings Strings
+	Attribs      []UnitAttributes // indexed by UnitType
+	Clans        []Clan
+	Strings      Strings
+	UnitDescKeys [UnitCount]string // language key of each unit's description, "" when it has none
 }
 
 // Load reads all tables: ATTRIBS and CLANATRB from the resource
-// library, and the language strings from lang-<language>.ini in the data
-// directory or next to the binary (falling back to lang-en-us.ini when
-// the requested file is missing; an empty language is treated as en-us).
+// library; the language strings from a loose lang-<language>.ini in the data
+// directory or next to the binary, else from LANG.RES there (an empty
+// language is treated as en-us); and the unit description keys from LANG.RES.
 //
 // C++: ResourceManager_InitUnitAttributes/InitClans/
 // InitLanguageManager (resource_manager.cpp)
@@ -357,28 +356,28 @@ func Load(lib *resfile.Library, dataDir, language string) (*Assets, error) {
 		return nil, err
 	}
 
-	if a.Strings, err = languageStringsOrFallback(dataDir, language); err != nil {
+	langRes := openLangRes(dataDir)
+	if langRes != nil {
+		defer langRes.Close()
+	}
+
+	if a.Strings, err = loadStrings(dataDir, language, langRes); err != nil {
+		return nil, err
+	}
+
+	if a.UnitDescKeys, err = loadUnitDescriptions(langRes); err != nil {
 		return nil, err
 	}
 
 	return a, nil
 }
 
-// languageStringsOrFallback loads the string table, tolerating a missing
-// file: the lang ini is a port asset, not vanilla game data, so without one
-// the game boots on the built in English fallback strings and only logs it.
+// languageStringsOrFallback loads the string table from a loose ini only,
+// tolerating a missing file: the strings are a port asset, not vanilla game
+// data, so without one the game boots on the built in English fallback
+// strings and only logs it. Load also consults LANG.RES (loadStrings).
 func languageStringsOrFallback(dataDir, language string) (Strings, error) {
-	s, err := loadLanguageStrings(dataDir, language)
-	if err == nil {
-		return s, nil
-	}
-
-	if !errors.Is(err, fs.ErrNotExist) {
-		return nil, err
-	}
-
-	log.Printf("assets: %s not found, using the built in English strings", LanguageFile(language))
-	return Strings{}, nil
+	return loadStrings(dataDir, language, nil)
 }
 
 // LanguageFile returns the strings filename for a language code, e.g.

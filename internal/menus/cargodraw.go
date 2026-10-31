@@ -153,10 +153,7 @@ func (m *cargoMenu) drawDetail() {
 	}
 	// Description checkbox: overlay the unit's description text on the portrait.
 	// C++: AbstractUpgradeMenu::DrawUnitInfo draws base_unit.GetDescription().
-	// PLACEHOLDER text: the real per unit description lives in the unit data
-	// (MAX.RES / lang_english.ini) and is wired with the unit data loader.
-	if m.descMode {
-		desc := fmt.Sprintf("This is a %s. (unit description text is not wired yet - it comes from the unit data in MAX.RES / lang_english.ini)", rosterName(t))
+	if desc := m.ctx.unitDescription(t); desc != "" {
 		for i, ln := range wrapText(m.f5, desc, cgPrevW-20) {
 			// C++: Text_TextBox(..., GNW_TEXT_OUTLINE | 0xA2), tan with an outline.
 			blitInBox(m.buf, m.f5, ln, cgPrevX+10, cgPrevY+8+i*(m.f5.Height+2), cgPrevW-20, m.f5.Height+2, cargoTan|fonts.FlagOutline, false)

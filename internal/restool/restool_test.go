@@ -11,6 +11,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/suglasp/max-go/internal/resfile"
 )
 
 func writeTestArchive(t *testing.T, entries map[string][]byte, order []string) string {
@@ -132,5 +134,29 @@ func TestPackRejectsManifestHashMismatch(t *testing.T) {
 	}
 	if err := Pack(dir, filepath.Join(t.TempDir(), "bad.res")); err == nil {
 		t.Fatal("Pack succeeded with a stale manifest hash")
+	}
+}
+
+// TestPackManifestWithoutHash packs a hand written two column manifest (tag, file), the form the port's
+// LANG.RES sources use so their text files stay editable.
+func TestPackManifestWithoutHash(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "hello.txt"), []byte("hello"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, manifestName), []byte("# max-go RES manifest v1\nHELLO\thello.txt\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out := filepath.Join(t.TempDir(), "two.res")
+	if err := Pack(dir, out); err != nil {
+		t.Fatalf("Pack refused a manifest without hashes: %v", err)
+	}
+	lib, err := resfile.Open(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lib.Close()
+	if data, err := lib.Read("HELLO"); err != nil || string(data) != "hello" {
+		t.Errorf("HELLO = %q, %v; want \"hello\"", data, err)
 	}
 }

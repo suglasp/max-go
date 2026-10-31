@@ -130,7 +130,6 @@ type factoryBuildMenu struct {
 	selAvail, scrollAvail int
 	selQueue, scrollQueue int
 	rate, maxRate         int
-	descMode              bool
 
 	pic                  *sprites.Big
 	f5                   *fonts.Font
@@ -265,6 +264,7 @@ func (m *factoryBuildMenu) buildWidgets() []gnw.ButtonID {
 	// Description checkbox (toggle).
 	if b, e := ctx.imageButton(mainWindow, 292, 264, "BLDDES_U", "BLDDES_D", "", 0, 0, true, 1200); e == nil {
 		ctx.Sys.SetButtonToggle(b)
+		ctx.Sys.SetRestState(b, unitDescriptionShown) // shared by the build and upgrade menus, starts on
 		ctx.registerButtonSfx(b, "KCARG0")
 		buttons = append(buttons, b)
 	}
@@ -321,7 +321,7 @@ func (m *factoryBuildMenu) handleKey(key int) (sel screendata.FactorySelection, 
 	case key == 1132: // Repeat toggle
 		m.repeatEdit = !m.repeatEdit
 	case key == 1200: // Description toggle
-		m.descMode = !m.descMode
+		unitDescriptionShown = !unitDescriptionShown // C++: button_description_rest_state is one static for all menus
 		m.drawDetail()
 	case key == 1201:
 		m.rate = 1
@@ -481,7 +481,7 @@ func (m *factoryBuildMenu) drawDetail() {
 		return
 	}
 	t := m.roster[m.selAvail].t
-	drawBuildPortrait(m.buf, m.f5, m.sc, t, m.team, m.roster[m.selAvail].name, fbPrevX, fbPrevY, fbPrevW, fbPrevH, m.descMode, m.loadPortrait)
+	drawBuildPortrait(m.buf, m.f5, m.sc, t, m.team, m.roster[m.selAvail].name, fbPrevX, fbPrevY, fbPrevW, fbPrevH, m.ctx.unitDescription(t), m.loadPortrait)
 	if int(t) >= len(m.at) {
 		return
 	}

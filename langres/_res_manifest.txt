@@ -1,0 +1,3 @@
+# max-go RES manifest v1
+LANG_EN	lang-en-us.ini
+UNITDESC	unit-descriptions.txt

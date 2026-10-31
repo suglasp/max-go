@@ -105,7 +105,6 @@ type cargoMenu struct {
 	active                int // cgBuyList or cgCargoList
 	buySel, buyScroll     int
 	cargoSel, cargoScroll int
-	descMode              bool // Description checkbox: overlay the unit's description on the portrait
 	buyRows, cargoRows    int
 
 	pic *sprites.Big
@@ -228,7 +227,8 @@ func (m *cargoMenu) buildWidgets() []gnw.ButtonID {
 	// Description checkbox (sticky): toggles the description text overlay on the
 	// portrait. C++: button_description (BLDDES) at 292,264.
 	if b, e := ctx.imageButton(mainWindow, 292, 264, "BLDDES_U", "BLDDES_D", "", 0, 0, true, 1200); e == nil {
-		ctx.Sys.SetButtonToggle(b) // a real toggle: a second click releases it
+		ctx.Sys.SetButtonToggle(b)                    // a real toggle: a second click releases it
+		ctx.Sys.SetRestState(b, unitDescriptionShown) // shared by the build and upgrade menus, starts on
 		ctx.registerButtonSfx(b, "KCARG0")
 		buttons = append(buttons, b)
 	}
@@ -297,7 +297,7 @@ func (m *cargoMenu) handleKey(key int) (done bool, err error) {
 	case key == 1001 || key == '?':
 		Help(ctx, "CARGO_SETUP")
 	case key == 1200: // Description checkbox: toggle the portrait text overlay
-		m.descMode = !m.descMode
+		unitDescriptionShown = !unitDescriptionShown // C++: button_description_rest_state is one static for all menus
 		m.drawDetail()
 	case key == 1110: // roster scroll up
 		if m.buyScroll > 0 {

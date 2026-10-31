@@ -243,8 +243,8 @@ where `auto` picks the aspect closest to the monitor at startup.
 ```
 
 Overrides the UI string file for this run.
-The bundled default language is `en-us` (`lang-en-us.ini`);
-an added `lang-<code>.ini` may live in the configured data directory or next to the executable,
+The bundled default language is `en-us` (entry `LANG_EN` in `LANG.RES`, see `docs/formats/lang-res.md`);
+an added `lang-<code>.ini` in the configured data directory or next to the executable overrides `LANG.RES`,
 and missing keys fall back to English.
 Without the flag the `language` value in `max-go.json` is used.
 Note the FON fonts are byte based,

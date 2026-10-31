@@ -427,10 +427,10 @@ Menu screens:
       picker.
 
   -language <code>
-      Overrides the UI string file for this run. The bundled/default UI
-      language is en-us (lang-en-us.ini); a user-added
-      lang-<code>.ini may live in the configured data directory
-      or next to the executable.
+      Overrides the UI string language for this run. The bundled/default UI
+      language is en-us (LANG_EN in LANG.RES); a user-added
+      lang-<code>.ini in the configured data directory or next to
+      the executable overrides LANG.RES.
 
   -nomovie / -nosplash
       Boot-sequence controls. -nomovie skips the intro movie but still

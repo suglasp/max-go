@@ -1,0 +1,57 @@
+LANG.RES - how to pack and unpack it with max-restool
+======================================================
+
+LANG.RES is max-go's own addon archive. It sits next to max-go(.exe) and holds:
+
+  LANG_EN    lang-en-us.ini          the English UI strings
+  UNITDESC   unit-descriptions.txt   TAG=key per unit, the key of its description text
+
+_res_manifest.txt lists which file goes in under which tag. Only the files it names are
+packed, so this HOWTO.txt stays out of the archive. The manifest has no hash column, so the
+text files can be edited freely.
+
+
+Pack (rebuild LANG.RES from this folder)
+----------------------------------------
+
+Windows, from the repo root:
+
+  max-restool pack langres bin\LANG.RES
+
+Linux, from the repo root:
+
+  ./max-restool pack langres bin/LANG.RES
+
+(Use the max-restool next to max-go, or "go run ./cmd/max-restool" in the repo.)
+The official build scripts do this for you: build-windows.cmd / build-linux.sh pack
+langres into the build folder, and stage-windows.cmd / stage-linux.sh copy LANG.RES to bin.
+
+
+Unpack (look inside a LANG.RES)
+-------------------------------
+
+  max-restool list LANG.RES
+  max-restool unpack LANG.RES extracted
+
+unpack writes every entry as a raw file named after its tag (LANG_EN, UNITDESC) plus a
+_res_manifest.txt WITH hashes. To pack an unpacked folder again after editing it, delete the
+hash column (or the whole manifest line's third field) first, or pack fails with a hash mismatch.
+
+
+Adding a language
+-----------------
+
+1. Copy lang-en-us.ini to lang-<code>.ini (for example lang-de-de.ini) and translate the values.
+   The keys (left of "=") stay the same; unit description texts translate with them.
+2. Add a manifest line: LANG_DE<TAB>lang-de-de.ini  (tag = LANG_ + the code before the dash).
+3. Pack again. Set "language": "de-de" in max-go.json (or run with -language de-de).
+   Missing keys fall back to English. The FON fonts are 8-bit, so stick to ASCII/8-bit glyphs.
+
+
+Override without packing
+------------------------
+
+A loose lang-<code>.ini next to max-go(.exe) or in the game data folder wins over LANG.RES.
+Handy for testing a translation; remove it to go back to LANG.RES.
+
+Format details: docs/formats/lang-res.md

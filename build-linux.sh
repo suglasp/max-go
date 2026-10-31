@@ -114,8 +114,10 @@ copy_payload() {
 
   cp -f "$script_dir/README.md" "$dest/"
   cp -f "$script_dir/max-lavender.png" "$dest/"
-  # The game loads its UI strings from beside the executable.
-  cp -f "$script_dir/lang-en-us.ini" "$dest/"
+  # LANG.RES (UI strings + unit descriptions) is packed once into the build folder, beside the executable.
+  if [[ "$dest" != "$build_dir" ]]; then
+    cp -f "$build_dir/LANG.RES" "$dest/"
+  fi
   # Refresh the build-only settings template. Live settings remain in bin/max-go.json.
   # The game still reads a legacy settings.json when present, but releases do not ship one.
   cp -f "$script_dir/max-go.json" "$dest/"
@@ -211,6 +213,11 @@ write_max_go_help
 write_help "$build_dir/max-restool-help.txt" "$build_dir/max-restool$exe" help
 write_help "$build_dir/max-convert-help.txt" "$build_dir/max-convert$exe" help
 write_help "$build_dir/max-settings-help.txt" "$build_dir/max-settings$exe" -h
+
+echo
+echo "Packing LANG.RES ..."
+# The port's addon archive: language strings + unit description keys, packed from langres/.
+"$build_dir/max-restool$exe" pack "$script_dir/langres" "$build_dir/LANG.RES"
 
 echo
 echo "Copying documentation and configuration files ..."

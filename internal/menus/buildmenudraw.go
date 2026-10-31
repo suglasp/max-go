@@ -21,10 +21,42 @@ import (
 // roster entry is selected, and the builder that funds the cost. These helpers
 // carry that shared drawing so each menu's own method is a thin wrapper.
 
+// unitDescriptionShown is the Description checkbox state, shared by the build,
+// factory, cargo and upgrade menus for the whole run, and on at start.
+// C++ ported : abstractmenu.hpp - button_description_rest_state (one static, true)
+var unitDescriptionShown = true
+
+// unitDescription returns the description text of a unit type for the portrait
+// overlay, or "" when the checkbox is off or the unit has none.
+// C++ ported : buildmenu.cpp / abstractupgrademenu.cpp - Text_TextBox(base_unit.GetDescription())
+func (ctx *Context) unitDescription(t assets.UnitType) string {
+	if !unitDescriptionShown {
+		return ""
+	}
+
+	return ctx.unitDescriptionText(t)
+}
+
+// unitDescriptionText returns the description text of a unit type from the
+// language strings (key from LANG.RES UNITDESC), or "" when it has none.
+// C++ ported : unit.cpp - Unit::GetDescription
+func (ctx *Context) unitDescriptionText(t assets.UnitType) string {
+	if ctx == nil || ctx.Assets == nil {
+		return ""
+	}
+
+	key := ctx.Assets.DescriptionKey(t)
+	if key == "" {
+		return ""
+	}
+
+	return ctx.text(key, "")
+}
+
 // drawBuildPortrait paints the selected buildable's portrait well: the big
 // portrait if the unit has one, else its team icon plus name, and the wrapped
-// placeholder description when descMode is on.
-func drawBuildPortrait(buf *gfx.Buffer, f5 *fonts.Font, sc *units.SpriteCache, t assets.UnitType, team int, name string, prevX, prevY, prevW, prevH int, descMode bool, loadPortrait func(assets.UnitType) *sprites.Big) {
+// description text over it when desc is not empty.
+func drawBuildPortrait(buf *gfx.Buffer, f5 *fonts.Font, sc *units.SpriteCache, t assets.UnitType, team int, name string, prevX, prevY, prevW, prevH int, desc string, loadPortrait func(assets.UnitType) *sprites.Big) {
 	if big := loadPortrait(t); big != nil {
 		bw, bh := minInt(big.W, prevW), minInt(big.H, prevH)
 		buf.Sub(prevX, prevY, bw, bh).Copy(big.Buffer().Sub(0, 0, bw, bh))
@@ -32,9 +64,7 @@ func drawBuildPortrait(buf *gfx.Buffer, f5 *fonts.Font, sc *units.SpriteCache, t
 		sc.DrawIcon(buf, t, team, prevX+prevW/2, prevY+prevH/2)
 		blitInBox(buf, f5, name, prevX, prevY+prevH-24, prevW, 20, colorGreen|fonts.FlagOutline, true)
 	}
-	if descMode {
-		desc := fmt.Sprintf("This is a %s. (per-unit description text is not wired yet "+
-			"- it comes from the unit data in MAX.RES / lang_english.ini)", name)
+	if desc != "" {
 		for i, ln := range wrapText(f5, desc, prevW-20) {
 			blitInBox(buf, f5, ln, prevX+10, prevY+8+i*(f5.Height+2), prevW-20, f5.Height+2, cargoTan|fonts.FlagOutline, false)
 		}

@@ -144,7 +144,6 @@ type constructMenu struct {
 	sel, scroll int
 	rate        int
 	maxRate     int // the fastest rate the builder's storage/turns allow for the selected item
-	descMode    bool
 
 	pic      *sprites.Big
 	f5       *fonts.Font
@@ -262,6 +261,7 @@ func (m *constructMenu) buildWidgets(hasPath bool) []gnw.ButtonID {
 	// Description checkbox (toggle).
 	if b, e := ctx.imageButton(mainWindow, 292, 264, "BLDDES_U", "BLDDES_D", "", 0, 0, true, 1200); e == nil {
 		ctx.Sys.SetButtonToggle(b)
+		ctx.Sys.SetRestState(b, unitDescriptionShown) // shared by the build and upgrade menus, starts on
 		ctx.registerButtonSfx(b, "KCARG0")
 		buttons = append(buttons, b)
 	}
@@ -308,7 +308,7 @@ func (m *constructMenu) handleKey(key int) (sel screendata.BuildSelection, done,
 	case key == 1001 || key == '?':
 		Help(m.ctx, "CONSTRUCTOR_BUILD_SETUP")
 	case key == 1200: // Description toggle
-		m.descMode = !m.descMode
+		unitDescriptionShown = !unitDescriptionShown // C++: button_description_rest_state is one static for all menus
 		m.drawDetail()
 	case key == 1201: // Build X1
 		m.rate = 1
@@ -431,7 +431,7 @@ func (m *constructMenu) drawDetail() {
 		return
 	}
 	t := m.roster[m.sel].t
-	drawBuildPortrait(m.buf, m.f5, m.sc, t, m.team, m.roster[m.sel].name, cbPrevX, cbPrevY, cbPrevW, cbPrevH, m.descMode, m.loadPortrait)
+	drawBuildPortrait(m.buf, m.f5, m.sc, t, m.team, m.roster[m.sel].name, cbPrevX, cbPrevY, cbPrevW, cbPrevH, m.ctx.unitDescription(t), m.loadPortrait)
 	if int(t) >= len(m.at) {
 		return
 	}

@@ -273,11 +273,17 @@ func readManifest(path string) ([]manifestEntry, error) {
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
+		// The hash column is optional: a hand written manifest (such as the port's LANG.RES sources) may leave
+		// it out so its text files can be edited without breaking the pack.
 		parts := strings.Split(line, "\t")
-		if len(parts) != 3 {
-			return nil, fmt.Errorf("restool: %s:%d: expected tag, file, hash", path, lineNum)
+		if len(parts) != 2 && len(parts) != 3 {
+			return nil, fmt.Errorf("restool: %s:%d: expected tag, file[, hash]", path, lineNum)
 		}
-		out = append(out, manifestEntry{Tag: parts[0], File: parts[1], Hash: parts[2]})
+		entry := manifestEntry{Tag: parts[0], File: parts[1]}
+		if len(parts) == 3 {
+			entry.Hash = parts[2]
+		}
+		out = append(out, entry)
 	}
 	if err := sc.Err(); err != nil {
 		return nil, err

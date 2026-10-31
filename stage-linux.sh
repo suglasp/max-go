@@ -33,8 +33,9 @@ if [[ -d "$build_dir" ]]; then
   cp -f "$build_dir/README.md" "$bin_dir/" 2>/dev/null || true
   cp -f "$build_dir/max-lavender.png" "$bin_dir/" 2>/dev/null || true
   
-  # The port's own UI string file; the game expects it beside the executable.
-  cp -f "$build_dir/lang-en-us.ini" "$bin_dir/" 2>/dev/null || true
+  # LANG.RES carries the UI strings and unit descriptions; the game loads it from beside the executable.
+  # A loose lang-en-us.ini already in bin/ is left alone: it still wins as an override.
+  cp -f "$build_dir/LANG.RES" "$bin_dir/" 2>/dev/null || true
 
   # The release version stamp, refreshed every stage so bin/ never reports a stale build.
   cp -f "$build_dir/version" "$bin_dir/" 2>/dev/null || true

@@ -80,6 +80,13 @@ REM Generate Windows help text here. Linux help text must be generated on Linux.
 "%BUILDDIR%\max-settings.exe" -h > "%BUILDDIR%\max-settings-help.txt" 2>&1
 
 echo.
+echo Packing LANG.RES ...
+REM The port's addon archive: language strings + unit description keys, packed from langres\.
+"%BUILDDIR%\max-restool.exe" pack "%WORKDIR%langres" "%BUILDDIR%\LANG.RES"
+if errorlevel 1 goto FAIL
+copy /Y "%BUILDDIR%\LANG.RES" "%LINUXDIR%\" > nul
+
+echo.
 echo Copying documentation ...
 call :PAYLOAD "%BUILDDIR%"
 call :PAYLOAD "%LINUXDIR%"
@@ -145,8 +152,7 @@ REM Copy the common release payload.
 copy /Y "%WORKDIR%README.md" "%~1\" > nul
 copy /Y "%WORKDIR%max-lavender.png" "%~1\" > nul
 
-REM The game loads its UI strings from beside the executable.
-copy /Y "%WORKDIR%lang-en-us.ini" "%~1\" > nul
+REM LANG.RES (UI strings + unit descriptions) is packed above, beside the executable.
 
 REM Refresh the build-only settings template. Live settings remain in bin\max-go.json.
 REM The game still reads a legacy settings.json when present, but releases do not ship one.

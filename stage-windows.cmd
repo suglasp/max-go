@@ -24,8 +24,9 @@ copy /Y "%BUILDDIR%\soloud_x64.dll" "%WORKDIR%bin\" > nul
 copy /Y "%BUILDDIR%\miniaudio_x64.dll" "%WORKDIR%bin\" > nul
 copy /Y "%BUILDDIR%\README.md" "%WORKDIR%bin\" > nul
 copy /Y "%BUILDDIR%\max-lavender.png" "%WORKDIR%bin\" > nul
-REM The game loads its UI strings from beside the executable.
-copy /Y "%BUILDDIR%\lang-en-us.ini" "%WORKDIR%bin\" > nul
+REM LANG.RES carries the UI strings and unit descriptions; the game loads it from beside the executable.
+REM A loose lang-en-us.ini already in bin\ is left alone: it still wins as an override.
+copy /Y "%BUILDDIR%\LANG.RES" "%WORKDIR%bin\" > nul
 REM Refresh the version stamp during every stage.
 copy /Y "%BUILDDIR%\version" "%WORKDIR%bin\" > nul
 REM Ship attribution files with the bundled audio libraries.

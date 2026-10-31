@@ -159,7 +159,8 @@ func (m *unitStatusMenu) paint() {
 
 		// Name (centred) + description, top right.
 		blitInBox(buf, f5, name, 336, 60, 287, 11, cargoTan, true)
-		for i, ln := range wrapText(f5, unitDescription(name), 270) {
+		// C++ ported : unitstats.cpp - Text_TextBox(base_unit.GetDescription(), 345, 90, 270, 117)
+		for i, ln := range wrapText(f5, ctx.unitDescriptionText(u.Type), 270) {
 			blitInBox(buf, f5, ln, 345, 90+i*(f5.Height+2), 270, f5.Height+2, cargoTan, false)
 		}
 
@@ -256,12 +257,4 @@ func unitStatRows(u *game.UnitInfo) []statRow {
 func drawPortraitFit(buf *gfx.Buffer, big *sprites.Big, x, y, w, h int) {
 	bw, bh := minInt(big.W, w), minInt(big.H, h)
 	buf.Sub(x, y, bw, bh).Copy(big.Buffer().Sub(0, 0, bw, bh))
-}
-
-// unitDescription returns the description blurb for a unit. The real per unit
-// text needs the unit data to lang key map (not wired yet, as on the cargo and
-// construct screens), so this is a placeholder keyed off the display name.
-func unitDescription(name string) string {
-	return name + ": detailed unit description text is not wired yet " +
-		"(it comes from the unit data in MAX.RES / lang_english.ini)."
 }

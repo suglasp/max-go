@@ -97,7 +97,7 @@ go build -o bin/ ./cmd/max-go
 ./bin/max-go
 ```
 
-The convenience scripts build the game and tools, write CLI help files, and copy `lang-en-us.ini` plus the SoLoud and miniaudio native libraries from `dependencies/soloud-bin/` and `dependencies/miniaudio-bin/`.\
+The convenience scripts build the game and tools, write CLI help files, and pack `LANG.RES` (UI strings and unit descriptions, from `langres/`, see `langres/HOWTO.txt`) plus copy the SoLoud and miniaudio native libraries from `dependencies/soloud-bin/` and `dependencies/miniaudio-bin/`.\
 Each platform uses its own build folder (`build/windows-x64/` or `build/linux-x64/`). The stage step copies the native platform's build into `bin/`.\
 Each build packs its completed platform folders into `release/` as `max-go-<version>-<platform>.zip` or `.tar.zst`:
 
