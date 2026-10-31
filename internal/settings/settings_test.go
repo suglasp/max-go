@@ -296,3 +296,22 @@ func TestValidateKeybinds(t *testing.T) {
 		t.Errorf("deliberate survey=F/find=C rewritten to survey=%q find=%q", s2.Keybinds["survey"], s2.Keybinds["find"])
 	}
 }
+
+// TestChannelsReversedKey checks the audio.channels_reversed key (from the original settings.ini): it defaults
+// to false, an older file without it stays false, and a file that sets it loads it.
+func TestChannelsReversedKey(t *testing.T) {
+	if Default().Audio.ChannelsReversed {
+		t.Error("channels_reversed must default to false")
+	}
+	path := filepath.Join(t.TempDir(), "max-go.json")
+	if err := os.WriteFile(path, []byte(`{"audio": {"sfx_volume": 80, "channels_reversed": true}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	s, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !s.Audio.ChannelsReversed || s.Audio.SfxVolume != 80 {
+		t.Errorf("loaded channels_reversed=%v sfx_volume=%d, want true and 80", s.Audio.ChannelsReversed, s.Audio.SfxVolume)
+	}
+}

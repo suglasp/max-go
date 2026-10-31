@@ -76,6 +76,7 @@ an explicit path of any of the first three never triggers that hunt - see `DataD
 | `music_enabled` | bool | `true` | |
 | `sfx_enabled` | bool | `true` | |
 | `voice_enabled` | bool | `true` | |
+| `channels_reversed` | bool | `false` | Swaps left and right for positional unit sounds (the original `settings.ini` `[AUDIO_SETTINGS] channels_reversed`). |
 
 ## `video`
 

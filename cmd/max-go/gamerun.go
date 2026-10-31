@@ -343,6 +343,10 @@ func wireAudioCallbacks(scr *gamescreen.Screen, ctx *menus.Context) {
 	scr.SetSfxIntroLoopFunc(func(primary, fallback string, pan, volScale float64) int {
 		return ctx.Audio.PlaySfxIntroThenLoop(primary, fallback, pan, volScale)
 	})
+	// Positional sound: a unit's one shots and its held sounds fade with distance from the view centre and zoom.
+	scr.SetSfxPositionalFunc(ctx.Audio.PlaySfxPositional)
+	scr.SetSfxHeldVolumeFunc(ctx.Audio.SetSfxHeldVolume)
+	scr.SetChannelsReversed(ctx.Settings.Audio.ChannelsReversed)
 
 	scr.SetVoiceFunc(ctx.Audio.PlayVoice)                                      // announcer voice (e.g. colony started)
 	scr.SetVoicePlayingFunc(ctx.Audio.VoicePlaying)                            // lets the voice queue space back to back lines (team end of turn voices)

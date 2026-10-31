@@ -163,6 +163,9 @@ type Audio struct {
 	MusicEnabled  bool   `json:"music_enabled"`
 	SfxEnabled    bool   `json:"sfx_enabled"`
 	VoiceEnabled  bool   `json:"voice_enabled"`
+	// ChannelsReversed swaps left and right for positional unit sounds.
+	// C++: settings.ini [AUDIO_SETTINGS] channels_reversed (SoundManager::GetPanning).
+	ChannelsReversed bool `json:"channels_reversed"`
 }
 
 // Video controls the window and the look of the game UI. The game renders at a

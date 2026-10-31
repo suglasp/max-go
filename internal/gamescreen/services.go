@@ -306,6 +306,27 @@ func (s *Screen) SetSfxHeldFuncs(start func(primary, fallback string, pan, volSc
 	s.sound.sfxHeldPanFn = setPan
 }
 
+// SetSfxPositionalFunc installs the hook that plays a unit's one shot sound at a
+// stereo pan and a positional volume factor (distance from the view centre and
+// zoom). Wired to the audio Manager's PlaySfxPositional; unset falls back to SetSfxFunc.
+// C++: SoundManager::PlaySfx (volume_1 = volume_2 * attenuation).
+func (s *Screen) SetSfxPositionalFunc(fn func(primary, fallback string, pan, volScale float64)) {
+	s.sound.sfxPosFn = fn
+}
+
+// SetSfxHeldVolumeFunc installs the hook that fades a live held sound (drive
+// sound, hum) as its unit or the view moves. Wired to the audio Manager's SetSfxHeldVolume.
+// C++: SoundManager::UpdateSfxPosition.
+func (s *Screen) SetSfxHeldVolumeFunc(fn func(id int, volScale float64)) {
+	s.sound.sfxHeldVolumeFn = fn
+}
+
+// SetChannelsReversed swaps left and right for positional unit sounds (settings
+// channels_reversed). C++: SoundManager::GetPanning reading channels_reversed.
+func (s *Screen) SetChannelsReversed(reversed bool) {
+	s.sound.channelsReversed = reversed
+}
+
 // playSfx plays a single sound effect centred (pan=0) by tag, with no fallback,
 // if an sfx hook is wired.
 func (s *Screen) playSfx(tag string) {

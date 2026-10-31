@@ -340,3 +340,53 @@ func TestAmbientWorkSoundUsesHeldLoop(t *testing.T) {
 		t.Fatalf("ambientSfxID = %d, want held-loop handle 12", s.sound.ambientSfxID)
 	}
 }
+
+// TestPositionalUnitSfx checks the klei positional model end to end on the screen side: a unit's one shot goes
+// out with the pan and fade of its cell against the view centre, and after the view moves every live held sound
+// (a drive sound, the ambient hum at its half volume) is panned and faded again.
+func TestPositionalUnitSfx(t *testing.T) {
+	s, g := newClickScreen(t)
+	tank := mkUnit(g, assets.Tank, 1, 2, 3, game.FlagMobileLandUnit|game.FlagSelectable)
+
+	var gotPan, gotVol float64
+	plays := 0
+	s.sound.sfxPosFn = func(_, _ string, pan, volScale float64) { gotPan, gotVol = pan, volScale; plays++ }
+	s.sound.sfxFn = func(string, string, float64) { t.Error("a unit sound fell back to the plain centred hook") }
+
+	expect := func() (float64, float64) {
+		cellX, cellY := s.viewCenterCell()
+		return units.SfxPosition(tank.GridX-cellX, tank.GridY-cellY, s.r.Zoom(), s.sound.channelsReversed)
+	}
+
+	s.playSfxForUnit(tank, game.SfxFire)
+	wantPan, wantVol := expect()
+	if plays != 1 || gotPan != wantPan || gotVol != wantVol {
+		t.Fatalf("one shot = %d plays at (%v, %v), want 1 at (%v, %v)", plays, gotPan, gotVol, wantPan, wantVol)
+	}
+
+	// Two live held sounds on the tank, then the view scrolls 5 cells right and the channels are reversed.
+	s.sound.driveSfx = map[*game.UnitInfo]int{tank: 9}
+	s.sound.ambientSfxID, s.sound.ambientSfxUnit = 12, tank
+	s.camera.scrollX += 5 * s.r.Zoom()
+	s.sound.channelsReversed = true
+
+	pans, vols := map[int]float64{}, map[int]float64{}
+	s.sound.sfxHeldPanFn = func(id int, pan float64) { pans[id] = pan }
+	s.sound.sfxHeldVolumeFn = func(id int, volScale float64) { vols[id] = volScale }
+	s.updateHeldSfxPositions(map[*game.UnitInfo]bool{tank: true})
+
+	wantPan, wantVol = expect()
+	if pans[9] != wantPan || vols[9] != wantVol {
+		t.Errorf("drive sound = (%v, %v), want (%v, %v)", pans[9], vols[9], wantPan, wantVol)
+	}
+	if pans[12] != wantPan || vols[12] != ambientVolumeScale*wantVol {
+		t.Errorf("ambient hum = (%v, %v), want (%v, %v)", pans[12], vols[12], wantPan, ambientVolumeScale*wantVol)
+	}
+
+	// A drive sound of a unit that stopped this frame is left alone.
+	delete(pans, 9)
+	s.updateHeldSfxPositions(map[*game.UnitInfo]bool{})
+	if _, touched := pans[9]; touched {
+		t.Error("a stopped unit's drive sound was repositioned")
+	}
+}

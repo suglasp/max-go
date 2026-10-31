@@ -280,6 +280,20 @@ func (h *heldSound) SetPan(pan float64) {
 	}
 }
 
+// SetVolume fades the held voice while it plays. Does nothing once it has stopped.
+// Wraps SoLoud's own Soloud::setVolume.
+func (h *heldSound) SetVolume(volume float64) {
+	if h == nil || h.b == nil {
+		return
+	}
+	b := h.b
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.engine != nil && h.handle != noVoice {
+		b.engine.SetVolume(h.handle, clampVolume(volume))
+	}
+}
+
 // Stop ends the held voice and releases any Wav owned by this handle. It is idempotent.
 func (h *heldSound) Stop() {
 	if h == nil || h.b == nil {

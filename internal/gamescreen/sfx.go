@@ -27,6 +27,9 @@ type soundState struct {
 	sfxIntroLoopStartFn func(primary, fallback string, pan, volScale float64) int            // starts a held intro loop sound
 	sfxHeldStopFn       func(id int)                                                         // stops a held sound early
 	sfxHeldPanFn        func(id int, pan float64)                                            // re pans a live held sound as the unit moves
+	sfxPosFn            func(primary, fallback string, pan, volScale float64)                // plays a unit sound at a pan and positional volume
+	sfxHeldVolumeFn     func(id int, volScale float64)                                       // fades a live held sound as the unit or the view moves
+	channelsReversed    bool                                                                 // settings channels_reversed: swap left and right
 	movingUnits         map[*game.UnitInfo]bool                                              // units in motion last frame (drive start/stop detection)
 	driveSfx            map[*game.UnitInfo]int                                               // moving unit's active drive sound handle id
 	driveSfxType        map[*game.UnitInfo]game.SfxType                                      // land vs water drive variant currently held per unit
@@ -145,14 +148,11 @@ func (s *Screen) playSfxForUnit(u *game.UnitInfo, sfx game.SfxType) {
 	}
 
 	dbg.Printf("sfx %s : %s %s", displayName(u.Type), sfxKindName(sfx), tag)
-	pan := 0.0
+	pan, volScale := s.unitSfxPosition(u)
 
-	if s.r != nil {
-		vw, _ := viewSize(MainMap)
-		z := s.r.Zoom()
-		// unit pixel centre in the map view
-		unitScreenX := u.GridX*z + z/2 - s.camera.scrollX
-		pan = units.SfxPan(unitScreenX, vw)
+	if s.sound.sfxPosFn != nil {
+		s.sound.sfxPosFn(tag, units.SfxDefaultTag(sfx), pan, volScale)
+		return
 	}
 
 	s.playSfxPanned(tag, units.SfxDefaultTag(sfx), pan)
@@ -172,14 +172,11 @@ func (s *Screen) playPowerCue(u *game.UnitInfo, sfx game.SfxType) {
 
 	s.stopPowerCue() // drop any cue still ringing from a previous toggle
 
-	pan := 0.0
-	if s.r != nil {
-		pan = s.unitPan(u)
-	}
+	pan, volScale := s.unitSfxPosition(u)
 
 	// A held voice (loop=false) plays the clip once but stays stoppable by its handle.
 	if s.sound.sfxHeldStartFn != nil {
-		s.sound.powerCueSfx = s.sound.sfxHeldStartFn(tag, units.SfxDefaultTag(sfx), pan, 1.0, false)
+		s.sound.powerCueSfx = s.sound.sfxHeldStartFn(tag, units.SfxDefaultTag(sfx), pan, volScale, false)
 		s.sound.powerCueUnit = u
 		return
 	}
@@ -373,16 +370,7 @@ func (s *Screen) tickMovementSfx() {
 		}
 	}
 
-	// Positional pan: repan each still driving unit's held engine sound to its
-	// current on screen position, so a unit driving across the view tracks left/
-	// right in stereo. Does nothing on a backend that cannot repan a live sound.
-	if s.sound.sfxHeldPanFn != nil {
-		for u, id := range s.sound.driveSfx {
-			if afterDriving[u] {
-				s.sound.sfxHeldPanFn(id, s.unitPan(u))
-			}
-		}
-	}
+	s.updateHeldSfxPositions(afterDriving)
 
 	s.sound.movingUnits = afterDriving
 
@@ -439,7 +427,9 @@ func (s *Screen) startDriveSfx(u *game.UnitInfo) {
 
 	dbg.Printf("sfx %s : %s %s", displayName(u.Type), sfxKindName(drive), tag)
 
-	if id := s.sound.sfxHeldStartFn(tag, units.SfxDefaultTag(drive), s.unitPan(u), 1.0, false); id != 0 {
+	pan, volScale := s.unitSfxPosition(u)
+
+	if id := s.sound.sfxHeldStartFn(tag, units.SfxDefaultTag(drive), pan, volScale, false); id != 0 {
 		if s.sound.driveSfxType == nil {
 			s.sound.driveSfxType = make(map[*game.UnitInfo]game.SfxType)
 		}
@@ -532,12 +522,14 @@ func (s *Screen) updateAmbientSfx(moving map[*game.UnitInfo]bool) {
 		return
 	}
 
+	pan, volScale := s.unitSfxPosition(want)
+
 	if s.ambientSfxUsesIntroLoop(want, moving) && s.sound.sfxIntroLoopStartFn != nil {
-		s.sound.ambientSfxID = s.sound.sfxIntroLoopStartFn(tag, fallback, s.unitPan(want), ambientVolumeScale)
+		s.sound.ambientSfxID = s.sound.sfxIntroLoopStartFn(tag, fallback, pan, ambientVolumeScale*volScale)
 		return
 	}
 
-	s.sound.ambientSfxID = s.sound.sfxHeldStartFn(tag, fallback, s.unitPan(want), ambientVolumeScale, true)
+	s.sound.ambientSfxID = s.sound.sfxHeldStartFn(tag, fallback, pan, ambientVolumeScale*volScale, true)
 }
 
 // ambientSfxUsesIntroLoop reports the C++ normal unit SFX path: play the clip once from the
@@ -616,12 +608,53 @@ func (s *Screen) stopUnitSfx() {
 	s.stopPowerCue() // a power on/off cue must not survive leaving the screen (quit to menu)
 }
 
-// unitPan returns the stereo pan in [-1, 1] for a unit at its current on screen
-// position in the map view (0 = centre).
-func (s *Screen) unitPan(u *game.UnitInfo) float64 {
-	vw, _ := viewSize(MainMap)
-	z := s.r.Zoom()
-	return units.SfxPan(u.GridX*z+z/2-s.camera.scrollX, vw)
+// unitSfxPosition returns the stereo pan and the positional volume factor of a
+// unit's sound: its cell offset from the view centre, the zoom, and the
+// channels_reversed setting. Without a renderer the sound plays centred at full volume.
+// C++ ported : sound_manager.cpp - SoundManager::PlaySfx (grid offset from GameManager_MapView's centre)
+func (s *Screen) unitSfxPosition(u *game.UnitInfo) (pan, volScale float64) {
+	if s.r == nil || u == nil {
+		return 0, 1
+	}
+
+	cellX, cellY := s.viewCenterCell()
+
+	return units.SfxPosition(u.GridX-cellX, u.GridY-cellY, s.r.Zoom(), s.sound.channelsReversed)
+}
+
+// updateHeldSfxPositions pans and fades every live held sound again for where its
+// unit stands now against the view: the drive sounds of units still moving, the
+// ambient hum, the power cue and the power bounce. Called once per frame, so
+// scrolling or zooming away from a humming building fades it too.
+// C++ ported : sound_manager.cpp - SoundManager::UpdateSfxPosition
+func (s *Screen) updateHeldSfxPositions(stillDriving map[*game.UnitInfo]bool) {
+	for u, id := range s.sound.driveSfx {
+		if stillDriving[u] {
+			s.repositionHeldSfx(id, u, 1)
+		}
+	}
+
+	s.repositionHeldSfx(s.sound.ambientSfxID, s.sound.ambientSfxUnit, ambientVolumeScale)
+	s.repositionHeldSfx(s.sound.powerCueSfx, s.sound.powerCueUnit, 1)
+	s.repositionHeldSfx(s.sound.powerBounceSfx, s.sound.powerBounceUnit, 1)
+}
+
+// repositionHeldSfx sends one held sound its unit's current pan and its base
+// volume times the positional fade. A zero id or a missing unit does nothing.
+func (s *Screen) repositionHeldSfx(id int, u *game.UnitInfo, baseVolume float64) {
+	if id == 0 || u == nil {
+		return
+	}
+
+	pan, volScale := s.unitSfxPosition(u)
+
+	if s.sound.sfxHeldPanFn != nil {
+		s.sound.sfxHeldPanFn(id, pan)
+	}
+
+	if s.sound.sfxHeldVolumeFn != nil {
+		s.sound.sfxHeldVolumeFn(id, baseVolume*volScale)
+	}
 }
 
 // isStructure reports whether a unit is a building. FlagBuilding marks 2x2 structures; 1x1

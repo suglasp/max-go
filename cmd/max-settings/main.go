@@ -194,6 +194,7 @@ func settingFields(cfg settings.Settings) []field {
 		boolField("audio.music_enabled", func(s settings.Settings) bool { return s.Audio.MusicEnabled }, func(s *settings.Settings, v bool) { s.Audio.MusicEnabled = v }),
 		boolField("audio.sfx_enabled", func(s settings.Settings) bool { return s.Audio.SfxEnabled }, func(s *settings.Settings, v bool) { s.Audio.SfxEnabled = v }),
 		boolField("audio.voice_enabled", func(s settings.Settings) bool { return s.Audio.VoiceEnabled }, func(s *settings.Settings, v bool) { s.Audio.VoiceEnabled = v }),
+		boolField("audio.channels_reversed", func(s settings.Settings) bool { return s.Audio.ChannelsReversed }, func(s *settings.Settings, v bool) { s.Audio.ChannelsReversed = v }),
 		boolField("video.fullscreen", func(s settings.Settings) bool { return s.Video.Fullscreen }, func(s *settings.Settings, v bool) { s.Video.Fullscreen = v }),
 		intField("video.window_scale", func(s settings.Settings) int { return s.Video.WindowScale }, func(s *settings.Settings, v int) { s.Video.WindowScale = v }),
 		intField("video.brightness", func(s settings.Settings) int { return s.Video.Brightness }, func(s *settings.Settings, v int) { s.Video.Brightness = v }),

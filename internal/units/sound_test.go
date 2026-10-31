@@ -251,6 +251,7 @@ func TestUsesWaterMovementSfxSlot(t *testing.T) {
 	}
 }
 
+/* // note: unused code in Go port
 // TestSfxPan verifies the stereo pan formula: centre of view => 0, left edge
 // => -1, right edge => +1, clamped once out of bounds.
 func TestSfxPan(t *testing.T) {
@@ -272,6 +273,38 @@ func TestSfxPan(t *testing.T) {
 		const eps = 1e-9
 		if got < tc.want-eps || got > tc.want+eps {
 			t.Errorf("SfxPan(%d, %d) = %v; want %v", tc.unitScreenX, tc.viewW, got, tc.want)
+		}
+	}
+}
+*/
+
+// TestSfxPosition checks klei's positional sound model: the pan widens to +/-0.5 at 28 cells off the view
+// centre, the volume fades over 112 cells, and a zoom below 32 px per cell fades it down to half at zoom 4.
+func TestSfxPosition(t *testing.T) {
+	cases := []struct {
+		name          string
+		dx, dy, zoom  int
+		reversed      bool
+		wantPan, wVol float64
+	}{
+		{"centre", 0, 0, 64, false, 0, 1},
+		{"14 right", 14, 0, 64, false, 0.25, 1 - 14.0/112},
+		{"28 right", 28, 0, 64, false, 0.5, 1 - 28.0/112},
+		{"40 right clamps the pan", 40, 0, 64, false, 0.5, 1 - 40.0/112},
+		{"28 left", -28, 0, 64, false, -0.5, 1 - 28.0/112},
+		{"reversed", 28, 0, 64, true, -0.5, 1 - 28.0/112},
+		{"56 below", 0, 56, 64, false, 0, 0.5},
+		{"112 off: silent", 112, 0, 64, false, 0.5, 0},
+		{"130 off: still silent", 0, -130, 64, false, 0, 0},
+		{"zoom 32: no fade", 0, 0, 32, false, 0, 1},
+		{"zoom 4: half", 0, 0, 4, false, 0, 0.5},
+		{"zoom 18: three quarters", 0, 0, 18, false, 0, 0.75},
+	}
+	const eps = 1e-9
+	for _, tc := range cases {
+		pan, vol := SfxPosition(tc.dx, tc.dy, tc.zoom, tc.reversed)
+		if pan < tc.wantPan-eps || pan > tc.wantPan+eps || vol < tc.wVol-eps || vol > tc.wVol+eps {
+			t.Errorf("%s: SfxPosition(%d, %d, %d, %v) = (%v, %v); want (%v, %v)", tc.name, tc.dx, tc.dy, tc.zoom, tc.reversed, pan, vol, tc.wantPan, tc.wVol)
 		}
 	}
 }

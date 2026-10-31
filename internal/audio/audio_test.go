@@ -26,6 +26,7 @@ type fakeBackend struct {
 	musicLoop bool
 	musicVol  float64
 	sfxPaths  []string
+	sfxVols   []float64
 	voicePath string
 	stops     int
 }
@@ -36,8 +37,9 @@ func (f *fakeBackend) PlayMusic(path string, loop bool, volume float64) error {
 }
 func (f *fakeBackend) StopMusic()             { f.stops++; f.musicPath = "" }
 func (f *fakeBackend) SetMusicVolume(float64) {}
-func (f *fakeBackend) PlaySfx(path string, _, _ float64) error {
+func (f *fakeBackend) PlaySfx(path string, volume, _ float64) error {
 	f.sfxPaths = append(f.sfxPaths, path)
+	f.sfxVols = append(f.sfxVols, volume)
 	return nil
 }
 func (f *fakeBackend) PlayVoice(path string, _ float64) error {
@@ -238,10 +240,12 @@ type fakeSfxHandle struct {
 	loop    bool
 	stopped bool
 	pan     float64
+	volume  float64
 }
 
-func (f *fakeSfxHandle) Stop()            { f.stopped = true }
-func (f *fakeSfxHandle) SetPan(p float64) { f.pan = p }
+func (f *fakeSfxHandle) Stop()               { f.stopped = true }
+func (f *fakeSfxHandle) SetPan(p float64)    { f.pan = p }
+func (f *fakeSfxHandle) SetVolume(v float64) { f.volume = v }
 
 func (f *heldFakeBackend) PlaySfxHeld(path string, _, _ float64, loop bool) (SfxHandle, error) {
 	h := &fakeSfxHandle{path: path, loop: loop}
@@ -276,10 +280,12 @@ type fakeIntroLoop struct {
 	loopStart time.Duration
 	stopped   bool
 	pan       float64
+	volume    float64
 }
 
-func (f *fakeIntroLoop) Stop()            { f.stopped = true }
-func (f *fakeIntroLoop) SetPan(p float64) { f.pan = p }
+func (f *fakeIntroLoop) Stop()               { f.stopped = true }
+func (f *fakeIntroLoop) SetPan(p float64)    { f.pan = p }
+func (f *fakeIntroLoop) SetVolume(v float64) { f.volume = v }
 
 func (f *introLoopFakeBackend) PlaySfxHeldMemIntroLoop(wav []byte, loopStart time.Duration, _, _ float64) (SfxHandle, error) {
 	h := &fakeIntroLoop{wav: append([]byte(nil), wav...), loopStart: loopStart}
@@ -414,6 +420,59 @@ func TestManagerSetSfxHeldPan(t *testing.T) {
 	// An unknown or zero id must not panic.
 	m.SetSfxHeldPan(id+1234, 1.0)
 	m.SetSfxHeldPan(0, 1.0)
+}
+
+// TestManagerPositionalSfxVolume checks the positional fade on top of the SFX group volume: a one shot
+// positional play and a live held sound both land at group volume x volScale.
+func TestManagerPositionalSfxVolume(t *testing.T) {
+	dir := testutil.DataDir(t)
+	lib, err := resfile.OpenDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { lib.Close() })
+
+	cfg := enabledCfg()
+	cfg.SfxVolume = 50
+	be := &heldFakeBackend{}
+	m := New(be, lib, dir, cfg)
+	group := vol(cfg.SfxVolume)
+
+	m.PlaySfxPositional("MBUTT0", "", 0.25, 0.5)
+	if len(be.sfxVols) != 1 || be.sfxVols[0] != group*0.5 {
+		t.Errorf("one shot volume = %v, want %v", be.sfxVols, group*0.5)
+	}
+
+	id := m.PlaySfxHeld("MBUTT0", "", 0, 1.0, true)
+	if id == 0 || len(be.held) != 1 {
+		t.Fatalf("held sound not started: id=%d held=%d", id, len(be.held))
+	}
+	m.SetSfxHeldVolume(id, 0.25)
+	if be.held[0].volume != group*0.25 {
+		t.Errorf("held volume = %v, want %v", be.held[0].volume, group*0.25)
+	}
+	m.SetSfxHeldVolume(id+99, 1) // an unknown id does nothing
+	m.SetSfxHeldVolume(0, 1)
+}
+
+// TestIntroLoopHandleKeepsVolume checks that a fade set during the intro voice carries over to the loop voice.
+func TestIntroLoopHandleKeepsVolume(t *testing.T) {
+	intro, loop := &fakeSfxHandle{volume: 1}, &fakeSfxHandle{volume: 1}
+	h := &introLoopHandle{current: intro}
+	h.SetVolume(0.3)
+	if intro.volume != 0.3 {
+		t.Errorf("intro voice volume = %v, want 0.3", intro.volume)
+	}
+	h.swap(loop)
+	if loop.volume != 0.3 {
+		t.Errorf("loop voice volume after the swap = %v, want 0.3", loop.volume)
+	}
+
+	untouched := &fakeSfxHandle{volume: 1}
+	(&introLoopHandle{current: &fakeSfxHandle{}}).swap(untouched)
+	if untouched.volume != 1 {
+		t.Errorf("a never faded handle changed the loop voice volume to %v", untouched.volume)
+	}
 }
 
 func TestManagerSfxIntroThenLoop(t *testing.T) {

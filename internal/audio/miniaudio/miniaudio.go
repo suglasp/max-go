@@ -262,6 +262,16 @@ func (h *heldSound) SetPan(pan float64) {
 	}
 }
 
+// SetVolume fades the held sound while it plays. Does nothing once it has stopped.
+func (h *heldSound) SetVolume(volume float64) {
+	h.b.mu.Lock()
+	defer h.b.mu.Unlock()
+
+	if h.snd != nil {
+		h.snd.SetVolume(clampVolume(volume))
+	}
+}
+
 // Stop ends the sound and releases it (idempotent).
 func (h *heldSound) Stop() {
 	h.b.mu.Lock()

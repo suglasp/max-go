@@ -108,6 +108,8 @@ type introLoopHandle struct {
 	timer   sfxTimer
 	stopped bool
 	pan     float64 // last requested pan, applied again to the loop voice on swap
+	volume  float64 // last requested volume, applied again to the loop voice on swap
+	faded   bool    // volume was set at least once (the loop voice otherwise keeps its start volume)
 }
 
 func (h *introLoopHandle) Stop() {
@@ -138,6 +140,17 @@ func (h *introLoopHandle) SetPan(pan float64) {
 	}
 }
 
+// SetVolume fades the live voice and remembers the value so the swap from the
+// intro voice to the loop voice applies it again.
+func (h *introLoopHandle) SetVolume(volume float64) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.volume, h.faded = volume, true
+	if h.current != nil {
+		h.current.SetVolume(volume)
+	}
+}
+
 func (h *introLoopHandle) swap(next SfxHandle) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -150,5 +163,8 @@ func (h *introLoopHandle) swap(next SfxHandle) {
 	}
 	h.current = next
 	h.current.SetPan(h.pan) // carry the latest pan over to the new loop voice
+	if h.faded {
+		h.current.SetVolume(h.volume) // and the latest positional fade
+	}
 	h.timer = nil
 }

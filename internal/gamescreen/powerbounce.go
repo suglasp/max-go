@@ -44,7 +44,8 @@ func (s *Screen) beginPowerBounce(u *game.UnitInfo, short economy.Shortage) {
 		return
 	}
 
-	s.sound.powerBounceSfx = s.sound.sfxHeldStartFn(tag, units.SfxDefaultTag(game.SfxPowerStart), s.unitPan(u), 1.0, false)
+	pan, volScale := s.unitSfxPosition(u)
+	s.sound.powerBounceSfx = s.sound.sfxHeldStartFn(tag, units.SfxDefaultTag(game.SfxPowerStart), pan, volScale, false)
 }
 
 // tickPowerBounce, called once per idle frame, cuts the rev up after powerBounceMS,

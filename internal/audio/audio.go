@@ -74,11 +74,12 @@ type IntroLoopSfxBackend interface {
 	PlaySfxHeldMemIntroLoop(introLoopWAV []byte, loopStart time.Duration, volume, pan float64) (SfxHandle, error)
 }
 
-// SfxHandle is a playing sound effect that can be stopped before it ends and
-// moved to a new position in the stereo field while it plays.
+// SfxHandle is a playing sound effect that can be stopped before it ends, and
+// moved in the stereo field and faded while it plays (its unit or the view moved).
 type SfxHandle interface {
-	Stop()              // Stop ends the sound and releases it.
-	SetPan(pan float64) // SetPan moves a held sound in stereo, pan -1 (left) .. +1 (right).
+	Stop()                    // Stop ends the sound and releases it.
+	SetPan(pan float64)       // SetPan moves a held sound in stereo, pan -1 (left) .. +1 (right).
+	SetVolume(volume float64) // SetVolume sets a held sound's final volume, 0..1.
 }
 
 // noopHandle is the SfxHandle returned for a fallback single play on a backend
@@ -92,6 +93,10 @@ func (noopHandle) Stop() {
 
 func (noopHandle) SetPan(float64) {
 	// SetPan does nothing because a fallback clip cannot be panned after it starts.
+}
+
+func (noopHandle) SetVolume(float64) {
+	// SetVolume does nothing because a fallback clip cannot be faded after it starts.
 }
 
 // PCMFormat describes decoded signed 16-bit PCM streamed by the movie player.
@@ -332,6 +337,15 @@ func (m *Manager) PlaySfxPanned(tag string, pan float64) {
 //
 // C++ ported : sound_manager.cpp - SoundManager::PlaySfx with the resolved SoundEffectInfo.
 func (m *Manager) PlaySfxPannedFallback(primary, fallback string, pan float64) {
+	m.PlaySfxPositional(primary, fallback, pan, 1)
+}
+
+// PlaySfxPositional is PlaySfxPannedFallback with a volume factor on top of the
+// SFX group volume: the positional fade of a unit's sound (its distance from the
+// view centre and the zoom).
+//
+// C++ ported : sound_manager.cpp - SoundManager::PlaySfx (volume_1 = volume_2 * attenuation)
+func (m *Manager) PlaySfxPositional(primary, fallback string, pan, volScale float64) {
 	if !m.cfg.SfxEnabled || m.cfg.SfxVolume == 0 {
 		return
 	}
@@ -348,7 +362,7 @@ func (m *Manager) PlaySfxPannedFallback(primary, fallback string, pan float64) {
 			continue // not in this archive; try the fallback
 		}
 
-		if err := m.be.PlaySfx(path, vol(m.cfg.SfxVolume), pan); err != nil {
+		if err := m.be.PlaySfx(path, vol(m.cfg.SfxVolume)*volScale, pan); err != nil {
 			// A play error here is a backend/device failure (a missing or
 			// undecodable clip is caught by resolvePath above), so fail over to
 			// silence rather than erroring every later sound.
@@ -477,6 +491,21 @@ func (m *Manager) SetSfxHeldPan(id int, pan float64) {
 
 	if handle, ok := m.sfxHeld[id]; ok {
 		handle.SetPan(pan)
+	}
+}
+
+// SetSfxHeldVolume fades the live held sound with the given handle id to the SFX
+// group volume times volScale, the same product PlaySfxHeld starts it with. A 0 or
+// unknown id does nothing.
+//
+// C++ ported : sound_manager.cpp - SoundManager::UpdateSfxPosition (ma_sound_set_volume)
+func (m *Manager) SetSfxHeldVolume(id int, volScale float64) {
+	if id == 0 {
+		return
+	}
+
+	if handle, ok := m.sfxHeld[id]; ok {
+		handle.SetVolume(vol(m.cfg.SfxVolume) * volScale)
 	}
 }
 

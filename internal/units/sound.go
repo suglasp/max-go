@@ -565,11 +565,9 @@ func SfxDefaultTag(sfx game.SfxType) string {
 	return sfxDefaults[sfx]
 }
 
+/* // note: unused code in Go port
 // SfxPan maps a unit's on screen pixel X in a viewW wide map view to a stereo
-// pan in [-1, 1] (0 center). Equivalent to the C++ grid distance formula at the
-// default zoom. Returns 0 when viewW <= 0.
-//
-// C++ ported : sound_manager.cpp - SoundManager::GetPanning.
+// pan in [-1, 1] (0 center). Replaced by SfxPosition (klei's grid model) in step 1446.
 func SfxPan(unitScreenX, viewW int) float64 {
 	if viewW <= 0 {
 		return 0
@@ -583,4 +581,49 @@ func SfxPan(unitScreenX, viewW int) float64 {
 		pan = 1
 	}
 	return pan
+}
+*/
+
+// Positional sound constants, in grid cells (klei sound_manager.cpp).
+const (
+	sfxPanRange         = 28  // offset from the view centre at which the pan stops widening
+	sfxPanDivisor       = 56  // pan = offset / 56, so at most +/-0.5
+	sfxAttenuationRange = 112 // SOUND_MANAGER_ATTENUATION_RANGE: silent this far from the view centre
+	sfxZoomFull         = 32  // at or above this zoom (px per cell) there is no zoom fade
+	sfxZoomMin          = 4   // the smallest zoom, where the zoom fade halves the volume
+)
+
+// SfxPosition returns the stereo pan (-0.5 left .. +0.5 right) and the volume factor (0..1) of a sound whose
+// unit sits dx, dy cells from the view centre at the given zoom (px per cell). The pan widens up to 28 cells
+// off centre; the volume fades over a fixed 112 cells and drops to half when zoomed all the way out.
+// reversed swaps left and right (settings channels_reversed).
+//
+// C++ ported : sound_manager.cpp - SoundManager::GetPanning / GetDistanceAttenuation / GetZoomAttenuation
+func SfxPosition(dx, dy, zoom int, reversed bool) (pan, volScale float64) {
+	distX, distY := dx, dy
+	if distX < 0 {
+		distX = -distX
+	}
+	if distY < 0 {
+		distY = -distY
+	}
+
+	panDist := min(distX, sfxPanRange)
+	if dx < 0 {
+		panDist = -panDist
+	}
+	pan = float64(panDist) / sfxPanDivisor
+	if reversed {
+		pan = -pan
+	}
+
+	dist := min(max(distX, distY), sfxAttenuationRange)
+	volScale = 1 - float64(dist)/sfxAttenuationRange
+
+	if zoom < sfxZoomFull {
+		zoom = max(zoom, sfxZoomMin)
+		volScale *= 0.5 + 0.5*float64(zoom-sfxZoomMin)/float64(sfxZoomFull-sfxZoomMin)
+	}
+
+	return pan, volScale
 }

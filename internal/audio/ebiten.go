@@ -412,6 +412,18 @@ func (h *ebitenSfxHandle) SetPan(pan float64) {
 	}
 }
 
+// SetVolume fades the held sound while it plays (its unit or the view moved).
+func (h *ebitenSfxHandle) SetVolume(volume float64) {
+	h.b.mu.Lock()
+	defer h.b.mu.Unlock()
+	if h.player == nil {
+		return
+	}
+	if _, live := h.b.sfxHeld[h.player]; live {
+		h.player.SetVolume(volume)
+	}
+}
+
 // Stop ends the sound and releases its player (idempotent).
 func (h *ebitenSfxHandle) Stop() {
 	h.b.mu.Lock()
