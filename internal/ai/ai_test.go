@@ -2254,19 +2254,27 @@ func TestContinentCloseProximityAndIsolated(t *testing.T) {
 }
 
 // TestScoreStrategiesSingleContinent checks the table for one viable big mass that
-// everyone shares. The single mass path sets the tank horde flag, which suppresses
-// the scout/defensive reassignment; at Expert+ the tank score is then overwritten
-// with the continent count (a faithful quirk of the original's ordering: the 6/12/24
-// single mass weights only ever act as that flag). Air/Sea stay 0 (the mass is
-// neither cramped nor isolated).
+// everyone shares. The single mass path weighs the tank horde 6/12/24 by tier, which
+// also suppresses the scout/defensive reassignment; Expert+ scores espionage with the
+// continent count (klei 23/08/26: it used to overwrite the tank weight instead).
+// Air/Sea stay 0 (the mass is neither cramped nor isolated).
 func TestScoreStrategiesSingleContinent(t *testing.T) {
 	one := []continent{{filler: 3, size: 200, ulx: 0, uly: 0, lrx: 30, lry: 30}}
 	scores := scoreStrategies(one, OpponentExpert)
 	if scores[StrategyScoutHorde] != 0 {
 		t.Errorf("single-mass ScoutHorde = %d, want 0 (suppressed by the single-mass tank flag)", scores[StrategyScoutHorde])
 	}
-	if scores[StrategyTankHorde] != 1 {
-		t.Errorf("single-mass Expert tank horde = %d, want 1 (count, post-overwrite)", scores[StrategyTankHorde])
+	if scores[StrategyTankHorde] != 6 {
+		t.Errorf("single-mass Expert tank horde = %d, want 6 (the single mass weight survives)", scores[StrategyTankHorde])
+	}
+	if scores[StrategyEspionage] != 1 {
+		t.Errorf("single-mass Expert espionage = %d, want 1 (continent count)", scores[StrategyEspionage])
+	}
+	if scores[StrategyCombinedArms] != 2 { // (count 1 - close 0) * 2
+		t.Errorf("single-mass CombinedArms = %d, want 2", scores[StrategyCombinedArms])
+	}
+	if got := scoreStrategies(one, OpponentAverage)[StrategyEspionage]; got != 0 {
+		t.Errorf("Average espionage = %d, want 0 (Expert and up only)", got)
 	}
 	if scores[StrategyAir] != 0 || scores[StrategySea] != 0 {
 		t.Errorf("big single mass Air=%d Sea=%d, want both 0 (not close/isolated)", scores[StrategyAir], scores[StrategySea])
@@ -2290,6 +2298,20 @@ func TestScoreStrategiesArchipelago(t *testing.T) {
 	}
 	if scores[StrategyFastAttack] != 0 { // count(3) - close(3)
 		t.Errorf("all-close archipelago FastAttack = %d, want 0", scores[StrategyFastAttack])
+	}
+	if scores[StrategyCombinedArms] != 0 { // (count 3 - close 3) * 2; klei 23/08/26 (was count + close = 12)
+		t.Errorf("all-close archipelago CombinedArms = %d, want 0", scores[StrategyCombinedArms])
+	}
+}
+
+// TestContinentCloseProximityUsesDoubleRange checks klei's 23/08/26 range: a landmass counts as close
+// proximity while both bounding box sides fit in twice proximity_range (28), not once (14).
+func TestContinentCloseProximityUsesDoubleRange(t *testing.T) {
+	if !continentCloseProximity(continent{ulx: 0, uly: 0, lrx: 2 * proximityRange, lry: 20}) {
+		t.Error("a 28x20 landmass is not close proximity, want true (twice the range)")
+	}
+	if continentCloseProximity(continent{ulx: 0, uly: 0, lrx: 2*proximityRange + 1, lry: 20}) {
+		t.Error("a 29x20 landmass is close proximity, want false")
 	}
 }
 

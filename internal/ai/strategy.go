@@ -188,10 +188,12 @@ func continentViable(label []int, w, h int, c continent) bool {
 }
 
 // continentCloseProximity reports whether the landmass is small/cramped enough that
-// teams on it sit on top of each other (favours air and combined arms). C++:
-// Continent::IsCloseProximity (continent.cpp).
+// teams on it sit on top of each other (favours air). Both bounding box sides must fit
+// in twice the proximity range.
+//
+// C++ ported : continent.cpp - Continent::IsCloseProximity (klei 23/08/26: proximity_range * 2)
 func continentCloseProximity(c continent) bool {
-	return (c.lrx-c.ulx) <= proximityRange && (c.lry-c.uly) <= proximityRange
+	return (c.lrx-c.ulx) <= proximityRange*2 && (c.lry-c.uly) <= proximityRange*2
 }
 
 // continentIsolated reports whether a close proximity landmass is cut off by water
@@ -267,7 +269,7 @@ func continentIsolated(label []int, w, h int, c continent) bool {
 // scaled by the opponent difficulty tier. A faithful port of aiplayer.cpp:
 // one viable big mass biases a tank horde (more so at higher tiers); many masses
 // bias missiles/defensive; cramped masses bias air/combined; isolated masses bias
-// sea/scout. Espionage is never scored (the original leaves it for an explicit menu choice).
+// sea/scout; Expert and up also score espionage.
 func scoreStrategies(continents []continent, tier int) [strategyCount]int {
 	var scores [strategyCount]int
 
@@ -347,13 +349,16 @@ func scoreStrategies(continents []continent, tier int) [strategyCount]int {
 
 	scores[StrategyAir] = closeCount * 2
 
+	// Expert and up weigh espionage by the continent count; the single mass tank horde weight above stays.
+	// C++ ported : aiplayer.cpp - AiPlayer::SelectStrategy (klei 23/08/26: ESPIONAGE, was a TANK_HORDE overwrite)
 	if tier >= OpponentExpert {
-		scores[StrategyTankHorde] = count
+		scores[StrategyEspionage] = count
 	}
 
 	scores[StrategySea] = isolatedCount * 2
 	scores[StrategyFastAttack] = count - closeCount
-	scores[StrategyCombinedArms] = (count + closeCount) * 2
+	// C++ ported : aiplayer.cpp - AiPlayer::SelectStrategy (klei 23/08/26: count - close, was count + close)
+	scores[StrategyCombinedArms] = (count - closeCount) * 2
 
 	return scores
 }
