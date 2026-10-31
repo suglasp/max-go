@@ -117,7 +117,7 @@ func CanTarget(attacker, target *game.UnitInfo, surf SurfaceSource) bool {
 
 // InRange reports whether (gx, gy) is within attacker's attack range. The test
 // is the same circular pixel test as scan range: (range*64)^2 >= dx^2+dy^2.
-// This check does not apply the original naval line of sight refinement.
+// WithinAttackRange adds the naval line of fire on top.
 //
 // C++: Access_IsWithinAttackRange (access.cpp), circular distance part.
 func InRange(attacker *game.UnitInfo, gx, gy, attackRange int) bool {
@@ -125,6 +125,54 @@ func InRange(attacker *game.UnitInfo, gx, gy, attackRange int) bool {
 	dx := (gx - attacker.GridX) * tileSize
 	dy := (gy - attacker.GridY) * tileSize
 	return dx*dx+dy*dy <= area
+}
+
+// WithinAttackRange is InRange plus the naval line of fire: a Submarine or Corvette fires only when every
+// cell between it and the target is water or coast. A nil surface skips the line, as in CanTarget.
+//
+// C++ ported : access.cpp - Access_IsWithinAttackRange
+func WithinAttackRange(attacker *game.UnitInfo, gx, gy, attackRange int, surf SurfaceSource) bool {
+	if !InRange(attacker, gx, gy, attackRange) {
+		return false
+	}
+	if (attacker.Type != assets.Submarne && attacker.Type != assets.Corvette) || surf == nil {
+		return true
+	}
+	return navalLineClear(attacker, gx, gy, surf)
+}
+
+// navalLineClear walks from the attacker's pixel position toward (gx, gy) one cell per step (16.16 fixed
+// point) and reports whether every cell strictly between the two is water or coast. The step count is the
+// longer axis in cells (klei 23/08/26 fixed it to `/ 64`, it was `* 64`).
+//
+// C++ ported : access.cpp - Access_IsWithinAttackRange (naval part)
+func navalLineClear(attacker *game.UnitInfo, gx, gy int, surf SurfaceSource) bool {
+	dx := (gx - attacker.GridX) * tileSize
+	dy := (gy - attacker.GridY) * tileSize
+	steps := max(abs(dx), abs(dy)) / tileSize
+	if steps <= 0 {
+		return true
+	}
+	stepX := (dx << 16) / steps
+	stepY := (dy << 16) / steps
+	x := stepX + attacker.X<<16
+	y := stepY + attacker.Y<<16
+	for steps--; steps > 0; steps-- {
+		s := surf.SurfaceAt((x>>16)/tileSize, (y>>16)/tileSize)
+		if s != world.SurfaceWater && s != world.SurfaceCoast {
+			return false
+		}
+		x += stepX
+		y += stepY
+	}
+	return true
+}
+
+func abs(n int) int {
+	if n < 0 {
+		return -n
+	}
+	return n
 }
 
 // Damage computes the hit point loss attacker inflicts on target for one shot.
@@ -225,5 +273,5 @@ func CanAttackForce(attacker, target *game.UnitInfo, surf SurfaceSource, force b
 		return false
 	}
 	return CanTarget(attacker, target, surf) &&
-		InRange(attacker, target.GridX, target.GridY, attacker.Values.Get(game.AttribRange))
+		WithinAttackRange(attacker, target.GridX, target.GridY, attacker.Values.Get(game.AttribRange), surf)
 }

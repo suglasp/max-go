@@ -147,9 +147,9 @@ func (g *Game) CanFarTarget(attacker *game.UnitInfo, cx, cy int) bool {
 	if target == nil || !combat.CanTarget(attacker, target, g.Grid.Surf) {
 		return false
 	}
-	// A far target is a valid enemy out of current weapon range; in range it is the
-	// normal CURSOR_ENEMY instead.
-	return !combat.InRange(attacker, target.GridX, target.GridY, attacker.Values.Get(game.AttribRange))
+	// A far target is a valid enemy out of current weapon range (for a ship also a blocked line of fire);
+	// in range it is the normal CURSOR_ENEMY instead. C++: game_manager.cpp Access_IsWithinAttackRange.
+	return !combat.WithinAttackRange(attacker, target.GridX, target.GridY, attacker.Values.Get(game.AttribRange), g.Grid.Surf)
 }
 
 // CanTargetUnit reports whether attacker's weapon may fire on target by type and

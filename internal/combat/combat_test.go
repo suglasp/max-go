@@ -216,3 +216,67 @@ func TestResetCombatRefillsShots(t *testing.T) {
 		t.Errorf("shots = %d, want 3 (full rounds)", u.Shots)
 	}
 }
+
+// landAt is a water map with land on the listed cells, for the naval line of fire tests.
+type landAt map[[2]int]bool
+
+func (m landAt) SurfaceAt(x, y int) uint8 {
+	if m[[2]int{x, y}] {
+		return world.SurfaceLand
+	}
+	return world.SurfaceWater
+}
+
+// coastAt is a water map with coast on the listed cells.
+type coastAt map[[2]int]bool
+
+func (m coastAt) SurfaceAt(x, y int) uint8 {
+	if m[[2]int{x, y}] {
+		return world.SurfaceCoast
+	}
+	return world.SurfaceWater
+}
+
+// TestNavalLineOfFire checks klei 23/08/26 Access_IsWithinAttackRange: a Submarine or Corvette fires only
+// along water or coast; only the cells strictly between shooter and target count.
+func TestNavalLineOfFire(t *testing.T) {
+	for _, c := range []struct {
+		name   string
+		typ    assets.UnitType
+		from   [2]int
+		to     [2]int
+		surf   SurfaceSource
+		wanted bool
+	}{
+		{"open water", assets.Corvette, [2]int{0, 2}, [2]int{4, 2}, landAt{}, true},
+		{"island in between", assets.Corvette, [2]int{0, 2}, [2]int{4, 2}, landAt{{2, 2}: true}, false},
+		{"submarine too", assets.Submarne, [2]int{0, 2}, [2]int{4, 2}, landAt{{3, 2}: true}, false},
+		{"coast in between", assets.Corvette, [2]int{0, 2}, [2]int{4, 2}, coastAt{{2, 2}: true}, true},
+		{"own cell not walked", assets.Corvette, [2]int{0, 2}, [2]int{4, 2}, landAt{{0, 2}: true}, true},
+		{"target cell not walked", assets.Corvette, [2]int{0, 2}, [2]int{4, 2}, landAt{{4, 2}: true}, true},
+		{"adjacent", assets.Corvette, [2]int{0, 2}, [2]int{1, 2}, landAt{}, true},
+		{"diagonal blocked", assets.Corvette, [2]int{0, 0}, [2]int{3, 3}, landAt{{1, 1}: true}, false},
+		{"diagonal clear beside land", assets.Corvette, [2]int{0, 0}, [2]int{3, 3}, landAt{{1, 0}: true, {0, 1}: true}, true},
+		{"not a ship", assets.Tank, [2]int{0, 2}, [2]int{4, 2}, landAt{{2, 2}: true}, true},
+		{"out of range", assets.Corvette, [2]int{0, 2}, [2]int{6, 2}, landAt{}, false},
+		{"no surface", assets.Corvette, [2]int{0, 2}, [2]int{4, 2}, nil, true},
+	} {
+		u := combatant(c.typ, 0, 0, 0, game.FlagMobileSeaUnit|game.FlagSelectable, 12, 0, 20, 1, 5, 4)
+		u.SetPosition(c.from[0], c.from[1])
+		if got := WithinAttackRange(u, c.to[0], c.to[1], 5, c.surf); got != c.wanted {
+			t.Errorf("%s: WithinAttackRange = %v, want %v", c.name, got, c.wanted)
+		}
+	}
+
+	// CanAttack follows the line: an island between a corvette and a ship blocks the shot.
+	corv := combatant(assets.Corvette, 0, 0, 0, game.FlagMobileSeaUnit|game.FlagSelectable, 12, 0, 20, 1, 5, 4)
+	corv.SetPosition(0, 2)
+	ship := combatant(assets.Battlshp, 1, 0, 0, game.FlagMobileSeaUnit|game.FlagSelectable, 30, 5, 30, 1, 5, 4)
+	ship.SetPosition(4, 2)
+	if !CanAttack(corv, ship, landAt{}) {
+		t.Error("corvette should fire at a ship over open water")
+	}
+	if CanAttack(corv, ship, landAt{{2, 2}: true}) {
+		t.Error("corvette should not fire across an island")
+	}
+}
