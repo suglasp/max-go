@@ -393,13 +393,13 @@ func jumpToUnitBench(ctx *menus.Context, name string, noMovie bool) (bool, error
 		err = runGameScreen(ctx, 0, gameScreenSubmarine, noMovie)
 
 	case "navalfire":
-		// World 0 (SNOW_1): three player ships vs static enemy Corvettes (AI off). Land between blocks the
-		// shot; open water and a friendly ship between do not (klei 23/08/26 naval line of fire).
+		// World 0 (SNOW_1): six player ships vs static enemy Corvettes (AI off). Land between blocks the
+		// shot; open water, a friendly ship, coast, a bridge or a diagonal corner do not (H9). 40 s turns (H3).
 		err = runGameScreen(ctx, 0, gameScreenNavalFire, noMovie)
 
 	case "parkedbuild":
-		// World 0 (SNOW_1): a Constructor and an Engineer parked on the buildings they just finished. Load the
-		// Constructor with the Air Transport (its Depot unfolds), force fire the Engineer (its turret is lost).
+		// World 0 (SNOW_1): builders parked on just finished buildings (H13 load, H14 kill, H2 Sentry exit),
+		// idle builders for the Build menu descriptions (H15) and a humming Habitat (H17).
 		err = runGameScreen(ctx, 0, gameScreenParkedBuild, noMovie)
 
 	case "air":

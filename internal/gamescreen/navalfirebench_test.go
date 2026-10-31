@@ -16,8 +16,9 @@ import (
 	"github.com/suglasp/max-go/internal/world"
 )
 
-// TestNavalFireBenchLanes checks the bench finds its three lanes on SNOW_1 and each gives the wanted line of
-// fire: blocked across land, clear on open water and clear past a friendly ship (units never block).
+// TestNavalFireBenchLanes checks the bench finds its six lanes on SNOW_1 and each gives the wanted line of fire:
+// blocked across land; clear on open water, past a friendly ship or a bridge (units and bridges never block),
+// along coast, and on a diagonal that only touches land at a corner.
 func TestNavalFireBenchLanes(t *testing.T) {
 	dir := os.Getenv("MAX_DATA_DIR")
 	if dir == "" {
@@ -35,20 +36,35 @@ func TestNavalFireBenchLanes(t *testing.T) {
 	center := game.Point{X: originX + 4, Y: originY + 4}
 	taken := map[game.Point]bool{}
 
-	blocked, ok := s.findNavalLane(center, taken, true)
+	blocked, ok := s.findNavalLane(center, taken, laneLand)
 	if !ok {
 		t.Fatal("no water lane across land on SNOW_1")
 	}
-	clear, ok := s.findNavalLane(blocked.From, taken, false)
+	clear, ok := s.findNavalLane(blocked.From, taken, laneOpen)
 	if !ok {
 		t.Fatal("no open water lane on SNOW_1")
 	}
-	friendly, ok := s.findNavalLane(blocked.From, taken, false)
+	friendly, ok := s.findNavalLane(blocked.From, taken, laneOpen)
 	if !ok {
 		t.Fatal("no second open water lane on SNOW_1")
 	}
+	coast, ok := s.findNavalLane(blocked.From, taken, laneCoast)
+	if !ok {
+		t.Fatal("no lane along coast on SNOW_1")
+	}
+	bridge, ok := s.findNavalLane(blocked.From, taken, laneOpen)
+	if !ok {
+		t.Fatal("no third open water lane (bridge) on SNOW_1")
+	}
+	diagonal, ok := s.findNavalLane(blocked.From, taken, laneDiagonal)
+	if !ok {
+		t.Fatal("no diagonal lane grazing land on SNOW_1")
+	}
+	if diagonal.To.X == diagonal.From.X || diagonal.To.Y == diagonal.From.Y {
+		t.Errorf("the diagonal lane %v is not diagonal", diagonal)
+	}
 
-	t.Logf("lanes: blocked %v, clear %v, friendly %v", blocked, clear, friendly)
+	t.Logf("lanes: blocked %v, clear %v, friendly %v, coast %v, bridge %v, diagonal %v", blocked, clear, friendly, coast, bridge, diagonal)
 	for _, c := range []struct {
 		name   string
 		lane   navalLane
@@ -57,6 +73,9 @@ func TestNavalFireBenchLanes(t *testing.T) {
 		{"blocked", blocked, false},
 		{"clear", clear, true},
 		{"friendly", friendly, true},
+		{"coast", coast, true},
+		{"bridge", bridge, true},
+		{"diagonal", diagonal, true},
 	} {
 		u := game.NewUnitInfo(assets.Corvette, 0, 0, 0)
 		u.SetPosition(c.lane.From.X, c.lane.From.Y)

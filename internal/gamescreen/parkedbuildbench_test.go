@@ -22,22 +22,50 @@ func benchUnit(s *Screen, t assets.UnitType) *game.UnitInfo {
 	return nil
 }
 
-// TestParkedBuildBench runs the -emulate parkedbuild bench end to end: both builders start parked on their
-// still hidden buildings, loading the Constructor unfolds its Depot (H13) and killing the Engineer loses
-// its Gun Turret with no slab left (H14).
+// parkedOn returns the parked builder whose hidden building is of type t, with that building, or nils.
+func parkedOn(s *Screen, t assets.UnitType) (*game.UnitInfo, *game.UnitInfo) {
+	for _, b := range s.game.BuildReadyUnits(0) {
+		if br := s.game.BuildReadyInfo(b); br != nil && br.Building != nil && br.Building.Type == t {
+			return b, br.Building
+		}
+	}
+	return nil, nil
+}
+
+// TestParkedBuildBench runs the -emulate parkedbuild bench end to end: four builders start parked on their still
+// hidden buildings (H13, H14, H2), the idle builders (H15) and the running Habitat (H17) are there, loading the
+// Depot's Constructor unfolds the Depot (H13) and killing the Gun Turret's Engineer loses the turret (H14).
 func TestParkedBuildBench(t *testing.T) {
 	s, g := newClickScreen(t)
 	s.DeployParkedBuildBench()
 
-	constructor, engineer := benchUnit(s, assets.Constrct), benchUnit(s, assets.Engineer)
-	air := benchUnit(s, assets.AirTrans)
-	if constructor == nil || engineer == nil || air == nil {
-		t.Fatal("the bench did not deploy its Constructor, Engineer and Air Transport")
+	if n := len(g.BuildReadyUnits(0)); n != 4 {
+		t.Fatalf("%d parked builders, want 4 (H13, H14 and the H2 pair)", n)
 	}
-	depot := g.BuildReadyInfo(constructor)
-	turret := g.BuildReadyInfo(engineer)
-	if depot == nil || turret == nil || !depot.Building.HiddenUntilExpand || !turret.Building.HiddenUntilExpand {
-		t.Fatal("both builders must start parked on a hidden, finished building")
+	constructor, depot := parkedOn(s, assets.Depot)
+	engineer, site := parkedOn(s, assets.GunTurrt)
+	if _, plant := parkedOn(s, assets.LightPlt); plant == nil || !plant.HiddenUntilExpand {
+		t.Error("the H2 Constructor is not parked on a hidden Light Vehicle Plant")
+	}
+	if _, antiAir := parkedOn(s, assets.AntiAir); antiAir == nil || !antiAir.HiddenUntilExpand {
+		t.Error("the H2 Engineer is not parked on a hidden Anti Aircraft gun")
+	}
+	air := benchUnit(s, assets.AirTrans)
+	if constructor == nil || engineer == nil || air == nil || !depot.HiddenUntilExpand || !site.HiddenUntilExpand {
+		t.Fatal("the H13 / H14 builders must start parked on a hidden, finished building, with the Air Transport")
+	}
+
+	idle := 0
+	for _, u := range g.Units.Units() {
+		if (u.Type == assets.Constrct || u.Type == assets.Engineer) && !g.IsBuildReady(u) {
+			idle++
+		}
+	}
+	if idle != 2 {
+		t.Errorf("%d idle builders for the H15 menus, want 2", idle)
+	}
+	if habitat := benchUnit(s, assets.Habitat); habitat == nil || habitat.Order != game.OrderPowerOn {
+		t.Error("the H17 Habitat is missing or not running")
 	}
 
 	// H13: the Air Transport loads the Constructor; the Depot unfolds at once.
@@ -47,12 +75,11 @@ func TestParkedBuildBench(t *testing.T) {
 	if !g.LoadUnit(air, constructor) {
 		t.Fatal("the Air Transport refused the parked Constructor")
 	}
-	if depot.Building.HiddenUntilExpand || g.IsBuildReady(constructor) || constructor.Building {
+	if depot.HiddenUntilExpand || g.IsBuildReady(constructor) || constructor.Building {
 		t.Error("loading the Constructor did not release its Depot and end its build pose")
 	}
 
 	// H14: the Engineer dies parked; its Gun Turret goes with it, no slab left on the site.
-	site := turret.Building
 	siteX, siteY := site.GridX, site.GridY
 	g.DestroyUnit(engineer)
 	if g.Units.ByID.Get(site.ID) != nil {
