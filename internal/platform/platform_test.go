@@ -261,3 +261,21 @@ func TestBrightnessCycle(t *testing.T) {
 		t.Fatalf("cycle from 5 -> %d, want 1", m)
 	}
 }
+
+func TestQuantizeWheel(t *testing.T) {
+	// Trackpad fractions add up across polls instead of truncating to zero; the sign is kept.
+	var remainder float64
+	got := 0
+	for range 4 {
+		got += quantizeWheel(0.25, &remainder)
+	}
+	if got != 1 || remainder != 0 {
+		t.Errorf("four quarter notches = %d (remainder %v), want 1 (0)", got, remainder)
+	}
+	if n := quantizeWheel(-2.5, &remainder); n != -2 || remainder != -0.5 {
+		t.Errorf("-2.5 = %d (remainder %v), want -2 (-0.5)", n, remainder)
+	}
+	if n := quantizeWheel(-0.5, &remainder); n != -1 || remainder != 0 {
+		t.Errorf("-0.5 after -0.5 = %d (remainder %v), want -1 (0)", n, remainder)
+	}
+}

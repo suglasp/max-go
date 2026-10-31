@@ -125,7 +125,8 @@ type Platform struct {
 	prevRight   bool
 	prevClosing bool // Previous window-close state for edge detection.
 
-	wheelAccum int // Wheel delta drained by ConsumeWheelY.
+	wheelAccum     int     // Wheel delta drained by ConsumeWheelY.
+	wheelRemainder float64 // Fraction of a notch carried to the next poll (trackpads).
 
 	frameHook func(*Platform) error
 	overlay   func(*ebiten.Image) // Drawn over the frame.
@@ -346,6 +347,16 @@ func (p *Platform) Mouse() MouseState {
 	return p.mouse
 }
 
+// quantizeWheel adds a wheel delta to the carried remainder and returns the whole notches, so trackpad fractions add up instead of truncating to zero.
+//
+// C++ ported : mouse.c - mouse_quantize_wheel_axis
+func quantizeWheel(delta float64, remainder *float64) int {
+	*remainder += delta
+	notches := int(*remainder)
+	*remainder -= float64(notches)
+	return notches
+}
+
 // ConsumeWheelY returns the accumulated vertical scroll wheel delta since the
 // last call and resets the accumulator, so each notch is acted on exactly
 // once regardless of the relative rates of the logic loop and the input poll.
@@ -474,7 +485,7 @@ func (p *Platform) pollMouse() {
 	p.prevRight = right
 
 	p.mu.Lock()
-	p.wheelAccum += int(wy)
+	p.wheelAccum += quantizeWheel(wy, &p.wheelRemainder)
 	p.mouse = MouseState{X: x, Y: y, Buttons: buttons, WheelX: int(wx), WheelY: int(wy)}
 	p.mu.Unlock()
 }

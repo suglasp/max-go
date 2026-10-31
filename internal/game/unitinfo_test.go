@@ -133,6 +133,24 @@ func TestTargetAngle(t *testing.T) {
 	}
 }
 
+func TestFiringAngle(t *testing.T) {
+	// Sixteen headings, 0=N clockwise; an axis needs a 4:1 ratio (klei 23/08/26), so 4:1 itself takes the in between frame.
+	for _, c := range []struct {
+		dx, dy int
+		want   int
+	}{
+		{0, -5, 0}, {5, 0, 4}, {0, 5, 8}, {-5, 0, 12}, {0, 0, 0},
+		{3, -3, 2}, {3, 3, 6}, {-3, 3, 10}, {-3, -3, 14},
+		{1, -4, 1}, {4, -1, 3}, {4, 1, 5}, {1, 4, 7}, // the 2:1 rule gave 0, 4, 4, 8
+		{-1, 4, 9}, {-4, 1, 11}, {-4, -1, 13}, {-1, -4, 15}, // the 2:1 rule gave 8, 12, 12, 0
+		{12, -2, 4}, {2, 12, 8}, {-12, 2, 12}, {-2, -12, 0}, // past 4:1 snaps to the axis
+	} {
+		if got := FiringAngle(c.dx, c.dy); got != c.want {
+			t.Errorf("FiringAngle(%d,%d) = %d, want %d", c.dx, c.dy, got, c.want)
+		}
+	}
+}
+
 func TestAimTurret(t *testing.T) {
 	// A turreted unit rotates only its turret; the body keeps its facing.
 	turreted := NewUnitInfo(0, 0, 1, 0)

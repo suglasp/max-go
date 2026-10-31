@@ -324,6 +324,7 @@ func (u *UnitInfo) TurnToward(target uint8) bool {
 }
 
 // FiringAngle returns the 16-step clockwise firing direction toward an offset. Missile sprites use the same 16-frame heading.
+// An axis needs a 4:1 ratio (klei 23/08/26, was 2:1), so shallow angles take the in between frames.
 // C++ ported : units_manager.cpp - UnitsManager_GetFiringAngle
 func FiringAngle(dx, dy int) int {
 	lx, ly := iabs(dx), iabs(dy)
@@ -331,9 +332,9 @@ func FiringAngle(dx, dy int) int {
 		switch {
 		case dx >= 0 && dy >= 0: // south east
 			switch {
-			case ly/2 > lx || lx == 0:
+			case ly/4 > lx || lx == 0:
 				return 8
-			case lx/2 > ly || ly == 0:
+			case lx/4 > ly || ly == 0:
 				return 4
 			case ly/2 >= lx:
 				return 7
@@ -344,9 +345,9 @@ func FiringAngle(dx, dy int) int {
 			}
 		case dx > 0: // north east (dy < 0)
 			switch {
-			case ly/2 > lx || lx == 0:
+			case ly/4 > lx || lx == 0:
 				return 0
-			case lx/2 > ly || ly == 0:
+			case lx/4 > ly || ly == 0:
 				return 4
 			case ly/2 >= lx:
 				return 1
@@ -357,9 +358,9 @@ func FiringAngle(dx, dy int) int {
 			}
 		default: // south west (dx < 0, dy > 0)
 			switch {
-			case ly/2 > lx || lx == 0:
+			case ly/4 > lx || lx == 0:
 				return 8
-			case lx/2 > ly || ly == 0:
+			case lx/4 > ly || ly == 0:
 				return 12
 			case ly/2 >= lx:
 				return 9
@@ -372,9 +373,9 @@ func FiringAngle(dx, dy int) int {
 	}
 	// north west quadrant (dx <= 0, dy <= 0; includes the zero offset)
 	switch {
-	case ly/2 > lx || lx == 0:
+	case ly/4 > lx || lx == 0:
 		return 0
-	case lx/2 > ly || ly == 0:
+	case lx/4 > ly || ly == 0:
 		return 12
 	case ly/2 >= lx:
 		return 15
