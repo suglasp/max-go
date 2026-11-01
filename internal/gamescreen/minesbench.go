@@ -45,7 +45,7 @@ func (s *Screen) DeployMinesBench() {
 	s.deployUnit(assets.Tank, mobile|game.FlagTurretSprite, enemy, 6, originX+1, originY+4)
 	s.deployUnit(assets.Tank, mobile|game.FlagTurretSprite, enemy, 6, originX+7, originY+4)
 
-	s.game.State.Teams[enemy].Type = game.TeamPlayer
+	s.freezeBenchTeam(enemy)
 	s.game.State.ActiveTeam = player
 	s.game.State.PlayerTeam = player
 

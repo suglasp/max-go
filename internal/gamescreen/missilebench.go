@@ -85,7 +85,7 @@ func (s *Screen) DeployMissileBench() {
 	// skipped on a landlocked map).
 	s.deployMissileSea(player, enemy, cx, cy)
 
-	s.game.State.Teams[enemy].Type = game.TeamPlayer // LOCK the AI: enemies are static targets
+	s.freezeBenchTeam(enemy) // LOCK the AI: enemies are static targets
 	s.game.State.ActiveTeam = player
 	s.game.State.PlayerTeam = player
 

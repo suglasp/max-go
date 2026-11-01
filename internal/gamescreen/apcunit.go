@@ -81,7 +81,7 @@ func (s *Screen) DeployAPCs() {
 
 	// Team 1 is a live opponent so the enemy tank is a valid attack target and
 	// the turn loop has two sides to hand over between.
-	s.game.State.Teams[enemy].Type = game.TeamPlayer
+	s.freezeBenchTeam(enemy)
 	s.game.State.ActiveTeam = player
 	s.game.State.PlayerTeam = player
 

@@ -89,7 +89,7 @@ func (s *Screen) DeployHeadRotateBench() {
 	}
 
 	// Keep the opposing side inert; this bench is for manual attack clicks, not AI turns.
-	s.game.State.Teams[enemy].Type = game.TeamPlayer
+	s.freezeBenchTeam(enemy)
 	s.game.State.ActiveTeam = player
 	s.game.State.PlayerTeam = player
 	s.fogShow = false

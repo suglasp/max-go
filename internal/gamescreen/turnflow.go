@@ -161,6 +161,23 @@ func (s *Screen) beginNextTeam() {
 	}
 
 	next := s.game.State.ActiveTeam
+
+	// A bench's frozen enemy (locked still as a human team) passes its turn at once: its turn start and end
+	// still run, but there is no hot seat banner and no turn to play, so End Turn comes straight back.
+	// C++: n/a (debug benches).
+	if s.benchFrozen(next) {
+		s.game.BeginTeamTurn(next)
+		dbg.Printf("turn %d : %s passes (frozen bench team)", s.game.State.TurnCounter, s.teamName(next))
+
+		if !s.finishActiveTurn() {
+			return // game over
+		}
+
+		s.beginNextTeam()
+
+		return
+	}
+
 	before := s.selectableIDs(next)   // diff against the units this team's turn start construction adds
 	goldBefore := s.teamCredits(next) // detect a first gold refine across this turn's economy
 	s.buyAITurnUpgrades(next)         // a computer team spends its banked refinery gold before it plans
@@ -467,12 +484,13 @@ func (s *Screen) runStallWatchdog(done <-chan struct{}) {
 }
 
 // soleHuman reports whether exactly one team is human controlled (a single player
-// skirmish); the hot seat banner is only meaningful with two or more humans.
+// skirmish); the hot seat banner is only meaningful with two or more humans. A
+// bench's frozen enemy plays as a human but never takes a turn, so it does not count.
 func (s *Screen) soleHuman() bool {
 	humans := 0
 
 	for i := 0; i < game.TeamCount; i++ {
-		if s.game.State.Teams[i].Type == game.TeamPlayer {
+		if s.game.State.Teams[i].Type == game.TeamPlayer && !s.benchFrozen(i) {
 			humans++
 		}
 	}
@@ -504,7 +522,7 @@ func (s *Screen) finishActiveTurn() bool {
 	// End Turn always makes a sound.
 	s.teamEndedTurnVoice(active)
 
-	if s.game.State.Teams[active].Type == game.TeamPlayer {
+	if s.game.State.Teams[active].Type == game.TeamPlayer && !s.benchFrozen(active) {
 		s.maybeAutoSave() // Auto-Save: silent save at the player's end of turn
 	}
 

@@ -118,3 +118,59 @@ func TestBenchBannerReturnsAfterAlert(t *testing.T) {
 		t.Errorf("the bench banner came back twice: %q", s.banner.msg)
 	}
 }
+
+// TestBenchStartPopup checks the start popup comes first: with a message dialog wired, the bench queues the
+// general guide (its name, Tab, the frozen enemy) and shows no stop banner yet; after OK it goes to stop 1.
+func TestBenchStartPopup(t *testing.T) {
+	s, g := newClickScreen(t)
+	s.hooks.messageFn = func(string) {}
+	enemy := mkUnit(g, assets.Tank, 3, 9, 9, game.FlagMobileLandUnit|game.FlagSelectable)
+	enemy.Team = 1
+	s.freezeBenchTeam(1)
+
+	a := mkUnit(g, assets.Tank, 1, 2, 2, game.FlagMobileLandUnit|game.FlagSelectable)
+	a.Hits = 10
+	s.addBenchStop(benchStop{Compass: "north", Title: "H9 BLOCKED", Text: "no shot", Cell: game.Point{X: 2, Y: 2}, Select: a})
+	s.addBenchStop(benchStop{Compass: "south", Title: "H9 COAST", Cell: game.Point{X: 12, Y: 12}})
+	s.startBench("Naval fire bench (AI off). H3: 40 s turns.")
+
+	for _, want := range []string{"test bench: Naval fire bench.", "Tab = next scenario, Shift+Tab = previous scenario", "The enemy is frozen"} {
+		if !strings.Contains(s.bench.popup, want) {
+			t.Errorf("popup %q lacks %q", s.bench.popup, want)
+		}
+	}
+	if s.banner.msg != "" || s.selected != nil {
+		t.Fatalf("stop 1 opened before the popup: banner %q", s.banner.msg)
+	}
+
+	s.openBenchStart() // the popup's OK
+	if s.selected != a || !strings.Contains(s.banner.msg, "H3: 40 s turns. Tab = next scenario") ||
+		!strings.Contains(s.banner.msg, "1/2 NORTH: H9 BLOCKED - no shot") {
+		t.Errorf("after OK: selected %v, banner %q", s.selected, s.banner.msg)
+	}
+}
+
+// TestFrozenBenchTeamPasses checks End Turn on a bench with a frozen enemy comes straight back to the player in
+// the next turn: no hot seat banner, no turn for the frozen team.
+func TestFrozenBenchTeamPasses(t *testing.T) {
+	s, g := newClickScreen(t)
+	g.State.Teams[1].Type = game.TeamComputer // a second team, then frozen like a bench does
+	enemy := mkUnit(g, assets.Tank, 2, 9, 9, game.FlagMobileLandUnit|game.FlagSelectable)
+	enemy.Team = 1
+	own := mkUnit(g, assets.Tank, 1, 2, 2, game.FlagMobileLandUnit|game.FlagSelectable)
+	own.Hits, enemy.Hits = 10, 10
+	own.Values.Set(game.AttribHits, 10)
+	enemy.Values.Set(game.AttribHits, 10)
+	s.freezeBenchTeam(1)
+	s.debugMenu.endless = true // two lone tanks: keep the win check out of the way
+
+	turn := g.State.TurnCounter
+	s.commitTurn()
+
+	if g.State.ActiveTeam != 0 || g.State.TurnCounter != turn+1 {
+		t.Errorf("after End Turn: active team %d turn %d, want team 0 in turn %d", g.State.ActiveTeam, g.State.TurnCounter, turn+1)
+	}
+	if s.turnFlow.handover != -1 {
+		t.Errorf("hot seat banner up for team %d", s.turnFlow.handover)
+	}
+}

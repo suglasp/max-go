@@ -136,7 +136,7 @@ func (s *Screen) DeployNavalFireBench() {
 		s.addBenchStop(benchStop{Compass: compass, Title: sc.title, Text: sc.text, Cell: lane.middle(), Select: u})
 	}
 
-	s.game.State.Teams[enemy].Type = game.TeamPlayer // LOCK the AI: enemies are static targets
+	s.freezeBenchTeam(enemy) // LOCK the AI: enemies are static targets
 	s.game.State.ActiveTeam = player
 	s.game.State.PlayerTeam = player
 	s.showNames = true

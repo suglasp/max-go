@@ -60,7 +60,7 @@ func (s *Screen) DeployCommandoBench() {
 
 	// Team 1 is a live opponent so its units are valid enemy targets and Return
 	// hands the turn over (watch a disabled unit recover on its turn).
-	s.game.State.Teams[enemy].Type = game.TeamPlayer
+	s.freezeBenchTeam(enemy)
 	s.game.State.ActiveTeam = player
 	s.game.State.PlayerTeam = player
 

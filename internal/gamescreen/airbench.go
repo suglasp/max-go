@@ -63,7 +63,7 @@ func (s *Screen) DeployAirBench() {
 	s.deployUnit(assets.Cnct4W, small, enemy, 0, originX+7, row)    // connector bridging storage -> mine
 	s.deployUnit(assets.MiningSt, bld2x2, enemy, 0, originX+8, row) // mining station / mine (2x2)
 
-	s.game.State.Teams[enemy].Type = game.TeamPlayer
+	s.freezeBenchTeam(enemy)
 	s.game.State.ActiveTeam = player
 	s.game.State.PlayerTeam = player
 

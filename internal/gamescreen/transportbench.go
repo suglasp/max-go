@@ -80,7 +80,7 @@ func (s *Screen) DeployTransport() {
 	ex, ey := originX+7, originY+6
 	s.deployUnit(assets.Tank, land|game.FlagTurretSprite, enemy, 0, ex, ey)
 	s.galleryLabels = append(s.galleryLabels, galleryLabel{name: "Enemy", gx: ex, gy: ey})
-	s.game.State.Teams[enemy].Type = game.TeamPlayer
+	s.freezeBenchTeam(enemy)
 
 	s.game.State.ActiveTeam = player
 	s.game.State.PlayerTeam = player
