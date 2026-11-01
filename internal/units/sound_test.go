@@ -278,7 +278,7 @@ func TestSfxPan(t *testing.T) {
 }
 */
 
-// TestSfxPosition checks klei's positional sound model: the pan widens to +/-0.5 at 28 cells off the view
+// TestSfxPosition checks the positional sound model: the pan widens to +/-0.5 at 28 cells off the view
 // centre, the volume fades over 112 cells, and a zoom below 32 px per cell fades it down to half at zoom 4.
 func TestSfxPosition(t *testing.T) {
 	cases := []struct {

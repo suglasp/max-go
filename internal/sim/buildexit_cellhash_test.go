@@ -220,7 +220,7 @@ func TestLoadRefusesBuilderAtWork(t *testing.T) {
 }
 
 /* // Loading a parked builder is refused, so the release path is currently unreachable.
-// TestLoadParkedBuilderReleasesBuilding checks klei 23/08/26 UnitsManager_BuildingReady: a builder stored in a
+// TestLoadParkedBuilderReleasesBuilding checks UnitsManager_BuildingReady: a builder stored in a
 // transport no longer blocks its finished building, which unfolds at once; the builder leaves its build pose.
 func TestLoadParkedBuilderReleasesBuilding(t *testing.T) {
 	for _, tc := range parkedBuilderCases {
@@ -306,7 +306,7 @@ func TestHiddenBuildingIsNoTarget(t *testing.T) {
 	}
 }
 
-// TestDestroyParkedBuilderLosesBuilding checks klei UnitsManager_BuildingReady with a dead parent inside the
+// TestDestroyParkedBuilderLosesBuilding checks UnitsManager_BuildingReady with a dead parent inside the
 // bounds: the never shown building goes with its builder, slab and all, without a casualty tally or rubble.
 func TestDestroyParkedBuilderLosesBuilding(t *testing.T) {
 	for _, tc := range parkedBuilderCases {

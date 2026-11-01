@@ -18,7 +18,7 @@ import (
 )
 
 // LangResFile is the port's own addon archive, shipped next to the binary. It holds the language strings
-// (LANG_<XX>) and the unit description keys (UNITDESC), the way klei ships its own PATCHES.RES.
+// (LANG_<XX>) and the unit description keys (UNITDESC), the same way PATCHES.RES adds its resources.
 const LangResFile = "LANG.RES"
 
 // unitDescTag is the LANG.RES entry holding unit-descriptions.txt.

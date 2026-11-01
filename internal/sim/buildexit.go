@@ -186,7 +186,7 @@ func nearestFootprintCell(br *BuildReady, cx, cy int) (int, int) {
 	return clamp(cx, br.SiteX, br.SiteX+br.Footprint-1), clamp(cy, br.SiteY, br.SiteY+br.Footprint-1)
 }
 
-/* // note: unused code in Go port - the storage bay Activate now uses klei's
+/* // note: unused code in Go port - the storage bay Activate now uses the
 // adjacent cell unload (UnloadSpot + UnloadUnit, repairshopmenu.cpp Activate),
 // so the BLDMRK drive out for STORED units went dead. Factories keep their own
 // output exit flow; kept for reference per the DEADCODE convention.
@@ -289,8 +289,8 @@ func (g *Game) armExpand(builder *game.UnitInfo) {
 // while still parked on it (loaded into a transport): the building is revealed and
 // unfolds at once, and the builder leaves its build pose. It must run while the builder
 // is still in the cell hash, so the pose ends with a clean rebucket.
-// C++ ported : units_manager.cpp - UnitsManager_BuildingReady (klei 23/08/26: a stored
-// builder no longer blocks the site)
+// C++ ported : units_manager.cpp - UnitsManager_BuildingReady (a stored builder
+// no longer blocks the site)
 func (g *Game) releaseParkedBuilding(builder *game.UnitInfo) {
 	br := g.buildReady[builder]
 	if br == nil || br.Factory {

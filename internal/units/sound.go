@@ -567,7 +567,7 @@ func SfxDefaultTag(sfx game.SfxType) string {
 
 /* // note: unused code in Go port
 // SfxPan maps a unit's on screen pixel X in a viewW wide map view to a stereo
-// pan in [-1, 1] (0 center). Replaced by SfxPosition (klei's grid model) in step 1446.
+// pan in [-1, 1] (0 center). Replaced by SfxPosition (the grid model) in step 1446.
 func SfxPan(unitScreenX, viewW int) float64 {
 	if viewW <= 0 {
 		return 0
@@ -584,7 +584,7 @@ func SfxPan(unitScreenX, viewW int) float64 {
 }
 */
 
-// Positional sound constants, in grid cells (klei sound_manager.cpp).
+// Positional sound constants, in grid cells (sound_manager.cpp).
 const (
 	sfxPanRange         = 28  // offset from the view centre at which the pan stops widening
 	sfxPanDivisor       = 56  // pan = offset / 56, so at most +/-0.5

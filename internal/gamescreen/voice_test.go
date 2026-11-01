@@ -215,7 +215,7 @@ func TestShouldWarnTimeLow(t *testing.T) {
 	}
 }
 
-// TestTimeWarnVoice checks the klei line choice: "20 seconds to end turn" when the clock ticks through 20s,
+// TestTimeWarnVoice checks the line choice: "20 seconds to end turn" when the clock ticks through 20s,
 // "about to run out of time" when it jumped below 20s, and silence for a team that already ended its turn.
 func TestTimeWarnVoice(t *testing.T) {
 	s := timeWarnScreen(180)

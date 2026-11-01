@@ -431,7 +431,7 @@ func runAttractDemo(ctx *menus.Context, idx *int, noMovie bool) error {
 
 	scr.SetNoMovie(noMovie)
 	// Turn based regardless of the configured play mode: the per team turn
-	// cycle IS the attract show (klei plays the save's own ini options).
+	// cycle IS the attract show (the original plays the save's own ini options).
 	scr.SetPlayMode(int(game.PlayTurnBased))
 
 	seed := int64(m.Info.RNGSeed)

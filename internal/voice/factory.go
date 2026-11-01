@@ -14,7 +14,7 @@ package voice
 // C++ ported : game_manager.cpp - GameManager_PlayUnitStatusVoice,
 // GameManager_ReportNewUnitsMessage; buildmenu.cpp - FactoryBuildMenu::Build.
 const (
-	// The placement prompt is a two sample pool in the original (klei's PlayVoice span
+	// The placement prompt is a two sample pool in the original (the PlayVoice span
 	// runs V_M049..V_F050), so an armed tape draws one of the two at random.
 	BuildPlacementPrompt  = "V_F050" // "Position tape and click inside it begin building."
 	BuildPlacementPromptB = "V_F049" // "Position tape and click inside it begin building."

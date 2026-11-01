@@ -33,7 +33,7 @@ func (s *Screen) armLoad(u *game.UnitInfo) {
 		return
 	}
 
-	// klei refuses to load DISABLED units up front (_(9897), game_manager.cpp:6719).
+	// Disabled units cannot be loaded up front (_(9897), game_manager.cpp:6719).
 	if s.game.IsDisabled(u) {
 		s.showInfo(s.lang.Get("9897", "Unable to load disabled units."))
 		return
@@ -209,7 +209,7 @@ func (s *Screen) tryTransportTarget(cellX, cellY int) bool {
 		}
 
 		// A land/sea transport: the same scale down suck up a storage building plays
-		// (klei ScaleUnit SHRINK for every carrier, units_manager.cpp:2927).
+		// (the ScaleUnit SHRINK animation runs for every carrier, units_manager.cpp:2927).
 		if container == nil || !s.game.CanContain(container, passenger) || !s.game.AdjacentToContainer(container, passenger) {
 			s.showInfo("Cannot store there - need an adjacent friendly transport or storage building with room.")
 			return true

@@ -167,7 +167,7 @@ func TestSyncResearchOrdersWritesTheClampBack(t *testing.T) {
 	}
 }
 
-// TestUpgradeUnitValuesBumpsMkOnRealChange: klei's GetBestValues version gate -
+// TestUpgradeUnitValuesBumpsMkOnRealChange: the GetBestValues version gate -
 // a re-derive that changes nothing keeps the unit's "Mk" mark; a real change
 // (research, gold, a depot upgrade) bumps it exactly once.
 func TestUpgradeUnitValuesBumpsMkOnRealChange(t *testing.T) {

@@ -61,7 +61,7 @@ func (s *Screen) beginSimRound() {
 	// computer teams' PLANS are rebuilt - their move orders are transient and never
 	// saved. The restored FinishedTurn flags and the restored turn clock both stay.
 	// C++ ported : game_manager.cpp - the GAME_STATE_10_LOAD_GAME guards on
-	// ManageEconomy/ProgressBuildState (klei's saves carry the AI state too, so it
+	// ManageEconomy/ProgressBuildState (save data carries the AI state too, so it
 	// also skips Ai_BeginTurn; the port's do not, hence the replan half).
 	if s.turnFlow.simLoadResume {
 		s.turnFlow.simLoadResume = false

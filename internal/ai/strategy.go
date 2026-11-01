@@ -191,7 +191,7 @@ func continentViable(label []int, w, h int, c continent) bool {
 // teams on it sit on top of each other (favours air). Both bounding box sides must fit
 // in twice the proximity range.
 //
-// C++ ported : continent.cpp - Continent::IsCloseProximity (klei 23/08/26: proximity_range * 2)
+// C++ ported : continent.cpp - Continent::IsCloseProximity (proximity_range * 2)
 func continentCloseProximity(c continent) bool {
 	return (c.lrx-c.ulx) <= proximityRange*2 && (c.lry-c.uly) <= proximityRange*2
 }
@@ -350,14 +350,14 @@ func scoreStrategies(continents []continent, tier int) [strategyCount]int {
 	scores[StrategyAir] = closeCount * 2
 
 	// Expert and up weigh espionage by the continent count; the single mass tank horde weight above stays.
-	// C++ ported : aiplayer.cpp - AiPlayer::SelectStrategy (klei 23/08/26: ESPIONAGE, was a TANK_HORDE overwrite)
+	// C++ ported : aiplayer.cpp - AiPlayer::SelectStrategy (ESPIONAGE, not a TANK_HORDE overwrite)
 	if tier >= OpponentExpert {
 		scores[StrategyEspionage] = count
 	}
 
 	scores[StrategySea] = isolatedCount * 2
 	scores[StrategyFastAttack] = count - closeCount
-	// C++ ported : aiplayer.cpp - AiPlayer::SelectStrategy (klei 23/08/26: count - close, was count + close)
+	// C++ ported : aiplayer.cpp - AiPlayer::SelectStrategy (count - close)
 	scores[StrategyCombinedArms] = (count - closeCount) * 2
 
 	return scores

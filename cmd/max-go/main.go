@@ -384,7 +384,7 @@ func printUsage(w io.Writer, exe string, fs *flag.FlagSet) {
   %[1]s -save <slot> [-screenshot <file>]     // load a saved game slot directly
   %[1]s -random -npc 3 -difficulty 3 -derelicts common  // random game, 3 AI opponents, average difficulty, common derelicts
 `, exe)
-	// The -mapeditor usage entry stays commented out until the user gated ME7 editor ships.
+	// The -mapeditor usage entry stays commented out until the ME7 editor ships.
 	// The flag itself already works:
 	//   %[1]s -mapeditor                          // open the map / scenario editor
 	if DEBUG_GAME {
@@ -499,7 +499,7 @@ Menu screens:
 func printFlagDefaults(w io.Writer, fs *flag.FlagSet) {
 	fs.VisitAll(func(f *flag.Flag) {
 		// -demo is an undocumented dev flag: keep it working but out of -help.
-		// -mapeditor stays hidden too until the ME7 editor ships (user gated).
+		// -mapeditor stays hidden too until the ME7 editor ships.
 		if f.Name == "demo" || f.Name == "mapeditor" {
 			return
 		}

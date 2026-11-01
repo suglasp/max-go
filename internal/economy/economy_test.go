@@ -83,7 +83,7 @@ func TestCargoTypeOf(t *testing.T) {
 		t.Error("a tank should hold no cargo")
 	}
 	// A power building CONSUMES fuel from the complex pool; only the dedicated
-	// Fuel Truck moves fuel to or from a Fuel Tank (user 2026-07-26 live check).
+	// Fuel Truck moves fuel to or from a Fuel Tank.
 	if CargoTypeOf(assets.PowerStn) != CargoNone || CargoTypeOf(assets.PowGen) != CargoNone {
 		t.Error("power buildings consume fuel but do not X-Fer it")
 	}

@@ -17,8 +17,8 @@ import (
 )
 
 // TestTransportRepairOpsActivateArmsPlacement: the Repair Shop screen's per unit
-// Activate arms klei's PLACEMENT pick - the carried unit stays aboard until the
-// player clicks an open adjacent square, which then places it there (klei
+// Activate arms the PLACEMENT pick - the carried unit stays aboard until the
+// player clicks an open adjacent square, which then places it there (per
 // repairshopmenu.cpp Activate -> _(755b) -> the ORDER_ACTIVATE click), instead of
 // the old drive-out that could strand cargo on water.
 func TestTransportRepairOpsActivateArmsPlacement(t *testing.T) {
@@ -78,7 +78,7 @@ func TestTransportRepairOpsActivateArmsPlacement(t *testing.T) {
 }
 
 // TestActivateRefusesBoxedInCarrier: a carrier with no reachable adjacent cell
-// refuses the Activate outright (klei _(a1f0)) instead of stranding the cargo.
+// refuses the Activate outright (_(a1f0)) instead of stranding the cargo.
 func TestActivateRefusesBoxedInCarrier(t *testing.T) {
 	const w, h = 12, 12
 	mgr := units.NewManager()

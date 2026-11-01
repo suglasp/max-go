@@ -56,7 +56,7 @@ func TestAllocAddReduce(t *testing.T) {
 }
 
 // TestMiningHeadroomRespectsPerStationLimits reproduces the Allocate screen
-// hazard-tape bug (user 2026-07-26): with more than one mining station, a
+// hazard tape bug: with more than one mining station, a
 // pooled free-slot total overstates a resource's real headroom once the
 // station that HOLDS the extra deposit is itself full, even though a
 // DIFFERENT station has plenty of spare slots it simply cannot use for that

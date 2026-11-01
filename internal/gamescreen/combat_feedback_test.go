@@ -322,7 +322,7 @@ func TestReactionBetweenComputerTeamsIsNotNarrated(t *testing.T) {
 	}
 }
 
-// TestReactionVoiceOnlyForUnseenUnselectedShooter checks the klei 23/08/26 gate: the reaction fire voice
+// TestReactionVoiceOnlyForUnseenUnselectedShooter checks the gate: the reaction fire voice
 // plays only when the player's shooter is neither selected nor on screen. The banner always shows.
 func TestReactionVoiceOnlyForUnseenUnselectedShooter(t *testing.T) {
 	cases := []struct {

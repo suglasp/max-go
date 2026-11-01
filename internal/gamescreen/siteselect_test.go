@@ -74,7 +74,7 @@ func TestTooCloseToEnemy(t *testing.T) {
 // tile + tile/2). A prior version centred the ring one whole tile further
 // right/down ("footprint centre (2x2 -> +1 tile)"), which visibly detached
 // the ring from the lander and from wherever the player actually clicked -
-// klei's GameManager_DrawProximityZones centres on GameManager_SelectedUnit
+// GameManager_DrawProximityZones centres on GameManager_SelectedUnit
 // ->x/y, the same footprint-agnostic gridX*tile+tile/2 point every unit uses
 // (unitinfo.cpp:1276), never a footprint-shifted point.
 func TestSiteSelectRingCenterMatchesUnitDrawPosition(t *testing.T) {

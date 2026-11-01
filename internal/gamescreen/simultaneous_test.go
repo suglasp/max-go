@@ -72,7 +72,7 @@ func TestBeginSimRoundFlagsComputerTeamsFinished(t *testing.T) {
 // TestBeginSimRoundResumeFromLoadSkipsTurnStart: a loaded mid round game reopens
 // the round WITHOUT re-running the per team turn start - the economy, builds and
 // budget refresh all ran before the save and their results ride it. Only the AI
-// plans are rebuilt; the restored FinishedTurn flags stay (klei's
+// plans are rebuilt; the restored FinishedTurn flags stay (the
 // GAME_STATE_10_LOAD_GAME guard).
 func TestBeginSimRoundResumeFromLoadSkipsTurnStart(t *testing.T) {
 	s, g := simTestScreen()

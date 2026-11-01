@@ -260,7 +260,7 @@ func TestMinimapOrderConsumesWithoutSelection(t *testing.T) {
 	}
 }
 
-// TestMinimapBlipSize checks klei 23/08/26 DrawMap_RenderMiniMapUnitList (and the DOS minimap): every unit is
+// TestMinimapBlipSize checks DrawMap_RenderMiniMapUnitList (and the DOS minimap): every unit is
 // a 2x2 cell blip, a unit that is not a building is 1 cell in the 2X view, and an edge blip shifts inward.
 func TestMinimapBlipSize(t *testing.T) {
 	s, _ := newClickScreen(t)

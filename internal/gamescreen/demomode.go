@@ -51,8 +51,8 @@ func (s *Screen) demoTickIdle() {
 
 // demoMouseExit leaves the demo on a FRESH mouse click; merely moving the
 // mouse keeps it playing. Any key does the same via the Run loop's key gate.
-// Deviation: klei only exits on ESC/SPACE (game_manager.cpp:5349/5377); the
-// port exits on any input, the classic attract mode contract (user choice).
+// Deviation: the original only exits on ESC/SPACE (game_manager.cpp:5349/5377);
+// the port exits on any input, the classic attract mode contract.
 func (s *Screen) demoMouseExit() {
 	m := s.plat.Mouse()
 

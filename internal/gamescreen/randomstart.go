@@ -75,7 +75,7 @@ const (
 )
 
 // The raw a freshly landed base pools, per the RAW resource richness the player chose
-// on the setup screen. These are the turn 0 readings the user observed in vanilla on
+// on the setup screen. These are the turn 0 readings observed in vanilla on
 // the mining station's cargo bar (capacity 25): a poor map lands 10, an average one 13,
 // and a rich one lands NOTHING - the deposits are so good that the drop ships bring no
 // buffer at all.

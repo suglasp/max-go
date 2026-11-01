@@ -68,7 +68,7 @@ func ContainerCapacity(u *game.UnitInfo) int {
 }
 
 // containerAccepts reports whether passenger is a valid occupant for container -
-// klei's receiver table (Access_GetReceiverUnit, access.cpp:2097-2124):
+// The receiver table (Access_GetReceiverUnit, access.cpp:2097-2124):
 //
 //	APC (ClnTrans) + Barracks : COMMANDO / INFANTRY only
 //	Sea Transport             : any mobile LAND unit (infantry AND vehicles)
@@ -77,7 +77,7 @@ func ContainerCapacity(u *game.UnitInfo) int {
 //	Hangar                    : air units
 //	Air Transport             : any mobile LAND unit (its own pick up flow)
 //
-// The ONLY sanctioned nesting is klei's: a LAND transport (the APC) may enter a
+// The supported nesting is: a LAND transport (the APC) may enter a
 // Depot or a Sea Transport (access.cpp:2105-2109 treats CLNTRANS as an ordinary
 // non infantry land unit there) - a sea or air transport is never cargo. The
 // passenger must be mobile, selectable, not a building, not already aboard.
@@ -91,7 +91,7 @@ func containerAccepts(container, passenger *game.UnitInfo) bool {
 			return false // a sea/air transport never boards anything
 		}
 		if container.Type != assets.Depot && container.Type != assets.SeaTrans {
-			return false // the APC rides only a Depot or a Sea Transport (klei)
+			return false // the APC rides only a Depot or a Sea Transport
 		}
 	}
 
@@ -147,11 +147,11 @@ func (g *Game) CanContain(container, passenger *game.UnitInfo) bool {
 	if !isContainer(container) || container.Team != passenger.Team {
 		return false
 	}
-	// klei's receiver gate: an ORDER_IDLE container takes nothing (access.cpp:2097).
+	// The receiver gate: an ORDER_IDLE container takes nothing (access.cpp:2097).
 	if container.Order == game.OrderIdle {
 		return false
 	}
-	// klei refuses to load DISABLED units (_(9897), game_manager.cpp:6719-6720).
+	// Disabled units cannot be loaded (_(9897), game_manager.cpp:6719-6720).
 	if g.IsDisabled(passenger) {
 		return false
 	}
@@ -237,9 +237,9 @@ func (g *Game) UnloadUnit(transport, passenger *game.UnitInfo, cx, cy int) bool 
 	g.Units.Deploy(passenger, cx, cy)
 	passenger.Unfold = 4                                   // start collapsed; tickBuildExpansions grows it to full size
 	passenger.HiddenUntilExpand = false                    // drawn (scaling up) from the moment it appears
-	g.expandReleased = append(g.expandReleased, passenger) // the grow in animation + expand sound (klei ScaleUnit EXPAND)
+	g.expandReleased = append(g.expandReleased, passenger) // the grow in animation + expand sound (ScaleUnit EXPAND)
 	g.RefreshVisibility()
-	g.detonateMines() // a unit placed onto a mined cell triggers it AT placement (klei units_manager.cpp:3831)
+	g.detonateMines() // a unit placed onto a mined cell triggers it at placement (units_manager.cpp:3831)
 	return true
 }
 
@@ -272,7 +272,7 @@ func (g *Game) DropUnloadedUnit(transport, passenger *game.UnitInfo) bool {
 	passenger.HiddenUntilExpand = false                    // drawn (scaling up) from the moment it appears
 	g.expandReleased = append(g.expandReleased, passenger) // queue the grow in animation + expand sound
 	g.RefreshVisibility()
-	g.detonateMines() // a unit dropped onto a mined cell triggers it AT placement (klei units_manager.cpp:3831)
+	g.detonateMines() // a unit dropped onto a mined cell triggers it at placement (units_manager.cpp:3831)
 	return true
 }
 
@@ -286,7 +286,7 @@ func (g *Game) PickUpUnit(transport, passenger *game.UnitInfo) bool {
 	if !g.CanContain(transport, passenger) {
 		return false
 	}
-	// klei requires a SETTLED target for the same cell pick up (ORDER_STATE_EXECUTING_ORDER,
+	// A same cell pick up requires a SETTLED target (ORDER_STATE_EXECUTING_ORDER,
 	// game_manager.cpp:6726): a unit still moving or mid transition is not grabbed. The
 	// port keys on the transitional states rather than the exact settled constant, since
 	// a freshly spawned parked unit can still sit at the zero Init state.

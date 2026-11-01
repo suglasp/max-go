@@ -74,7 +74,7 @@ type panelButton struct {
 // panelButtons lists the control row + toggle grid buttons, top to bottom. The
 // labels are drawn in gold over the FRAMEPIC bevel; the highlighted (_ON) face
 // adds the green border when pressed or active. C++: GameManager_MenuItems +
-// GameManager_MenuItemLabelOffsets (PREV x=-10 / NEXT x=+10). klei's SetCaption
+// GameManager_MenuItemLabelOffsets (PREV x=-10 / NEXT x=+10). SetCaption
 // centres the caption in a box of width (button_width - x), so its offset x moves
 // the text centre by -x/2: PREV +5 px right, NEXT -5 px left, onto the wide half
 // of each pennant arrow (PREV points left, NEXT points right). The port's xoff is
@@ -104,7 +104,7 @@ func (s *Screen) panelButtons() []panelButton {
 
 // playMenuBarSfx plays the small menu button blip every in game control button
 // shares: Files, Preferences, Play, Pause, Center, Lock, Prev, Done, Next,
-// Reports, Goal/Chat, Help, End Turn. In klei each carries sfx = MENUOP and the
+// Reports, Goal/Chat, Help, End Turn. In the original each carries sfx = MENUOP and the
 // GNW button plays it on press (Button::PlaySound); MENUOP and MBUTT0 both
 // resolve to mengens4.wav, so a single tag serves.
 // C++ ported : game_manager.cpp - MENU_GUI_ITEM_DEF(..., MENUOP), button.cpp - Button::PlaySound.
@@ -115,7 +115,7 @@ func (s *Screen) playMenuBarSfx() {
 }
 
 // playToggleSfx plays the left panel overlay toggle blip (Survey/Status/Colors/
-// Hits/Ammo/Range/Scan/Grid/Names). klei tags each button separately (ISURV0,
+// Hits/Ammo/Range/Scan/Grid/Names). the original tags each button separately (ISURV0,
 // ISTAT0, ICOLO0, ...) but they all resolve to the same ihits0.wav, so one tag
 // serves. C++ ported : game_manager.cpp - PlaySfx(ISURV0/ISTAT0/... = ihits0.wav).
 func (s *Screen) playToggleSfx() {

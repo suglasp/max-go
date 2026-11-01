@@ -202,7 +202,7 @@ func (g *Game) StoredCargo(team int, cargo economy.CargoType) int {
 // could pull from the deposits under them, whatever they are set to mine right now. The
 // Surveying mission is won by raising it, which is why it is raw and not the sum of all
 // three ores - the original's function hands back the three separately and the mission
-// reads only the first (klei's save format notes agree: "Total Raw Materials Mining > 21",
+// reads only the first (the save format notes agree: "Total Raw Materials Mining > 21",
 // and the retail briefing asks for a second station pulling at least 10 raw a turn).
 //
 // C++ ported : scripter.cpp - CountTotalMining (its raw_mining_max return)

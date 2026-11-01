@@ -237,7 +237,7 @@ func (m coastAt) SurfaceAt(x, y int) uint8 {
 	return world.SurfaceWater
 }
 
-// TestNavalLineOfFire checks klei 23/08/26 Access_IsWithinAttackRange: a Submarine or Corvette fires only
+// TestNavalLineOfFire checks Access_IsWithinAttackRange: a Submarine or Corvette fires only
 // along water or coast; only the cells strictly between shooter and target count.
 func TestNavalLineOfFire(t *testing.T) {
 	for _, c := range []struct {

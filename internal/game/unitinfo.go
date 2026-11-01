@@ -328,7 +328,7 @@ func (u *UnitInfo) TurnToward(target uint8) bool {
 
 // FiringAngle returns the 16-step clockwise firing direction toward an offset. Missile sprites use the same
 // 16-frame heading.
-// An axis needs a 4:1 ratio (klei 23/08/26, was 2:1), so shallow angles take the in between frames.
+// An axis needs a 4:1 ratio (not 2:1), so shallow angles take the in between frames.
 // C++ ported : units_manager.cpp - UnitsManager_GetFiringAngle
 func FiringAngle(dx, dy int) int {
 	lx, ly := iabs(dx), iabs(dy)

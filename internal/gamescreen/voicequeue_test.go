@@ -115,7 +115,7 @@ func TestVoiceQueueFallbackSpacing(t *testing.T) {
 	}
 }
 
-// TestVoiceWaitsForSpeakingLine verifies klei's single voice job: a line never cuts the one still speaking.
+// TestVoiceWaitsForSpeakingLine verifies the single voice job: a line never cuts the one still speaking.
 // It waits in the pending slot and plays once the channel frees; a later line of the same or higher priority
 // replaces the waiting one, and a lower priority line is dropped.
 func TestVoiceWaitsForSpeakingLine(t *testing.T) {

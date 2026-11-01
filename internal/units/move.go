@@ -226,8 +226,8 @@ func (m *MoveOrder) Tick() MoveStatus {
 // cost and debits the unit's speed budget for the turn. It returns false (and
 // zeroes the remaining speed) when the unit cannot afford the step this
 // turn. Diagonal steps cost (cost*3)/2, matching the pathfinder. An unaffordable
-// step adds the leftover speed to the banked move fraction (klei 23/08/26; it used
-// to overwrite it).
+// step adds the leftover speed to the banked move fraction (it no longer
+// overwrites it).
 //
 // C++ ported : paths.cpp - Paths_CalculateStep. The shots clamp
 // (ClampShotsToSpeed) is ported. Omitted versus the original (this is a turn

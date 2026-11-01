@@ -128,7 +128,7 @@ func RunMissionBriefing(ctx *Context, text string) error {
 
 	// The reveal: one more character every briefingCharMS. A normal typed key, ESC,
 	// or a left click finishes it at once. Only the F keys are left alone (the
-	// original speeds up on any input, but the user wants the F keys untouched).
+	// original speeds up on any input, but the port leaves the F keys alone).
 	// The skipping key is flushed below, so the ESC that finished the text does not
 	// also dismiss the OK plate: leaving takes a second press.
 	prevButtons := ctx.Plat.Mouse().Buttons

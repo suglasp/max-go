@@ -15,7 +15,7 @@ import (
 // TestTransportLoadUnload covers the core transport interaction: an adjacent
 // friendly passenger boards (and leaves the map), a far one cannot, capacity is
 // respected, and unloading returns the unit to a free adjacent cell. The carrier
-// is the APC, so the passengers are INFANTRY - klei's receiver table gives the
+// is the APC, so the passengers are INFANTRY - the receiver table gives the
 // APC infantry and commandos only (a tank rides a Sea Transport or a Depot).
 func TestTransportLoadUnload(t *testing.T) {
 	g := newGame(t, 16, 16)

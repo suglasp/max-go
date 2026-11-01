@@ -103,7 +103,7 @@ func CargoTypeOf(t assets.UnitType) CargoType {
 		// Factories (Shipyard/LandPlt/LightPlt/AirPlt/TrainHal) are NOT here: their
 		// build material is drawn straight from the complex pool (sim/buildorders.go
 		// BuildMaterial/buildPool), never through a CargoType bin, and X-Fer does not
-		// offer them one in the original (user 2026-07-26 live check).
+		// offer them one in the original.
 		return CargoRaw
 	case assets.FDump, assets.FuelTrck:
 		// PowerStn/PowGen consume fuel but do not X-Fer it: in vanilla only the dedicated Fuel Truck moves fuel to or from a Fuel Tank,

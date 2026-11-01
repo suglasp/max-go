@@ -210,8 +210,8 @@ func (m *Manager) Move(u *game.UnitInfo, gridX, gridY int) {
 
 // Arrive completes a reserved move (see AddAt): it releases the OLD cell and
 // updates position, WITHOUT re-adding the destination - AddAt already holds it,
-// so the reservation entry silently becomes the real one, matching klei's
-// in-transit hash handover (unitinfo.cpp:1773-1783).
+// so the reservation entry silently becomes the real one, matching the
+// in transit hash handover (unitinfo.cpp:1773-1783).
 func (m *Manager) Arrive(u *game.UnitInfo, gridX, gridY int) {
 	m.Cells.Remove(u) // drops the OLD-cell entry (still keyed off the live GridX/GridY)
 	u.SetPosition(gridX, gridY)

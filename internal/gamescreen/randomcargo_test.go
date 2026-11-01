@@ -78,7 +78,7 @@ func TestSetPurchasedCargo(t *testing.T) {
 }
 
 // TestStartSupplyRawFollowsRichness checks the landing raw buffer tracks the map's RAW
-// richness the way the user observed in vanilla: a poor map lands 10, an average one 13,
+// richness as observed in vanilla: a poor map lands 10, an average one 13,
 // and a rich one none at all. A game with no level set (both random benches) lands the
 // average buffer.
 func TestStartSupplyRawFollowsRichness(t *testing.T) {

@@ -2259,7 +2259,7 @@ func TestContinentCloseProximityAndIsolated(t *testing.T) {
 // TestScoreStrategiesSingleContinent checks the table for one viable big mass that
 // everyone shares. The single mass path weighs the tank horde 6/12/24 by tier, which
 // also suppresses the scout/defensive reassignment; Expert+ scores espionage with the
-// continent count (klei 23/08/26: it used to overwrite the tank weight instead).
+// continent count (it no longer overwrites the tank weight).
 // Air/Sea stay 0 (the mass is neither cramped nor isolated).
 func TestScoreStrategiesSingleContinent(t *testing.T) {
 	one := []continent{{filler: 3, size: 200, ulx: 0, uly: 0, lrx: 30, lry: 30}}
@@ -2302,12 +2302,12 @@ func TestScoreStrategiesArchipelago(t *testing.T) {
 	if scores[StrategyFastAttack] != 0 { // count(3) - close(3)
 		t.Errorf("all-close archipelago FastAttack = %d, want 0", scores[StrategyFastAttack])
 	}
-	if scores[StrategyCombinedArms] != 0 { // (count 3 - close 3) * 2; klei 23/08/26 (was count + close = 12)
+	if scores[StrategyCombinedArms] != 0 { // (count 3 - close 3) * 2, not count + close = 12
 		t.Errorf("all-close archipelago CombinedArms = %d, want 0", scores[StrategyCombinedArms])
 	}
 }
 
-// TestContinentCloseProximityUsesDoubleRange checks klei's 23/08/26 range: a landmass counts as close
+// TestContinentCloseProximityUsesDoubleRange checks the doubled range: a landmass counts as close
 // proximity while both bounding box sides fit in twice proximity_range (28), not once (14).
 func TestContinentCloseProximityUsesDoubleRange(t *testing.T) {
 	if !continentCloseProximity(continent{ulx: 0, uly: 0, lrx: 2 * proximityRange, lry: 20}) {

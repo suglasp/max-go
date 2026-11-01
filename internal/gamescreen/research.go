@@ -159,10 +159,10 @@ func (s *Screen) upgradeUnitValues(team int, u *game.UnitInfo) {
 
 	next := s.teamValues(team, u.Type)
 
-	// The "Mk" version, klei's GetBestValues gate (unitinfo.cpp:3893-3902):
+	// The "Mk" version, the GetBestValues gate (unitinfo.cpp:3893-3902):
 	// identical values keep the mark, a REAL change bumps it. The bookkeeping
 	// fields align first so Equal (the ported operator==) compares only the
-	// attributes; the assigned in service set is then marked in use like klei's
+	// attributes; the assigned in service set is then marked in use like the original's
 	// MarkAsInUse, which is what arms UpdateVersion.
 	if u.Values != nil {
 		next.SetVersion(u.Values.Version())
@@ -227,7 +227,7 @@ func (s *Screen) syncResearchOrders(team int) {
 	// GHOST (NewTurn subtracts the STORED allocation, not this local clamp). Write
 	// the clamp BACK, shrinking the highest index topics first like the research
 	// menu's freeing order, via SetAllocation so TurnsToComplete stays consistent.
-	// klei cannot drift here: its allocation is per building and PowerDown
+	// The original cannot drift here: its allocation is per building and PowerDown
 	// decrements it (unitinfo.cpp:4959), so only the pooled model has to reapply the cap.
 	if allocated > len(avail) {
 		excess := allocated - len(avail)

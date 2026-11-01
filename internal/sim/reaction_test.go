@@ -173,7 +173,7 @@ func TestEnemyMoveTriggersReaction(t *testing.T) {
 	}
 }
 
-// TestSimModeHumanReactionSentryGate: klei's concurrent mode rule for HUMAN
+// TestSimModeHumanReactionSentryGate: the concurrent mode rule for HUMAN
 // reactors (units_manager.cpp:4329-4348) - during live simultaneous movement a
 // player unit auto fires only ON SENTRY, once its team committed the turn, or
 // when the mover could shoot a friendly from where it stands. A plain awaiting

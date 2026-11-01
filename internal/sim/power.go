@@ -216,7 +216,7 @@ func (g *Game) accrueScore(team int) {
 	// flat run). operatingEcoSphereUnits applies both gates.
 	spheres := g.operatingEcoSphereUnits(team)
 	for _, u := range spheres {
-		u.Storage++ // the sphere banks its point as cargo too, unclamped (klei ++storage)
+		u.Storage++ // the sphere banks its point as cargo too, unclamped (++storage)
 	}
 	operating := len(spheres)
 	g.TeamPoints[team] += operating

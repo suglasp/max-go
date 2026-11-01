@@ -268,8 +268,7 @@ func TestPopupParity(t *testing.T) {
 		{
 			// InitFactories: Build (empty queue) + commons. A factory draws its build
 			// material straight from the complex pool, not a CargoType bin, so the
-			// original's InitCommons cargo gate does NOT offer it X-Fer (user 2026-07-26
-			// live check); Remove closes it. NO power toggle (finding C) - asserted
+			// original's InitCommons cargo gate does NOT offer it X-Fer; Remove closes it. NO power toggle (finding C) - asserted
 			// separately below.
 			name: "factory",
 			unit: &game.UnitInfo{Type: assets.LandPlt, Flags: game.FlagBuilding | game.FlagStationary, Order: game.OrderPowerOn},

@@ -69,7 +69,7 @@ func TestDemoTurnCapExitsToMenu(t *testing.T) {
 	}
 }
 
-// TestDemoViewFollowsActiveTeam verifies the user chosen (klei faithful) camera:
+// TestDemoViewFollowsActiveTeam verifies the demo camera:
 // each demo turn moves the view AND the fog to the team whose turn plays.
 // C++: game_manager.cpp - GameManager_PlayerTeam = team in demo mode.
 func TestDemoViewFollowsActiveTeam(t *testing.T) {

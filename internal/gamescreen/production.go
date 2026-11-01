@@ -40,7 +40,7 @@ func (s *Screen) announceBuildStarted(builder *game.UnitInfo, product assets.Uni
 		text = fmt.Sprintf("%s under construction: ready in %d turns.", displayName(product), turns)
 	}
 
-	s.showBanner(text) // routine dark banner, klei message type 0
+	s.showBanner(text) // routine dark banner, message type 0
 	s.logEvent(s.iconForType(product, builder.Team), fmt.Sprintf("%d,%d", cellX, cellY), text)
 }
 

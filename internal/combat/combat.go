@@ -143,7 +143,7 @@ func WithinAttackRange(attacker *game.UnitInfo, gx, gy, attackRange int, surf Su
 
 // navalLineClear walks from the attacker's pixel position toward (gx, gy) one cell per step (16.16 fixed
 // point) and reports whether every cell strictly between the two is water or coast. The step count is the
-// longer axis in cells (klei 23/08/26 fixed it to `/ 64`, it was `* 64`).
+// longer axis in cells (pixels `/ 64`, not `* 64`).
 //
 // C++ ported : access.cpp - Access_IsWithinAttackRange (naval part)
 func navalLineClear(attacker *game.UnitInfo, gx, gy int, surf SurfaceSource) bool {

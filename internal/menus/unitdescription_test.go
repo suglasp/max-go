@@ -11,7 +11,7 @@ import (
 	"github.com/suglasp/max-go/internal/assets"
 )
 
-// TestUnitDescriptionToggle checks klei's shared button_description_rest_state: the checkbox starts on, one
+// TestUnitDescriptionToggle checks the shared button_description_rest_state: the checkbox starts on, one
 // state serves every menu, the portrait overlay follows it, and the Unit Status text ignores it.
 func TestUnitDescriptionToggle(t *testing.T) {
 	if !unitDescriptionShown {

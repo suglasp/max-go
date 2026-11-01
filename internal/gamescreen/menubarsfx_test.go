@@ -23,7 +23,7 @@ func TestPlayMenuBarSfx(t *testing.T) {
 }
 
 // TestPlayToggleSfx: the left panel overlay toggles play the IHITS0 blip (all the
-// per button klei tags resolve to the same ihits0.wav), and a nil hook is safe.
+// per button tags resolve to the same ihits0.wav), and a nil hook is safe.
 func TestPlayToggleSfx(t *testing.T) {
 	var played []string
 	s := &Screen{sound: soundState{sfxFn: func(primary, fallback string, pan float64) { played = append(played, primary) }}}

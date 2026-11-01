@@ -137,11 +137,11 @@ func (g *Game) reactorsAgainst(mover *game.UnitInfo) []*game.UnitInfo {
 // stealthy reactor (commando / submarine) the mover's team cannot see holds its
 // fire so it does not give itself away.
 //
-// SIMULTANEOUS mode adds klei's HUMAN reactor gate (units_manager.cpp:4329-4348):
+// SIMULTANEOUS mode adds the HUMAN reactor gate (units_manager.cpp:4329-4348):
 // during live concurrent movement a player unit auto fires only ON SENTRY, once
 // its team has committed the turn (the drain), or when the mover could shoot one
 // of the team's units from where it stands - a plain awaiting unit does NOT open
-// up on every enemy that drives by. Turn based always reacts (klei:
+// up on every enemy that drives by. Turn based always reacts (the
 // PLAY_MODE_TURN_BASED short circuits true) and a computer reactor keeps the
 // AI's own targeting.
 //
@@ -207,7 +207,7 @@ func (g *Game) shouldReact(reactor, mover *game.UnitInfo) bool {
 // one of team's units: the heuristic that lets a plain awaiting human unit answer
 // a REAL threat during concurrent enemy movement. combat.CanAttack covers the
 // mover's shots/ammo, its weapon range from the current cell and the target class,
-// which is klei's shots > 0 + squared range sweep over the team's unit lists.
+// which is the shots > 0 + squared range sweep over the team's unit lists.
 // C++ ported : units_manager.cpp:4336-4362.
 func (g *Game) moverThreatensTeam(mover *game.UnitInfo, team int) bool {
 	for _, u := range g.Units.Units() {

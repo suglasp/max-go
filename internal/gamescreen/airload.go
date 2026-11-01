@@ -16,7 +16,7 @@ import (
 // descending starts over the unit cell. loaded starts after the unit boards.
 // armX/armY remember where the unit stood when the pick up was ordered: a unit
 // that drives off abandons the job instead of dragging the transport on an
-// endless chase (klei only loads a settled unit at the transport's own cell).
+// endless chase (the original only loads a settled unit at the transport's own cell).
 type airLoadJob struct {
 	transport  *game.UnitInfo
 	unit       *game.UnitInfo
@@ -74,7 +74,7 @@ func (s *Screen) tickAirLoad() {
 	}
 
 	// The unit drove off its arming cell: abandon the chase (the player re-issues
-	// the load; klei only grabs a settled unit at the transport's own cell).
+	// the load; the original only grabs a settled unit at the transport's own cell).
 	if !job.loaded && (job.unit.GridX != job.armX || job.unit.GridY != job.armY) {
 		s.effects.airLoad = nil
 		return

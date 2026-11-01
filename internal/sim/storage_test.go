@@ -35,7 +35,7 @@ func adjStorable(g *Game, t assets.UnitType, flags game.Flags, x, y int) *game.U
 
 // TestDepotStoresAndUnloadsLandUnit: a depot stores an adjacent land unit off the
 // map, then the Activate flow places it back on a REACHABLE ADJACENT cell where it
-// grows in - klei's ProcessUnloading, not a drive out.
+// grows in - ProcessUnloading, not a drive out.
 func TestDepotStoresAndUnloadsLandUnit(t *testing.T) {
 	g := newGame(t, 16, 16)
 	g.Resources = economy.NewResourceMap(16, 16)
@@ -96,7 +96,7 @@ func TestDepotStoresAndUnloadsLandUnit(t *testing.T) {
 }
 
 // TestUnloadRefusesWhenBoxedIn: a carrier with no reachable adjacent cell cannot
-// unload at all - klei refuses with _(a1f0) rather than stranding the cargo (the
+// unload at all - the original refuses with _(a1f0) rather than stranding the cargo (the
 // sea transport on open water case, here with a land carrier walled in by water).
 func TestUnloadRefusesWhenBoxedIn(t *testing.T) {
 	// Every cell but the carrier's own is water: a land passenger has nowhere to go.
@@ -207,7 +207,7 @@ func transportUnit(g *Game, t assets.UnitType, x, y, capacity int) *game.UnitInf
 	return u
 }
 
-// TestCarrierAcceptanceTable: klei's receiver table (access.cpp:2097-2124) - the APC
+// TestCarrierAcceptanceTable: the receiver table (access.cpp:2097-2124) - the APC
 // and the Barracks take INFANTRY/COMMANDO only, the Depot takes land VEHICLES only,
 // the Dock takes sea units that are not amphibious, and the Sea Transport takes any
 // land unit.
@@ -259,7 +259,7 @@ func TestCarrierAcceptanceTable(t *testing.T) {
 	}
 }
 
-// TestTransportNestingKleiRule: klei ferries a loaded APC on a Sea Transport and
+// TestTransportNestingKleiRule: the original ferries a loaded APC on a Sea Transport and
 // stores it in a Depot (a CLNTRANS is an ordinary non infantry land unit to the
 // receiver logic, access.cpp:2105-2109), but a sea/air transport is never cargo.
 func TestTransportNestingKleiRule(t *testing.T) {
@@ -297,7 +297,7 @@ func TestTransportNestingKleiRule(t *testing.T) {
 	}
 }
 
-// TestDisabledUnitCannotBoard: klei refuses to load a disabled unit (_(9897)), and a
+// TestDisabledUnitCannotBoard: the original refuses to load a disabled unit (_(9897)), and a
 // disabled passenger whose carrier dies must not leave a stale countdown entry behind.
 func TestDisabledUnitCannotBoard(t *testing.T) {
 	g := newGame(t, 16, 16)
@@ -395,7 +395,7 @@ func TestDropUnloadedUnitPlacesBeneathAndGrows(t *testing.T) {
 
 // TestDropUnloadedUnitRefusesImpassableTerrain: an air transport hovering over
 // water cannot drop a LAND unit onto it - the drop is refused and the unit stays
-// aboard (klei gates ORDER_UNLOAD on Access_IsAccessible, message _(eeb4)).
+// aboard (ORDER_UNLOAD is gated on Access_IsAccessible, message _(eeb4)).
 func TestDropUnloadedUnitRefusesImpassableTerrain(t *testing.T) {
 	g := newGameSurf(16, 16, waterAt{{8, 8}: true})
 	g.Resources = economy.NewResourceMap(16, 16)
@@ -424,7 +424,7 @@ func TestDropUnloadedUnitRefusesImpassableTerrain(t *testing.T) {
 }
 
 // TestCarriedUnitsRefreshAtTurnStart: a stored unit's move budget refills at
-// BeginTeamTurn like any deployed unit's (klei keeps stored units in its main
+// BeginTeamTurn like any deployed unit's (the original keeps stored units in its main
 // lists), so a later unload keeps the TURN's remaining speed, not a stale one
 // from the turn it boarded.
 func TestCarriedUnitsRefreshAtTurnStart(t *testing.T) {

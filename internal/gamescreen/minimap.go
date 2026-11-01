@@ -126,7 +126,7 @@ func (s *Screen) drawMinimapUnits(dst *gfx.Buffer, mmW, mmH int) {
 // stampUnit fills a 2x2 cell blip on the minimap with the unit's team colour, scaled to minimap pixels, at
 // least one pixel. In the 2X minimap view a unit that is not a building is one cell. A 2x2 blip at the right
 // or bottom edge shifts inward to stay on the map. No outline, pure team colour pixels.
-// C++ ported : drawmap.cpp - DrawMap_RenderMiniMapUnitList (klei 23/08/26; was a 2x2 blip for buildings only)
+// C++ ported : drawmap.cpp - DrawMap_RenderMiniMapUnitList
 func (s *Screen) stampUnit(dst *gfx.Buffer, u *game.UnitInfo, mmW, mmH int) {
 	cells := minimapBlipCells(u, s.minimap.minimap2x)
 	gridX, gridY := u.GridX, u.GridY

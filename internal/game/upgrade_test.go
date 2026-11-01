@@ -39,7 +39,7 @@ func TestUpgradeCostMonotonic(t *testing.T) {
 }
 
 // TestUpgradeCostVanillaPrices checks first step prices against the vanilla DOS Buy Upgrade
-// screen (retail ATTRIBS bases, no research). Speed and ammo pin the klei 23/08/26 factors.
+// screen (retail ATTRIBS bases, no research). Speed and ammo pin those factors.
 func TestUpgradeCostVanillaPrices(t *testing.T) {
 	cases := []struct {
 		name      string

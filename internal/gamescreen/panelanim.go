@@ -24,7 +24,7 @@ const (
 	panelAnimBottomX = 240
 	panelAnimBottomY = 456
 
-	// panelAnimSteps is klei's loop count, and each step is held at 24 FPS, so the
+	// panelAnimSteps is the original's loop count, and each step is held at 24 FPS, so the
 	// whole thing is over in about a fifth of a second.
 	panelAnimSteps   = 5
 	panelAnimFrameMS = 42

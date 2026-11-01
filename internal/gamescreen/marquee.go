@@ -6,12 +6,12 @@
 package gamescreen
 
 // marquee.go - the drag box that selects several units at once, ported from
-// Klei's Access_MultiSelect / GameManager_RenderMultiSelectIndicator. A left drag
+// Access_MultiSelect / GameManager_RenderMultiSelectIndicator. A left drag
 // over the open map rubber bands a yellow box; on release every own team mobile
 // unit inside it (with a half tile inset, capped at maxGroupSize) becomes the
 // selection, the prior leader staying in front when it fell in the box. A move or
 // attack order issued to a group fans out in formation (each member keeps its
-// offset to the leader), matching Klei and MaxR.
+// offset to the leader), matching the original and MaxR.
 
 import (
 	"sort"
@@ -28,9 +28,9 @@ type dragBoxState struct {
 	marqueeX, marqueeY   int   // the current drag box corner in screen (logical) pixels
 }
 
-// maxGroupSize caps a multi selection / control group, matching Klei's 10 unit
+// maxGroupSize caps a multi selection / control group, matching the 10 unit
 // limit in Access_MultiSelect. marqueeThresholdPx is how far the pointer must
-// travel before a press turns into a drag box (Klei uses 16 on a 640 wide screen;
+// travel before a press turns into a drag box (the original uses 16 on a 640 wide screen;
 // the port uses a smaller value so a small drag still reads as a box, while a
 // plain click stays a click). The half tile inset (16 of the 64 pixel tile) means
 // a unit must sit substantially inside the box to be caught.
@@ -102,7 +102,7 @@ func (s *Screen) trackMarquee(mouse platform.MouseState) bool {
 // commitMarquee selects every own team mobile unit inside the finished box. It
 // ports Access_MultiSelect: convert the box to world pixels, inset a half tile on
 // each side, then take the units whose grid cell lands inside. An empty box
-// deselects (Klei clears when nothing is caught). C++ ported : access.cpp - Access_MultiSelect.
+// deselects (the original clears when nothing is caught). C++ ported : access.cpp - Access_MultiSelect.
 func (s *Screen) commitMarquee() {
 	team := s.game.State.ActiveTeam
 

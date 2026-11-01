@@ -41,7 +41,7 @@ type UpgradeUnit struct {
 const UpgradeCostLimit = 800
 
 // upgradeFactors is the per attribute cost multiplier (attack, rounds, range, armor, hits, speed,
-// scan, turns, ammo). Speed 4, turns 16 and ammo 2 follow klei 23/08/26; vanilla DOS upgrade
+// scan, turns, ammo). Speed 4, turns 16 and ammo 2; vanilla DOS upgrade
 // prices confirm the speed and ammo values.
 //
 // C++ ported : upgradecontrol.cpp - UpgradeControl_Factors

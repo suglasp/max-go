@@ -63,7 +63,7 @@ type navalFireScenario struct {
 	extra   func(lane navalLane) // the friendly ship or bridge on the middle cell, or nil
 }
 
-// DeployNavalFireBench lays out the -emulate navalfire bench for the klei 23/08/26 naval line of fire
+// DeployNavalFireBench lays out the -emulate navalfire bench for the naval line of fire
 // (step 1440, hand check H9) and the turn timer warning (H3). Six lanes, each a player ship facing a still
 // enemy Corvette (AI off) in range, each near its own compass anchor so only one is on screen at a time
 // (Tab moves on):

@@ -23,7 +23,7 @@ func TestPrintUsageMatchesLaunchFlags(t *testing.T) {
 
 	fs.VisitAll(func(f *flag.Flag) {
 		// -demo is an undocumented dev flag: deliberately kept out of -help.
-		// -mapeditor stays undocumented too until the ME7 editor ships (user gated).
+		// -mapeditor stays undocumented too until the ME7 editor ships.
 		if f.Name == "demo" || f.Name == "mapeditor" {
 			return
 		}

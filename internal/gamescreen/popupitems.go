@@ -421,7 +421,7 @@ func (s *Screen) appendCargoOrders(u *game.UnitInfo, items []popupItem, mobile b
 	// Enter: board a transport OR be stored in a Depot/Hangar/Dock - any mobile unit
 	// (the container's class gate decides what it accepts: depot=land, hangar=air,
 	// dock=sea). A sea/air transport cannot itself enter another container, but the
-	// land APC may (klei ferries a loaded APC on a Sea Transport / stores it in a
+	// land APC may carry a loaded APC on a Sea Transport or store it in a
 	// Depot, access.cpp:2105-2109). Also excluded mid build / mid clear, matching
 	// the original's InitCommons.
 	if mobile && (!sim.IsTransport(u.Type) || u.Type == assets.ClnTrans) && !busyOrder(u) {

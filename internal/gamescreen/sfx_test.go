@@ -341,7 +341,7 @@ func TestAmbientWorkSoundUsesHeldLoop(t *testing.T) {
 	}
 }
 
-// TestPositionalUnitSfx checks the klei positional model end to end on the screen side: a unit's one shot goes
+// TestPositionalUnitSfx checks the positional model end to end on the screen side: a unit's one shot goes
 // out with the pan and fade of its cell against the view centre, and after the view moves every live held sound
 // (a drive sound, the ambient hum at its half volume) is panned and faded again.
 func TestPositionalUnitSfx(t *testing.T) {

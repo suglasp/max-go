@@ -70,7 +70,7 @@ func (s *Screen) buildCost(t assets.UnitType) int {
 
 // buildRawCost is the total raw material to build product with builder at rate 1:
 // the builder's own per turn raw draw times the product's (research adjusted) build
-// turns. This is the figure klei refuses a start below and the same one the construct
+// turns. This is the figure the original refuses a start below and the same one the construct
 // menu paints red when the builder cannot afford it.
 // C++ ported : buildmenu.cpp - Cargo_GetRawConsumptionRate(builder, 1) * GetTurnsToBuild(product).
 func (s *Screen) buildRawCost(builder *game.UnitInfo, product assets.UnitType) int {
@@ -186,7 +186,7 @@ func (s *Screen) openBuild() {
 		rate = 1
 	}
 
-	// Refuse a build the mobile builder cannot pay for, the way klei does at the Build
+	// Refuse a build the mobile builder cannot pay for, the way the original does at the Build
 	// button, before any placement is armed. A mobile builder spends its own storage
 	// first, so a build it cannot afford would only stall out of material a few turns in
 	// and strand the builder posed on the site (the construct menu already paints this

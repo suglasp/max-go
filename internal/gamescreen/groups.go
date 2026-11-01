@@ -23,7 +23,7 @@ import (
 // setUnitGroup assigns the whole current selection to control group n (0..8).
 // Membership is EXCLUSIVE: a unit belongs to only one numbered group, so the
 // assigned units are first dropped from every other slot (classic single group
-// behaviour, the user's choice).
+// behaviour).
 func (s *Screen) setUnitGroup(n int) {
 	if n < 0 || n >= len(s.unitGroups) {
 		return
@@ -190,5 +190,5 @@ func (s *Screen) applyTurnClock(secondsLeft int) {
 
 	s.turnFlow.turnSeconds = secondsLeft
 	s.turnFlow.turnStart = platform.Ticks()
-	s.turnFlow.timeWarnedTurn = turnID{} // a loaded turn warns again on its remainder (klei re arms at the load turn start)
+	s.turnFlow.timeWarnedTurn = turnID{} // a loaded turn warns again on its remainder (armed again at the load turn start)
 }

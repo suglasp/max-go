@@ -34,7 +34,7 @@ type announcerState struct {
 	lastVoiceMS       uint64               // last time any voice line played
 	lastVoicePriority int                  // priority of the currently speaking line
 	voiceQueue        []queuedVoice        // serialised announcer lines (played one at a time)
-	pendingVoice      queuedVoice          // the one line waiting for the speaking voice to finish (klei's single voice job)
+	pendingVoice      queuedVoice          // the one line waiting for the speaking voice to finish (single voice job)
 	hasPendingVoice   bool                 // pendingVoice holds a line
 	voicePlayingFn    func() bool          // whether a voice is still audible; nil = fixed spacing (tests)
 	clock             func() uint64        // voice timing source; platform.Ticks when nil (tests override)

@@ -116,7 +116,7 @@ func TestColonyScorePlateauAndEdges(t *testing.T) {
 		t.Fatalf("steady-state events = %+v, want none (edge already fired)", evs)
 	}
 
-	// The sphere banks each scored point as cargo too (klei ++storage beside
+	// The sphere banks each scored point as cargo too (++storage beside
 	// ++team_points), so its gauge shows the accumulated colony points.
 	if eco.Storage != 2 {
 		t.Errorf("eco-sphere Storage after two scoring turns = %d, want 2", eco.Storage)

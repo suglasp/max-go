@@ -241,7 +241,7 @@ func (o *screenRepairOps) unitInfo(u *game.UnitInfo, isShop bool, raw int) Repai
 		ru.Cargo, ru.MaxCargo = u.Storage, maxCargo
 	}
 
-	// klei IsActivateViable (repairshopmenu.cpp:657-659): a stored AIR unit needs
+	// IsActivateViable (repairshopmenu.cpp:657-659): a stored AIR unit needs
 	// speed left to lift off; everything else activates freely.
 	ru.CanActivate = !u.Flags.Has(game.FlagMobileAirUnit) || u.Speed > 0
 	ru.CanReload = isShop && maxAmmo > 0 && u.Ammo < maxAmmo && raw > 0
@@ -364,7 +364,7 @@ func (o *screenRepairOps) Activate(i int) {
 		return
 	}
 
-	// klei's Activate (repairshopmenu.cpp:676-689): probe for a reachable adjacent
+	// Activate (repairshopmenu.cpp:676-689): probe for a reachable adjacent
 	// spot first - refuse with the retail a1f0 line when the carrier is boxed in -
 	// then arm the click to place pick ("Select an open square to place unit.").
 	// The menu has already closed, so the pick happens on the map.

@@ -160,7 +160,7 @@ func TestCalculateStepSpeedBudget(t *testing.T) {
 	}
 }
 
-// TestCalculateStepBanksLeftoverSpeed checks klei 23/08/26 Paths_CalculateStep: an unaffordable step ADDS the
+// TestCalculateStepBanksLeftoverSpeed checks Paths_CalculateStep: an unaffordable step ADDS the
 // leftover speed (x4) to the banked move_fraction instead of overwriting it, and spends the speed.
 func TestCalculateStepBanksLeftoverSpeed(t *testing.T) {
 	// Cost 12 straight, 2 already banked: 10 left, normalized 3, more than the 1 speed point.

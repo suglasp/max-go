@@ -13,7 +13,7 @@ import (
 )
 
 // TestGameEndWarningDue checks the Duration "game will end in 10 turns" notice opens turn limit-9, so
-// turns limit-9 to limit are the last ten (klei 23/08/26), and only for a human player in a Duration game.
+// turns limit-9 to limit are the last ten, and only for a human player in a Duration game.
 func TestGameEndWarningDue(t *testing.T) {
 	s := timeWarnScreen(0)
 	s.game.VictoryType = winloss.VictoryDuration

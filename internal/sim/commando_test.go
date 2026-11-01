@@ -178,7 +178,7 @@ func TestInfiltrateEligibility(t *testing.T) {
 	}
 }
 
-// TestInfiltrateRejectsBusyOrDyingTarget checks klei's shared disable/steal rejections: a target that is
+// TestInfiltrateRejectsBusyOrDyingTarget checks the shared disable/steal rejections: a target that is
 // transforming, firing, exploding or being destroyed cannot be infiltrated.
 func TestInfiltrateRejectsBusyOrDyingTarget(t *testing.T) {
 	cases := []struct {

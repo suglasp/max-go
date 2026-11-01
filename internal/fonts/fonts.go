@@ -8,7 +8,7 @@
 // Package fonts decodes FONT0.FON through FONT6.FON and renders them with
 // text.c semantics. docs/formats/fon.md documents the file format.
 //
-// klei1984's master replaced GNW bitmap text with FreeType TTF (its
+// A later port build replaced GNW bitmap text with FreeType TTF (its
 // PATCHES.RES FONT_1/2/5 entries are TTF blobs, not .FON data); this
 // port sticks to the original bitmap fonts.
 package fonts
