@@ -38,10 +38,10 @@ func (s *Screen) DeployAirBench() {
 	air := game.FlagMobileAirUnit | game.FlagHovering | game.FlagSelectable
 
 	// Two player LANDING PADs, one under the bomber and one to fly to.
-	pad := game.FlagStationary | game.FlagSelectable
+	// Use PlaceBuilding so each pad receives its slab.
 	bx, by := originX+4, originY+4
-	s.deployUnit(assets.LandPad, pad, player, 0, bx, by)
-	s.deployUnit(assets.LandPad, pad, player, 0, originX+1, originY+1)
+	s.benchPlaceBuilding(assets.LandPad, player, bx, by, false)
+	s.benchPlaceBuilding(assets.LandPad, player, originX+1, originY+1, false)
 
 	// Player bomber flying over the pad (InitState sets AirAlt = full while hovering).
 	bomber := s.deployUnit(assets.Bomber, air, player, 0, bx, by)
@@ -52,16 +52,15 @@ func (s *Screen) DeployAirBench() {
 
 	// The southern enemy complex is a large generator, three storage units, and a mining station linked by connectors.
 	// Large buildings use FlagBuilding and a 2x2 footprint. Same-team edge-adjacent structures automatically rig connector arms.
-	bld2x2 := game.FlagStationary | game.FlagBuilding | game.FlagSelectable // large 2x2 structure
-	small := game.FlagStationary | game.FlagSelectable                      // 1x1 structure (storage / connector)
+	// Use PlaceBuilding for slab-backed structures; connectors do not lay slabs.
 	row := originY + 8
-	s.deployUnit(assets.PowerStn, bld2x2, enemy, 0, originX+1, row) // large generator (2x2)
-	s.deployUnit(assets.Cnct4W, small, enemy, 0, originX+3, row)    // connector bridging generator -> storage
-	s.deployUnit(assets.ADump, small, enemy, 0, originX+4, row)     // storage unit (1x1)
-	s.deployUnit(assets.ADump, small, enemy, 0, originX+5, row)     // storage unit (1x1)
-	s.deployUnit(assets.ADump, small, enemy, 0, originX+6, row)     // storage unit (1x1)
-	s.deployUnit(assets.Cnct4W, small, enemy, 0, originX+7, row)    // connector bridging storage -> mine
-	s.deployUnit(assets.MiningSt, bld2x2, enemy, 0, originX+8, row) // mining station / mine (2x2)
+	s.benchPlaceBuilding(assets.PowerStn, enemy, originX+1, row, true) // large generator (2x2)
+	s.benchPlaceConnector(enemy, originX+3, row)                       // connector bridging generator -> storage
+	s.benchPlaceBuilding(assets.ADump, enemy, originX+4, row, false)   // storage unit (1x1)
+	s.benchPlaceBuilding(assets.ADump, enemy, originX+5, row, false)   // storage unit (1x1)
+	s.benchPlaceBuilding(assets.ADump, enemy, originX+6, row, false)   // storage unit (1x1)
+	s.benchPlaceConnector(enemy, originX+7, row)                       // connector bridging storage -> mine
+	s.benchPlaceBuilding(assets.MiningSt, enemy, originX+8, row, true) // mining station / mine (2x2)
 
 	s.freezeBenchTeam(enemy)
 	s.game.State.ActiveTeam = player

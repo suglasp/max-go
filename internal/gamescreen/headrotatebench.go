@@ -33,7 +33,8 @@ func (s *Screen) DeployHeadRotateBench() {
 	headRotateLand := game.FlagMobileLandUnit | game.FlagSelectable | game.FlagTurretSprite | game.FlagCanHeadRotate
 	bodyRotateLand := game.FlagMobileLandUnit | game.FlagSelectable
 	staticTarget := game.FlagMobileLandUnit | game.FlagSelectable
-	buildingHead := game.FlagStationary | game.FlagBuilding | game.FlagSelectable | game.FlagTurretSprite | game.FlagCanHeadRotate
+	// 1x1 turrets use slab placement without the 2x2 BUILDING flag.
+	buildingHead := game.FlagStationary | game.FlagRequiresSlab | game.FlagSelectable | game.FlagTurretSprite | game.FlagCanHeadRotate
 	air := game.FlagMobileAirUnit | game.FlagHovering | game.FlagSelectable
 
 	centerX, centerY := originX+5, originY+4
@@ -48,16 +49,16 @@ func (s *Screen) DeployHeadRotateBench() {
 	scout := s.deployUnit(assets.Scout, bodyRotateLand, player, 2, centerX+3, centerY+2)
 	scout.Values.Set(game.AttribRange, 7)
 
-	gun := s.deployUnit(assets.GunTurrt, buildingHead, player, 2, centerX-3, centerY)
+	gun := s.benchPlaceTurret(assets.GunTurrt, buildingHead, player, 2, centerX-3, centerY)
 	gun.Values.Set(game.AttribRange, 7)
 
-	artillery := s.deployUnit(assets.ArtyTrrt, buildingHead, player, 2, centerX-3, centerY+2)
+	artillery := s.benchPlaceTurret(assets.ArtyTrrt, buildingHead, player, 2, centerX-3, centerY+2)
 	artillery.Values.Set(game.AttribRange, 8)
 
-	missile := s.deployUnit(assets.AntiMssl, buildingHead, player, 2, centerX+3, centerY)
+	missile := s.benchPlaceTurret(assets.AntiMssl, buildingHead, player, 2, centerX+3, centerY)
 	missile.Values.Set(game.AttribRange, 8)
 
-	antiAir := s.deployUnit(assets.AntiAir, buildingHead, player, 2, centerX+3, centerY+4)
+	antiAir := s.benchPlaceTurret(assets.AntiAir, buildingHead, player, 2, centerX+3, centerY+4)
 	antiAir.Values.Set(game.AttribRange, 7)
 
 	type benchTarget struct {
@@ -97,4 +98,21 @@ func (s *Screen) DeployHeadRotateBench() {
 	s.r.SetZoom(headRotateBenchZoom)
 	s.startSingleBench("Headrotate bench: attack an enemy - the Tank and the turrets turn their heads toward it; the Rocket Launcher and the Scout turn their body.", game.Point{X: centerX, Y: centerY + 1}, tank)
 	dbg.Printf("headrotate bench: snow block (%d,%d) deployed=%d", originX, originY, len(s.game.Units.Units()))
+}
+
+// benchPlaceTurret places a defense turret with its slab and team complex,
+// facing angle, so its head starts turned that way.
+//
+// C++: n/a (debug helper).
+func (s *Screen) benchPlaceTurret(t assets.UnitType, flags game.Flags, team int, angle uint8, gx, gy int) *game.UnitInfo {
+	u := game.NewUnitInfo(t, team, s.spawnSeq+1, angle)
+	u.Flags = flags
+	u.Values = s.teamValues(team, t)
+	u.InitState()
+	u.SetAngle(angle)
+	u.TurretAngle = angle
+	s.spawnSeq++
+	s.game.PlaceBuilding(u, gx, gy)
+
+	return u
 }

@@ -75,11 +75,10 @@ func (s *Screen) DeployMissileBench() {
 	// A tight cluster of enemy BUILDINGS (mining station + factory + small generator)
 	// so a missile can be fired AT structures - and, once splash/area damage lands, to
 	// watch one impact damage the adjacent buildings. Placed adjacent on purpose.
-	bld2x2 := game.FlagStationary | game.FlagBuilding | game.FlagSelectable
-	bld1x1 := game.FlagStationary | game.FlagSelectable
-	s.deployUnit(assets.MiningSt, bld2x2, enemy, 0, cx+6, cy+4) // 2x2 mining station
-	s.deployUnit(assets.LandPlt, bld2x2, enemy, 0, cx+8, cy+4)  // 2x2 factory (vehicle plant)
-	s.deployUnit(assets.PowGen, bld1x1, enemy, 0, cx+6, cy+6)   // 1x1 small generator
+	// Use PlaceBuilding so each structure receives its slab and joins the enemy complex.
+	s.benchPlaceBuilding(assets.MiningSt, enemy, cx+6, cy+4, true) // 2x2 mining station
+	s.benchPlaceBuilding(assets.LandPlt, enemy, cx+8, cy+4, true)  // 2x2 factory (vehicle plant)
+	s.benchPlaceBuilding(assets.PowGen, enemy, cx+6, cy+6, false)  // 1x1 small generator
 
 	// Player SEA missile units + enemy boats, in the nearest open water (best effort:
 	// skipped on a landlocked map).

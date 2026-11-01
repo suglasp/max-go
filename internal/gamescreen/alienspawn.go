@@ -127,7 +127,8 @@ func (s *Screen) spawnAlienDerelicts(point game.Point, value int, avoid []game.P
 	w, h := s.wmap.W, s.wmap.H
 	s.findAlienSpot(&point, avoid)
 
-	building := game.FlagStationary | game.FlagBuilding | game.FlagSelectable
+	// Alien artifacts use the same slab placement as other buildings.
+	building := game.FlagStationary | game.FlagBuilding | game.FlagSelectable | game.FlagRequiresSlab
 	artifact := alienBuildings[rng.Generate(len(alienBuildings))]
 	s.placeStartBuilding(game.AlienTeam, artifact, building, point.X, point.Y)
 

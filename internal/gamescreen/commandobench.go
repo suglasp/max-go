@@ -76,7 +76,7 @@ func (s *Screen) DeployCommandoBench() {
 // commando bench (a valid disable target). C++: n/a (debug helper).
 func (s *Screen) placeElectronicBuilding(t assets.UnitType, team, gx, gy int) {
 	u := game.NewUnitInfo(t, team, s.spawnSeq+1, 0)
-	u.Flags = game.FlagBuilding | game.FlagStationary | game.FlagSelectable | game.FlagElectronicUnit
+	u.Flags = game.FlagBuilding | game.FlagStationary | game.FlagSelectable | game.FlagElectronicUnit | game.FlagRequiresSlab
 	u.Values = s.teamValues(team, t)
 	u.InitState()
 	u.Order = game.OrderPowerOn

@@ -95,7 +95,7 @@ func (s *Screen) DeployAPCs() {
 // (operational, hums when selected) or off (silent). C++: n/a (debug helper).
 func (s *Screen) placeTestBuilding(t assets.UnitType, team, gx, gy int, powered bool) {
 	u := game.NewUnitInfo(t, team, s.spawnSeq+1, 0)
-	u.Flags = game.FlagBuilding | game.FlagStationary | game.FlagSelectable
+	u.Flags = game.FlagBuilding | game.FlagStationary | game.FlagSelectable | game.FlagRequiresSlab
 	u.Values = s.teamValues(team, t)
 	u.InitState()
 

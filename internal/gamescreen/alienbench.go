@@ -31,7 +31,7 @@ func (s *Screen) DeployAliensBench() {
 	const player = 0
 	mobile := game.FlagMobileLandUnit | game.FlagSelectable
 	air := game.FlagMobileAirUnit | game.FlagHovering | game.FlagSelectable
-	building := game.FlagStationary | game.FlagBuilding | game.FlagSelectable
+	building := game.FlagStationary | game.FlagBuilding | game.FlagSelectable | game.FlagRequiresSlab // slab-backed building
 
 	// The four alien mobile derelicts (top row), owned by the fixed alien slot.
 	s.deployUnit(assets.AlnTank, mobile, game.AlienTeam, 2, originX+4, originY+2)
