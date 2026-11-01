@@ -164,8 +164,10 @@ func (s *Screen) announceBuildsCompleted(team int, before map[uint16]bool) {
 // checkStorageFull announces when the player's pooled raw/fuel/gold storage first
 // fills up, once per resource until it drops below full again. C++: the storage full
 // voices F057/F061/F066.
+//
+// The opening turn stays quiet. If storage is still full, the line plays at the next turn start.
 func (s *Screen) checkStorageFull(team int) {
-	if !s.isHumanTeam(team) {
+	if !s.isHumanTeam(team) || !s.announcer.openingTurnDone {
 		return
 	}
 

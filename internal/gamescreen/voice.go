@@ -48,6 +48,7 @@ type announcerState struct {
 	fuelFull          bool                 // player raw fuel storage is full
 	rawFull           bool                 // player raw material storage is full
 	goldFull          bool                 // player gold storage is full
+	openingTurnDone   bool                 // storage full lines may play after the opening turn ends
 	pointsLeader      int                  // team that led on points at the last round close (announcerNoLeader = not seeded)
 }
 

@@ -116,6 +116,7 @@ func (s *Screen) beginSimRound() {
 // the only trigger; the computer teams already finished when they planned at round
 // start. C++: the human closing GameManager_TeamTurnConcurrent.
 func (s *Screen) commitSimTurn() {
+	s.announcer.openingTurnDone = true // allow storage full lines from the next turn start
 	// No per team end turn voice: concurrent play has no per team end moment, and the
 	// player's own line is suppressed anyway (the pressed End Turn button confirms it).
 	if !s.finishSimRound() {

@@ -90,6 +90,7 @@ func (s *Screen) announceWaitingForOpponents() {
 // simultaneous round commit, or the turn based finish + roll to the next team.
 func (s *Screen) commitTurn() {
 	s.turnFlow.endTurnSettling = false
+	s.announcer.openingTurnDone = true // allow storage full lines from the next turn start
 
 	// A move still deferred behind the planning bulb belongs to the turn being
 	// committed: drop it, or tickPlanningBulb would execute the stale order in the
@@ -122,7 +123,7 @@ func (s *Screen) maybeWarnGameEnd() {
 // gameEndWarningDue reports whether this turn opens the last ten of a Duration game (turns limit-9 to limit)
 // for a human player. It runs after AdvanceTurn, so the counter is already the new turn.
 // C++ ported : game_manager.cpp - GameManager_UpdateGui, DialogMenu_Menu(_(4556)) at
-// GameManager_TurnCounter == victory_limit-9 (klei 23/08/26; was menu.cpp limit-10 BEFORE the increment).
+// GameManager_TurnCounter == victory_limit-9 after the turn counter increment.
 func (s *Screen) gameEndWarningDue() bool {
 	if s.game.VictoryType != winloss.VictoryDuration || s.game.VictoryLimit <= 0 {
 		return false

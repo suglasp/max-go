@@ -315,8 +315,8 @@ func TestVoicePriorityGate(t *testing.T) {
 	}
 }
 
-// TestStorageFullVoiceForcesPastEndedTurn reproduces the reported bug (user 2026-07-26:
-// raw storage-full played but fuel/gold went silent). checkStorageFull runs at the same
+// TestStorageFullVoiceForcesPastEndedTurn verifies that all storage-full lines play when
+// checkStorageFull runs at the same
 // turn start as the queued "team ended turn" line (priority 20), which lands inside the
 // speak window right before a storage-full check (priority 15) - the same "no voice on
 // completion" class of bug already fixed for announceBuildsCompleted. storageFullVoice
@@ -379,4 +379,29 @@ func TestVoiceNilHook(t *testing.T) {
 	s := &Screen{announcer: announcerState{clock: func() uint64 { return 0 }}}
 	s.playVoice(vsSelectUnit) // must not panic with voiceFn nil
 	s.playVoiceTag("V_F001", 10, "test")
+}
+
+// TestStorageFullWaitsForOpeningTurn verifies that full storage stays quiet during the opening turn and announces
+// at the next turn start when it remains full.
+func TestStorageFullWaitsForOpeningTurn(t *testing.T) {
+	s, _ := newClickScreen(t)
+	var played []string
+	var clk uint64 = 100000
+	s.announcer.clock = func() uint64 { return clk }
+	s.announcer.voiceFn = func(tag string) { played = append(played, tag) }
+
+	mine := s.benchPlaceBuilding(assets.MiningSt, 0, 4, 4, true)
+	mine.Values.Set(game.AttribStorage, 25)
+	mine.Storage = 25 // full raw storage
+
+	s.checkStorageFull(0) // the opening turn start
+	if len(played) != 0 || s.announcer.rawFull {
+		t.Fatalf("storage full played during the opening turn: %v", played)
+	}
+
+	s.announcer.openingTurnDone = true // simulate End Turn
+	s.checkStorageFull(0)
+	if len(played) != 1 || !s.announcer.rawFull {
+		t.Fatalf("after the opening turn: played %v (raw full latch %v), want the raw storage full line", played, s.announcer.rawFull)
+	}
 }
