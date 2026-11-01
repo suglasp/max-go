@@ -72,10 +72,7 @@ func (s *Screen) DeployLevelUpBench() {
 	s.showNames = true
 	s.fogShow = false
 	s.r.SetZoom(levelUpBenchZoom)
-	vw, vh := viewSize(MainMap)
-	s.camera.scrollX, s.camera.scrollY = centerScroll(originX+4, originY+4, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
-	s.showMessage("Level-up bench: player has Cost+Hits research at level 5 (enemy at 0). Build menu turns are reduced; the player tanks show higher max HITS - a full tank stays full, a damaged tank keeps its missing-HP gap. Compare vs the enemy tanks.")
+	s.startSingleBench("Level-up bench: player has Cost+Hits research at level 5 (enemy at 0). Build menu turns are reduced; the player tanks show higher max HITS - a full tank stays full, a damaged tank keeps its missing-HP gap. Compare vs the enemy tanks.", game.Point{X: originX + 4, Y: originY + 4}, con)
 
 	// Log the numbers so the effect is checkable against the panel readout.
 	dbg.Printf("levelup bench: player Cost+Hits research = %d (enemy 0)", levelUpResearchLevel)

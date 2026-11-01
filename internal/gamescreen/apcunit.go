@@ -87,9 +87,7 @@ func (s *Screen) DeployAPCs() {
 
 	s.fogShow = false
 	s.r.SetZoom(apcUnitZoom)
-	vw, vh := viewSize(MainMap)
-	s.camera.scrollX, s.camera.scrollY = centerScroll(originX+4, originY+4, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
+	s.startSingleBench("APC sound bench: select a unit (idle hum), click to move it (drive, then stop sound), click the enemy tank to fire (fire, hit). Buildings: the running mine and plant hum when selected, the plant that is off stays silent.", game.Point{X: originX + 4, Y: originY + 4}, nil)
 	dbg.Printf("apcunit: snow block (%d,%d) deployed=%d", originX, originY, len(s.game.Units.Units()))
 }
 

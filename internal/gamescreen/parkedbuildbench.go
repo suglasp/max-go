@@ -9,24 +9,37 @@ import (
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/dbg"
 	"github.com/suglasp/max-go/internal/game"
+	"github.com/suglasp/max-go/internal/world"
 )
 
-// parkedBuildBenchZoom frames the three bench rows together.
+// parkedBuildBenchZoom frames one scenario.
 const parkedBuildBenchZoom = 32
 
 // parkedBuildBenchAttack kills the parked Engineer in one forced shot.
 const parkedBuildBenchAttack = 200
 
+// parkedBuildScenario is one stop of the bench: the land block it needs, how it deploys, and its banner.
+type parkedBuildScenario struct {
+	w, h   int
+	title  string
+	text   string
+	deploy func(x, y int) (game.Point, *game.UnitInfo) // fills the block at (x, y); returns the stop cell and the selected unit
+}
+
 // DeployParkedBuildBench lays out the -emulate parkedbuild bench for the October hand checks (PLAN-OKT2026),
-// three rows on a snow block:
-//   - row 1, H13: a Constructor parked on a finished Depot with an Air Transport beside it. Load the
-//     Constructor: the Depot must unfold at once. H14: an Engineer parked on a finished Gun Turret with a one
-//     shot player Tank beside it. Force fire (Shift or Ctrl click) the Engineer: the hidden turret goes with it.
-//   - row 2, H2: a second Constructor parked on a finished Light Vehicle Plant and a second Engineer on a
-//     finished Anti Aircraft gun. Sentry on the parked builder, then an exit marker: it drives off cleanly.
-//   - row 3, H15: an idle Constructor and Engineer with full storage to open the Build menus (real unit
-//     descriptions, one shared Description checkbox). H17: a running Habitat: select it and scroll away, its
-//     hum pans and fades. H10: every unit here is a 2x2 minimap blip.
+// five scenarios, each on its own land block near its own compass anchor so only one is on screen at a time
+// (Tab moves on):
+//   - H13: a Constructor parked on a finished Depot with an Air Transport beside it. Load the Constructor: the
+//     Depot must unfold at once.
+//   - H14: an Engineer parked on a finished Gun Turret with a one shot player Tank beside it. Force fire (Shift
+//     or Ctrl click) the Engineer: the hidden turret goes with it.
+//   - H2: a Constructor parked on a finished Light Vehicle Plant and an Engineer on a finished Anti Aircraft
+//     gun. Sentry on the parked builder, then an exit marker: it drives off cleanly.
+//   - H15: an idle Constructor and Engineer with full storage to open the Build menus (real unit descriptions,
+//     one shared Description checkbox).
+//   - H17: a running Habitat on its own: select it and scroll away, its hum pans and fades.
+//
+// H10: every unit here is a 2x2 minimap blip.
 //
 // C++: n/a (debug helper).
 func (s *Screen) DeployParkedBuildBench() {
@@ -36,58 +49,114 @@ func (s *Screen) DeployParkedBuildBench() {
 	bigFlags := game.FlagStationary | game.FlagBuilding | game.FlagRequiresSlab | game.FlagSelectable
 	smallFlags := game.FlagStationary | game.FlagRequiresSlab | game.FlagSelectable
 
-	originX, originY, ok := s.snowBlock(12, 14)
-	if !ok {
-		originX, originY = 6, 6
+	var constructor, engineer, sentryConstructor, sentryEngineer *game.UnitInfo
+	var depot, turret, plant, antiAir, habitat, air, tank *game.UnitInfo
+
+	scenarios := []parkedBuildScenario{
+		{w: 4, h: 5, title: "H13 Air Transport loads a parked builder",
+			text: "Air Transport popup Load, click the Constructor: the Depot unfolds at once, the Constructor is aboard",
+			deploy: func(x, y int) (game.Point, *game.UnitInfo) {
+				constructor = s.deployUnit(assets.Constrct, builderFlags, player, 2, x+1, y+2)
+				depot = s.parkOnFinishedBuild(constructor, assets.Depot, bigFlags, x+1, y+2)
+				air = s.deployUnit(assets.AirTrans, game.FlagMobileAirUnit|game.FlagHovering|game.FlagSelectable, player, 4, x+1, y+1)
+				return game.Point{X: x + 2, Y: y + 2}, air
+			}},
+		{w: 3, h: 5, title: "H14 a parked builder is killed",
+			text: "the Tank is selected: Shift click the Engineer, its hidden Gun Turret is lost too, no slab left",
+			deploy: func(x, y int) (game.Point, *game.UnitInfo) {
+				engineer = s.deployUnit(assets.Engineer, builderFlags, player, 2, x+1, y+1)
+				turret = s.parkOnFinishedBuild(engineer, assets.GunTurrt, smallFlags, x+1, y+1)
+				tank = s.deployUnit(assets.Tank, landFlags, player, 0, x+1, y+3)
+				tank.Values.Set(game.AttribAttack, parkedBuildBenchAttack)
+				return game.Point{X: x + 1, Y: y + 2}, tank
+			}},
+		{w: 7, h: 4, title: "H2 Sentry on a parked builder",
+			text: "Sentry on the parked Constructor (or Engineer), then click an exit marker: it drives off cleanly",
+			deploy: func(x, y int) (game.Point, *game.UnitInfo) {
+				sentryConstructor = s.deployUnit(assets.Constrct, builderFlags, player, 2, x+1, y+1)
+				plant = s.parkOnFinishedBuild(sentryConstructor, assets.LightPlt, bigFlags, x+1, y+1)
+				sentryEngineer = s.deployUnit(assets.Engineer, builderFlags, player, 2, x+5, y+1)
+				antiAir = s.parkOnFinishedBuild(sentryEngineer, assets.AntiAir, smallFlags, x+5, y+1)
+				return game.Point{X: x + 3, Y: y + 2}, sentryConstructor
+			}},
+		{w: 6, h: 4, title: "H15 unit descriptions in the Build menus",
+			text: "open Build on the Constructor and on the Engineer: real descriptions, the box ticked; untick it in one, it stays off in the other",
+			deploy: func(x, y int) (game.Point, *game.UnitInfo) {
+				var first *game.UnitInfo
+				for i, t := range []assets.UnitType{assets.Constrct, assets.Engineer} {
+					u := s.deployUnit(t, builderFlags, player, 2, x+1+i*3, y+1)
+					u.Storage = u.Values.Get(game.AttribStorage)
+					if first == nil {
+						first = u
+					}
+				}
+				return game.Point{X: x + 3, Y: y + 2}, first
+			}},
+		{w: 4, h: 4, title: "H17 positional sound",
+			text: "the Habitat hums: scroll left and right (the hum pans), far away (it fades), zoom out (quieter)",
+			deploy: func(x, y int) (game.Point, *game.UnitInfo) {
+				habitat = s.benchPlaceBuilding(assets.Habitat, player, x+1, y+1, true)
+				return game.Point{X: x + 2, Y: y + 2}, habitat
+			}},
 	}
-	x, y := originX+2, originY+2
-	engineerX := x + 6
 
-	// Row 1. H13: Constructor parked on a finished 2x2 Depot, Air Transport hovering just north of it.
-	constructor := s.deployUnit(assets.Constrct, builderFlags, player, 2, x, y)
-	depot := s.parkOnFinishedBuild(constructor, assets.Depot, bigFlags, x, y)
-	air := s.deployUnit(assets.AirTrans, game.FlagMobileAirUnit|game.FlagHovering|game.FlagSelectable, player, 4, x, y-1)
+	for _, sc := range scenarios {
+		var blockX, blockY int
 
-	// H14: Engineer parked on a finished 1x1 Gun Turret, a one shot player Tank two cells south of it.
-	engineer := s.deployUnit(assets.Engineer, builderFlags, player, 2, engineerX, y)
-	turret := s.parkOnFinishedBuild(engineer, assets.GunTurrt, smallFlags, engineerX, y)
-	tank := s.deployUnit(assets.Tank, landFlags, player, 0, engineerX, y+2)
-	tank.Values.Set(game.AttribAttack, parkedBuildBenchAttack)
+		compass, ok := s.claimAnchor(func(anchor game.Point) bool {
+			x, y, fits := s.landBlockNear(anchor, sc.w, sc.h, benchAnchorRadius)
+			blockX, blockY = x, y
+			return fits
+		})
+		if !ok {
+			dbg.Printf("parkedbuild bench: no free compass anchor has a %dx%d land block for %s", sc.w, sc.h, sc.title)
+			continue
+		}
 
-	// Row 2. H2: a second parked pair for the Sentry, then exit marker check.
-	sentryY := y + 5
-	sentryConstructor := s.deployUnit(assets.Constrct, builderFlags, player, 2, x, sentryY)
-	plant := s.parkOnFinishedBuild(sentryConstructor, assets.LightPlt, bigFlags, x, sentryY)
-	sentryEngineer := s.deployUnit(assets.Engineer, builderFlags, player, 2, engineerX, sentryY)
-	antiAir := s.parkOnFinishedBuild(sentryEngineer, assets.AntiAir, smallFlags, engineerX, sentryY)
-
-	// Row 3. H15: idle builders with a full load for the Build menus; H17: a running Habitat to hear its hum.
-	menuY := y + 9
-	for i, t := range []assets.UnitType{assets.Constrct, assets.Engineer} {
-		u := s.deployUnit(t, builderFlags, player, 2, x+i*2, menuY)
-		u.Storage = u.Values.Get(game.AttribStorage)
+		cell, sel := sc.deploy(blockX, blockY)
+		s.addBenchStop(benchStop{Compass: compass, Title: sc.title, Text: sc.text, Cell: cell, Select: sel})
+		dbg.Printf("parkedbuild bench: %s %s block (%d,%d)", compass, sc.title, blockX, blockY)
 	}
-	habitat := s.benchPlaceBuilding(assets.Habitat, player, engineerX, menuY, true)
 
 	s.game.State.ActiveTeam = player
 	s.game.State.PlayerTeam = player
-	s.selected = air
 	s.showNames = true
 	s.fogShow = false
 	s.game.RefreshVisibility()
 
 	s.r.SetZoom(parkedBuildBenchZoom)
-	vw, vh := viewSize(MainMap)
-	s.camera.scrollX, s.camera.scrollY = centerScroll(x+3, y+4, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
-	s.showMessage("Parked builder bench (press F). Row 1 - H13: Air Transport Load, click the Constructor: the Depot unfolds at once. H14: select the Tank, Shift click the Engineer: its hidden turret vanishes too. Row 2 - H2: Sentry on a parked builder, then an exit marker: it drives off cleanly. Row 3 - H15: open Build on the idle Constructor / Engineer: real descriptions, one shared checkbox. H17: select the Habitat, scroll away: the hum pans and fades. H10: minimap blips 2x2.")
+	s.startBench("Parked builder bench. H10: every unit is a 2x2 minimap blip (1 pixel for mobile units with 2X on).")
 
-	dbg.Printf("parkedbuild bench: H13 constructor ready=%v depot hidden=%v; H14 engineer ready=%v turret hidden=%v; H2 constructor ready=%v plant hidden=%v, engineer ready=%v antiair hidden=%v; habitat order=%d; air (%d,%d) tank (%d,%d)",
-		s.game.IsBuildReady(constructor), depot != nil && depot.HiddenUntilExpand,
-		s.game.IsBuildReady(engineer), turret != nil && turret.HiddenUntilExpand,
-		s.game.IsBuildReady(sentryConstructor), plant != nil && plant.HiddenUntilExpand,
-		s.game.IsBuildReady(sentryEngineer), antiAir != nil && antiAir.HiddenUntilExpand,
-		habitat.Order, air.GridX, air.GridY, tank.GridX, tank.GridY)
+	dbg.Printf("parkedbuild bench: H13 constructor ready=%v depot hidden=%v; H14 engineer ready=%v turret hidden=%v; H2 constructor ready=%v plant hidden=%v, engineer ready=%v antiair hidden=%v; habitat running=%v",
+		constructor != nil && s.game.IsBuildReady(constructor), depot != nil && depot.HiddenUntilExpand,
+		engineer != nil && s.game.IsBuildReady(engineer), turret != nil && turret.HiddenUntilExpand,
+		sentryConstructor != nil && s.game.IsBuildReady(sentryConstructor), plant != nil && plant.HiddenUntilExpand,
+		sentryEngineer != nil && s.game.IsBuildReady(sentryEngineer), antiAir != nil && antiAir.HiddenUntilExpand,
+		habitat != nil && habitat.Order == game.OrderPowerOn)
+}
+
+// landBlockNear returns the top left of a w x h block of land with no unit on it, nearest to anchor and at
+// most radius cells from it, or false.
+//
+// C++: n/a (debug helper).
+func (s *Screen) landBlockNear(anchor game.Point, w, h, radius int) (int, int, bool) {
+	free := func(x, y int) bool {
+		if x+w > s.wmap.W || y+h > s.wmap.H {
+			return false
+		}
+
+		for fy := y; fy < y+h; fy++ {
+			for fx := x; fx < x+w; fx++ {
+				if s.wmap.SurfaceAt(fx, fy)&world.SurfaceLand == 0 || len(s.game.Units.Cells.At(fx, fy)) > 0 {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+
+	return s.nearestCell(anchor, radius, free)
 }
 
 // parkOnFinishedBuild has builder raise a product at (gx, gy) and runs the build to completion, so the

@@ -6,6 +6,7 @@
 package gamescreen
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/suglasp/max-go/internal/access"
@@ -594,6 +595,64 @@ func TestProjectileImpactSpawnsEffect(t *testing.T) {
 	s.tickProjectiles()
 	if len(s.effects.explosions) <= before {
 		t.Error("a missile impact spawned no explosion effect")
+	}
+}
+
+// TestMissileHitMessageOnImpact: a player missile reports its hit when it lands, with the real damage, and
+// not at launch (it used to read "hit for 0" while the missile was still in flight).
+func TestMissileHitMessageOnImpact(t *testing.T) {
+	const w, h = 16, 8
+	mgr := units.NewManager()
+	grid := &access.Grid{W: w, H: h, Surf: buildExitSurf{}, Units: mgr.Cells}
+	p := &game.StartParams{}
+	p.Teams[0].Type = game.TeamPlayer
+	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
+	s := &Screen{game: g}
+
+	bomber := game.NewUnitInfo(assets.Bomber, 0, 1, 0)
+	bomber.Flags = game.FlagMobileAirUnit | game.FlagHovering | game.FlagSelectable
+	bomber.Values = &game.UnitValues{}
+	bomber.Values.Set(game.AttribAttack, 20)
+	bomber.Values.Set(game.AttribRange, 8)
+	bomber.Values.Set(game.AttribRounds, 1)
+	bomber.Values.Set(game.AttribAmmo, 4)
+	bomber.Values.Set(game.AttribHits, 16)
+	bomber.InitState()
+	mgr.Deploy(bomber, 2, 4)
+
+	enemy := game.NewUnitInfo(assets.Tank, 1, 2, 0)
+	enemy.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+	enemy.Values = &game.UnitValues{}
+	enemy.Values.Set(game.AttribHits, 30)
+	enemy.Hits = 30
+	mgr.Deploy(enemy, 7, 4)
+
+	hitLines := func() []string {
+		var out []string
+		for _, e := range s.banner.msgLog {
+			if strings.Contains(e.text, "hit for") {
+				out = append(out, e.text)
+			}
+		}
+		return out
+	}
+
+	s.attackWith(bomber, 7, 4, false)
+	if len(g.ActiveProjectiles()) == 0 {
+		t.Fatal("the bomber launched no missile")
+	}
+	if got := hitLines(); len(got) != 0 {
+		t.Fatalf("hit message at launch: %q", got)
+	}
+
+	for i := 0; i < 1000 && len(g.ActiveProjectiles()) > 0; i++ {
+		g.Tick()
+	}
+	s.tickProjectiles()
+
+	got := hitLines()
+	if len(got) != 1 || !strings.Contains(got[0], "hit for 20 (10/30") {
+		t.Errorf("hit message on impact = %q, want one line with \"hit for 20 (10/30\"", got)
 	}
 }
 

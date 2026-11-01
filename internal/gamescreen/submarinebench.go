@@ -103,11 +103,8 @@ func (s *Screen) DeploySubmarineBench() {
 	s.game.RefreshVisibility()
 
 	s.r.SetZoom(submarineBenchZoom)
-	vw, vh := viewSize(MainMap)
 	midX, midY := (corvCell.X+subCell.X)/2, (corvCell.Y+subCell.Y)/2
-	s.camera.scrollX, s.camera.scrollY = centerScroll(midX, midY, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
-	s.showMessage("Submarine bench: the enemy sub starts SUBMERGED (out of sonar). Drive your Corvette toward it - when your sonar reaches it you hear 'Submarine detected!' (F201). Back off and it re-submerges + re-arms. The AWAC alone cannot detect a submerged sub.")
+	s.startSingleBench("Submarine bench: the enemy sub starts SUBMERGED (out of sonar). Drive your Corvette toward it - when your sonar reaches it you hear 'Submarine detected!' (F201). Back off and it re-submerges + re-arms. The AWAC alone cannot detect a submerged sub.", game.Point{X: midX, Y: midY}, corvette)
 
 	detected := s.game.Vis != nil && s.game.Vis.VisibleToTeam(sub, player)
 	dbg.Printf("submarine bench: corvette (%d,%d) sonar=%d, awac (%d,%d), enemy sub (%d,%d) gap=%d cells; detected at start=%v (want false)",

@@ -68,10 +68,7 @@ func (s *Screen) DeployCommandoBench() {
 	s.showNames = true // label the units (the NAMES panel toggle reads checked)
 	s.fogShow = false
 	s.r.SetZoom(commandoBenchZoom)
-	vw, vh := viewSize(MainMap)
-	s.camera.scrollX, s.camera.scrollY = centerScroll(originX+4, originY+4, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
-	s.showMessage("Commando bench: move next to an enemy, then popup -> Disable/Steal (tank: both, radar: disable, infantry: immune).")
+	s.startSingleBench("Commando bench: move next to an enemy, then popup -> Disable/Steal (tank: both, radar: disable, infantry: immune).", game.Point{X: originX + 4, Y: originY + 4}, commando)
 	dbg.Printf("commando bench: snow block (%d,%d) deployed=%d", originX, originY, len(s.game.Units.Units()))
 }
 

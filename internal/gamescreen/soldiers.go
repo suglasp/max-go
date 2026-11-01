@@ -67,10 +67,8 @@ func (s *Screen) DeploySoldiers() {
 	s.walkAnimAll = true
 	s.fogShow = false
 	s.r.SetZoom(soldierZoom)
-	vw, vh := viewSize(MainMap)
 	// Centre the two row block so all eight facings of both rows fit on screen.
-	s.camera.scrollX, s.camera.scrollY = centerScroll(originX+soldierCols/2, originY+soldierRowGap/2, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
+	s.startSingleBench("Soldier bench: Infantry (top row) and Commando (bottom row) in all eight facings (clockwise from north), every one walking in place.", game.Point{X: originX + soldierCols/2, Y: originY + soldierRowGap/2}, nil)
 }
 
 // snowBlock finds the top left of a w x h cell block whose every cell is land

@@ -95,9 +95,6 @@ func (s *Screen) DeployHeadRotateBench() {
 	s.fogShow = false
 	s.showNames = false
 	s.r.SetZoom(headRotateBenchZoom)
-	vw, vh := viewSize(MainMap)
-	s.camera.scrollX, s.camera.scrollY = centerScroll(centerX, centerY+1, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
-	s.showMessage("Headrotate: Tank/turrets use heads; Rocket/Scout turn body.")
+	s.startSingleBench("Headrotate bench: attack an enemy - the Tank and the turrets turn their heads toward it; the Rocket Launcher and the Scout turn their body.", game.Point{X: centerX, Y: centerY + 1}, tank)
 	dbg.Printf("headrotate bench: snow block (%d,%d) deployed=%d", originX, originY, len(s.game.Units.Units()))
 }

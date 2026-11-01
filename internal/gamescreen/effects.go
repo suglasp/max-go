@@ -218,6 +218,12 @@ func (s *Screen) tickProjectiles() {
 			s.playSfxForUnit(t, game.SfxHit)
 			s.spawnHitImpact(t)
 			s.notifyDamage(t)
+
+			// The player's missile reports its hit on arrival, the same line a direct shot shows at once.
+			if im.Attacker != nil && s.isHumanTeam(im.Attacker.Team) {
+				s.showMessage(s.hitMessage(t, im.Damage))
+			}
+
 			maxHits := 0
 
 			if t.Values != nil {

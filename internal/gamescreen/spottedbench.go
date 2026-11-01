@@ -57,9 +57,6 @@ func (s *Screen) DeploySpottedBench() {
 	s.showNames = true
 	s.fogShow = false // reveal everything so you can watch the AI hunters move
 	s.r.SetZoom(spottedBenchZoom)
-	vw, vh := viewSize(MainMap)
-	s.camera.scrollX, s.camera.scrollY = centerScroll(originX+8, originY+7, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
-	s.showMessage("Spotted bench: the AI tank squad has SEEN your scout. Drive the scout far away into the open and End Turn - the squad heads to where it LAST saw you, then SEARCHES the area (a focused zone sweep or a wider wander, picked at random). Watch the debug log: 'pursues last-seen' / 'searching'.")
+	s.startSingleBench("Spotted bench: the AI tank squad has SEEN your scout. Drive the scout far away into the open and End Turn - the squad heads to where it LAST saw you, then SEARCHES the area (a focused zone sweep or a wider wander, picked at random). Watch the debug log: 'pursues last-seen' / 'searching'.", game.Point{X: originX + 8, Y: originY + 7}, scout)
 	dbg.Printf("spotted bench: snow block (%d,%d) deployed=%d", originX, originY, len(s.game.Units.Units()))
 }

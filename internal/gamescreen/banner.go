@@ -111,8 +111,13 @@ func (s *Screen) showInfoLines(lines []string) {
 
 // setBanner stores a transient banner's text, expiry tick, and tint.
 func (s *Screen) setBanner(text string, tint bannerTint) {
+	s.setBannerFor(text, tint, 2500)
+}
+
+// setBannerFor is setBanner with its own hold time in milliseconds.
+func (s *Screen) setBannerFor(text string, tint bannerTint, ms uint64) {
 	s.banner.msg = text
-	s.banner.msgExpire = platform.Ticks() + 2500
+	s.banner.msgExpire = platform.Ticks() + ms
 	s.banner.msgTint = tint
 }
 

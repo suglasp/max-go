@@ -93,10 +93,7 @@ func (s *Screen) DeployMissileBench() {
 	s.showNames = true
 	s.fogShow = false
 	s.r.SetZoom(missileBenchZoom)
-	vw, vh := viewSize(MainMap)
-	s.camera.scrollX, s.camera.scrollY = centerScroll(cx+3, cy, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
-	s.showMessage("Missile bench (AI off): select a launcher - Rocket/Missile (land), Sub/Corvette/Boat (sea, scroll to the water), Bomber (air) - and attack an enemy tank or building; the missile flies + explodes. Fire the Rocket Launcher dry, then use the Supply Truck's Reload to refill it.")
+	s.startSingleBench("Missile bench (AI off): select a launcher - Rocket/Missile (land), Sub/Corvette/Boat (sea, scroll to the water), Bomber (air) - and attack an enemy tank or building; the missile flies + explodes. Fire the Rocket Launcher dry, then use the Supply Truck's Reload to refill it.", game.Point{X: cx + 3, Y: cy}, rl)
 	dbg.Printf("missile bench: land block (%d,%d) deployed=%d", originX, originY, len(s.game.Units.Units()))
 }
 

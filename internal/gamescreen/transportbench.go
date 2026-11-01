@@ -86,9 +86,7 @@ func (s *Screen) DeployTransport() {
 	s.game.State.PlayerTeam = player
 	s.fogShow = false
 	s.r.SetZoom(transportBenchZoom)
-	vw, vh := viewSize(MainMap)
-	s.camera.scrollX, s.camera.scrollY = centerScroll(originX+2, originY+2, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
+	s.startSingleBench("Transport bench: the APC and the Air Transport carry two units each - popup Activate, pick one, click an exit marker. Load the two free units beside the APC (move one next to it first). A loaded Sea Transport and a free Corvette sit on the nearest water.", game.Point{X: originX + 2, Y: originY + 2}, apc)
 	dbg.Logf(dbg.UI, "transport bench: snow (%d,%d) APC carries %d, AirTransport carries %d", originX, originY, len(apc.Carried), len(air.Carried))
 }
 

@@ -63,9 +63,10 @@ type Projectile struct {
 // ProjectileImpact is a missile arrival the in game screen draws as an explosion +
 // blast/hit sound at the target's cell. C++: Paths_FinishMove -> parent->Attack.
 type ProjectileImpact struct {
+	Attacker  *game.UnitInfo // the firer, so the screen can report a hit the player made
 	Target    *game.UnitInfo
 	Destroyed bool
-	Damage    int // hit points the missile took off the target (for debug/log lines)
+	Damage    int // hit points the missile took off the target
 }
 
 // launchProjectile fires a travelling missile from attacker at target (already
@@ -129,7 +130,7 @@ func (g *Game) resolveProjectileHit(p *Projectile) {
 	// Single target (it may have died to an earlier missile this frame, in which
 	// case the blast is cosmetic only).
 	t := p.Target
-	impact := ProjectileImpact{Target: t}
+	impact := ProjectileImpact{Attacker: p.Attacker, Target: t}
 	if t != nil && t.Hits > 0 {
 		res := combat.Apply(p.Attacker, t, 0)
 		impact.Destroyed = res.Destroyed
@@ -177,7 +178,7 @@ func (g *Game) attackArea(attacker *game.UnitInfo, cx, cy, radius int) {
 		}
 	}
 	for _, v := range victims {
-		impact := ProjectileImpact{Target: v.u}
+		impact := ProjectileImpact{Attacker: attacker, Target: v.u}
 		res := combat.Apply(attacker, v.u, v.dist)
 		impact.Destroyed = res.Destroyed
 		impact.Damage = res.Damage

@@ -71,9 +71,6 @@ func (s *Screen) DeployAirBench() {
 	s.showNames = true
 	s.fogShow = false
 	s.r.SetZoom(airBenchZoom)
-	vw, vh := viewSize(MainMap)
-	s.camera.scrollX, s.camera.scrollY = centerScroll(originX+5, originY+6, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
-	s.showMessage("Air bench: attack the enemy tank -> a ROCKET flies + explodes on arrival. Scroll SOUTH to the enemy complex (generator/storage/mine) and attack a BUILDING - the bomber should fire in place, not fly over. Click a LANDING PAD to fly onto it + auto-land.")
+	s.startSingleBench("Air bench: attack the enemy tank -> a ROCKET flies + explodes on arrival. Scroll SOUTH to the enemy complex (generator/storage/mine) and attack a BUILDING - the bomber should fire in place, not fly over. Click a LANDING PAD to fly onto it + auto-land.", game.Point{X: originX + 5, Y: originY + 6}, bomber)
 	dbg.Printf("air bench: land block (%d,%d) deployed=%d", originX, originY, len(s.game.Units.Units()))
 }

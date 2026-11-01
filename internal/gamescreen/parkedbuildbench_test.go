@@ -9,7 +9,10 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
+	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
+	"github.com/suglasp/max-go/internal/sim"
+	"github.com/suglasp/max-go/internal/world"
 )
 
 // benchUnit returns the bench's first unit of a type, or nil.
@@ -36,8 +39,21 @@ func parkedOn(s *Screen, t assets.UnitType) (*game.UnitInfo, *game.UnitInfo) {
 // hidden buildings (H13, H14, H2), the idle builders (H15) and the running Habitat (H17) are there, loading the
 // Depot's Constructor unfolds the Depot (H13) and killing the Gun Turret's Engineer loses the turret (H14).
 func TestParkedBuildBench(t *testing.T) {
-	s, g := newClickScreen(t)
+	m := &world.Map{Surface: make([]uint8, 112*112)}
+	m.W, m.H = 112, 112
+	for i := range m.Surface {
+		m.Surface[i] = world.SurfaceLand
+	}
+	p := &game.StartParams{}
+	p.Teams[0].Type = game.TeamPlayer
+	g := sim.New(p, m)
+	s := &Screen{game: g, wmap: m, r: drawmap.New(m)}
 	s.DeployParkedBuildBench()
+
+	if n := len(s.bench.stops); n != 5 {
+		t.Fatalf("%d stops, want 5 (H13, H14, H2, H15, H17)", n)
+	}
+	checkBenchStopsApart(t, s.bench.stops)
 
 	if n := len(g.BuildReadyUnits(0)); n != 4 {
 		t.Fatalf("%d parked builders, want 4 (H13, H14 and the H2 pair)", n)
@@ -89,5 +105,23 @@ func TestParkedBuildBench(t *testing.T) {
 		if u.Flags.Has(game.FlagGroundCover) || u == site {
 			t.Errorf("%v left on the lost turret site", u.Type)
 		}
+	}
+}
+
+// TestParkedBuildBenchSnow places the five scenarios on the bench's real map, SNOW_1: each on its own land
+// block at its own compass anchor, far enough apart to never share the screen.
+func TestParkedBuildBenchSnow(t *testing.T) {
+	s := benchScreen(t, "SNOW_1.WRL")
+	s.DeployParkedBuildBench()
+
+	if n := len(s.bench.stops); n != 5 {
+		t.Fatalf("%d stops on SNOW_1, want 5", n)
+	}
+	checkBenchStopsApart(t, s.bench.stops)
+	if n := len(s.game.BuildReadyUnits(0)); n != 4 {
+		t.Errorf("%d parked builders on SNOW_1, want 4", n)
+	}
+	for _, stop := range s.bench.stops {
+		t.Logf("%s %s at %v", stop.Compass, stop.Title, stop.Cell)
 	}
 }

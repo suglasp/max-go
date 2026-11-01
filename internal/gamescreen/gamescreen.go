@@ -145,6 +145,7 @@ type Screen struct {
 	hooks      screenHooks     // host callbacks
 	camera     cameraState     // viewport state
 	turnFlow   turnFlowState   // turn flow and watchdog state
+	bench      benchState      // -emulate bench stops (Tab)
 }
 
 // New builds the screen for a loaded map.
@@ -505,6 +506,7 @@ func (s *Screen) tickFrameEvents() {
 	s.tickDamage()               // a unit that SURVIVED an instant attack: bloom, hit sound, under attack banner
 	s.tickReactions()            // reaction (opportunity) fire: the weapon report + banner
 	s.tickCommandoEvents()       // an enemy commando seized / shut down / was caught raiding a player unit
+	s.tickBenchBanner()          // -emulate benches: the stop banner returns once a turn start alert is gone
 }
 
 // draw renders the map viewport and minimap into the background window, then prints the status line.

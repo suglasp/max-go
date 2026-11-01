@@ -517,6 +517,9 @@ func (s *Screen) handleHotkey(key int, buf *gfx.Buffer) {
 
 	case '[':
 		s.armCheatInput() // start typing a [MAX...] cheat code (cheats.go)
+
+	case platform.KeyTab:
+		s.stepBenchStop() // -emulate benches only: Tab / Shift+Tab to the next / previous scenario
 	}
 }
 

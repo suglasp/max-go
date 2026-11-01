@@ -10,80 +10,89 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/combat"
+	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
+	"github.com/suglasp/max-go/internal/sim"
 	"github.com/suglasp/max-go/internal/world"
 )
 
-// TestNavalFireBenchLanes checks the bench finds its six lanes on SNOW_1 and each gives the wanted line of fire:
-// blocked across land; clear on open water, past a friendly ship or a bridge (units and bridges never block),
-// along coast, and on a diagonal that only touches land at a corner.
-func TestNavalFireBenchLanes(t *testing.T) {
+// benchScreen builds a headless Screen on the retail map file (MAX_DATA_DIR), or skips the test.
+func benchScreen(t *testing.T, file string) *Screen {
+	t.Helper()
 	dir := os.Getenv("MAX_DATA_DIR")
 	if dir == "" {
 		t.Skip("game data not found (set MAX_DATA_DIR)")
 	}
-	m, err := world.LoadMap(filepath.Join(dir, "SNOW_1.WRL"))
+	m, err := world.LoadMap(filepath.Join(dir, file))
 	if err != nil {
-		t.Skipf("SNOW_1.WRL: %v", err)
+		t.Skipf("%s: %v", file, err)
 	}
-	s := &Screen{wmap: m}
-	originX, originY, ok := s.snowBlock(8, 8)
-	if !ok {
-		originX, originY = m.W/2, m.H/2
-	}
-	center := game.Point{X: originX + 4, Y: originY + 4}
-	taken := map[game.Point]bool{}
+	p := &game.StartParams{}
+	p.Teams[0].Type = game.TeamPlayer
+	g := sim.New(p, m)
+	return &Screen{game: g, wmap: m, r: drawmap.New(m)}
+}
 
-	blocked, ok := s.findNavalLane(center, taken, laneLand)
-	if !ok {
-		t.Fatal("no water lane across land on SNOW_1")
-	}
-	clear, ok := s.findNavalLane(blocked.From, taken, laneOpen)
-	if !ok {
-		t.Fatal("no open water lane on SNOW_1")
-	}
-	friendly, ok := s.findNavalLane(blocked.From, taken, laneOpen)
-	if !ok {
-		t.Fatal("no second open water lane on SNOW_1")
-	}
-	coast, ok := s.findNavalLane(blocked.From, taken, laneCoast)
-	if !ok {
-		t.Fatal("no lane along coast on SNOW_1")
-	}
-	bridge, ok := s.findNavalLane(blocked.From, taken, laneOpen)
-	if !ok {
-		t.Fatal("no third open water lane (bridge) on SNOW_1")
-	}
-	diagonal, ok := s.findNavalLane(blocked.From, taken, laneDiagonal)
-	if !ok {
-		t.Fatal("no diagonal lane grazing land on SNOW_1")
-	}
-	if diagonal.To.X == diagonal.From.X || diagonal.To.Y == diagonal.From.Y {
-		t.Errorf("the diagonal lane %v is not diagonal", diagonal)
-	}
-
-	t.Logf("lanes: blocked %v, clear %v, friendly %v, coast %v, bridge %v, diagonal %v", blocked, clear, friendly, coast, bridge, diagonal)
-	for _, c := range []struct {
-		name   string
-		lane   navalLane
-		wanted bool
-	}{
-		{"blocked", blocked, false},
-		{"clear", clear, true},
-		{"friendly", friendly, true},
-		{"coast", coast, true},
-		{"bridge", bridge, true},
-		{"diagonal", diagonal, true},
-	} {
-		u := game.NewUnitInfo(assets.Corvette, 0, 0, 0)
-		u.SetPosition(c.lane.From.X, c.lane.From.Y)
-		if got := combat.WithinAttackRange(u, c.lane.To.X, c.lane.To.Y, navalFireBenchRange, m); got != c.wanted {
-			t.Errorf("%s lane %v: line of fire clear = %v, want %v", c.name, c.lane, got, c.wanted)
+// checkBenchStopsApart fails when two stops share a compass anchor or lie close enough to share the screen.
+func checkBenchStopsApart(t *testing.T, stops []benchStop) {
+	t.Helper()
+	seen := map[string]bool{}
+	for i, a := range stops {
+		if a.Compass == "" || seen[a.Compass] {
+			t.Errorf("stop %d %s: compass %q missing or used twice", i+1, a.Title, a.Compass)
 		}
-		if n := len(c.lane.cells()) - 1; n > navalFireBenchRange {
-			t.Errorf("%s lane %v: %d cells long, past the bench range %d", c.name, c.lane, n, navalFireBenchRange)
+		seen[a.Compass] = true
+		for _, b := range stops[i+1:] {
+			if d := max(abs(a.Cell.X-b.Cell.X), abs(a.Cell.Y-b.Cell.Y)); d < benchStopsApart {
+				t.Errorf("%s %v and %s %v are %d cells apart, want %d or more", a.Title, a.Cell, b.Title, b.Cell, d, benchStopsApart)
+			}
 		}
 	}
+}
+
+// benchStopsApart is the least distance (cells, larger axis) between two stops: a zoom 32 view is at most 20
+// cells wide, so a neighbour stays off screen.
+const benchStopsApart = 20
+
+func abs(n int) int {
+	if n < 0 {
+		return -n
+	}
+	return n
+}
+
+// TestNavalFireBenchLanes runs the bench on SNOW_1: six lanes, each its own stop at its own compass anchor and
+// far apart, each with the wanted line of fire to its enemy: blocked across land; clear along coast, on a
+// diagonal that only touches land at a corner, on open water, past a friendly ship or under a bridge.
+func TestNavalFireBenchLanes(t *testing.T) {
+	s := benchScreen(t, "SNOW_1.WRL")
+	s.DeployNavalFireBench()
+
+	stops := s.bench.stops
+	if len(stops) != 6 {
+		t.Fatalf("%d lanes placed, want 6", len(stops))
+	}
+	checkBenchStopsApart(t, stops)
+
+	for _, stop := range stops {
+		shooter := stop.Select
+		var target *game.UnitInfo
+		for _, u := range s.game.Units.Units() {
+			if u.Team == 1 && (target == nil || dist2(u, shooter) < dist2(target, shooter)) {
+				target = u
+			}
+		}
+		want := stop.Title != "H9 BLOCKED"
+		if got := combat.WithinAttackRange(shooter, target.GridX, target.GridY, navalFireBenchRange, s.game.Grid.Surf); got != want {
+			t.Errorf("%s %s: (%d,%d) -> (%d,%d) line of fire clear = %v, want %v", stop.Compass, stop.Title,
+				shooter.GridX, shooter.GridY, target.GridX, target.GridY, got, want)
+		}
+		t.Logf("%s %s: (%d,%d) -> (%d,%d)", stop.Compass, stop.Title, shooter.GridX, shooter.GridY, target.GridX, target.GridY)
+	}
+}
+
+func dist2(a, b *game.UnitInfo) int {
+	dx, dy := a.GridX-b.GridX, a.GridY-b.GridY
+	return dx*dx + dy*dy
 }

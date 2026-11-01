@@ -53,9 +53,6 @@ func (s *Screen) DeployBulldozerBench() {
 	s.showNames = true
 	s.fogShow = false
 	s.r.SetZoom(bulldozerBenchZoom)
-	vw, vh := viewSize(MainMap)
-	s.camera.scrollX, s.camera.scrollY = centerScroll(originX+4, originY+4, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
-	s.showMessage("Bulldozer bench: select a dozer on a pile, popup -> Remove to clear it (building pile 4 turns, small pile 1); end turn to advance, Stop to cancel.")
+	s.startSingleBench("Bulldozer bench: select a dozer on a pile, popup -> Remove to clear it (building pile 4 turns, small pile 1); end turn to advance, Stop to cancel.", game.Point{X: originX + 4, Y: originY + 4}, dozerLarge)
 	dbg.Printf("bulldozer bench: snow block (%d,%d) deployed=%d", originX, originY, len(s.game.Units.Units()))
 }

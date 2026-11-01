@@ -258,8 +258,10 @@ func (s *Screen) attackWith(u *game.UnitInfo, cellX, cellY int, force bool) {
 		return
 	}
 
-	// A missile firer spent its shot but damage resolves on arrival; log the launch.
-	if target != nil && len(s.game.ActiveProjectiles()) > projBefore {
+	// A missile firer spent its shot but damage resolves on arrival; log the launch. Its hit message waits
+	// for the impact (tickProjectiles), since res holds no damage yet.
+	missile := target != nil && len(s.game.ActiveProjectiles()) > projBefore
+	if missile {
 		maxAmmo := 0
 
 		if u.Values != nil {
@@ -282,24 +284,8 @@ func (s *Screen) attackWith(u *game.UnitInfo, cellX, cellY int, force bool) {
 	// The sim queues each impact. tickCasualties presents a kill and tickDamage presents a nonfatal hit, whether the shot came from the player or a computer team.
 
 	// A not fatal hit reports damage here; a kill's message comes from tickCasualties.
-	if !res.Destroyed {
-		name := "Enemy unit"
-
-		if target != nil {
-			name = s.teamName(target.Team) + " unit"
-		}
-
-		if target != nil {
-			maxHits := 0
-
-			if target.Values != nil {
-				maxHits = target.Values.Get(game.AttribHits)
-			}
-
-			s.showMessage(fmt.Sprintf("%s hit for %d (%d/%d, %s).", name, res.Damage, target.Hits, maxHits, hitBand(target)))
-		} else {
-			s.showMessage(fmt.Sprintf("%s hit for %d.", name, res.Damage))
-		}
+	if !res.Destroyed && !missile {
+		s.showMessage(s.hitMessage(target, res.Damage))
 	}
 
 	s.game.UpdateEliminations()
@@ -493,4 +479,19 @@ func (s *Screen) clickCombat(cellX, cellY int) bool {
 	}
 
 	return false
+}
+
+// hitMessage is the status line for a shot that hit target for damage without destroying it.
+func (s *Screen) hitMessage(target *game.UnitInfo, damage int) string {
+	if target == nil {
+		return fmt.Sprintf("Enemy unit hit for %d.", damage)
+	}
+
+	maxHits := 0
+
+	if target.Values != nil {
+		maxHits = target.Values.Get(game.AttribHits)
+	}
+
+	return fmt.Sprintf("%s unit hit for %d (%d/%d, %s).", s.teamName(target.Team), damage, target.Hits, maxHits, hitBand(target))
 }

@@ -53,9 +53,6 @@ func (s *Screen) DeployMinesBench() {
 	s.showNames = true
 	s.fogShow = false
 	s.r.SetZoom(minesBenchZoom)
-	vw, vh := viewSize(MainMap)
-	s.camera.scrollX, s.camera.scrollY = centerScroll(originX+4, originY+4, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
-	s.showMessage("Mines bench: select the layer, popup -> Place Mine (lays on its own cell); move + lay to build a minefield; Remove Mine picks it back up.")
+	s.startSingleBench("Mines bench: select the layer, popup -> Place Mine (lays on its own cell); move + lay to build a minefield; Remove Mine picks it back up.", game.Point{X: originX + 4, Y: originY + 4}, layer)
 	dbg.Printf("mines bench: snow block (%d,%d) deployed=%d", originX, originY, len(s.game.Units.Units()))
 }

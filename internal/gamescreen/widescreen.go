@@ -78,11 +78,22 @@ func (s *Screen) setWideMode(wide bool) {
 		s.bg = s.bgNarrow
 	}
 
+	// The map pixel at the view centre, so the wider (or narrower) view stays centred on it. A bench or a
+	// start that centred the camera for the 4:3 view before Run widened it would otherwise open off target.
+	oldW, oldH := viewSize(MainMap)
+	oldZoom := s.r.Zoom()
+	centreX, centreY := s.camera.scrollX+oldW/2, s.camera.scrollY+oldH/2
+
 	s.sys.ResizeScreen(s.plat, width, platform.ScreenHeight)
 	ApplyWidescreen(wide)
 	// The viewport width changed: lift/relax the zoom floor and keep the
 	// camera on the map.
 	vw, vh := viewSize(MainMap)
 	s.r.SetViewport(vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
+
+	if zoom := s.r.Zoom(); zoom != oldZoom && oldZoom > 0 {
+		centreX, centreY = centreX*zoom/oldZoom, centreY*zoom/oldZoom // the floor raised the zoom
+	}
+
+	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(centreX-vw/2, centreY-vh/2, vw, vh)
 }

@@ -56,9 +56,6 @@ func (s *Screen) DeployAliensBench() {
 	s.showNames = true
 	s.fogShow = false
 	s.r.SetZoom(alienBenchZoom)
-	vw, vh := viewSize(MainMap)
-	s.camera.scrollX, s.camera.scrollY = centerScroll(originX+6, originY+4, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
-	s.showMessage("Aliens bench: the neutral derelicts (alien colour) - 4 units + 3 artifact buildings - never move or fire; drive the player tank up and attack one to salvage it.")
+	s.startSingleBench("Aliens bench: the neutral derelicts (alien colour) - 4 units + 3 artifact buildings - never move or fire; drive the player tank up and attack one to salvage it.", game.Point{X: originX + 6, Y: originY + 4}, tank)
 	dbg.Printf("aliens bench: snow block (%d,%d) deployed=%d", originX, originY, len(s.game.Units.Units()))
 }

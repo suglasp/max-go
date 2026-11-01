@@ -71,9 +71,7 @@ func (s *Screen) DebugFactoryRun() {
 	s.game.State.PlayerTeam = player
 	s.fogShow = false
 	s.r.SetZoom(factoryRunZoom)
-	vw, vh := viewSize(MainMap)
-	s.camera.scrollX, s.camera.scrollY = centerScroll(bx+5, row+1, s.r.Zoom(), vw, vh)
-	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
+	s.startSingleBench("Factory run bench: select the Heavy or Light plant, its finished unit waits parked - click an exit marker to drive it out. Depot (store, repair) with a damaged Scout beside it; a Shipyard linked to the base by connectors.", game.Point{X: bx + 5, Y: row + 1}, heavy)
 
 	dbg.Printf("factoryrun: base (%d,%d) shipyard-at-water=%v units=%d", bx, by, shipPlaced, len(s.game.Units.Units()))
 }
