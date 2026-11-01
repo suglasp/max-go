@@ -284,6 +284,7 @@ func (g *Game) armExpand(builder *game.UnitInfo) {
 	g.pendingExpand[br.Building] = builder
 }
 
+/* // Loading a builder at work is refused, so this release path is currently unreachable.
 // releaseParkedBuilding frees the finished building of a builder that is leaving the map
 // while still parked on it (loaded into a transport): the building is revealed and
 // unfolds at once, and the builder leaves its build pose. It must run while the builder
@@ -301,6 +302,7 @@ func (g *Game) releaseParkedBuilding(builder *game.UnitInfo) {
 	}
 	g.clearBuildReady(builder)
 }
+*/
 
 // updateExpansions releases a building to unfold once its builder has cleared the
 // building's footprint (or the builder is gone). Called each frame from Tick.

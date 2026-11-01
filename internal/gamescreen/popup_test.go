@@ -851,3 +851,49 @@ func TestPopupAirNoLandTakeOff(t *testing.T) {
 		t.Error("a grounded air unit must not offer Take Off/Land popup items (it rises on a move)")
 	}
 }
+
+// TestSentryOnlyWhileAwaiting verifies that Sentry appears only for a mobile unit waiting for orders or already
+// on guard. Builders in ORDER_BUILD, a clearing Bulldozer, and a Commando do not receive it; mobile units keep Done.
+func TestSentryOnlyWhileAwaiting(t *testing.T) {
+	s := &Screen{game: &sim.Game{}}
+	has := func(u *game.UnitInfo, label string) bool {
+		for _, it := range s.popupItemsFor(u) {
+			if it.label == label {
+				return true
+			}
+		}
+		return false
+	}
+	unit := func(tp assets.UnitType, order game.Order, state game.OrderState) *game.UnitInfo {
+		u := game.NewUnitInfo(tp, 0, 1, 0)
+		u.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+		if tp == assets.Constrct || tp == assets.Engineer {
+			u.Flags |= game.FlagConstructorUnit
+		}
+		u.Values = &game.UnitValues{}
+		u.Order, u.State = order, state
+		return u
+	}
+
+	for _, tc := range []struct {
+		name   string
+		u      *game.UnitInfo
+		sentry bool
+	}{
+		{"idle Constructor", unit(assets.Constrct, game.OrderAwait, game.OrderStateExecutingOrder), true},
+		{"parked Constructor", unit(assets.Constrct, game.OrderBuild, game.OrderStateUnitReady), false},
+		{"building Constructor", unit(assets.Constrct, game.OrderBuild, game.OrderStateBuildInProgress), false},
+		{"idle Engineer", unit(assets.Engineer, game.OrderAwait, game.OrderStateExecutingOrder), true},
+		{"parked Engineer", unit(assets.Engineer, game.OrderBuild, game.OrderStateUnitReady), false},
+		{"Tank on guard", unit(assets.Tank, game.OrderSentry, game.OrderStateExecutingOrder), true},
+		{"clearing Bulldozer", unit(assets.Bulldozr, game.OrderClear, game.OrderStateExecutingOrder), false},
+		{"Commando", unit(assets.Commando, game.OrderAwait, game.OrderStateExecutingOrder), false},
+	} {
+		if got := has(tc.u, "Sentry"); got != tc.sentry {
+			t.Errorf("%s: Sentry offered = %v, want %v", tc.name, got, tc.sentry)
+		}
+		if !has(tc.u, "Done") {
+			t.Errorf("%s: no Done button", tc.name)
+		}
+	}
+}

@@ -269,6 +269,10 @@ func CanAttackForce(attacker, target *game.UnitInfo, surf SurfaceSource, force b
 	if attacker.Values == nil || attacker.Shots <= 0 || attacker.Ammo <= 0 {
 		return false
 	}
+	// A building still hidden behind its parked builder cannot be shot (it is not on the map yet).
+	if target.HiddenUntilExpand {
+		return false
+	}
 	if !force && attacker.Team == target.Team {
 		return false
 	}

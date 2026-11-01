@@ -236,8 +236,16 @@ func (s *Screen) cursorForArmedOrder(cellX, cellY int) (id cursors.ID, armed boo
 	// Building "Load" armed: the friendly load pointer over any friendly unit this
 	// Depot/Hangar/Dock can take (it paths in if not adjacent), no go elsewhere.
 	if s.effects.loadInto != nil {
-		if s.game.CanContain(s.effects.loadInto, s.pickFriendlyUnit(cellX, cellY)) {
+		friend := s.pickFriendlyUnit(cellX, cellY)
+
+		if s.game.CanContain(s.effects.loadInto, friend) {
 			return cursors.Load, true
+		}
+
+		// A friendly unit it cannot take (a builder at work, a full hold, the wrong class) gets the select
+		// pointer: a click only selects it. C++: GameManager_GetCursor falls through to CURSOR_FRIEND.
+		if friend != nil && friend != s.effects.loadInto {
+			return cursors.Friend, true
 		}
 
 		return cursors.UnitNoGo, true

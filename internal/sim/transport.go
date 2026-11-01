@@ -155,6 +155,12 @@ func (g *Game) CanContain(container, passenger *game.UnitInfo) bool {
 	if g.IsDisabled(passenger) {
 		return false
 	}
+	// A builder raising a building or parked on its finished one (ORDER_BUILD), and a bulldozer clearing rubble
+	// (ORDER_CLEAR), cannot be picked up. The Load action selects these units instead of loading them.
+	// Source: game_manager.cpp - GameManager_GetCursor and Task_IsReadyToTakeOrders.
+	if passenger.Order == game.OrderBuild || passenger.Order == game.OrderClear {
+		return false
+	}
 	if len(container.Carried) >= ContainerCapacity(container) {
 		return false
 	}
@@ -201,7 +207,9 @@ func (g *Game) LoadUnit(container, passenger *game.UnitInfo) bool {
 	}
 	g.cancel(passenger)
 	delete(g.pending, passenger)
+	/* // Loading a builder at work is refused, so no loaded unit is parked
 	g.releaseParkedBuilding(passenger) // a builder still parked on its finished building lets it unfold
+	*/
 	g.Units.Remove(passenger)
 	passenger.Parent = container
 	container.Carried = append(container.Carried, passenger)

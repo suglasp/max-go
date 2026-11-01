@@ -231,8 +231,14 @@ func (s *Screen) tryTransportTarget(cellX, cellY int) bool {
 			return true
 		}
 
-		if unit == nil || !s.game.CanContain(building, unit) {
+		if unit == nil {
 			s.showInfo("Cannot load that unit here.")
+			return true
+		}
+
+		// A friendly unit it cannot take is selected instead of loaded, as indicated by the select pointer.
+		if !s.game.CanContain(building, unit) {
+			s.setSelected(unit)
 			return true
 		}
 

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
+	"github.com/suglasp/max-go/internal/combat"
 	"github.com/suglasp/max-go/internal/economy"
 	"github.com/suglasp/max-go/internal/game"
 )
@@ -158,6 +159,67 @@ func parkOnFinishedBuilding(t *testing.T, g *Game, builder func(g *Game) *game.U
 	return b, bld
 }
 
+// TestLoadRefusesBuilderAtWork verifies that transports reject a builder parked on its finished building, a
+// builder still raising one, and a bulldozer clearing rubble. A parked building stays hidden behind its builder.
+func TestLoadRefusesBuilderAtWork(t *testing.T) {
+	newAir := func(g *Game, x, y int) *game.UnitInfo {
+		air := game.NewUnitInfo(assets.AirTrans, 0, 1, 0)
+		air.Flags = game.FlagMobileAirUnit | game.FlagHovering | game.FlagSelectable
+		air.Values = &game.UnitValues{}
+		air.Values.Set(game.AttribStorage, 3)
+		air.InitState()
+		g.Units.Deploy(air, x, y)
+		return air
+	}
+
+	for _, tc := range parkedBuilderCases {
+		t.Run(tc.name+" parked", func(t *testing.T) {
+			g := newGame(t, 24, 24)
+			g.Resources = economy.NewResourceMap(24, 24)
+			b, bld := parkOnFinishedBuilding(t, g, tc.builder, tc.product)
+			air := newAir(g, b.GridX, b.GridY-1)
+
+			if g.CanContain(air, b) || g.LoadUnit(air, b) {
+				t.Fatal("the air transport took a builder parked on its finished building")
+			}
+			if !bld.HiddenUntilExpand || !g.IsBuildReady(b) || len(air.Carried) != 0 {
+				t.Error("the refused load changed the parked builder or its building")
+			}
+		})
+
+		t.Run(tc.name+" building", func(t *testing.T) {
+			g := newGame(t, 24, 24)
+			g.Resources = economy.NewResourceMap(24, 24)
+			b := tc.builder(g)
+			g.StartBuild(b, tc.product(), 8, 8, 1)
+			air := newAir(g, b.GridX, b.GridY-1)
+
+			if g.CanContain(air, b) {
+				t.Error("the air transport took a builder raising a building")
+			}
+		})
+	}
+
+	t.Run("bulldozer clearing", func(t *testing.T) {
+		g := newGame(t, 24, 24)
+		dozer := game.NewUnitInfo(assets.Bulldozr, 0, 2, 0)
+		dozer.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+		dozer.Values = &game.UnitValues{}
+		g.Units.Deploy(dozer, 8, 8)
+		dozer.Order = game.OrderClear
+		air := newAir(g, 8, 7)
+
+		if g.CanContain(air, dozer) {
+			t.Error("the air transport took a bulldozer that is clearing rubble")
+		}
+		dozer.Order = game.OrderAwait
+		if !g.CanContain(air, dozer) {
+			t.Error("an idle bulldozer should load")
+		}
+	})
+}
+
+/* // Loading a parked builder is refused, so the release path is currently unreachable.
 // TestLoadParkedBuilderReleasesBuilding checks klei 23/08/26 UnitsManager_BuildingReady: a builder stored in a
 // transport no longer blocks its finished building, which unfolds at once; the builder leaves its build pose.
 func TestLoadParkedBuilderReleasesBuilding(t *testing.T) {
@@ -196,6 +258,47 @@ func TestLoadParkedBuilderReleasesBuilding(t *testing.T) {
 						if u == b {
 							t.Errorf("the loaded builder is still hashed at (%d,%d)", 8+dx, 8+dy)
 						}
+					}
+				}
+			}
+		})
+	}
+}
+*/
+
+// TestHiddenBuildingIsNoTarget verifies that shots at a parked builder's cell hit the builder rather than the
+// finished building hidden behind it, regardless of cell-list order. Area damage also leaves the building alone.
+func TestHiddenBuildingIsNoTarget(t *testing.T) {
+	for _, tc := range parkedBuilderCases {
+		t.Run(tc.name, func(t *testing.T) {
+			g := newGame(t, 24, 24)
+			g.Resources = economy.NewResourceMap(24, 24)
+			b, bld := parkOnFinishedBuilding(t, g, tc.builder, tc.product)
+
+			tank := game.NewUnitInfo(assets.Tank, 0, 3, 0)
+			tank.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+			tank.Values = &game.UnitValues{}
+			tank.Values.Set(game.AttribAttack, 200)
+			tank.Values.Set(game.AttribRange, 5)
+			tank.Values.Set(game.AttribRounds, 1)
+			tank.Values.Set(game.AttribAmmo, 4)
+			tank.InitState()
+			g.Units.Deploy(tank, 8, 12)
+
+			if targetableUnit(bld) {
+				t.Error("the hidden building counts as targetable")
+			}
+			if combat.CanAttackForce(tank, bld, g.Grid.Surf, true) {
+				t.Error("combat lets the Tank shoot the hidden building")
+			}
+			fp := 1
+			if bld.Flags.Has(game.FlagBuilding) {
+				fp = 2
+			}
+			for y := bld.GridY; y < bld.GridY+fp; y++ {
+				for x := bld.GridX; x < bld.GridX+fp; x++ {
+					if got := g.attackTargetAt(tank, x, y, true); got != b {
+						t.Errorf("a forced shot at site cell (%d,%d) picks %v, want the parked builder", x, y, got)
 					}
 				}
 			}

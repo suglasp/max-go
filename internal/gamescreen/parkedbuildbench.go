@@ -29,12 +29,12 @@ type parkedBuildScenario struct {
 // DeployParkedBuildBench lays out the -emulate parkedbuild bench for the October hand checks (PLAN-OKT2026),
 // five scenarios, each on its own land block near its own compass anchor so only one is on screen at a time
 // (Tab moves on):
-//   - H13: a Constructor parked on a finished Depot with an Air Transport beside it. Load the Constructor: the
-//     Depot must unfold at once.
+//   - H13: a Constructor parked on a finished Depot with an Air Transport beside it. The Air Transport's Load
+//     must refuse it: the select pointer appears over it and a click only selects it.
 //   - H14: an Engineer parked on a finished Gun Turret with a one shot player Tank beside it. Force fire (Shift
 //     or Ctrl click) the Engineer: the hidden turret goes with it.
 //   - H2: a Constructor parked on a finished Light Vehicle Plant and an Engineer on a finished Anti Aircraft
-//     gun. Sentry on the parked builder, then an exit marker: it drives off cleanly.
+//     gun. Their popup has no Sentry button; an exit marker drives each off cleanly.
 //   - H15: an idle Constructor and Engineer with full storage to open the Build menus (real unit descriptions,
 //     one shared Description checkbox).
 //   - H17: a running Habitat on its own: select it and scroll away, its hum pans and fades.
@@ -53,8 +53,8 @@ func (s *Screen) DeployParkedBuildBench() {
 	var depot, turret, plant, antiAir, habitat, air, tank *game.UnitInfo
 
 	scenarios := []parkedBuildScenario{
-		{w: 4, h: 5, title: "H13 Air Transport loads a parked builder",
-			text: "Air Transport popup Load, click the Constructor: the Depot unfolds at once, the Constructor is aboard",
+		{w: 4, h: 5, title: "H13 Air Transport cannot load a parked builder",
+			text: "Air Transport popup Load, point at the Constructor: the select pointer (no load pointer), a click only selects it, nothing is picked up",
 			deploy: func(x, y int) (game.Point, *game.UnitInfo) {
 				constructor = s.deployUnit(assets.Constrct, builderFlags, player, 2, x+1, y+2)
 				depot = s.parkOnFinishedBuild(constructor, assets.Depot, bigFlags, x+1, y+2)
@@ -70,8 +70,8 @@ func (s *Screen) DeployParkedBuildBench() {
 				tank.Values.Set(game.AttribAttack, parkedBuildBenchAttack)
 				return game.Point{X: x + 1, Y: y + 2}, tank
 			}},
-		{w: 7, h: 4, title: "H2 Sentry on a parked builder",
-			text: "Sentry on the parked Constructor (or Engineer), then click an exit marker: it drives off cleanly",
+		{w: 7, h: 4, title: "H2 a parked builder has no Sentry",
+			text: "open the parked Constructor's (and Engineer's) popup: no Sentry button, Done is there; click an exit marker: it drives off cleanly",
 			deploy: func(x, y int) (game.Point, *game.UnitInfo) {
 				sentryConstructor = s.deployUnit(assets.Constrct, builderFlags, player, 2, x+1, y+1)
 				plant = s.parkOnFinishedBuild(sentryConstructor, assets.LightPlt, bigFlags, x+1, y+1)

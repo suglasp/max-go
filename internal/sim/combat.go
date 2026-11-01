@@ -212,6 +212,10 @@ func targetableUnit(u *game.UnitInfo) bool {
 	if u.Type == assets.Waldo || u.Type == assets.Harvster {
 		return false
 	}
+	// A finished building hidden behind its parked builder is not a target until the builder leaves the site.
+	if u.HiddenUntilExpand {
+		return false
+	}
 	return !u.Flags.Has(game.FlagGroundCover) && u.Type != assets.Bridge
 }
 

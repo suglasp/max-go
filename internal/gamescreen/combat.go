@@ -229,7 +229,7 @@ func (s *Screen) attackWith(u *game.UnitInfo, cellX, cellY int, force bool) {
 	var target *game.UnitInfo
 
 	for _, e := range s.game.Units.Cells.At(cellX, cellY) {
-		if e == u || e.Flags.Has(game.FlagGroundCover) {
+		if e == u || e.Flags.Has(game.FlagGroundCover) || e.HiddenUntilExpand {
 			continue
 		}
 

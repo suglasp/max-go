@@ -166,7 +166,7 @@ func (g *Game) attackArea(attacker *game.UnitInfo, cx, cy, radius int) {
 				continue
 			}
 			for _, u := range g.Units.Cells.At(cx+dx, cy+dy) {
-				if u == attacker || seen[u] || u.Hits <= 0 || u.Flags.Has(game.FlagGroundCover) {
+				if u == attacker || seen[u] || u.Hits <= 0 || u.Flags.Has(game.FlagGroundCover) || u.HiddenUntilExpand {
 					continue
 				}
 				if !combat.CanTarget(attacker, u, g.Grid.Surf) {

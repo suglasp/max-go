@@ -438,6 +438,18 @@ func (s *Screen) appendCargoOrders(u *game.UnitInfo, items []popupItem, mobile b
 	return items
 }
 
+// sentryOffered reports whether a mobile unit's popup offers Sentry: it must be waiting for orders or already on
+// guard (a parked or building Constructor / Engineer holds ORDER_BUILD, a clearing Bulldozer ORDER_CLEAR), and it
+// must not be a Commando.
+// Source: units_manager.cpp - UnitsManager_Popup_InitCommons.
+func sentryOffered(u *game.UnitInfo) bool {
+	if u.Type == assets.Commando {
+		return false
+	}
+
+	return u.Order == game.OrderAwait || u.Order == game.OrderSentry
+}
+
 // appendSentryOrders adds the on guard toggles: Sentry and Done for a mobile unit,
 // Sentry alone for a defense building.
 func (s *Screen) appendSentryOrders(u *game.UnitInfo, items []popupItem, mobile bool) []popupItem {
@@ -445,14 +457,19 @@ func (s *Screen) appendSentryOrders(u *game.UnitInfo, items []popupItem, mobile 
 	// bought upgrade in place, but the port applies upgrades eagerly on purchase, so no unit
 	// ever has one pending and the button is always moot. Buy Upgrade lives on the Gold
 	// Refinery only (adding it here too showed it twice).
-	// Sentry + Done: mobile units (the SENTRY_UNIT flag in the original).
-	if mobile {
+	// Sentry is available to mobile units waiting for orders or already on guard. Builders in ORDER_BUILD,
+	// clearing Bulldozers, disabled units, and Commandos do not receive it. Done remains available to mobile units.
+	// Source: units_manager.cpp - UnitsManager_Popup_InitCommons (SENTRY_UNIT block).
+	if mobile && sentryOffered(u) {
 		items = append(items, popupItem{
 			tex:    "SNTRY",
 			label:  s.lang.Get("524e", "Sentry"),
 			active: u.Order == game.OrderSentry, // green highlight follows the real order
 			action: func() { s.toggleSentry(u) },
 		})
+	}
+
+	if mobile {
 		items = append(items, popupItem{tex: "DONE", label: s.lang.Get("2b7d", "Done"), action: func() {
 			u.Speed = 0 // spend the rest of its turn
 			s.game.CancelOrder(u)
