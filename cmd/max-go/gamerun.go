@@ -167,6 +167,9 @@ func applyGameScreenMode(scr *gamescreen.Screen, ctx *menus.Context, mode gameSc
 	case gameScreenParkedBuild:
 		scr.DeployParkedBuildBench() // -emulate parkedbuild: a parked builder loaded or killed releases / loses its building
 
+	case gameScreenReactionFire:
+		scr.DeployReactionFireBench() // -emulate reactionfire: the reaction fire voice on and off screen (H1)
+
 	}
 }
 
@@ -510,6 +513,7 @@ const (
 	gameScreenSubmarine
 	gameScreenNavalFire
 	gameScreenParkedBuild
+	gameScreenReactionFire
 )
 
 // runGameScreenShadow is the unit shadow inspection view (-emulate shadow):

@@ -43,27 +43,7 @@ func (s *Screen) deployUnit(t assets.UnitType, flags game.Flags, team int, angle
 	}
 
 	u.Flags = flags
-
-	if int(t) >= 0 && int(t) < len(s.buildUI.attribs) {
-		// Real ATTRIBS loaded: use the same team/clan adjusted values a factory
-		// produced unit gets, so a deployed unit starts with its TRUE stats.
-		// C++: a deployed and a produced unit share UnitsManager_BaseUnitValues.
-		u.Values = s.teamValues(team, t)
-	} else {
-		// Headless benches/tests with no ATTRIBS: placeholder stats so the turn loop
-		// and right click fire still work.
-		u.Values = &game.UnitValues{}
-		u.Values.Set(game.AttribScan, 4)
-		u.Values.Set(game.AttribSpeed, 8)
-		u.Values.Set(game.AttribAttack, 12)
-		u.Values.Set(game.AttribArmor, 4)
-		u.Values.Set(game.AttribHits, 24)
-		u.Values.Set(game.AttribRounds, 1)
-		u.Values.Set(game.AttribRange, 5)
-		u.Values.Set(game.AttribAmmo, 6)
-		u.Values.Set(game.AttribStorage, 40)
-	}
-
+	u.Values = s.deployValues(team, t)
 	u.InitState() // Hits/Ammo/Shots/Speed from the values above
 	u.SetAngle(angle)
 	u.TurretAngle = angle
@@ -75,6 +55,29 @@ func (s *Screen) deployUnit(t assets.UnitType, flags game.Flags, team int, angle
 	s.game.Units.Deploy(u, cellX, cellY)
 	s.spawnSeq++
 	return u
+}
+
+// deployValues is a deployed unit's stats: with real ATTRIBS loaded, the same team and clan adjusted values a
+// factory produced unit gets, so it starts with its TRUE stats; in a headless bench or test with no ATTRIBS,
+// placeholder stats so the turn loop and fire still work.
+// C++: a deployed and a produced unit share UnitsManager_BaseUnitValues.
+func (s *Screen) deployValues(team int, t assets.UnitType) *game.UnitValues {
+	if int(t) >= 0 && int(t) < len(s.buildUI.attribs) {
+		return s.teamValues(team, t)
+	}
+
+	v := &game.UnitValues{}
+	v.Set(game.AttribScan, 4)
+	v.Set(game.AttribSpeed, 8)
+	v.Set(game.AttribAttack, 12)
+	v.Set(game.AttribArmor, 4)
+	v.Set(game.AttribHits, 24)
+	v.Set(game.AttribRounds, 1)
+	v.Set(game.AttribRange, 5)
+	v.Set(game.AttribAmmo, 6)
+	v.Set(game.AttribStorage, 40)
+
+	return v
 }
 
 // assignSprite fills a unit's sprite frame bases from its type's sheet, so units

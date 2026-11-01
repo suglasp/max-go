@@ -134,7 +134,7 @@ func TestBenchStartPopup(t *testing.T) {
 	s.addBenchStop(benchStop{Compass: "south", Title: "H9 COAST", Cell: game.Point{X: 12, Y: 12}})
 	s.startBench("Naval fire bench (AI off). H3: 40 s turns.")
 
-	for _, want := range []string{"test bench: Naval fire bench.", "Tab = next scenario, Shift+Tab = previous scenario", "The enemy is frozen"} {
+	for _, want := range []string{"test bench: Naval fire bench.", "Tab = next scenario, Shift+Tab = previous scenario", "The enemy takes no turns"} {
 		if !strings.Contains(s.bench.popup, want) {
 			t.Errorf("popup %q lacks %q", s.bench.popup, want)
 		}

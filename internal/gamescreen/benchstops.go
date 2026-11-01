@@ -249,7 +249,7 @@ func (s *Screen) benchPopupText(name string) string {
 
 	for _, frozen := range s.bench.frozen {
 		if frozen {
-			turn = "The enemy is frozen: it never moves or plays, and End Turn comes straight back to you."
+			turn = "The enemy takes no turns: End Turn comes straight back to you. Its units only do what the bench sets up, and they fire back at units in their range."
 			break
 		}
 	}

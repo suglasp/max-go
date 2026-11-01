@@ -403,6 +403,11 @@ func jumpToUnitBench(ctx *menus.Context, name string, noMovie bool) (bool, error
 		// H14 kill, H2 Sentry exit), idle builders for the Build menu descriptions (H15), a humming Habitat (H17).
 		err = runGameScreen(ctx, 0, gameScreenParkedBuild, noMovie)
 
+	case "reactionfire":
+		// World 0 (SNOW_1): two Gun Turret + Tank pairs at their own compass stops (Tab). The near pair fires back
+		// on screen (banner, no voice), the far pair off screen (banner and the reaction voice) (H1).
+		err = runGameScreen(ctx, 0, gameScreenReactionFire, noMovie)
+
 	case "air":
 		// World 0 gives the player a bomber and tanks. Land makes the bomber
 		// immobile, blocking, and vulnerable. Take Off returns it to the air.

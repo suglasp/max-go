@@ -107,7 +107,7 @@ func (s *Screen) DeployHeadRotateBench() {
 func (s *Screen) benchPlaceTurret(t assets.UnitType, flags game.Flags, team int, angle uint8, gx, gy int) *game.UnitInfo {
 	u := game.NewUnitInfo(t, team, s.spawnSeq+1, angle)
 	u.Flags = flags
-	u.Values = s.teamValues(team, t)
+	u.Values = s.deployValues(team, t)
 	u.InitState()
 	u.SetAngle(angle)
 	u.TurretAngle = angle
