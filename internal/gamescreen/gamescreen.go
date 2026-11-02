@@ -606,10 +606,10 @@ func (s *Screen) draw(buf *gfx.Buffer) {
 // statusHint returns the key list printed under the map for the current mode.
 // Armed debug placement, the build menu, and build or path picks each show their own keys instead of the general list.
 func (s *Screen) statusHint() string {
-	hint := "scroll, zoom, G grid, F find, ? help, Alt+S save, Alt+L load, Alt+1-4 set group, 1-4 recall, RETURN end turn, ESC"
+	hint := "letter = popup button, Ctrl+S status, Ctrl+R survey, Ctrl+O options, F1 last event, G grid, F find, ? help, Alt+S/L save/load, Alt+1-9 set group, 1-9 recall, RETURN end turn, ESC"
 
 	if s.debug {
-		hint = "G grid, F find, Alt+S/L save/load, Alt+D explode, Alt+1-4/1-4 groups, F2 debug menu, A access, V fog, L move/attack, R info, RETURN end, ESC"
+		hint = "letter = popup button, Ctrl+S/R/O status/survey/options, Ctrl+M resources, F1 last event, G grid, F find, Alt+S/L save/load, Alt+D explode, Alt+1-9/1-9 groups, F2 debug menu, A access, V fog, Tab bench stop, RETURN end, ESC"
 	}
 
 	if s.debugPlaceArmed() {
