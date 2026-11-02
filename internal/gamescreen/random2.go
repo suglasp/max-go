@@ -192,22 +192,39 @@ func (s *Screen) placeBigBaseBuildings(team int, center game.Point, coastal bool
 			return build.SiteValid(s.game.Grid, d, team, x, y) && !footprintTaken(taken, x, y, n)
 		}
 
+		pick := func(valid func(x, y int) bool) (int, int, bool) {
+			switch {
+			case water:
+				// A naval building (the Shipyard) searches wide for the nearest coast; it
+				// stands on its own complex (its water edges do not abut the land mass).
+				return s.nearestCell(center, baseSearchRadius+28, valid)
+			case len(placed) == 0:
+				// The first land building anchors the base near the centre.
+				return s.nearestCell(center, baseSearchRadius, valid)
+			}
+
+			// Every later land building hugs the placed mass so the complex connects.
+			if x, y, ok := adjacentSite(placed, n, valid); ok {
+				return x, y, true
+			}
+
+			return s.nearestCell(center, baseSearchRadius, valid) // fall back to any valid site
+		}
+
 		var x, y int
 		var ok bool
 
-		switch {
-		case water:
-			// A naval building (the Shipyard) searches wide for the nearest coast; it
-			// stands on its own complex (its water edges do not abut the land mass).
-			x, y, ok = s.nearestCell(center, baseSearchRadius+28, valid)
-		case len(placed) == 0:
-			// The first land building anchors the base near the centre.
-			x, y, ok = s.nearestCell(center, baseSearchRadius, valid)
-		default:
-			// Every later land building hugs the placed mass so the complex connects.
-			if x, y, ok = adjacentSite(placed, n, valid); !ok {
-				x, y, ok = s.nearestCell(center, baseSearchRadius, valid) // fall back to any valid site
-			}
+		// A building whose units drive out over land first looks for a site that still has a lane out to open
+		// ground, and takes any valid site only when none has.
+		if drivesOutOverLand(t) {
+			x, y, ok = pick(func(x, y int) bool {
+				_, found := s.exitLane(team, x, y, n, taken)
+				return valid(x, y) && found
+			})
+		}
+
+		if !ok {
+			x, y, ok = pick(valid)
 		}
 
 		if !ok {
@@ -216,6 +233,14 @@ func (s *Screen) placeBigBaseBuildings(team int, center game.Point, coastal bool
 
 		s.placeStartBuilding(team, t, flags, x, y)
 		markFootprint(taken, x, y, n)
+
+		// A building whose units drive out over land keeps its exit ring free, plus a lane
+		// from the ring out to open ground, so the buildings and units placed after it
+		// cannot box it in.
+		if drivesOutOverLand(t) {
+			markExitRing(taken, x, y, n)
+			s.markExitLane(team, x, y, n, taken)
+		}
 
 		// Only land footprints seed the adjacency search (a water shipyard cannot
 		// edge share with land buildings).
@@ -255,6 +280,92 @@ func (s *Screen) placeBigBaseBuildings(team int, center game.Point, coastal bool
 	s.layBigRoads(team, center, taken)
 
 	return taken
+}
+
+// drivesOutOverLand reports whether a base building sends land units out through its exit ring: the land unit
+// plants build them and a Depot unloads them.
+func drivesOutOverLand(t assets.UnitType) bool {
+	return t == assets.LightPlt || t == assets.LandPlt || t == assets.Depot
+}
+
+// markExitRing marks the ring of cells around an nxn footprint at (x,y) as taken, the cells a unit leaving the
+// building drives onto, so no later building, connector or unit is placed there.
+func markExitRing(taken map[game.Point]bool, x, y, n int) {
+	for cellY := y - 1; cellY <= y+n; cellY++ {
+		for cellX := x - 1; cellX <= x+n; cellX++ {
+			taken[game.Point{X: cellX, Y: cellY}] = true
+		}
+	}
+}
+
+// exitLaneReach is how far (cells, larger axis) from the footprint an exit lane runs: past the edge of the packed
+// base, so open ground is left at its end.
+const exitLaneReach = 8
+
+// markExitLane marks the exitLane of the nxn footprint at (x,y) taken, so the base building that follows grows
+// around the lane instead of across it. With no lane the base is left as it is.
+func (s *Screen) markExitLane(team, x, y, n int, taken map[game.Point]bool) {
+	lane, _ := s.exitLane(team, x, y, n, taken)
+
+	for _, p := range lane {
+		taken[p] = true
+	}
+}
+
+// exitLane finds the shortest path a Tank could drive from the exit ring of the nxn footprint at (x,y) to a cell
+// exitLaneReach cells away, over cells that are free now and not taken (the ring cells themselves may already be
+// reserved). found is false when there is no such path.
+func (s *Screen) exitLane(team, x, y, n int, taken map[game.Point]bool) (lane []game.Point, found bool) {
+	flags := game.FlagMobileLandUnit | game.FlagSelectable
+	tank := access.UnitDesc{Type: assets.Tank, Flags: flags, LandType: access.LandTypeForUnit(assets.Tank, flags)}
+	drivable := func(p game.Point) bool {
+		return p.X >= 0 && p.Y >= 0 && p.X < s.wmap.W && p.Y < s.wmap.H &&
+			s.game.Grid.IsAccessible(tank, team, p.X, p.Y, access.SameClassBlocks).Passable()
+	}
+	insideRing := func(p game.Point) bool { return p.X >= x-1 && p.X <= x+n && p.Y >= y-1 && p.Y <= y+n }
+	farEnough := func(p game.Point) bool {
+		return max(max(x-p.X, p.X-(x+n-1)), max(y-p.Y, p.Y-(y+n-1))) >= exitLaneReach
+	}
+
+	prev := map[game.Point]game.Point{}
+	var queue []game.Point
+
+	for cellY := y - 1; cellY <= y+n; cellY++ {
+		for cellX := x - 1; cellX <= x+n; cellX++ {
+			p := game.Point{X: cellX, Y: cellY}
+
+			if !(cellX >= x && cellX < x+n && cellY >= y && cellY < y+n) && drivable(p) {
+				prev[p] = game.Point{X: -1, Y: -1}
+				queue = append(queue, p)
+			}
+		}
+	}
+
+	for len(queue) > 0 {
+		cur := queue[0]
+		queue = queue[1:]
+
+		if farEnough(cur) {
+			for c := cur; c.X >= 0; c = prev[c] {
+				lane = append(lane, c)
+			}
+
+			return lane, true
+		}
+
+		for _, d := range [4]game.Point{{X: 1}, {X: -1}, {Y: 1}, {Y: -1}} {
+			next := game.Point{X: cur.X + d.X, Y: cur.Y + d.Y}
+
+			if _, seen := prev[next]; seen || insideRing(next) || taken[next] || !drivable(next) {
+				continue
+			}
+
+			prev[next] = cur
+			queue = append(queue, next)
+		}
+	}
+
+	return nil, false
 }
 
 // deployBigBaseForce deploys this team's mobile force around the placed base and

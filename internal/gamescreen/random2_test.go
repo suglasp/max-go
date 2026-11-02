@@ -109,3 +109,72 @@ func TestBuildBigBaseConnectorLaysNoSlab(t *testing.T) {
 		}
 	}
 }
+
+// landPlantReach counts the cells a Tank of the plant's team can drive to from the plant's exit ring, stopping at
+// limit.
+func landPlantReach(s *Screen, plant *game.UnitInfo, limit int) int {
+	tank := game.NewUnitInfo(assets.Tank, plant.Team, 0, 0)
+	tank.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+	seen := map[game.Point]bool{}
+	var queue []game.Point
+
+	for y := plant.GridY - 1; y <= plant.GridY+2; y++ {
+		for x := plant.GridX - 1; x <= plant.GridX+2; x++ {
+			inside := x >= plant.GridX && x <= plant.GridX+1 && y >= plant.GridY && y <= plant.GridY+1
+
+			if !inside && s.game.CanEnter(tank, x, y) {
+				seen[game.Point{X: x, Y: y}] = true
+				queue = append(queue, game.Point{X: x, Y: y})
+			}
+		}
+	}
+
+	for len(queue) > 0 && len(seen) < limit {
+		cur := queue[0]
+		queue = queue[1:]
+
+		for _, d := range [4]game.Point{{X: 1}, {X: -1}, {Y: 1}, {Y: -1}} {
+			next := game.Point{X: cur.X + d.X, Y: cur.Y + d.Y}
+
+			if !seen[next] && s.game.CanEnter(tank, next.X, next.Y) {
+				seen[next] = true
+				queue = append(queue, next)
+			}
+		}
+	}
+
+	return len(seen)
+}
+
+// TestRandom2PlantsCanBuild runs the bench on SNOW_1 for a few seeds: every unit factory starts powered off (it
+// only runs with something queued), and a unit leaving a land plant can drive well away from it (the base used
+// to box the Light Vehicle Plant in on every one of these seeds).
+func TestRandom2PlantsCanBuild(t *testing.T) {
+	const reach = 20
+
+	for seed := int64(1); seed <= 4; seed++ {
+		s := benchScreen(t, "SNOW_1.WRL")
+		s.RandomStart2(seed, 2)
+		plants := 0
+
+		for _, u := range s.game.Units.Units() {
+			if isFactory(u.Type) && u.Order != game.OrderPowerOff {
+				t.Errorf("seed %d: team %d %v starts with order %v, want OrderPowerOff", seed, u.Team, u.Type, u.Order)
+			}
+
+			if u.Type != assets.LightPlt && u.Type != assets.LandPlt {
+				continue
+			}
+
+			plants++
+
+			if got := landPlantReach(s, u, reach); got < reach {
+				t.Errorf("seed %d: team %d %v at (%d,%d) reaches %d cells from its exit ring, want %d", seed, u.Team, u.Type, u.GridX, u.GridY, got, reach)
+			}
+		}
+
+		if plants == 0 {
+			t.Errorf("seed %d: no land plant placed", seed)
+		}
+	}
+}

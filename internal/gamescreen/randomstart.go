@@ -609,7 +609,7 @@ func (s *Screen) nearestCell(center game.Point, maxR int, ok func(x, y int) bool
 		for dy := -r; dy <= r; dy++ {
 			for dx := -r; dx <= r; dx++ {
 				if r > 0 && dx > -r && dx < r && dy > -r && dy < r {
-					continue // interior was scanned at a smaller radius; only the ring edge is new
+					continue // the smaller-radius scan covers the interior; only the ring edge is new
 				}
 
 				x, y := center.X+dx, center.Y+dy
@@ -672,8 +672,13 @@ func (s *Screen) placeStartBuilding(team int, t assets.UnitType, flags game.Flag
 	u.Values = s.teamValues(team, t) // base ATTRIBS + team research
 	u.InitState()                    // Hits etc. from the values so the stat window has something to show
 	// Start operational so the economy runs from turn one: a powered generator
-	// supplies the mining station, which then produces.
+	// supplies the mining station, which then produces. A unit factory is the
+	// exception: it starts powered off like one built in play, because it only
+	// runs while it has something queued.
 	u.Order = game.OrderPowerOn
+	if isFactory(t) {
+		u.Order = game.OrderPowerOff
+	}
 	u.State = game.OrderStateExecutingOrder
 	s.spawnSeq++
 	s.game.PlaceBuilding(u, cellX, cellY)
