@@ -54,7 +54,7 @@ func runGameScreen(ctx *menus.Context, worldIdx int, mode gameScreenMode, noMovi
 		return err
 	}
 
-	// If the game ended (not abandoned via ESC to menu), show the game over screen
+	// When the game ends, show the game-over screen unless ESC returns to the menu.
 	// as a standalone state with no game world underneath.
 	if o := scr.Outcome(); o != winloss.Continue {
 		// The game over snapshot is a screendata DTO the menu takes as is.
@@ -86,34 +86,35 @@ func applyGameScreenMode(scr *gamescreen.Screen, ctx *menus.Context, mode gameSc
 	case gameScreenRandom:
 		scr.SetAlienDerelicts(derelictsLevel)              // -derelicts: scatter neutral aliens (default Rare)
 		applyBenchCustomFlags(scr, ctx)                    // explicit -raw/-fuel/-gold/-startcredit/-score/-duration
+		scr.SetAIDifficulty(benchDifficulty())             // before starting, the AI rolls its strategy and buys upgrades
 		scr.RandomStart(time.Now().UnixNano(), npcCount()) // -random: player + 1..3 opponents on separate islands
-		scr.SetAIDifficulty(benchDifficulty())             // default Average, or -difficulty override
-		scr.SetPlayMode(ctx.Settings.Game.PlayMode)        // -simultane / -turnbased on the quick start bench
-		scr.SetTurnTimer(ctx.Settings.Game.TurnTimer)      // the per-turn time budget
-		scr.SetEndTurnTimer(ctx.Settings.Game.EndTurn)     // the simultaneous End Turn grace period
+		scr.SetPlayMode(ctx.Settings.Game.PlayMode)        // -simultane / -turnbased selects the quick-start mode
+		scr.SetTurnTimer(ctx.Settings.Game.TurnTimer)      // sets the per-turn time budget
+		scr.SetEndTurnTimer(ctx.Settings.Game.EndTurn)     // sets the simultaneous End Turn grace period
 		scr.AnnounceAIDifficulty()                         // banner: the quick start has no setup screen to show it
 		scr.SetRandomGameGoal()                            // GOAL button info dialog (built from the resolved state)
 
 	case gameScreenRandom2:
 		scr.SetAlienDerelicts(derelictsLevel)               // -derelicts: scatter neutral aliens (default Rare)
 		applyBenchCustomFlags(scr, ctx)                     // explicit -raw/-fuel/-gold/-startcredit/-score/-duration
+		scr.SetAIDifficulty(benchDifficulty())              // before starting, the AI rolls its strategy
 		scr.RandomStart2(time.Now().UnixNano(), npcCount()) // -emulate random2: player + 1..3 large turn 100 bases (test bed)
-		scr.SetAIDifficulty(benchDifficulty())
-		scr.SetPlayMode(ctx.Settings.Game.PlayMode)    // -simultane / -turnbased on the random2 test bed
-		scr.SetTurnTimer(ctx.Settings.Game.TurnTimer)  // the per-turn time budget
-		scr.SetEndTurnTimer(ctx.Settings.Game.EndTurn) // the simultaneous End Turn grace period
+		scr.SetPlayMode(ctx.Settings.Game.PlayMode)         // -simultane / -turnbased selects the random2 mode
+		scr.SetTurnTimer(ctx.Settings.Game.TurnTimer)       // sets the per-turn time budget
+		scr.SetEndTurnTimer(ctx.Settings.Game.EndTurn)      // sets the simultaneous End Turn grace period
 		scr.AnnounceAIDifficulty()
 		scr.SetRandomGameGoal() // GOAL button info dialog (built from the resolved state)
 
 	case gameScreenCustom:
-		// -emulate custom: a sample purchased loadout landed as in a custom game, the
-		// two builders carrying the raw the purchase screen loads them with.
+		// -emulate custom starts with a purchased loadout like a custom game. The two
+		// builders carry the raw materials from the purchase screen. The tier goes
+		// first, so the AI rolls its strategy and buys its upgrades during setup.
+		scr.SetAIDifficulty(benchDifficulty())
 		scr.CustomStart([]assets.UnitType{
 			assets.Constrct, assets.Engineer, assets.Tank, assets.Scout, assets.Scanner,
 		}, []int{
 			economy.StartConstructorCargo, economy.StartEngineerCargo, 0, 0, 0,
 		}, 500, time.Now().UnixNano()) // a testable starting gold reserve for the bench
-		scr.SetAIDifficulty(benchDifficulty())
 		scr.SetRandomGameGoal() // GOAL button info dialog (built from the resolved state)
 
 	case gameScreenAssets:
@@ -228,7 +229,7 @@ func buildGameScreen(ctx *menus.Context, mapFile string) (*gamescreen.Screen, er
 
 	scr.SetDebug(debugUI)
 
-	// Apply remappable action keys when building the game. Changes made by max-settings take effect on
+	// Apply remappable action keys when building the game. Changes from max-settings take effect on
 	// the next run because the Options menu does not edit key bindings.
 	if ctx.Settings != nil {
 		scr.SetKeybinds(ctx.Settings.Keybinds)
@@ -236,7 +237,7 @@ func buildGameScreen(ctx *menus.Context, mapFile string) (*gamescreen.Screen, er
 
 	scr.SetShowAStarPath(showAStarPath) // -set-a-star debug: draw the white A* path
 
-	// Let an in game load swap to a save's own world when it was made on a different map (otherwise the restored
+	// Let an in-game load swap to a save's own world when its map differs (otherwise the restored
 	// units land on the wrong terrain).
 	scr.SetWorldReloader(func(name string) (*world.Map, error) {
 		return world.LoadMap(filepath.Join(ctx.DataDir, strings.TrimSpace(name)))
@@ -565,7 +566,7 @@ func runGameScreenShadow(ctx *menus.Context, worldIdx int) error {
 var (
 	benchResourceLevels  *[3]int // -raw/-fuel/-gold as 0/1/2 levels; nil = default allocator params
 	benchStartGold       = -1    // -startcredit gold amount; negative = no reserve
-	benchVictoryProvided bool    // -score or -duration was passed: a real victory outranks endless
+	benchVictoryProvided bool    // -score or -duration is set: a real victory outranks endless
 )
 
 // applyBenchCustomFlags applies explicit Custom Game flags to the random benches before RandomStart or
