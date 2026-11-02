@@ -1,52 +1,56 @@
 # max-go
 
-A Go port of Interplay's **M.A.X.: Mechanized Assault & Exploration**, the 1996 turn based strategy game by Interplay Productions.
+Independent Go reimplementation of the gameplay and runtime behavior of Interplay's **M.A.X.: Mechanized Assault & Exploration**, the 1996 turn-based strategy game by Interplay Productions.
 
 <img src="./max-lavender.png" width="1710" height="962">
 
 
 ## The Project
 
-This project targets the single-player mode of vanilla M.A.X. and make it work on modern OS versions for x86-64.\
-Game logic is derived from observed vanilla gameplay and reference C++ behaviour of an other online M.A.X. port.\
-max-go reimplements M.A.X. in Go on top of [Ebitengine](https://ebitengine.org/).\
+This noncommercial preservation project targets the single-player mode of vanilla M.A.X. on modern x86-64 systems.\
+New game logic is written in Go and informed by observed vanilla gameplay and an other online M.A.X. port.\
+max-go implements that behavior in Go on top of [Ebitengine](https://ebitengine.org/).\
 It does not depend on SDL and avoids CGO for its libraries.\
 Audio can use Oto, SoLoud, or miniaudio through wrapper libraries.\
 The compiled versions of SoLoud and miniaudio are shipped with the release, including their licenses.
 
 
-During the project, I've made some use of Claude Max (Opus/Fable) and Codex to learn and test the capabilities to work with AI in a large code base.\
-Before you ask : Yes, LLM's where used to assist in porting pieces of code in this codebase.
+AI tools are used during development for research, implementation, and testing.
 
 
-## Original M.A.X. (I call it Vanilla), is not my idea
+## Original M.A.X.
 
 M.A.X. COPYRIGHT (C) 1996 Interplay Productions. All Rights Reserved.
 
 
-This project or code has no affiliation with Interplay or the current M.A.X. IP Holder!\
-The project is pure a free time reverse engineering project of the 1996 MS-Dos game M.A.X. (Mechanized Assault & Exploration).
+This project has no affiliation with Interplay or the current M.A.X. IP holder.\
+It is a noncommercial hobby project focused on preserving the 1996 MS-DOS game for modern systems.
 
 
-## Vanilla M.A.X.
+## Compatibility and additions
 
-The Golang M.A.X. port tries to stick as much as possible close to the Vanilla M.A.X. gameplay experience.
+The project aims to preserve the vanilla single-player experience while adding modern platform support.
 
 
-Except, a few Quality Of Life (QOL) improvements were added:
-- Mouse scrollwheel, zooms in and out
-- Grouping of units is not locked to 1..4 groups, but standard RTS 1..9 groups
+It also adds these quality of life (QOL) features:
+- Windows and Linux support
+- Mouse-wheel zoom
+- Unit groups from 1..9 instead of only 1..4
 - F2 recalls a special Debug menu (only when Debug is enabled in max-go.json)
-- F10 cycle screen brightness settings
+- F10 cycles screen brightness settings
 - F11 switches between Fullscreen/Windowed mode
-- F12 takes screenshot in-game
-- Added CMDline flags; the next bulletpoint was added as a specific feature for this reason
-- Random mode using -random : it is like an extended Custom Game. You can tweak all details using flags (Difficulty, Alien Derelicts, resource Richness, NPC numbers, ...)
-- max-restool (unpack or repack MAX.RES or other RES files if you want -- modding support)
-- max-convert (converts game assets to bmp, png, wav or txt -- images, sprites, fonts, music, animations and movies)
-- max-settings tool (edits the max-go.json using a tool)
+- F12 takes in-game screenshots
+- Additional command-line flags
+- Random mode with adjustable difficulty, alien derelicts, resource richness, and NPC counts
+- max-restool for working with user-supplied RES files and local modding
+- max-convert for converting user-supplied game data to formats such as BMP, PNG, WAV, and TXT
+- max-settings tool for editing max-go.json
 - Vanilla easter eggs are preserved (Waldo and rusted C&C Harvester)
 - Support for widescreen mode (16:9) and the vanilla screen mode (4:3)
+- Support for rich set of sound libraries (Oto, SoLoud and standalone MiniAudio driver)
+
+
+Future QOL features are on the roadmap. 
 
 
 ## Source repository
@@ -58,46 +62,43 @@ https://github.com/suglasp/max-go
 ```
 
 
-## Game data is not included!
+## Game data is not included
 
-max-go is only the 'game engine'.\
-It requires the data files of the original game (`MAX.RES`, `*.WRL`, `*.WAV`, `*.FLC`, ...).\
+max-go provides the engine and tools, but it does not include the original game's data.\
+It requires data files from a legally obtained copy of the original game (`MAX.RES`, `*.WRL`, `*.WAV`, `*.FLC`, ...).\
 You can buy M.A.X. on [GOG.com](https://www.gog.com/game/m_a_x_m_a_x_2) or [Steam](https://store.steampowered.com/app/615250/MAX_Mechanized_Assault__Exploration/),\
-then point `data_dir` in `max-go.json` at the installed game folder or copy over the data files so they reside next to the max-go binary.\
-The max-go port is self contained, meaning savegame data, screenshots, and game data can all be placed in one folder, in order to run and play the game.
+then point `data_dir` in `max-go.json` at that installation or copy the data into a local folder next to the max-go binary.\
+The executable, user-owned game data, save files, and screenshots can all live in one local folder.
 
-On a fresh start max-go can do the copying for you: when no data path is configured and `MAX.RES` is missing next to the binary,\
-it looks for an installed GOG or Steam copy of M.A.X. on the machine (with a typed path prompt as fallback) and copies the game data over.\
-During bootstreapping it will show progress on screen.\
-This only automates pulling the data from a legitimate local install - the port itself still ships without any game data.\
+If no data path is configured and `MAX.RES` is missing next to the binary, max-go can copy data from an existing media installation of GOG or Steam on the same machine, with a typed path as fallback.\
+The bootstrap shows its progress on screen. It does not download game data, and releases contain no original game data or retail assets.\
 A path set explicitly (`data_dir`, `MAX_DATA_DIR`, or `-datadir`) is used as given and never triggers the bootstrap.
 
 
 ## max-go Tooling
 
-max-go comes with several addon utilities:
-- max-restool : extracts the provided `*.RES` file(s)
-- max-convert : converts the extracted data from the RES file(s), to today's standard formats like WAV,BMP,TXT,CSV,...
-- max-setting : CLI based config tool to edit max-go.json
+max-go comes with several add-on utilities:
+- max-restool : extracts user-supplied `*.RES` file(s)
+- max-convert : converts user-supplied game data to formats such as WAV, BMP, TXT, and CSV
+- max-settings : CLI configuration tool for max-go.json
 
 
 ## max-go Documenting
 
-During the porting process, we tried to document each file format M.A.X. uses.\
-The files are stored in markdown in the [docs/](docs/) folder.
+The project documents the file formats used by M.A.X. in markdown format.
 
 
 ## max-go Building and running
 
 Building requires Go 1.26+ on Windows or Linux (x86-64 only).\
-Since most OS versions nowadays are 64-bit, we targeted this port to compile and run on x86-64.
+Since most OS versions nowadays are 64-bit, we targeted this port to compile and run on x86-64 instruction set CPU's.
 
 ```
 go build -o bin/ ./cmd/max-go
 ./bin/max-go
 ```
 
-The convenience scripts build the game and tools, write CLI help files, and pack `LANG.RES` (UI strings and unit descriptions, from `langres/`, see `langres/HOWTO.txt`) plus copy the SoLoud and miniaudio native libraries from `dependencies/soloud-bin/` and `dependencies/miniaudio-bin/`.\
+The convenience scripts build the game and tools, write CLI help files, and pack `LANG.RES` (project language resources from `langres/`, see `langres/HOWTO.txt`) plus copy the SoLoud and miniaudio native libraries from `dependencies/soloud-bin/` and `dependencies/miniaudio-bin/`.\
 Each platform uses its own build folder (`build/windows-x64/` or `build/linux-x64/`). The stage step copies the native platform's build into `bin/`.\
 Each build packs its completed platform folders into `release/` as `max-go-<version>-<platform>.zip` or `.tar.zst`:
 
@@ -126,7 +127,7 @@ Build dependency layout is documented in [docs/build/dependencies.md](docs/build
 
 The `bin/` folder is ignored by git: put the compiled binary there, and optionally copy the game data next to it\
 (or leave the data where it is and point `data_dir` in `max-go.json` at it).\
-Game data files (`*.RES`, `*.WRL`, ...) are ignored everywhere in this repository so they can never be committed by accident.
+Game data files (`*.RES`, `*.WRL`, ...) are ignored throughout this repository to reduce the chance of an accidental commit.
 
 On first run a `max-go.json` is created next to the binary (audio backend `ebiten`, `soloud`, or `miniaudio`,\
 fullscreen/window scale, volumes, keybinds)\
@@ -156,19 +157,20 @@ Log lines are buffered in memory and written to disk every `log_buffer_lines` li
 
 ## max-go Extras
 
-The first steps were taken to implement a build-in map editor. But it's far from complete.
+Early work has started on a built-in map editor, but it is far from complete.
 
 
-## max-go Code License
+## License and attribution
 
-The original Go source code in this repository is available under the MIT License.\
+The Go source authored for max-go is available under the MIT License.\
 M.A.X.: Mechanized Assault & Exploration and its original assets are copyrighted by Interplay Entertainment.\
 This project is an independent reimplementation and is not affiliated with or endorsed by Interplay.\
-The MIT License applies only to the original source code in this repository. It does not cover the original game or its assets.\
+The MIT License applies only to source authored for max-go. It does not cover the original game or its assets.\
+The Klei1984 M.A.X. Port is a separate upstream project with its own MIT license.\
 Note: Dependency libraries are shipped with their own license file.
 
 
-## tributes
+## Tributes
 
 [Golang](https://go.dev/)\
 [Ebitengine](https://ebitengine.org/)\
