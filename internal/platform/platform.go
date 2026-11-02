@@ -440,6 +440,7 @@ func (p *Platform) Update() error {
 func (p *Platform) pollKeyboard() {
 	shift := ebiten.IsKeyPressed(ebiten.KeyShift)
 	alt := ebiten.IsKeyPressed(ebiten.KeyAlt)
+	ctrl := ebiten.IsKeyPressed(ebiten.KeyControl)
 	p.keysDown = inpututil.AppendJustPressedKeys(p.keysDown[:0])
 
 	p.mu.Lock()
@@ -448,7 +449,7 @@ func (p *Platform) pollKeyboard() {
 		if k == ebiten.KeyF3 || k == ebiten.KeyF11 || k == ebiten.KeyF12 || (k == ebiten.KeyF10 && !shift) {
 			continue // reserved for fps / fullscreen / screenshots / brightness
 		}
-		if code, ok := translateKey(k, shift, alt); ok {
+		if code, ok := translateKeyWithCtrl(k, shift, alt, ctrl); ok {
 			p.inputs = append(p.inputs, code)
 		}
 	}

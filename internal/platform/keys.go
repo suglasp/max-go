@@ -55,6 +55,10 @@ const (
 
 	// AltMod distinguishes Alt combinations without overlapping special keys or InputPress. C++: GNW_KB_KEY_LALT_*.
 	AltMod = 0x800
+
+	// CtrlMod marks a Ctrl+letter combination. It sits above the menu button
+	// codes (1000-1099) and below InputPress, so it overlaps neither.
+	CtrlMod = 0x1000
 )
 
 // specialKeys maps Ebitengine keys to GNW codes that do not depend on
@@ -142,10 +146,30 @@ var keyNames = map[string]int{
 }
 
 // KeyFromName resolves a case-insensitive key name or one printable ASCII character. Letters use their lowercase, unshifted GNW code.
+// A "ctrl+" or "alt+" prefix before a letter gives that combination ("Ctrl+S"); Alt also takes a digit.
 func KeyFromName(name string) (code int, ok bool) {
 	name = strings.TrimSpace(name)
+	lower := strings.ToLower(name)
 
-	if n, ok := keyNames[strings.ToLower(name)]; ok {
+	for _, mod := range []struct {
+		prefix string
+		bit    int
+		digits bool
+	}{{"ctrl+", CtrlMod, false}, {"alt+", AltMod, true}} {
+		rest, found := strings.CutPrefix(lower, mod.prefix)
+
+		if !found {
+			continue
+		}
+
+		if len(rest) == 1 && ((rest[0] >= 'a' && rest[0] <= 'z') || (mod.digits && rest[0] >= '0' && rest[0] <= '9')) {
+			return mod.bit | int(rest[0]), true
+		}
+
+		return 0, false
+	}
+
+	if n, ok := keyNames[lower]; ok {
 		return n, true
 	}
 
@@ -162,6 +186,18 @@ func KeyFromName(name string) (code int, ok bool) {
 	}
 
 	return 0, false
+}
+
+// translateKeyWithCtrl is translateKey plus Ctrl: with Ctrl held and Alt not, a letter becomes its Ctrl combo
+// code (CtrlMod | lowercase ascii). Every other key, and any key with Alt held, goes through translateKey.
+func translateKeyWithCtrl(k ebiten.Key, shift, alt, ctrl bool) (code int, ok bool) {
+	if ctrl && !alt {
+		if c, found := asciiKeys[k]; found && c >= 'a' && c <= 'z' {
+			return CtrlMod | int(c), true
+		}
+	}
+
+	return translateKey(k, shift, alt)
 }
 
 // translateKey converts an Ebitengine key event to a GNW input code,

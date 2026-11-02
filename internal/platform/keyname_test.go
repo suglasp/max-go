@@ -28,6 +28,11 @@ func TestKeyFromName(t *testing.T) {
 		{"=", '='},
 		{"-", '-'},
 		{"5", '5'},
+		{"Ctrl+S", CtrlMod | 's'},
+		{"ctrl+r", CtrlMod | 'r'},
+		{" CTRL+O ", CtrlMod | 'o'},
+		{"Alt+M", AltMod | 'm'},
+		{"alt+1", AltMod | '1'},
 	}
 
 	for _, c := range good {
@@ -38,7 +43,7 @@ func TestKeyFromName(t *testing.T) {
 		}
 	}
 
-	for _, name := range []string{"", "  ", "no such key", "f13", "ctrl+g"} {
+	for _, name := range []string{"", "  ", "no such key", "f13", "ctrl+", "ctrl+1", "ctrl+enter", "alt+?", "ctrl+gg"} {
 		if got, ok := KeyFromName(name); ok {
 			t.Errorf("KeyFromName(%q) = %d, want a miss", name, got)
 		}

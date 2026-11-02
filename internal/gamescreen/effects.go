@@ -257,7 +257,8 @@ func (s *Screen) notifyDeath(v *game.UnitInfo) {
 
 	if v.Team == s.game.State.PlayerTeam {
 		s.playVoice(vsUnitDestroyed)                    // the player just lost this unit
-		s.showInfo(displayName(v.Type) + " destroyed!") // world tint event: a unit was lost (the original's type 1)
+		s.showInfo(displayName(v.Type) + " destroyed!") // world tint event: a unit is lost (the original's type 1)
+		s.latchEventCell(v.GridX, v.GridY)              // F1 jumps to where it fell
 
 		return
 	}

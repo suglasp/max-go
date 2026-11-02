@@ -62,16 +62,17 @@ func abs(n int) int {
 	return n
 }
 
-// TestNavalFireBenchLanes runs the bench on SNOW_1: six lanes, each its own stop at its own compass anchor and
-// far apart, each with the wanted line of fire to its enemy: blocked across land; clear along coast, on a
-// diagonal that only touches land at a corner, on open water, past a friendly ship or under a bridge.
+// TestNavalFireBenchLanes runs the bench on SNOW_1: eight lanes, each its own stop at its own compass anchor and
+// far apart, each with the wanted line of fire to its enemy: blocked across land, or to a Tank inland; clear
+// along coast, on a diagonal that only touches land at a corner, on open water, past a friendly ship, under a
+// bridge, or to a Tank on the shore (which the Corvette may also target).
 func TestNavalFireBenchLanes(t *testing.T) {
 	s := benchScreen(t, "SNOW_1.WRL")
 	s.DeployNavalFireBench()
 
 	stops := s.bench.stops
-	if len(stops) != 6 {
-		t.Fatalf("%d lanes placed, want 6", len(stops))
+	if len(stops) != 8 {
+		t.Fatalf("%d lanes placed, want 8", len(stops))
 	}
 	checkBenchStopsApart(t, stops)
 
@@ -83,7 +84,10 @@ func TestNavalFireBenchLanes(t *testing.T) {
 				target = u
 			}
 		}
-		want := stop.Title != "H9 BLOCKED"
+		want := stop.Title != "H9 BLOCKED" && stop.Title != "H20 INLAND"
+		if !combat.CanTarget(shooter, target, s.game.Grid.Surf) {
+			t.Errorf("%s %s: the shooter cannot target the %v at all", stop.Compass, stop.Title, target.Type)
+		}
 		if got := combat.WithinAttackRange(shooter, target.GridX, target.GridY, navalFireBenchRange, s.game.Grid.Surf); got != want {
 			t.Errorf("%s %s: (%d,%d) -> (%d,%d) line of fire clear = %v, want %v", stop.Compass, stop.Title,
 				shooter.GridX, shooter.GridY, target.GridX, target.GridY, got, want)

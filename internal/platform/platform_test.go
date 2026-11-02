@@ -55,6 +55,31 @@ func TestTranslateKey(t *testing.T) {
 	}
 }
 
+// TestTranslateKeyWithCtrl checks Ctrl+letter codes, Alt precedence, and unchanged other keys.
+func TestTranslateKeyWithCtrl(t *testing.T) {
+	tests := []struct {
+		key              ebiten.Key
+		shift, alt, ctrl bool
+		want             int
+	}{
+		{ebiten.KeyS, false, false, true, CtrlMod | 's'}, // Ctrl+S
+		{ebiten.KeyS, true, false, true, CtrlMod | 's'},  // Ctrl+Shift+S folds to lowercase
+		{ebiten.KeyS, false, true, true, AltMod | 's'},   // Ctrl+Alt+S = Alt+S
+		{ebiten.KeyS, false, false, false, 's'},          // plain S stays plain
+		{ebiten.KeyDigit1, false, false, true, '1'},      // Ctrl+digit is not a combo
+		{ebiten.KeyF1, false, false, true, KeyF1},        // Ctrl+F1 stays F1
+	}
+
+	for _, tt := range tests {
+		got, ok := translateKeyWithCtrl(tt.key, tt.shift, tt.alt, tt.ctrl)
+
+		if !ok || got != tt.want {
+			t.Errorf("translateKeyWithCtrl(%v, shift=%v, alt=%v, ctrl=%v) = %d,%v want %d",
+				tt.key, tt.shift, tt.alt, tt.ctrl, got, ok, tt.want)
+		}
+	}
+}
+
 func TestInputQueue(t *testing.T) {
 	p := New(Config{})
 	if got := p.GetInput(); got != -1 {

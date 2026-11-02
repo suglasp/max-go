@@ -61,9 +61,9 @@
     "grid": "G",
     "help": "?",
     "menu": "Escape",
-    "options": "O",
-    "status": "S",
-    "survey": "R",
+    "options": "Ctrl+O",
+    "status": "Ctrl+S",
+    "survey": "Ctrl+R",
     "zoom_in": "=",
     "zoom_out": "-"
   }

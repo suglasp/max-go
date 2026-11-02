@@ -127,7 +127,16 @@ func isMobileUnit(u *game.UnitInfo) bool {
 		u.Flags.Has(game.FlagMobileAirUnit)
 }
 
-// notifyDamage tells the player one of their own units was hit, as both a banner and a
+// latchEventCell remembers the cell of the latest event message for the F1 key: an enemy coming into view, one of
+// the player's units hit or lost, or a commando acting on one of them. Each new event moves it.
+//
+// C++ ported : game_manager.cpp - GameManager_NotifyEvent (GameManager_SpottedEnemyPosition)
+func (s *Screen) latchEventCell(cellX, cellY int) {
+	s.announcer.lastEventCellX, s.announcer.lastEventCellY = cellX, cellY
+	s.announcer.hasEventCell = true
+}
+
+// notifyDamage tells the player that one of their own units takes a hit, using a banner and a
 // voice line the way the original raises the two together. The banner is the type 1
 // "under attack" line; the voice scales with how hurt the unit is: "Status critical" at
 // a quarter hits, "Status yellow" at a half, else "Unit under attack". A killed unit is
@@ -145,8 +154,9 @@ func (s *Screen) notifyDamage(u *game.UnitInfo) {
 		return
 	}
 
-	// The banner names the unit that was hit (world tint, type 1).
+	// The banner names the unit that takes the hit (world tint, type 1), and F1 jumps to it.
 	s.showInfo(fmt.Sprintf(s.lang.Get("fd20", "%s under attack!"), displayName(u.Type)))
+	s.latchEventCell(u.GridX, u.GridY)
 
 	// The status voice reflects the remaining hits.
 	switch {
@@ -193,10 +203,7 @@ func (s *Screen) checkEnemyDetected() {
 
 		s.announcer.enemySeen[u.ID] = true
 		newly = true
-		// Remember where this hostile came into view so the F1 key can jump the camera
-		// to the last spotted enemy (GameManager_SpottedEnemyPosition).
-		s.announcer.lastSpottedCellX, s.announcer.lastSpottedCellY = u.GridX, u.GridY
-		s.announcer.hasSpottedEnemy = true
+		s.latchEventCell(u.GridX, u.GridY) // F1 jumps to where this hostile came into view
 	}
 
 	if newly {

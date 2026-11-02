@@ -424,8 +424,9 @@ func (s *Screen) centerOnSelected() {
 	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
 }
 
-// centerOnLastSpotted jumps the view to the last enemy the player spotted - the F1 key
-// (C++: GameManager_SpottedEnemyPosition). With no known enemy it does nothing.
+// centerOnLastSpotted jumps the view to the cell of the last event message - the F1 key: the
+// last enemy spotted, or the last of the player's units hit, lost or targeted by a commando
+// (C++: GameManager_SpottedEnemyPosition). With nothing known it does nothing.
 func (s *Screen) centerOnLastSpotted() {
 	cellX, cellY, ok := s.lastSpottedTarget()
 
@@ -438,13 +439,12 @@ func (s *Screen) centerOnLastSpotted() {
 	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
 }
 
-// lastSpottedTarget returns the cell F1 should centre on: the cell latched when
-// checkEnemyDetected last raised the "Enemy detected!" alert, or, if none has been
-// latched yet, the first enemy currently visible to the player. ok is false when no
-// enemy is known at all.
+// lastSpottedTarget returns the cell F1 should centre on: the cell latchEventCell stored
+// at the last event message, or, if none has been stored yet, the first enemy currently
+// visible to the player. ok is false when nothing is known at all.
 func (s *Screen) lastSpottedTarget() (cellX, cellY int, ok bool) {
-	if s.announcer.hasSpottedEnemy {
-		return s.announcer.lastSpottedCellX, s.announcer.lastSpottedCellY, true
+	if s.announcer.hasEventCell {
+		return s.announcer.lastEventCellX, s.announcer.lastEventCellY, true
 	}
 
 	return s.firstVisibleEnemy()

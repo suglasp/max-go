@@ -24,29 +24,35 @@ func TestKeybindDefaults(t *testing.T) {
 		{platform.KeyReturn, bindEndTurn},
 		{platform.KeyEscape, bindMenu},
 		{'g', bindGrid}, {'G', bindGrid},
-		{'r', bindSurvey},
-		{'s', bindStatus}, {'S', bindStatus},
+		{platform.CtrlMod | 'r', bindSurvey},
+		{platform.CtrlMod | 's', bindStatus},
 		{'f', bindFind},
 		{'?', bindHelp},
-		{'o', bindOptions},
+		{platform.CtrlMod | 'o', bindOptions},
 		{'=', bindZoomIn},
 		{'-', bindZoomOut},
 	}
 
 	for _, c := range cases {
-		got, ok := s.keybindAction(c.key)
+		got, ok := anyKeybind(s, c.key)
 
 		if !ok || got != c.want {
 			t.Errorf("keybindAction(%d) = %v/%v, want %v", c.key, got, ok, c.want)
 		}
 	}
 
-	// Unbound keys and Alt combos never match a plain binding.
-	if _, ok := s.keybindAction('z'); ok {
+	// Unbound keys, the old plain port letters and Alt combos never match.
+	for _, key := range []int{'r', 's', 'o'} {
+		if action, ok := anyKeybind(s, key); ok {
+			t.Errorf("plain %c matched %s, want a miss (the port picks moved to Ctrl)", key, bindNames[action])
+		}
+	}
+
+	if _, ok := anyKeybind(s, 'z'); ok {
 		t.Errorf("keybindAction('z') matched, want a miss")
 	}
 
-	if _, ok := s.keybindAction(platform.AltMod | 's'); ok {
+	if _, ok := anyKeybind(s, platform.AltMod|'s'); ok {
 		t.Errorf("keybindAction(Alt+s) matched, want a miss (Alt+S is the save hotkey)")
 	}
 }
@@ -61,19 +67,19 @@ func TestSetKeybindsRemap(t *testing.T) {
 		"help":     "",
 	})
 
-	if got, ok := s.keybindAction('t'); !ok || got != bindEndTurn {
+	if got, ok := anyKeybind(s, 't'); !ok || got != bindEndTurn {
 		t.Errorf("remapped end_turn: keybindAction('t') = %v/%v, want bindEndTurn", got, ok)
 	}
 
-	if _, ok := s.keybindAction(platform.KeyReturn); ok {
+	if _, ok := anyKeybind(s, platform.KeyReturn); ok {
 		t.Errorf("KeyReturn still matches after end_turn moved to T")
 	}
 
-	if got, ok := s.keybindAction('g'); !ok || got != bindGrid {
+	if got, ok := anyKeybind(s, 'g'); !ok || got != bindGrid {
 		t.Errorf("bad grid value must keep the default: got %v/%v", got, ok)
 	}
 
-	if _, ok := s.keybindAction('?'); ok {
+	if _, ok := anyKeybind(s, '?'); ok {
 		t.Errorf("empty help value must unbind the action")
 	}
 }
@@ -86,7 +92,7 @@ func TestAltShortcutsStayOutOfTheKeybinds(t *testing.T) {
 	s.SetKeybinds(map[string]string{"find": "F", "options": "P", "status": "X"})
 
 	for _, key := range []int{platform.AltMod | 'f', platform.AltMod | 'p', platform.AltMod | 'x'} {
-		if action, ok := s.keybindAction(key); ok {
+		if action, ok := anyKeybind(s, key); ok {
 			t.Errorf("Alt+%c was claimed by the %s binding, want a miss", key&0xff, bindNames[action])
 		}
 	}
@@ -134,5 +140,32 @@ func TestKeybindSurveyTogglesOverlay(t *testing.T) {
 
 	if !s.showStatus {
 		t.Errorf("status action did not raise the status icons")
+	}
+}
+
+// anyKeybind matches a key against both action groups, the vanilla ones first, the way handleGameKey tries
+// them around the popup hotkeys.
+func anyKeybind(s *Screen, key int) (bindAction, bool) {
+	if action, ok := s.keybindAction(key, false); ok {
+		return action, true
+	}
+
+	return s.keybindAction(key, true)
+}
+
+// TestPortPickGroup: the vanilla group never returns a port action and the port group never a vanilla one.
+func TestPortPickGroup(t *testing.T) {
+	s, _ := newClickScreen(t)
+
+	if _, ok := s.keybindAction(platform.CtrlMod|'s', false); ok {
+		t.Error("Ctrl+S (status) matched in the vanilla group")
+	}
+
+	if got, ok := s.keybindAction(platform.CtrlMod|'s', true); !ok || got != bindStatus {
+		t.Errorf("Ctrl+S in the port group = %v/%v, want bindStatus", got, ok)
+	}
+
+	if _, ok := s.keybindAction('g', true); ok {
+		t.Error("G (grid) matched in the port group")
 	}
 }

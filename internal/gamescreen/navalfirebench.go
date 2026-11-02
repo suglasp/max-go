@@ -22,7 +22,7 @@ const navalFireBenchRange = 8
 // navalFireBenchTurnSeconds is the bench's turn timer: the "about to run out of time" line comes at 0:20 (H3).
 const navalFireBenchTurnSeconds = 40
 
-// navalLane is a straight row, column or diagonal from a player ship (From) to an enemy ship (To).
+// navalLane is a straight row, column or diagonal from a player ship (From) to its enemy target (To).
 type navalLane struct {
 	From, To game.Point
 }
@@ -48,11 +48,18 @@ func (l navalLane) middle() game.Point {
 type navalLaneKind int
 
 const (
-	laneLand     navalLaneKind = iota // at least one land cell between: no line of fire
-	laneOpen                          // only water: fires
-	laneCoast                         // coast between, no land: fires (coast never blocks)
-	laneDiagonal                      // a diagonal whose cells only touch land at a corner: fires
+	laneLand     navalLaneKind = iota // land between the ships blocks fire
+	laneOpen                          // open water leaves the line clear
+	laneCoast                         // coast between the ships leaves the line clear
+	laneDiagonal                      // a corner-touching diagonal leaves the line clear
+	laneShore                         // a target on the first land cell past the coast is valid
+	laneInland                        // a target with land between the ships is invalid
 )
+
+// targetsLand reports whether the lane ends on land with an enemy Tank rather than water with an enemy ship.
+func (k navalLaneKind) targetsLand() bool {
+	return k == laneShore || k == laneInland
+}
 
 // navalFireScenario is one lane of the bench: what lies between the ships, the shooter, and the banner.
 type navalFireScenario struct {
@@ -61,18 +68,21 @@ type navalFireScenario struct {
 	title   string
 	text    string
 	extra   func(lane navalLane) // the friendly ship or bridge on the middle cell, or nil
+	target  assets.UnitType      // the still enemy at the far end; zero means an enemy Corvette
 }
 
 // DeployNavalFireBench lays out the -emulate navalfire bench for the naval line of fire
-// (step 1440, hand check H9) and the turn timer warning (H3). Six lanes, each a player ship facing a still
-// enemy Corvette (AI off) in range, each near its own compass anchor so only one is on screen at a time
-// (Tab moves on):
+// (step 1440, hand check H9), the Corvette shore fire (step 1457, H20) and the turn timer warning (H3). Eight
+// lanes, each a player ship facing a still enemy (AI off) in range, each near its own compass anchor so only one
+// is on screen at a time (Tab moves on):
 //   - BLOCKED: land between, so no attack cursor and no shot;
 //   - COAST: coast cells between, so it fires;
 //   - DIAGONAL: land only touching the line at a corner, so it fires;
 //   - CLEAR: a Submarine on open water, so it fires;
 //   - FRIENDLY: its own Sea Transport between, so it still fires (units never block);
-//   - BRIDGE: a Bridge laid between, so a Submarine still fires under it.
+//   - BRIDGE: a Bridge laid between, so a Submarine still fires under it;
+//   - SHORE: an enemy Tank on the first land cell past the coast, so the Corvette fires at it;
+//   - INLAND: an enemy Tank with a land cell between, so no shot.
 //
 // The scarcest lane kinds claim their anchor first. The turn timer runs at 40 s, so the "about to run out of
 // time" line comes once at 0:20.
@@ -103,6 +113,10 @@ func (s *Screen) DeployNavalFireBench() {
 				mid := lane.middle()
 				s.deployProp(player, assets.Bridge, game.FlagStationary, mid.X, mid.Y)
 			}},
+		{kind: laneShore, shooter: assets.Corvette, target: assets.Tank, title: "H20 SHORE",
+			text: "a Tank on the shore: the Corvette gets the red attack cursor and fires at it"},
+		{kind: laneInland, shooter: assets.Corvette, target: assets.Tank, title: "H20 INLAND",
+			text: "a Tank further inland, land between: yellow cursor (out of reach), no shot"},
 	}
 
 	taken := map[game.Point]bool{}
@@ -123,7 +137,11 @@ func (s *Screen) DeployNavalFireBench() {
 		u := s.deployUnit(sc.shooter, seaFlags, player, 0, lane.From.X, lane.From.Y)
 		u.Values.Set(game.AttribRange, navalFireBenchRange)
 		u.Values.Set(game.AttribScan, navalFireBenchRange+2) // the enemy must be in sight to be targeted
-		s.deployUnit(assets.Corvette, seaFlags, enemy, 4, lane.To.X, lane.To.Y)
+		if sc.target == 0 {
+			s.deployUnit(assets.Corvette, seaFlags, enemy, 4, lane.To.X, lane.To.Y)
+		} else {
+			s.deployUnit(sc.target, game.FlagMobileLandUnit|game.FlagSelectable, enemy, 4, lane.To.X, lane.To.Y)
+		}
 
 		if sc.extra != nil {
 			sc.extra(lane)
@@ -149,13 +167,18 @@ func (s *Screen) DeployNavalFireBench() {
 }
 
 // findNavalLane returns the free lane of the given kind nearest to center, starting at most radius cells from
-// it, between two water ends: a row or column of 3 to 7 cells, or for laneDiagonal a diagonal of 3 to 5 cells
+// it, between two water ends (the far end on land for laneShore / laneInland): a row or column of 3 to 7 cells,
+// or for laneDiagonal a diagonal of 3 to 5 cells
 // (a shore is buffered by coast cells, so a short lane across land needs ends next to the coast). The lane and
 // a one cell margin are marked taken, so the next lane keeps clear of it.
 func (s *Screen) findNavalLane(center game.Point, taken map[game.Point]bool, kind navalLaneKind, radius int) (navalLane, bool) {
 	var found navalLane
 	free := func(p game.Point) bool { return !taken[p] && s.wmap.SurfaceAt(p.X, p.Y) == world.SurfaceWater }
 	isLand := func(p game.Point) bool { return s.wmap.SurfaceAt(p.X, p.Y) == world.SurfaceLand }
+	freeEnd := free
+	if kind.targetsLand() {
+		freeEnd = func(p game.Point) bool { return !taken[p] && isLand(p) }
+	}
 	fits := func(lane navalLane) bool {
 		cells := lane.cells()
 		land, coast, corner := false, false, false
@@ -185,6 +208,10 @@ func (s *Screen) findNavalLane(center game.Point, taken map[game.Point]bool, kin
 			return coast && !land
 		case laneDiagonal:
 			return corner && !land
+		case laneShore:
+			return coast && !land
+		case laneInland:
+			return land
 		default:
 			return !land && !coast
 		}
@@ -205,7 +232,7 @@ func (s *Screen) findNavalLane(center game.Point, taken map[game.Point]bool, kin
 		for length := 3; length <= maxLength; length++ {
 			for _, dir := range dirs {
 				lane := navalLane{From: from, To: game.Point{X: x + dir.X*length, Y: y + dir.Y*length}}
-				if free(lane.To) && fits(lane) {
+				if freeEnd(lane.To) && fits(lane) {
 					found = lane
 					return true
 				}

@@ -40,9 +40,9 @@ type announcerState struct {
 	clock             func() uint64        // voice timing source; platform.Ticks when nil (tests override)
 	lastBeginKey      int                  // turn+team the "Begin!" line last announced (-1 = none yet)
 	enemySeen         map[uint16]bool      // enemy unit ids already announced as spotted
-	lastSpottedCellX  int                  // cell of the most recently newly spotted enemy (F1 recenter key), X
-	lastSpottedCellY  int                  // cell of the most recently newly spotted enemy (F1 recenter key), Y
-	hasSpottedEnemy   bool                 // false until the first enemy is seen
+	lastEventCellX    int                  // cell of the last event message, X: enemy spotted, own unit hit or lost (F1)
+	lastEventCellY    int                  // cell of the last event message, Y
+	hasEventCell      bool                 // false until the first event message of this game
 	subDetected       map[uint16]bool      // enemy submarine ids the player currently detects
 	subSurfacedUntil  map[uint16]uint64    // submarine id -> tick it stays surfaced until
 	fuelFull          bool                 // player raw fuel storage is full
@@ -64,7 +64,7 @@ func (s *Screen) resetAnnouncerForLoad() {
 	a.hasPendingVoice = false
 	a.lastBeginKey = -1
 	a.pointsLeader = announcerNoLeader // reseeded (silently) at the restored game's first round close
-	a.hasSpottedEnemy = false          // F1 recenters only on a spot made IN this game
+	a.hasEventCell = false             // F1 recenters only on an event made IN this game
 	a.enemySeen = map[uint16]bool{}
 	a.subDetected = map[uint16]bool{}
 	a.subSurfacedUntil = nil
@@ -88,7 +88,7 @@ func (s *Screen) resetAnnouncerForLoad() {
 		}
 	}
 
-	// A colony already running at save time was announced back then.
+	// A colony that already runs in a save has its announcement recorded.
 	for t := 0; t < game.TeamCount; t++ {
 		if t != player && s.workingEcospheres(t) > 0 {
 			a.colonyAnnounced[t] = true

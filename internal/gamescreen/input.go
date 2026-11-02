@@ -218,7 +218,7 @@ func (s *Screen) handleSpectatorInput(mouse platform.MouseState) {
 // selectForInspect selects the top unit at a cell for the info panel without
 // issuing any order - the left click inspection allowed during the opponent's
 // turn. An empty cell keeps the current selection (it is not cleared), so the
-// unit you were working with survives the turn. C++: the active unit stays
+// active unit survives the turn. C++: the active unit stays
 // selected across turn advance; only order input is gated while another team moves.
 func (s *Screen) selectForInspect(cellX, cellY int) {
 	if u := s.topUnitAt(cellX, cellY); u != nil {
@@ -421,10 +421,21 @@ func (s *Screen) handleGameKey(key int, buf *gfx.Buffer) {
 		return
 	}
 
-	// The configurable actions (max-go.json keybinds) resolve first, so a
-	// remapped key wins over the fixed hotkeys below. Defaults reproduce
-	// the vanilla keys, so an untouched settings file changes nothing.
-	if action, ok := s.keybindAction(key); ok {
+	// Configurable actions from max-go.json resolve first. A remapped key wins over
+	// the fixed hotkeys below; the defaults keep the vanilla behavior.
+	if action, ok := s.keybindAction(key, false); ok {
+		s.runKeybindAction(action, buf)
+
+		return
+	}
+
+	// A letter runs the matching popup button for the selected unit before the
+	// port actions and fixed hotkeys.
+	if s.popupHotkey(key) {
+		return
+	}
+
+	if action, ok := s.keybindAction(key, true); ok {
 		s.runKeybindAction(action, buf)
 
 		return
@@ -509,11 +520,11 @@ func (s *Screen) handleHotkey(key int, buf *gfx.Buffer) {
 
 	case 'v', 'V':
 		if s.debug {
-			s.fogShow = !s.fogShow // debug: toggle fog of war (was F before F became Find)
+			s.fogShow = !s.fogShow // debug: toggle fog of war; F now belongs to Find
 		}
 
-	case 'm', 'M':
-		s.maxSurvey = !s.maxSurvey // debug: reveal every cell's resources
+	case platform.CtrlMod | 'm':
+		s.maxSurvey = !s.maxSurvey // reveal every cell's resources; Ctrl leaves plain M for popup hotkeys
 
 	case '[':
 		s.armCheatInput() // start typing a [MAX...] cheat code (cheats.go)

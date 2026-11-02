@@ -31,9 +31,9 @@ Either way the loaded/created settings are immediately written back,
 so the file on disk always shows the FULL current schema - a field added by a newer build appears in an old `max-go.json` the first time it loads,
 seeded with its default rather than silently missing.
 
-`Load` decodes the JSON **over a copy of `Default()`**,
-not over a zero value,
-so a field the file predates keeps its default instead of reading back as `0`/`false`/`""` - an old `max-go.json` never silently disables a bool-shaped setting that didn't exist when it was written.
+`Load` decodes the JSON **over a copy of `Default()`**, not over a zero value.
+A field the file predates keeps its default instead of reading back as `0`/`false`/`""`.
+An older `max-go.json` therefore keeps a new boolean setting enabled when the file omits it.
 
 `Validate()` runs after every load and clamps/repairs invalid values back to a supported default (see the per-field notes below for exactly what it checks) - a hand-edited or corrupted field degrades gracefully instead of crashing the game.
 
@@ -143,7 +143,7 @@ no relaunch needed.
 | JSON key | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `menu` | bool | `false` | Opts into the in-game developer UI at runtime - the `F2` debug flag menu and the developer keys `A`/`V` (see `docs/controls.md`) - in a release build, without a `DEBUG_GAME` rebuild. Independent of the logging switches below. A `DEBUG_GAME` dev build forces this on regardless of the field's value. |
-| `console` | bool | `false` | Debug output to the console; on Windows also keeps the console window visible (Ebitengine normally hides it on a double-click launch). QuickEdit Mode is disabled on this console automatically (a click-drag selection used to freeze the whole game - fixed 2026-07-25). |
+| `console` | bool | `false` | Console output; Windows keeps it visible. QuickEdit is disabled to prevent click-drag freezes. |
 | `log_file` | bool | `false` | Debug output to `max-go.log` next to the binary (overwritten every launch). |
 | `log_buffer_lines` | int | `100` | How many log lines batch in memory before a disk write. `<=0` resets to `100`; capped at `100000` (`Validate`). |
 
@@ -166,18 +166,26 @@ see `docs/controls.md`) is fixed and not remappable through this map.
 | `end_turn` | `"Enter"` | End the current turn. |
 | `menu` | `"Escape"` | Back out of a popup/menu, or the exit confirm. |
 | `grid` | `"G"` | Toggle the grid overlay. |
-| `survey` | `"R"` | Toggle the survey (resource) overlay. No vanilla key (panel button only) - a port pick. |
-| `status` | `"S"` | Toggle the status overlay. No vanilla key (panel button only) - a port pick. |
+| `survey` | `"Ctrl+R"` | Toggle the survey (resource) overlay. No vanilla key (panel button only) - a port pick. |
+| `status` | `"Ctrl+S"` | Toggle the status overlay. No vanilla key (panel button only) - a port pick. |
 | `find` | `"F"` | Centre on the selected unit. |
 | `help` | `"?"` | Context help mode. |
-| `options` | `"O"` | Open the in-game Options menu. |
+| `options` | `"Ctrl+O"` | Open the in-game Options menu. No vanilla key - a port pick. |
 | `zoom_in` | `"="` | Zoom in. |
 | `zoom_out` | `"-"` | Zoom out. |
 
-`Validate` repairs a missing/
-il` keybinds map wholesale from the defaults;
+A key name is a single character, a named key (`Enter`, `Escape`, `Space`, `Tab`, `F1`-`F12`, `PageUp`, ...),
+`Ctrl+<letter>`, or `Alt+<letter or digit>`; case does not matter. A plain letter is better left alone: with a
+unit selected, the unit popup hotkeys run first (`docs/controls.md`), so the three port picks (`survey`,
+`status`, `options`) only see a plain letter when the selected unit has no button with it. The vanilla actions
+above them always win.
+
+`Validate` fills a missing/`nil` keybinds map from the defaults;
 for an existing map it only ADDS actions absent from an older schema (preserving every value the player actually set),
-and moves the one known legacy collision (`survey` bound to `"F"` while `find` is also `"F"`) back to `"R"` - an intentional `survey = "F"` binding chosen deliberately (with `find` rebound elsewhere) is left alone. `SetKeybinds` itself: an unresolvable key name keeps that action's default (and logs a warning);
+and moves the one known legacy collision (`survey` bound to `"F"` while `find` is also `"F"`) to `"R"`. An intentional
+`survey = "F"` binding with `find` on another key stays unchanged. It also moves the old plain defaults of the port
+picks (`survey` `"R"`, `status` `"S"`, `options` `"O"`, in any case) to their `Ctrl` forms once; other values stay.
+`SetKeybinds` itself: an unresolvable key name keeps that action's default (and logs a warning);
 an empty string value explicitly unbinds the action;
 two actions sharing one key both keep it,
 and the one listed first in dispatch order wins at input time (also warned).

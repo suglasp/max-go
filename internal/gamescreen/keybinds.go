@@ -14,9 +14,9 @@ import (
 	"github.com/suglasp/max-go/internal/platform"
 )
 
-// bindAction names one remappable game action from the settings keybinds map.
-// Vanilla has no key rebinding; this layer is port infrastructure, and its
-// defaults reproduce the vanilla keys exactly.
+// bindAction names a remappable game action from the settings keybinds map.
+// The original has no key rebinding; this layer adds it while preserving the
+// original keys by default.
 type bindAction int
 
 const (
@@ -48,27 +48,35 @@ var bindNames = [bindActionCount]string{
 	bindZoomOut: "zoom_out",
 }
 
-// defaultKeybinds holds the vanilla key per action, used when the settings
-// map is absent, misses an action, or carries an unresolvable value. The
-// survey and status overlays have no vanilla key (panel buttons only), so
-// theirs are port picks on free letters.
+// defaultKeybinds holds the default key for each action when the settings map
+// is absent, misses an action, or contains an unresolvable value. The survey
+// and status overlays and the options screen have no original key, so their
+// port picks use Ctrl and leave plain letters for unit popup hotkeys.
 var defaultKeybinds = [bindActionCount]int{
 	bindEndTurn: platform.KeyReturn,
 	bindMenu:    platform.KeyEscape,
 	bindGrid:    'g',
-	bindSurvey:  'r',
-	bindStatus:  's',
+	bindSurvey:  platform.CtrlMod | 'r',
+	bindStatus:  platform.CtrlMod | 's',
 	bindFind:    'f',
 	bindHelp:    '?',
-	bindOptions: 'o',
+	bindOptions: platform.CtrlMod | 'o',
 	bindZoomIn:  '=',
 	bindZoomOut: '-',
 }
 
-// SetKeybinds resolves the settings keybinds map onto the screen's action
-// keys. A missing action or a value KeyFromName rejects keeps the default
-// (warned); an empty value unbinds the action. A key claimed twice stays on
-// both actions and the earlier one wins at dispatch (warned).
+// bindPortPick marks actions that the port adds without an original key. They
+// resolve after unit popup hotkeys, so a popup letter wins even after rebinding.
+var bindPortPick = [bindActionCount]bool{
+	bindSurvey:  true,
+	bindStatus:  true,
+	bindOptions: true,
+}
+
+// SetKeybinds resolves the settings keybinds map onto the screen's action keys.
+// A missing action or an unresolvable value keeps the default and logs a warning;
+// an empty value unbinds the action. A shared key remains on both actions, and
+// the earlier action wins at dispatch with a warning.
 func (s *Screen) SetKeybinds(binds map[string]string) {
 	s.keybinds = defaultKeybinds
 
@@ -105,8 +113,8 @@ func (s *Screen) SetKeybinds(binds map[string]string) {
 	}
 }
 
-// actionKeys returns the active key table. A zero array means the screen was
-// built without New/SetKeybinds (tests, benches), so the defaults apply.
+// actionKeys returns the active key table. A zero array means the screen lacks
+// New/SetKeybinds setup, as in tests and benches, so the defaults apply.
 func (s *Screen) actionKeys() *[bindActionCount]int {
 	if s.keybinds == ([bindActionCount]int{}) {
 		return &defaultKeybinds
@@ -116,9 +124,11 @@ func (s *Screen) actionKeys() *[bindActionCount]int {
 }
 
 // keybindAction matches an input code against the configured action keys. A
-// letter arrives uppercased when shift is held, so letters fold to lowercase
-// first; Alt combo codes carry AltMod and never match a plain binding.
-func (s *Screen) keybindAction(key int) (bindAction, bool) {
+// A shifted letter arrives uppercased, so letters fold to lowercase first. Alt
+// and Ctrl combo codes carry modifier bits and never match a plain binding.
+// portPick selects either the original actions or the port additions that
+// resolve after popup hotkeys.
+func (s *Screen) keybindAction(key int, portPick bool) (bindAction, bool) {
 	if key >= 'A' && key <= 'Z' {
 		key += 'a' - 'A'
 	}
@@ -126,6 +136,10 @@ func (s *Screen) keybindAction(key int) (bindAction, bool) {
 	keys := s.actionKeys()
 
 	for action := bindAction(0); action < bindActionCount; action++ {
+		if bindPortPick[action] != portPick {
+			continue
+		}
+
 		if keys[action] != 0 && keys[action] == key {
 			return action, true
 		}
@@ -252,7 +266,7 @@ func (s *Screen) confirmExitToMain(buf *gfx.Buffer) {
 		return
 	}
 
-	s.draw(buf) // the confirm dialog was a separate window; refresh
+	s.draw(buf) // refresh after drawing the separate confirm dialog
 }
 
 // pauseDialog pops the vanilla pause box: a modal with a single OK that holds the

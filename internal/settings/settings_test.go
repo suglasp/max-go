@@ -281,14 +281,28 @@ func TestValidateKeybinds(t *testing.T) {
 			t.Errorf("action %q not filled from the defaults", action)
 		}
 	}
-	if s.Keybinds["survey"] != "R" {
-		t.Errorf("survey = %q, want the F collision migrated to R", s.Keybinds["survey"])
+	if s.Keybinds["survey"] != "Ctrl+R" {
+		t.Errorf("survey = %q, want the F collision migrated to R and then on to Ctrl+R", s.Keybinds["survey"])
+	}
+	if s.Keybinds["status"] != "Ctrl+S" {
+		t.Errorf("status = %q, want the old plain S moved to Ctrl+S", s.Keybinds["status"])
 	}
 	if s.Keybinds["grid"] != "G" {
 		t.Errorf("grid = %q, want the user's value kept", s.Keybinds["grid"])
 	}
 
-	// A deliberate survey on F: find was moved away, so no migration.
+	// The old plain letters move to Ctrl in any case; another letter stays.
+	s3 := Settings{Keybinds: map[string]string{"survey": "r", "status": "Q", "options": "O"}}
+	s3.Validate()
+
+	if s3.Keybinds["survey"] != "Ctrl+R" || s3.Keybinds["options"] != "Ctrl+O" {
+		t.Errorf("old letters not moved: survey=%q options=%q, want Ctrl+R / Ctrl+O", s3.Keybinds["survey"], s3.Keybinds["options"])
+	}
+	if s3.Keybinds["status"] != "Q" {
+		t.Errorf("status = %q, want the deliberate Q kept", s3.Keybinds["status"])
+	}
+
+	// A deliberate survey on F stays because find uses another key.
 	s2 := Settings{Keybinds: map[string]string{"survey": "F", "find": "C"}}
 	s2.Validate()
 

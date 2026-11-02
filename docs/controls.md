@@ -14,7 +14,7 @@ Sourced from the reference C++ `GameManager_ProcessKey` (`game_manager.cpp`).
 | `G` | Toggle the grid overlay | `G` |
 | `F` | Find: centre on the selected unit | `F` (Find button) |
 | `?` | Context help for the game screen | `?` (Shift + `/`) |
-| `F1` | Centre on the last spotted enemy | `F1` |
+| `F1` | Centre on the latest event: an enemy you spot, or your unit is hit, lost, or targeted by a commando | `F1` |
 | `F5`-`F8` | Recall a camera bookmark | `F5`-`F8` |
 | `Alt`+`F5`-`F8` | Set a camera bookmark at the current view | `Alt`+`F5`-`F8` |
 
@@ -30,8 +30,30 @@ Sourced from the reference C++ `GameManager_ProcessKey` (`game_manager.cpp`).
 | `Alt`+`P` | Pause ("Game Paused. Click OK to continue.") | `Alt`+`P` |
 | `Alt`+`X` | Exit to the main menu (confirm dialog) | `Alt`+`X` |
 
-(Save/Load were on `F9`/`F5` before;
-they now match the original's `Alt`+`S` / `Alt`+`L`.)
+(Save/Load use `F9`/`F5` in the port;
+they also match the original's `Alt`+`S` / `Alt`+`L`.)
+
+## Unit popup hotkeys
+
+With one of your units selected, a plain letter runs the first order-popup button whose caption starts with that
+letter, whether the popup is open or not. For example, `S` toggles Sentry, `B` opens Build, `D` selects Done,
+`L` selects Load, and `A` selects Attack. This matches the original (`GameManager_ProcessPopupMenuInput`) and
+runs after Enter, Esc, `F`, `G`, `?`, `=`, and `-`, which keep their own meanings.
+
+No hotkey runs during the computer's turn, a hand-over banner, or landing; while a build is placed; for a disabled
+unit; for a Constructor or Engineer parked on its finished building; or for a unit between order steps, such as
+one that is driving. Digits remain the unit group keys below; the original's popup digits are unused.
+
+## Port keys (project additions)
+
+These overlays and screens have no key in the original (panel buttons only). They sit on `Ctrl` so every plain
+letter stays free for the popup hotkeys, and they are remappable in `max-go.json`.
+
+| Key | Action |
+|-----|--------|
+| `Ctrl`+`S` | Toggle the status overlay |
+| `Ctrl`+`R` | Toggle the survey (resource) overlay |
+| `Ctrl`+`O` | Open the Options menu |
 
 ## Selecting units
 
@@ -61,7 +83,7 @@ Assigned groups ride the save game.
 
 A group slot stores the unit ids of the selection,
 so a recall reselects every surviving member (destroyed units are skipped).
-Membership is exclusive: assigning a unit to a group removes it from any other group it was in.
+Membership is exclusive: assigning a unit to a group removes it from every other group it occupies.
 
 ## Developer keys
 
@@ -69,15 +91,16 @@ Membership is exclusive: assigning a unit to a group removes it from any other g
 `A`,
 and `V` are gated on `s.debug`,
 which is true in a `DEBUG_GAME` build OR at runtime when `debug.menu` is set to `true` in `max-go.json` (edit it with `max-settings`) - so a release build can still open these by opting in,
-without a rebuild. `M` has no gate at all and always works,
-`DEBUG_GAME` or not.
+without a rebuild. `Ctrl`+`M` has no gate at all and always works,
+`DEBUG_GAME` or not. A plain `A` or `V` goes to the popup hotkeys first, so these two act only when the selected
+unit has no button with that letter.
 
 | Key | Action |
 |-----|--------|
 | `F2` | Open the debug flag menu (AI on/off, clock pause, **Add unit / Add building** to place a unit/building, etc.) - gated on `s.debug` |
 | `A` | Toggle the access (passability) overlay - gated on `s.debug` |
 | `V` | Toggle fog of war - gated on `s.debug` |
-| `M` | Reveal every cell's resources - **always active, no gate** |
+| `Ctrl`+`M` | Reveal every cell's resources - **always active, no gate** |
 
-(The old `U` spawn unit and `B` build menu keys were removed;
-both are now reached through the `F2` debug menu's **Add unit** / **Add building** rows.)
+(The old `U` spawn unit and `B` build menu keys no longer apply;
+the `F2` debug menu's **Add unit** / **Add building** rows provide both actions.)

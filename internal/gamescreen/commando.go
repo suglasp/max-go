@@ -24,6 +24,7 @@ func (s *Screen) tickCommandoEvents() {
 		}
 
 		name := displayName(e.Victim.Type)
+		s.latchEventCell(e.Victim.GridX, e.Victim.GridY) // F1 jumps to the targeted unit
 
 		switch e.Kind {
 		case sim.CommandoCapture:
@@ -38,7 +39,7 @@ func (s *Screen) tickCommandoEvents() {
 
 		case sim.CommandoExposed:
 			// The attempt FAILED and the infiltrator gave itself away: the target's owner is
-			// told what was tried on which unit, which is the warning that an enemy commando
+			// told what the commando tried on which unit, which warns that an enemy commando
 			// is standing next to it.
 			key, fallback := "eb6c", "Attempt to disable %s!"
 

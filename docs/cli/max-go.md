@@ -111,8 +111,9 @@ The custom game launch flags (`-turnlimit`/`-turns`,
 `-startcredit`/`-credit`) are NOT gated - `registerCustomFlags` runs unconditionally and their `-help` block prints in every build,
 `DEBUG_GAME` or not.
 
-The in game developer UI - the `F2` debug flag menu (which also hosts unit/building placement,
-replacing the removed `U` spawn and `B` build menu keys) plus the developer keys `A` access overlay / `V` fog / `M` reveal resources and the on screen key hint - is on in a `DEBUG_GAME` build,
+The in game developer UI includes the `F2` debug flag menu with unit/building placement. The old `U` spawn and `B`
+build menu keys no longer apply. The developer keys `A` access overlay and `V` fog, plus the on-screen key hint,
+are active in a `DEBUG_GAME` build. Resource reveal uses `Ctrl`+`M` and is always active; see `docs/controls.md`.
 and otherwise opt in at runtime via the `debug.menu` flag in `max-go.json` (edit it with `max-settings`,
 key `debug.menu`;
 default off).
@@ -342,7 +343,7 @@ Movies/screens:   credits, intro, splash
 - `popup` opens a unit's order popup menu over the demo game for inspection.
 - `random` starts the `-random` quick start (the human plus `-npc` opponents on separate landmasses; each base adapts to coastal vs landlocked terrain).
 - `random2` is a developer test bed: the human plus `-npc` fully developed bases (default one opponent) on turn 100 - multiple mining stations, heavy power stations, the light/heavy/air plants, launchers, connectors, a T shaped road, and (for a coastal base) a shipyard wired into the complex with connectors and a span of bridge pieces at the shore, plus air and naval units - so lots of unit/building types can be exercised at once. A landlocked base skips the shipyard/boats and leans on its Eco Sphere + habitat. You drop straight into the running game (no landing).
-- `custom` lands a sample custom game: the human team deploys with a fixed purchased loadout (the first slice of the landing phase) and an opponent team with the quick start roster, each on its own landmass. The full flow (Main Menu -> New Game -> Custom) runs the Cargo purchase screen first, then lands with whatever was bought.
+ - `custom` lands a sample custom game: the human team deploys with a fixed purchased loadout (the first slice of the landing phase) and an opponent team with the quick start roster, each on its own landmass. The full flow (Main Menu -> New Game -> Custom) runs the Cargo purchase screen first, then lands with the selected loadout.
 - `setup` opens the standalone main menu Setup screen (SETUPPIC): the setup section only (audio volumes/disables, auto save, player name), distinct from the in game Preferences (`options`, PREFSPIC) which shows the full preferences/options list.
 - `prefs-game` / `loadgame` open the in game Preferences / Load dialogs over a live game frame; `research` / `alloc` / `upgrade` open those in game menus.
 - `transfer` opens the cargo exchange dialog between two adjacent supply trucks (the X-Fer popup order).

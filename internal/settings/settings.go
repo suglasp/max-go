@@ -274,18 +274,18 @@ func Default() Settings {
 			LogFile:        false,
 			LogBufferLines: 100,
 		},
-		// The remappable game actions (read by gamescreen.SetKeybinds). The
-		// defaults are the vanilla keys; survey and status have no vanilla key
-		// (panel buttons only), so theirs are port picks on free letters.
+		// Remappable actions read by gamescreen.SetKeybinds. Defaults preserve the
+		// original keys; survey, status, and options have no original key, so the
+		// port assigns Ctrl combinations and leaves plain letters for popup hotkeys.
 		Keybinds: map[string]string{
 			"end_turn": "Enter",
 			"menu":     "Escape",
 			"grid":     "G",
-			"survey":   "R",
-			"status":   "S",
+			"survey":   "Ctrl+R",
+			"status":   "Ctrl+S",
 			"find":     "F",
 			"help":     "?",
-			"options":  "O",
+			"options":  "Ctrl+O",
 			"zoom_in":  "=",
 			"zoom_out": "-",
 		},
@@ -340,6 +340,13 @@ func (s *Settings) Validate() {
 		if s.Keybinds["survey"] == "F" && s.Keybinds["find"] == "F" {
 			s.Keybinds["survey"] = "R"
 		}
+		// Port-pick defaults use Ctrl, leaving plain letters for popup hotkeys. Move
+		// only the old default on its own action; preserve every other binding.
+		for action, oldKey := range map[string]string{"survey": "R", "status": "S", "options": "O"} {
+			if strings.EqualFold(strings.TrimSpace(s.Keybinds[action]), oldKey) {
+				s.Keybinds[action] = Default().Keybinds[action]
+			}
+		}
 	}
 	if !IsSupportedLanguage(s.Language) {
 		s.Language = LangEnglish
@@ -364,9 +371,8 @@ func Load(path string) (Settings, error) {
 		return Settings{}, err
 	}
 
-	// Decode over the defaults, not over a zero Settings: a key the file predates
-	// then keeps its default instead of reading back as 0/false/"". Without this, a
-	// max-go.json written before a bool was added would silently turn that bool off.
+	// Decode over the defaults, not over a zero Settings. A key the file predates
+	// keeps its default instead of reading back as 0/false/"".
 	s := Default()
 	if err := json.Unmarshal(data, &s); err != nil {
 		return Settings{}, fmt.Errorf("settings: parse %s: %w", path, err)
@@ -392,7 +398,7 @@ func (s Settings) Save(path string) error {
 // LoadOrCreate reads settings from path, creating the file with
 // defaults if it does not exist yet. A successfully loaded file is
 // written back so it always shows the full current schema, including
-// keys added since it was created.
+// keys added since its creation.
 func LoadOrCreate(path string) (Settings, error) {
 	s, err := Load(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -423,7 +429,7 @@ func (s Settings) ResolveDataDir() (string, error) {
 	return BaseDir()
 }
 
-// DataDirExplicit reports whether the data dir was pointed somewhere
+// DataDirExplicit reports whether the data dir points somewhere
 // explicitly (the -datadir flag, MAX_DATA_DIR, or the data_dir setting).
 // When false, ResolveDataDir falls back to the binary's own directory,
 // which is the only case where the first run bootstrap may go hunting

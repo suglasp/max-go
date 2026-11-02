@@ -27,8 +27,8 @@ import (
 const tileSize = 64
 
 // SurfaceSource yields the surface mask of a cell; combat needs it for the
-// naval rules (sub/corvette can only shoot across water, and a sub/corvette
-// must itself stand on water/coast). Satisfied by *world.Map and the synthetic
+// naval rules (a sub/corvette can only shoot across water, and a sub only at a
+// target on water/coast). Satisfied by *world.Map and the synthetic
 // test surfaces; may be nil, in which case those rules are skipped.
 type SurfaceSource interface {
 	SurfaceAt(x, y int) uint8
@@ -81,8 +81,7 @@ func canTargetType(attacker, target assets.UnitType, targetFlags game.Flags) boo
 // CanTarget reports whether attacker may fire on target at the target's cell.
 // It ports Access_IsValidAttackTarget: a ground (or hovering) attacker cannot
 // be the pure air firing path; a not hovering air target is treated as a land
-// target; and a naval attacker (sub/corvette) may only shoot if the target
-// cell is water or coast.
+// target; and a Submarine may only shoot if the target cell is water or coast.
 //
 // C++: Access_IsValidAttackTarget / Access_IsValidAttackTargetEx (access.cpp).
 func CanTarget(attacker, target *game.UnitInfo, surf SurfaceSource) bool {
@@ -102,8 +101,9 @@ func CanTarget(attacker, target *game.UnitInfo, surf SurfaceSource) bool {
 		targetFlags |= game.FlagMobileLandUnit
 	}
 
-	// Naval attackers can only fire when the target stands on water/coast.
-	if attacker.Type == assets.Submarne || attacker.Type == assets.Corvette {
+	// A Submarine fires only at a target on water or coast. A Corvette also fires
+	// at a unit on land near the shore, but land between the units blocks the shot.
+	if attacker.Type == assets.Submarne {
 		if surf != nil {
 			s := surf.SurfaceAt(target.GridX, target.GridY)
 			if s&(world.SurfaceWater|world.SurfaceCoast) == 0 {
@@ -208,7 +208,7 @@ type Result struct {
 }
 
 // Apply removes one shot's damage from target (clamped to its remaining hits)
-// and reports whether it was destroyed. It mirrors the hit point arithmetic of
+// and reports whether the target is destroyed. It mirrors the hit point arithmetic of
 // UnitInfo::AttackUnit. The caller handles explosions, AI tracking, experience,
 // and messages.
 //

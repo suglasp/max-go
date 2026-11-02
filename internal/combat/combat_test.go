@@ -187,17 +187,51 @@ func TestAirUnitCanAttack(t *testing.T) {
 	}
 }
 
-// TestNavalAttackNeedsWater checks a corvette can only fire at a target on
-// water/coast.
+// TestNavalAttackNeedsWater checks a Submarine only fires at a target on water/coast, while a Corvette may also
+// fire at a unit standing on land.
 func TestNavalAttackNeedsWater(t *testing.T) {
 	corv := combatant(assets.Corvette, 0, 0, 0, game.FlagMobileSeaUnit|game.FlagSelectable, 12, 0, 20, 1, 5, 4)
-	target := combatant(assets.Battlshp, 1, 1, 0, game.FlagMobileSeaUnit|game.FlagSelectable, 30, 5, 30, 1, 5, 4)
+	sub := combatant(assets.Submarne, 0, 0, 0, game.FlagMobileSeaUnit|game.FlagSelectable, 12, 0, 20, 1, 5, 4)
+	ship := combatant(assets.Battlshp, 1, 1, 0, game.FlagMobileSeaUnit|game.FlagSelectable, 30, 5, 30, 1, 5, 4)
+	tank := combatant(assets.Tank, 1, 1, 0, game.FlagMobileLandUnit|game.FlagSelectable, 30, 5, 30, 1, 5, 4)
 
-	if !CanTarget(corv, target, allWater{}) {
+	if !CanTarget(corv, ship, allWater{}) {
 		t.Error("corvette should fire at a ship over water")
 	}
-	if CanTarget(corv, target, allLand{}) {
-		t.Error("corvette should not fire when the target cell is land")
+	if !CanTarget(corv, tank, allLand{}) {
+		t.Error("corvette should be able to target a land unit standing on land")
+	}
+	if CanTarget(sub, tank, allLand{}) {
+		t.Error("submarine should not fire when the target cell is land")
+	}
+}
+
+// shoreRow is a map row at y = 2: water up to x = 0, coast at x = 1, land from x = 2 on.
+type shoreRow struct{}
+
+func (shoreRow) SurfaceAt(x, y int) uint8 {
+	switch {
+	case x <= 0:
+		return world.SurfaceWater
+	case x == 1:
+		return world.SurfaceCoast
+	default:
+		return world.SurfaceLand
+	}
+}
+
+// TestCorvetteFiresAtTheShore checks a Corvette on the water hits a Tank on the first land cell past the coast,
+// but not a Tank one land cell further in.
+func TestCorvetteFiresAtTheShore(t *testing.T) {
+	corv := combatant(assets.Corvette, 0, 0, 2, game.FlagMobileSeaUnit|game.FlagSelectable, 12, 0, 20, 1, 5, 4)
+	shore := combatant(assets.Tank, 1, 2, 2, game.FlagMobileLandUnit|game.FlagSelectable, 30, 5, 30, 1, 5, 4)
+	inland := combatant(assets.Tank, 1, 3, 2, game.FlagMobileLandUnit|game.FlagSelectable, 30, 5, 30, 1, 5, 4)
+
+	if !CanTarget(corv, shore, shoreRow{}) || !WithinAttackRange(corv, shore.GridX, shore.GridY, 4, shoreRow{}) {
+		t.Error("corvette should fire at the Tank on the shore (only coast between)")
+	}
+	if WithinAttackRange(corv, inland.GridX, inland.GridY, 4, shoreRow{}) {
+		t.Error("corvette should not fire at the Tank inland (a land cell between)")
 	}
 }
 
