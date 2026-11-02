@@ -92,6 +92,19 @@ func (m *MoveOrder) ReleaseReservation() {
 	m.reserved = false
 }
 
+// StopAtNextCell ends the route at the cell the unit is driving into, so it finishes
+// the crossing and parks on a cell centre, and returns the steps it dropped.
+//
+// C++ ported : groundpath.cpp - GroundPath::CancelMovement
+func (m *MoveOrder) StopAtNextCell() []paths.Step {
+	if m.Done() {
+		return nil
+	}
+	rest := append([]paths.Step(nil), m.Steps[m.Index+1:]...)
+	m.Steps = m.Steps[:m.Index+1]
+	return rest
+}
+
 // RemainingSteps returns the steps of the route not yet taken. The slice
 // aliases the order's Steps; copy it if it must outlive the order.
 func (m *MoveOrder) RemainingSteps() []paths.Step {

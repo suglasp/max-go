@@ -55,6 +55,7 @@ func (g *Game) orderMoveToAvoiding(u *game.UnitInfo, cx, cy int, penalty func(x,
 	}
 	g.cancel(u)
 	delete(g.pending, u) // a fresh explicit order supersedes any queued route
+	delete(g.held, u)    // and any route held by an enemy halt (Auto Survey, the AI, a Path build)
 	steps, cost, ok := g.findRouteAvoiding(u, cx, cy, penalty)
 	if !ok {
 		return false
@@ -79,6 +80,7 @@ func (g *Game) QueueMove(u *game.UnitInfo, cx, cy int) bool {
 	}
 	g.cancel(u)             // drop any active order; the unit is not moving this turn
 	delete(g.buildPaths, u) // a fresh manual route supersedes a Path build
+	delete(g.held, u)       // and a route held by an enemy halt
 	u.AttackTarget = nil    // and any move to attack pursuit
 	// Mirror the mid path pending state: the unit holds OrderMove with its route
 	// shelved (see the move state machine), so it reads as en route and resumes.

@@ -176,3 +176,72 @@ func TestHeldRouteYieldsToANewOrder(t *testing.T) {
 		t.Errorf("a cancelled unit drove on to x=%d; it should stand at x=10", other.GridX)
 	}
 }
+
+// TestHaltMidCellFinishesTheCrossing checks that a unit halted halfway into a cell drives
+// on to that cell's centre and holds the rest, instead of freezing between two cells.
+func TestHaltMidCellFinishesTheCrossing(t *testing.T) {
+	g := newGame(t, 16, 4)
+	tank := addTank(g, 1, 6, 1, 1)
+
+	g.BeginTeamTurn(0)
+	if !g.OrderMove(tank, 7, 1) {
+		t.Fatal("OrderMove should route across open land")
+	}
+	for i := 0; i < 200 && tank.Moved == 0; i++ {
+		g.Tick()
+	}
+	if tank.Moved == 0 {
+		t.Fatal("the tank never started crossing into the next cell")
+	}
+
+	g.HaltForEnemy(tank)
+	g.ResolveMovement()
+
+	if tank.GridX != 2 || tank.GridY != 1 {
+		t.Errorf("tank parked at (%d,%d), want the cell it was crossing into (2,1)", tank.GridX, tank.GridY)
+	}
+	if tank.Moved != 0 || tank.X != 2*64+32 || tank.Y != 1*64+32 {
+		t.Errorf("tank left between cells: Moved=%d pixel=(%d,%d), want the (2,1) centre", tank.Moved, tank.X, tank.Y)
+	}
+	held := g.HeldRoute(tank)
+	if len(held) != 5 {
+		t.Fatalf("held route = %d steps, want the 5 after the crossing", len(held))
+	}
+	if dest := held[len(held)-1].To; dest.X != 7 || dest.Y != 1 {
+		t.Errorf("held route ends at (%d,%d), want (7,1)", dest.X, dest.Y)
+	}
+}
+
+// TestAnyNewRouteDropsTheHeldOne checks that the routes Auto Survey, the AI and a click
+// with no moves left lay also drop a held route, so no stale arrows stay behind and the
+// turn start never drives the old one.
+func TestAnyNewRouteDropsTheHeldOne(t *testing.T) {
+	g := newGame(t, 16, 6)
+	tank := addTank(g, 1, 6, 1, 1)
+
+	g.BeginTeamTurn(0)
+	g.OrderMove(tank, 7, 1)
+	g.HaltForEnemy(tank)
+	if !g.OrderMoveAvoiding(tank, 1, 4, nil) {
+		t.Fatal("OrderMoveAvoiding should route to (1,4)")
+	}
+	if len(g.HeldRoute(tank)) != 0 {
+		t.Error("OrderMoveAvoiding must drop the held route")
+	}
+
+	other := addTank(g, 2, 6, 10, 1)
+	g.OrderMove(other, 14, 1)
+	g.HaltForEnemy(other)
+	if !g.QueueMove(other, 10, 4) {
+		t.Fatal("QueueMove should route to (10,4)")
+	}
+	if len(g.HeldRoute(other)) != 0 {
+		t.Error("QueueMove must drop the held route")
+	}
+
+	g.BeginTeamTurn(0)
+	g.ResolveMovement()
+	if other.GridX != 10 || other.GridY != 4 {
+		t.Errorf("queued tank at (%d,%d), want its new destination (10,4), not the old held one", other.GridX, other.GridY)
+	}
+}

@@ -9,6 +9,7 @@ import (
 	"github.com/suglasp/max-go/internal/dbg"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/paths"
+	"github.com/suglasp/max-go/internal/units"
 )
 
 // A unit that spots an enemy stops for the rest of the turn and holds the remainder of its route, arrows and all.
@@ -18,6 +19,20 @@ import (
 // a Continue or a new order.
 func (g *Game) HaltForEnemy(u *game.UnitInfo) {
 	if u == nil {
+		return
+	}
+
+	// Halfway into a cell: finish the crossing and stop on that cell, holding the steps
+	// after it. Cancelling here would leave the unit drawn between two cells.
+	if o := g.activeOrder(u); o != nil && u.Moved > 0 {
+		rest := o.StopAtNextCell()
+		delete(g.pending, u)
+		u.AttackTarget = nil
+
+		if len(rest) > 0 { // a second halt during the same crossing keeps the first hold
+			g.holdRoute(u, rest)
+		}
+
 		return
 	}
 
@@ -33,6 +48,11 @@ func (g *Game) HaltForEnemy(u *game.UnitInfo) {
 		return // nowhere left to go: nothing worth holding
 	}
 
+	g.holdRoute(u, steps)
+}
+
+// holdRoute stores steps as u's held route.
+func (g *Game) holdRoute(u *game.UnitInfo, steps []paths.Step) {
 	if g.held == nil {
 		g.held = make(map[*game.UnitInfo][]paths.Step)
 	}
@@ -41,6 +61,17 @@ func (g *Game) HaltForEnemy(u *game.UnitInfo) {
 
 	dest := steps[len(steps)-1].To
 	dbg.Printf("halt: %s at (%d,%d) holds its route to (%d,%d)", u.Type.Tag(), u.GridX, u.GridY, dest.X, dest.Y)
+}
+
+// activeOrder is the live move order driving u, or nil.
+func (g *Game) activeOrder(u *game.UnitInfo) *units.MoveOrder {
+	for _, o := range g.orders {
+		if o.Unit == u {
+			return o
+		}
+	}
+
+	return nil
 }
 
 // remainingRoute is what a unit still has to drive: the live order's remainder, else its
