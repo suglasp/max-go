@@ -185,6 +185,7 @@ func (g *Game) BeginTeamTurn(team int) {
 	g.turnStalled = g.AdvanceBuilds(team)
 	g.issueBuildExits(team)
 	g.resumePending(team)
+	g.resumeHeld(team)        // a unit halted on spotting an enemy drives on now its moves are back
 	g.resumePursuit(team)     // continue any 2+-turn move to attack chase now budgets refilled
 	g.clearArrivalShots(team) // a shot queued last turn and never taken belongs to last turn
 	// Hand a computer team to the AI once its economy and construction have run,

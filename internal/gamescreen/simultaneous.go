@@ -104,7 +104,7 @@ func (s *Screen) beginSimRound() {
 	s.game.State.ActiveTeam = human
 	s.game.State.PlayerTeam = human
 	s.clearSelectionForNewTurn(human)
-	s.tickAutoSurvey(human)                 // drive any Auto Survey surveyor toward the nearest unsurveyed cell
+	s.tickAutoSurvey(human)                 // drive any Auto Survey surveyor, base first
 	s.resetEndTurnGrace()                   // full turn budget back; the grace re arms once the opponents finish
 	s.turnFlow.turnStart = platform.Ticks() // (re)start the real time turn clock
 	dbg.Printf("sim round: turn %d real-time plan phase, view=%s", s.game.State.TurnCounter, s.teamName(human))

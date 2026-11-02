@@ -5,10 +5,14 @@
 // Licensed under the MIT License. See MIT.md file in the project root for full license information.
 package sim
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/suglasp/max-go/internal/game"
+)
 
 // TestHaltForEnemyHoldsTheRoute checks that a halted unit stops where it stands but keeps
-// the remainder of its drive, and that nothing but the player sets it going again.
+// the remainder of its drive, and that the next turn start drives it on by itself.
 func TestHaltForEnemyHoldsTheRoute(t *testing.T) {
 	g := newGame(t, 16, 4)
 	tank := addTank(g, 1, 6, 1, 1)
@@ -31,21 +35,36 @@ func TestHaltForEnemyHoldsTheRoute(t *testing.T) {
 		t.Errorf("held route ends at (%d,%d), want the original (7,1)", dest.X, dest.Y)
 	}
 	if len(g.PendingRoutes()) != 0 {
-		t.Error("a held route must not be a pending one, or the next turn start drives the unit back into the enemy")
+		t.Error("a held route must not also be a pending one, or the turn start drives it twice")
 	}
 
-	// The trap: the unit must sit still through the turn boundary. Only the player
-	// decides whether to press on.
-	g.BeginTeamTurn(0)
+	// The rest of this turn it stands; the next turn start drives it on by itself.
 	g.ResolveMovement()
 	if tank.GridX != 1 || tank.GridY != 1 {
-		t.Errorf("tank moved to (%d,%d) on its own; a halted unit waits at (1,1)", tank.GridX, tank.GridY)
+		t.Errorf("tank moved to (%d,%d) in the halt turn; it waits at (1,1) until the next turn", tank.GridX, tank.GridY)
 	}
-	if len(g.HeldRoute(tank)) == 0 {
-		t.Error("the turn start dropped the held route; it must survive until the player orders something")
+	g.BeginTeamTurn(0)
+	g.ResolveMovement()
+	if tank.GridX != 7 || tank.GridY != 1 {
+		t.Errorf("tank at (%d,%d) after the next turn start, want it to drive on to (7,1)", tank.GridX, tank.GridY)
 	}
+	if len(g.HeldRoute(tank)) != 0 {
+		t.Error("the turn start must consume the hold")
+	}
+}
 
-	// The player presses on: the route is re-laid from where the unit stands.
+// TestContinueHeldRouteInTheHaltTurn checks that Continue presses on at once, in the same
+// turn as the halt, re-laying the route from where the unit stands.
+func TestContinueHeldRouteInTheHaltTurn(t *testing.T) {
+	g := newGame(t, 16, 4)
+	tank := addTank(g, 1, 6, 1, 1)
+
+	g.BeginTeamTurn(0)
+	if !g.OrderMove(tank, 7, 1) {
+		t.Fatal("OrderMove should route across open land")
+	}
+	g.HaltForEnemy(tank)
+
 	if !g.ContinueHeldRoute(tank) {
 		t.Fatal("ContinueHeldRoute should re-path to the held destination")
 	}
@@ -63,8 +82,8 @@ func TestHaltForEnemyHoldsTheRoute(t *testing.T) {
 }
 
 // TestHaltForEnemyHoldsAShelvedRoute checks the between turns case: a unit that ran out of
-// movement points holds the SHELVED remainder, and the shelf is emptied so the turn start
-// cannot drive it.
+// movement points holds the SHELVED remainder, the shelf is emptied, and the turn start
+// drives the held route on once.
 func TestHaltForEnemyHoldsAShelvedRoute(t *testing.T) {
 	g := newGame(t, 16, 4)
 	tank := addTank(g, 1, 2, 1, 1) // two cells a turn, so a six cell drive spills over
@@ -92,8 +111,32 @@ func TestHaltForEnemyHoldsAShelvedRoute(t *testing.T) {
 
 	g.BeginTeamTurn(0)
 	g.ResolveMovement()
-	if tank.GridX != 3 {
-		t.Errorf("tank drove on to x=%d by itself; a halted unit waits at x=3", tank.GridX)
+	if tank.GridX != 5 {
+		t.Errorf("tank at x=%d after the turn start, want x=5 (two more cells toward the held destination)", tank.GridX)
+	}
+	if len(g.HeldRoute(tank)) != 0 {
+		t.Error("the turn start must consume the hold")
+	}
+}
+
+// TestHeldRouteOfABuilderAtWorkIsDropped checks that the turn start never drives a unit
+// parked build ready off its building: the stale held route is dropped instead.
+func TestHeldRouteOfABuilderAtWorkIsDropped(t *testing.T) {
+	g := newGame(t, 16, 4)
+	tank := addTank(g, 1, 6, 1, 1)
+
+	g.BeginTeamTurn(0)
+	g.OrderMove(tank, 7, 1)
+	g.HaltForEnemy(tank)
+	g.buildReady = map[*game.UnitInfo]*BuildReady{tank: {}}
+
+	g.BeginTeamTurn(0)
+	g.ResolveMovement()
+	if tank.GridX != 1 {
+		t.Errorf("a unit parked build ready drove to x=%d; it must stay at x=1", tank.GridX)
+	}
+	if len(g.HeldRoute(tank)) != 0 {
+		t.Error("the stale held route should be dropped")
 	}
 }
 

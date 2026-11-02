@@ -96,7 +96,7 @@ type UnitInfo struct {
 	Ammo  int // long term store that depletes per shot and refills at a depot
 
 	DisabledReactionFire bool  // suppresses automatic reaction (opportunity) fire; player toggles it per unit ('4' button)
-	AutoSurvey           bool  // human Surveyor auto drives to the nearest unsurveyed cell each turn; "Auto" popup toggle, persisted v12
+	AutoSurvey           bool  // human Surveyor auto drives over unsurveyed ground (base first) each turn; "Auto" popup toggle, persisted v12
 	SpottedBy            uint8 // teams that have UNCOVERED this stealth unit, one bit per team. A found mine stays found even after the detector drives away. C++: UnitInfo::spotted_by_team
 
 	Storage                           int // cargo held

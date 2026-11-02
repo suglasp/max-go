@@ -11,10 +11,11 @@ import (
 	"github.com/suglasp/max-go/internal/paths"
 )
 
-// A unit that spots an enemy stops and holds the remainder of its route. Its arrows remain visible until the player continues it or issues a new order.
-// A held route is not pending: pending routes resume at the next team turn, whereas only the player may resume a held route.
+// A unit that spots an enemy stops for the rest of the turn and holds the remainder of its route, arrows and all.
+// The player may press on at once (Continue) or give a new order; otherwise the next team turn start drives it on.
 
-// HaltForEnemy stops a unit that spotted an enemy and stores the remainder of its route until the player continues it or issues a new order.
+// HaltForEnemy stops a unit that spotted an enemy and stores the remainder of its route until the next turn start,
+// a Continue or a new order.
 func (g *Game) HaltForEnemy(u *game.UnitInfo) {
 	if u == nil {
 		return
@@ -25,7 +26,7 @@ func (g *Game) HaltForEnemy(u *game.UnitInfo) {
 	steps := append([]paths.Step(nil), g.remainingRoute(u)...)
 
 	g.cancel(u)
-	delete(g.pending, u) // it must not auto resume: the player decides
+	delete(g.pending, u) // the hold replaces the shelved route, so it resumes only once
 	u.AttackTarget = nil // and it is no longer chasing anything
 
 	if len(steps) == 0 {
@@ -84,6 +85,29 @@ func (g *Game) HeldRoutes() []PendingRoute {
 // ClearHeldRoute forgets a unit's held route. Any fresh order supersedes it.
 func (g *Game) ClearHeldRoute(u *game.UnitInfo) {
 	delete(g.held, u)
+}
+
+// resumeHeld drives each of team's halted units on toward its held destination once the
+// turn start has refilled its moves. The resumed drive halts again only for an enemy it
+// has not seen yet. A builder at work or a disabled unit drops its stale route instead.
+func (g *Game) resumeHeld(team int) {
+	for u, steps := range g.held {
+		if u.Team != team {
+			continue
+		}
+
+		delete(g.held, u) // OrderMove lays a fresh, current route
+
+		if len(steps) == 0 || u.Building || g.buildReady[u] != nil || g.IsDisabled(u) {
+			dbg.Printf("resume: %s at (%d,%d) dropped its held route", u.Type.Tag(), u.GridX, u.GridY)
+			continue
+		}
+
+		dest := steps[len(steps)-1].To
+		if g.OrderMove(u, dest.X, dest.Y) {
+			dbg.Printf("resume: %s at (%d,%d) drives on to held (%d,%d)", u.Type.Tag(), u.GridX, u.GridY, dest.X, dest.Y)
+		}
+	}
 }
 
 // ContinueHeldRoute drives a halted unit toward its stored destination, finding a new path from its current position. It returns false and clears the

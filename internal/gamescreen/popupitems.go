@@ -34,9 +34,8 @@ func (s *Screen) unitPopupItems(u *game.UnitInfo) []popupItem {
 	var items []popupItem
 
 	// Continue leads for a unit that halted on spotting an enemy: it still holds the rest
-	// of its drive (arrows and all), and this sends it on, re pathing from where it stands.
-	// Nothing else resumes a held route, which is the point - the player decides whether to
-	// press on or deal with what the unit found.
+	// of its drive (arrows and all), and this sends it on at once, re pathing from where it
+	// stands. Left alone, the held route drives on at the next turn start.
 	//
 	// The original discards the route at the halt (access.cpp:829 -
 	// UnitEventEmergencyStop), so it cannot offer this action.
@@ -55,8 +54,8 @@ func (s *Screen) unitPopupItems(u *game.UnitInfo) []popupItem {
 	}
 
 	// Auto is the FIRST item for a player owned Surveyor (vanilla order): it drives
-	// itself toward the nearest unsurveyed cell, starting RIGHT AWAY while moves remain
-	// this turn. Kept SEPARATE from Sentry (distinct vanilla buttons).
+	// itself over the ground around the base, then the rest of the map, starting RIGHT
+	// AWAY while moves remain this turn. Kept SEPARATE from Sentry (distinct vanilla buttons).
 	// C++ ported : units_manager.cpp - UnitsManager_Popup_OnClick_Auto.
 	if u.Type == assets.Surveyor && s.game.State != nil && u.Team == s.game.State.PlayerTeam {
 		items = append(items, popupItem{

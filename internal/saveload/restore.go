@@ -120,9 +120,8 @@ func (s *Snapshot) restoreOrders(g *sim.Game, byID map[uint16]*game.UnitInfo) {
 		}
 	}
 
-	// Put back the routes a halt on enemy stop was holding (v24). Deliberately NOT
-	// re queued as pending moves: a held route waits for the player, and resumePending
-	// would drive the unit straight back into the enemy it stopped for.
+	// Put back the routes a halt on enemy stop was holding (v24), as held routes so the
+	// unit keeps its Continue item; the next turn start drives them on.
 	for i := range s.HeldMoves {
 		hm := &s.HeldMoves[i]
 		if u := byID[hm.UnitID]; u != nil {

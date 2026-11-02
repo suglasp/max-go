@@ -153,8 +153,7 @@ func (s *Screen) drawAllGroundPaths(view *gfx.Buffer) {
 	}
 
 	// Routes HELD by a halt on enemy stop. Drawn exactly like a queued one - the unit is
-	// still going there, it is just waiting for the player to say when. Unlike a queued
-	// route, nothing resumes it by itself.
+	// still going there and drives on at the next turn start (or at once on Continue).
 	held := s.game.HeldRoutes()
 	sort.Slice(held, func(i, j int) bool {
 		return held[i].Unit.ID < held[j].Unit.ID

@@ -93,3 +93,76 @@ func TestNearestUnsurveyedMoveNoResourceMapReturnsFalse(t *testing.T) {
 		t.Error("NearestUnsurveyedMove should return false with no resource map")
 	}
 }
+
+// surveyAllBut marks every cell of team 0 surveyed except the listed ones.
+func surveyAllBut(g *Game, open ...game.Point) {
+	isOpen := make(map[game.Point]bool, len(open))
+	for _, p := range open {
+		isOpen[p] = true
+	}
+	for y := 0; y < g.H; y++ {
+		for x := 0; x < g.W; x++ {
+			if !isOpen[game.Point{X: x, Y: y}] {
+				g.Resources.MarkSurveyed(x, y, 0)
+			}
+		}
+	}
+}
+
+// surveyDestination is where the surveyor's move order ends, or (-1,-1).
+func surveyDestination(g *Game, u *game.UnitInfo) game.Point {
+	for _, o := range g.MoveOrders() {
+		if o.Unit == u && len(o.Steps) > 0 {
+			return o.Steps[len(o.Steps)-1].To
+		}
+	}
+	return game.Point{X: -1, Y: -1}
+}
+
+// TestSurveyMapsTheBaseFirst checks that a Surveyor maps the ground around its base
+// before a nearer cell out in the open, and heads out once the base is mapped.
+func TestSurveyMapsTheBaseFirst(t *testing.T) {
+	g := newSurveyGame(t, 40, 10)
+	radar := game.NewUnitInfo(assets.Radar, 0, 2, 0)
+	radar.Flags = game.FlagStationary | game.FlagSelectable
+	g.Units.Deploy(radar, 2, 5)
+
+	near, base := game.Point{X: 22, Y: 5}, game.Point{X: 8, Y: 5} // 2 cells away / 12 cells away but 6 from the Radar
+	surveyAllBut(g, near, base)
+	sur := newSurveyor(g, 20, 5)
+
+	if !g.NearestUnsurveyedMove(sur, 0) {
+		t.Fatal("NearestUnsurveyedMove should issue a move")
+	}
+	if got := surveyDestination(g, sur); got != base {
+		t.Fatalf("surveyor heads to %v, want the base cell %v before the nearer open cell", got, base)
+	}
+
+	// Base mapped: it heads out to the nearest cell anywhere.
+	g.CancelOrder(sur)
+	g.Resources.MarkSurveyed(base.X, base.Y, 0)
+	if !g.NearestUnsurveyedMove(sur, 0) {
+		t.Fatal("NearestUnsurveyedMove should issue a move once the base is mapped")
+	}
+	if got := surveyDestination(g, sur); got != near {
+		t.Errorf("surveyor heads to %v, want the nearest open cell %v", got, near)
+	}
+}
+
+// TestSurveyBaseBeforeTheFirstBuilding checks that before any building stands the base
+// is the landing group (the team's other units).
+func TestSurveyBaseBeforeTheFirstBuilding(t *testing.T) {
+	g := newSurveyGame(t, 40, 10)
+	addTank(g, 2, 6, 2, 5)
+
+	near, base := game.Point{X: 22, Y: 5}, game.Point{X: 8, Y: 5}
+	surveyAllBut(g, near, base)
+	sur := newSurveyor(g, 20, 5)
+
+	if !g.NearestUnsurveyedMove(sur, 0) {
+		t.Fatal("NearestUnsurveyedMove should issue a move")
+	}
+	if got := surveyDestination(g, sur); got != base {
+		t.Errorf("surveyor heads to %v, want %v near the landing group", got, base)
+	}
+}

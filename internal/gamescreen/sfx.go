@@ -263,9 +263,8 @@ func (s *Screen) haltMoversOnEnemy() {
 	last := ""
 
 	for _, u := range halt {
-		// HOLD the route rather than cancel it: the unit stops, but it remembers where it
-		// was going and keeps its arrows, so the player is not left to recall the
-		// destination and re-issue the whole move by hand.
+		// HOLD the route rather than cancel it: the unit stops for this turn, keeps its
+		// arrows and drives on at the next turn start (or at once on Continue).
 		s.game.HaltForEnemy(u)
 
 		if s.game.State != nil && u.Team == s.game.State.PlayerTeam {

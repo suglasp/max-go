@@ -11,8 +11,8 @@ import (
 )
 
 // TestSaveLoadV24HeldRoute checks that a route held by an enemy halt survives a save and a
-// load, and that it comes back HELD rather than pending: a reloaded game must not drive the
-// unit back into the enemy it stopped for at the next turn start.
+// load, comes back HELD (so the unit keeps its Continue item), and drives on at the next
+// turn start.
 func TestSaveLoadV24HeldRoute(t *testing.T) {
 	g := newTestGame(t)
 	tank := g.Units.ByID.Get(1) // the bench tank at (3,4)
@@ -52,21 +52,16 @@ func TestSaveLoadV24HeldRoute(t *testing.T) {
 		t.Error("the restored tank lost its held route; the destination must survive a reload")
 	}
 	if len(g2.PendingRoutes()) != 0 {
-		t.Error("a held route must not come back as a pending one, or the turn start resumes it")
+		t.Error("a held route must come back held, not pending")
 	}
 
+	// The next turn start drives the restored route on to its destination.
 	g2.BeginTeamTurn(0)
 	g2.ResolveMovement()
-	if tank2.GridX != 3 || tank2.GridY != 4 {
-		t.Errorf("the restored tank drove to (%d,%d) on its own; it should still wait at (3,4)", tank2.GridX, tank2.GridY)
-	}
-
-	// And the player can still press on with it.
-	if !g2.ContinueHeldRoute(tank2) {
-		t.Fatal("ContinueHeldRoute should re-path to the restored destination")
-	}
-	g2.ResolveMovement()
 	if tank2.GridX != 11 || tank2.GridY != 4 {
-		t.Errorf("tank at (%d,%d) after continuing, want the held destination (11,4)", tank2.GridX, tank2.GridY)
+		t.Errorf("tank at (%d,%d) after the turn start, want the held destination (11,4)", tank2.GridX, tank2.GridY)
+	}
+	if len(g2.HeldRoute(tank2)) != 0 {
+		t.Error("the turn start must consume the restored hold")
 	}
 }

@@ -231,7 +231,7 @@ func (s *Screen) goLiveForHuman(next int) {
 	if s.turnFlow.fullTurnSeconds > 0 {
 		s.turnFlow.turnSeconds = s.turnFlow.fullTurnSeconds
 	}
-	s.tickAutoSurvey(next) // drive any Surveyor with Auto Survey on toward the nearest unsurveyed cell
+	s.tickAutoSurvey(next) // drive any Surveyor with Auto Survey on: base first, then the nearest unsurveyed cell
 
 	if s.soleHuman() { // single player: resume at once instead of a pass banner every turn
 		s.turnFlow.handover = -1
@@ -257,8 +257,9 @@ func (s *Screen) endTurnVoicesPending() bool {
 	return false
 }
 
-// tickAutoSurvey drives each ready Surveyor with AutoSurvey on toward the nearest
-// unsurveyed cell (same scan the AI uses); turns itself off once nothing is left.
+// tickAutoSurvey drives each ready Surveyor with AutoSurvey on over the ground around
+// the base first, then toward the nearest unsurveyed cell (same scan the AI uses);
+// turns itself off once nothing is left.
 // C++ ported : units_manager.cpp - UnitsManager_Popup_OnClick_Auto.
 func (s *Screen) tickAutoSurvey(team int) {
 	for _, u := range s.game.Units.Units() {
@@ -270,7 +271,7 @@ func (s *Screen) tickAutoSurvey(team int) {
 	}
 }
 
-// driveAutoSurvey sends one Surveyor toward the nearest unsurveyed cell, clearing
+// driveAutoSurvey sends one Surveyor to the next unsurveyed cell, base first, clearing
 // AutoSurvey once the map is fully revealed. Shared by the per turn tick and the
 // popup Auto toggle (drives at once on enable).
 func (s *Screen) driveAutoSurvey(u *game.UnitInfo, team int) {

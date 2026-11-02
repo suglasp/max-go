@@ -171,9 +171,8 @@ which is exactly what those saves ran on
 enemy (the "halt movement when enemy is detected" preference).
 A halted unit stops but keeps the rest of its drive,
 so the player is not left to remember the destination and re-issue the whole move by hand.
-These are stored SEPARATELY from `PendingMoves` on purpose: a pending route is re-issued automatically at the team's next turn start,
-and a held one must never be - the unit would drive straight back into the enemy it just stopped for.
-Only the player resumes a held route (the unit's popup offers Continue).
+These are stored SEPARATELY from `PendingMoves`: a held unit offers Continue in its popup and reads as "Halted" in Reports.
+Both kinds drive on at the team's next turn start; Continue presses on at once in the halt turn.
 Restored as the destination alone,
 since continuing re paths from wherever the unit now stands.
 Empty on a pre-v24 save
