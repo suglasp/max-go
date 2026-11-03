@@ -3,7 +3,7 @@
 Check the version file next to the game executables.
 
 
-## 1.0.1.1 (planned release)
+## 1.0.1.1 (2026-11-03)
 
 ### Changes
 - Built on Ebitengine 2.10.5 and Go 1.26.7.
@@ -14,6 +14,9 @@ Check the version file next to the game executables.
 - Unit sounds pan and fade by their distance from the view centre and by the zoom; units off screen sound quieter.
 - The build, cargo, upgrade and Unit Status screens show the real unit descriptions, with one Description toggle shared by all of them.
 - The texts ship in the new `LANG.RES` archive; a loose `lang-<code>.ini` next to the game still overrides it.
+- 47 English texts in `LANG.RES` have new wording: unit descriptions, the "is ready, click a marked square" exit
+  hints, the radar contact lines, the clan hint, the end of game notice and the farewell line.
+- The build exit markers blink at the original pace.
 - A Corvette fires on land units standing on the shore. Corvettes and Submarines fire only along open water, never across land.
 - Every unit shows as a 2x2 blip on the minimap, as in the original game.
 - The "Game will end in 10 turns" notice comes 10 turns before the end (it came after 11).

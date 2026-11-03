@@ -24,7 +24,7 @@ import (
 )
 
 // DEBUG_GAME enables developer command-line shortcuts, including -emulate.
-const DEBUG_GAME = true // Flip to false for a release build
+const DEBUG_GAME = false // Flip to false for a release build
 
 // menuScreensHelp lists the developer screens accepted by -emulate.
 const menuScreensHelp = "planetselect, newgame, multiplayer, gameconfig, chooseplayer, clanselect, " +
