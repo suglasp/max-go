@@ -25,6 +25,7 @@ Check the version file next to the game executables.
 - The misspelled `-derilicts` flag is gone; use `-derelicts`.
 
 ### QOL
+- Tested rendering and zoom quality on 2K and 4K screen resolutions.
 - Surveyors on Auto Survey (and the AI's Surveyors) map the ground around the base first, then the rest of the map.
 - `-random` never lands a team on an islet too small to build a base on.
 - The "storage is full" voices wait until after the first End Turn.
@@ -32,6 +33,7 @@ Check the version file next to the game executables.
 - New `audio.channels_reversed` setting in `max-go.json` swaps the left and right speakers.
 - The key list under the map shows the current keys.
 - `build-windows.cmd` builds the Linux game as well.
+- The release includes this change list (`CHANGES.md`) next to `README.md`.
 
 ### Fixes
 - Linux: the Custom Game map previews were empty and starting a game quit with "no such file", because data file names were matched by case.
