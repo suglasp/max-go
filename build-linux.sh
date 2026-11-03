@@ -225,7 +225,7 @@ copy_payload "$build_dir"
 copy_native_libs "$build_dir" "$platform"
 
 # Linux can cross-build the complete Windows release because Ebitengine's Windows build is pure Go.
-# Linux game builds require CGO with X11 and OpenGL, so Windows cross-builds only the utilities.
+# Ebitengine 2.10 also drives X11 and OpenGL from pure Go, so Windows cross-builds the Linux game too.
 if [[ "$platform" == "linux-x64" ]]; then
   echo
   echo "Cross building M.A.X. for Windows x64 ..."

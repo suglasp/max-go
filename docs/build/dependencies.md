@@ -22,12 +22,13 @@ Both scripts also build what they can for the other platform:
 
 | Script | Native | Cross built |
 |------|---------|---------|
-| `build-windows.cmd` | `build\windows-x64\`, game + utilities | `build\linux-x64\`, **utilities only** |
+| `build-windows.cmd` | `build\windows-x64\`, game + utilities | `build\linux-x64\`, game + utilities |
 | `build-linux.sh` | `build/linux-x64/`, game + utilities | `build/windows-x64/`, game + utilities |
 
-Ebitengine's Windows build is pure Go, so Linux can cross-build it with `GOOS=windows CGO_ENABLED=0`.
-Its Linux build uses X11 and OpenGL through CGO, so Linux `max-go` needs a Linux host or a full cross toolchain with the X11 headers.
+Ebitengine 2.10 is pure Go on both platforms, so each side cross-builds the other with `CGO_ENABLED=0`.
+On Linux it drives X11 and loads OpenGL at run time, so the Linux binary needs only libc plus the X11 and GL libraries of the desktop.
 The three utilities are pure Go on both platforms and always cross build.
+Help text comes from running each binary, so a cross-built folder has none.
 
 `build-linux.sh` under MSYS or Git Bash on Windows builds Windows natively and skips the cross step.
 The stage scripts read the folder for the platform they run on and copy it into `bin\`, which is the native folder you actually run from.
@@ -42,7 +43,6 @@ Each build packs what it has into `release/`, named after the first line of the 
 | `max-go-<version>-linux-x64.tar.zst` | `build/linux-x64/` |
 
 An archive is written only when its folder contains the game binary.
-On Windows that means the Linux tarball is skipped until you build `max-go` on a Linux host and copy the folder back.
 On Linux, packing uses `zip` and `zstd`; a missing tool is reported and skipped.
 On Windows the Linux tarball is written by `pack-linux-tar.py` instead of `tar.exe`, so it needs `python` on PATH.
 `tar.exe` reads permissions from the filesystem. NTFS has no execute bit, so its archives unpack binaries without executable permissions.

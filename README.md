@@ -121,7 +121,7 @@ run-windows.cmd
 ```
 
 Set `MAX_GO_BUILD_ONLY=1` before running either script to skip release archives.\
-Linux cross-builds the complete Windows release. Windows cross-builds the three Linux utilities; the Linux game build requires CGO and X11 headers.\
+Each script cross-builds the game and the three utilities for the other platform. Help text is written only for the host platform.\
 Build dependency layout is documented in [docs/build/dependencies.md](docs/build/dependencies.md).
 
 

@@ -35,7 +35,7 @@ echo Prepping Go ...
 go mod tidy
 
 REM Rebuild the Windows output folder so stale files cannot enter a release archive.
-REM Keep Linux game files produced on a Linux host, but remove Windows DLLs from that folder.
+REM Keep Linux help text produced on a Linux host, but remove Windows DLLs from that folder.
 if exist "%BUILDDIR%" rmdir /S /Q "%BUILDDIR%"
 mkdir "%BUILDDIR%"
 if not exist "%LINUXDIR%" mkdir "%LINUXDIR%"
@@ -56,11 +56,16 @@ if errorlevel 1 goto FAIL
 go build -o "%BUILDDIR%/" ./cmd/max-settings
 if errorlevel 1 goto FAIL
 
-REM Linux game builds require CGO with X11 and OpenGL, so Windows cross-builds only the utilities.
+REM Ebitengine 2.10 drives X11 and OpenGL from pure Go, so the Linux game cross-builds with CGO off.
 REM The utilities are pure Go on both platforms.
 echo.
-echo Cross building M.A.X. utilities for Linux x64 ...
+echo Cross building M.A.X. for Linux x64 ...
 set GOOS=linux
+go build -o "%LINUXDIR%/" ./cmd/max-go
+if errorlevel 1 goto FAIL
+
+echo.
+echo Cross building M.A.X. utilities for Linux x64 ...
 go build -o "%LINUXDIR%/" ./cmd/max-restool
 if errorlevel 1 goto FAIL
 go build -o "%LINUXDIR%/" ./cmd/max-convert
@@ -118,8 +123,6 @@ if exist "%LINUXDIR%\max-go" (
     if errorlevel 1 goto FAILTAR
 ) else (
     echo   Linux archive skipped, build\linux-x64\max-go is not there.
-    echo   Build it on a Linux host with build-linux.sh, copy the folder back, then
-    echo   run this script again to pack it.
 )
 goto PACKED
 
@@ -136,7 +139,7 @@ echo.
 echo ---------------------------------
 echo Built:
 echo   build\windows-x64  (game + utilities)
-echo   build\linux-x64    (utilities only)
+echo   build\linux-x64    (game + utilities, no help text)
 echo.
 echo Packed into release\ (skipped with MAX_GO_BUILD_ONLY=1).
 echo.
