@@ -50,7 +50,7 @@ Check the version file next to the game executables.
 - A Commando could disable or steal a unit that was busy firing, exploding or being destroyed.
 
 
-## 1.0.0.2 (2026-10-20)
+## 1.0.0.2 (2026-10-20 - skipped release)
 
 ### Changes
 - Gold Refinery upgrade prices follow the original game.
