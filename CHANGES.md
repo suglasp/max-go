@@ -3,6 +3,11 @@
 Check the version file next to the game executables.
 
 
+## 1.0.1.2 (in development)
+
+No changes yet.
+
+
 ## 1.0.1.1 (2026-11-03)
 
 ### Changes
