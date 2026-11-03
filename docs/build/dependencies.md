@@ -75,11 +75,13 @@ Both build scripts build:
 
 The build scripts write CLI help text files and copy the native libraries from `dependencies/soloud-bin/` and `dependencies/miniaudio-bin/`,
 `README.md`,
+`CHANGES.md`,
 and `max-go.json` into the platform folder, and pack `LANG.RES` (UI strings + unit descriptions) from `langres/` with the freshly built `max-restool`.
 The stage scripts then copy the built executables,
 help text,
 native libraries,
 `README.md`,
+`CHANGES.md`,
 `max-lavender.png`,
 `LANG.RES`,
 and (only if `bin\max-go.json` doesn't already exist,

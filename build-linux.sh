@@ -113,6 +113,7 @@ copy_payload() {
   local dest="$1"
 
   cp -f "$script_dir/README.md" "$dest/"
+  cp -f "$script_dir/CHANGES.md" "$dest/"
   cp -f "$script_dir/max-lavender.png" "$dest/"
   # LANG.RES (UI strings + unit descriptions) is packed once into the build folder, beside the executable.
   if [[ "$dest" != "$build_dir" ]]; then

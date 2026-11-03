@@ -153,6 +153,7 @@ exit /b 0
 REM Copy the common release payload.
 :PAYLOAD
 copy /Y "%WORKDIR%README.md" "%~1\" > nul
+copy /Y "%WORKDIR%CHANGES.md" "%~1\" > nul
 copy /Y "%WORKDIR%max-lavender.png" "%~1\" > nul
 
 REM LANG.RES (UI strings + unit descriptions) is packed above, beside the executable.

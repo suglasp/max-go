@@ -31,6 +31,7 @@ if [[ -d "$build_dir" ]]; then
   cp -f "$build_dir"/libsoloud* "$bin_dir/" 2>/dev/null || true
   cp -f "$build_dir"/libminiaudio* "$bin_dir/" 2>/dev/null || true
   cp -f "$build_dir/README.md" "$bin_dir/" 2>/dev/null || true
+  cp -f "$build_dir/CHANGES.md" "$bin_dir/" 2>/dev/null || true
   cp -f "$build_dir/max-lavender.png" "$bin_dir/" 2>/dev/null || true
   
   # LANG.RES carries the UI strings and unit descriptions; the game loads it from beside the executable.

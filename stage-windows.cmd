@@ -23,6 +23,7 @@ copy /Y "%BUILDDIR%\max-*-help.txt" "%WORKDIR%bin\" > nul
 copy /Y "%BUILDDIR%\soloud_x64.dll" "%WORKDIR%bin\" > nul
 copy /Y "%BUILDDIR%\miniaudio_x64.dll" "%WORKDIR%bin\" > nul
 copy /Y "%BUILDDIR%\README.md" "%WORKDIR%bin\" > nul
+copy /Y "%BUILDDIR%\CHANGES.md" "%WORKDIR%bin\" > nul
 copy /Y "%BUILDDIR%\max-lavender.png" "%WORKDIR%bin\" > nul
 REM LANG.RES carries the UI strings and unit descriptions; the game loads it from beside the executable.
 REM A loose lang-en-us.ini already in bin\ is left alone: it still wins as an override.
