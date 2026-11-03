@@ -21,6 +21,7 @@ import (
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/mve"
 	"github.com/suglasp/max-go/internal/platform"
+	"github.com/suglasp/max-go/internal/resfile"
 	"github.com/suglasp/max-go/internal/settings"
 )
 
@@ -414,5 +415,5 @@ func resolveMediaPath(cfg settings.Settings, name string, defaultExt string) (st
 		return "", err
 	}
 
-	return filepath.Join(dir, name), nil
+	return resfile.DataPath(dir, name), nil
 }

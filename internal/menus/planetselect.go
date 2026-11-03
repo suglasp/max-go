@@ -8,7 +8,6 @@ package menus
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/suglasp/max-go/internal/dbg"
@@ -16,6 +15,7 @@ import (
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/gnw"
 	"github.com/suglasp/max-go/internal/platform"
+	"github.com/suglasp/max-go/internal/resfile"
 	"github.com/suglasp/max-go/internal/world"
 )
 
@@ -275,7 +275,7 @@ func drawWorldPreview(ctx *Context, menuPal *gfx.Palette, worldIdx int, slot gfx
 	if err != nil {
 		return err
 	}
-	prev, err := world.LoadPreview(filepath.Join(dir, strings.TrimSpace(name)))
+	prev, err := world.LoadPreview(resfile.DataPath(dir, strings.TrimSpace(name)))
 	if err != nil {
 		return err
 	}

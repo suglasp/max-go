@@ -7,7 +7,6 @@ package main
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/suglasp/max-go/internal/dbg"
 	"github.com/suglasp/max-go/internal/fonts"
@@ -147,7 +146,7 @@ func loadGamePalette(p *platform.Platform, cfg settings.Settings) {
 		return
 	}
 
-	data, err := os.ReadFile(filepath.Join(dir, "COLOR.PAL"))
+	data, err := os.ReadFile(resfile.DataPath(dir, "COLOR.PAL"))
 	if err != nil {
 		dbg.Printf("no game palette: %v", err)
 		return
@@ -171,7 +170,7 @@ var demoPal gfx.Palette
 func setupDemo(p *platform.Platform, cfg settings.Settings) {
 	// Use the game palette when available, or build a synthetic fallback.
 	if dir, err := cfg.ResolveDataDir(); err == nil {
-		if data, err := os.ReadFile(filepath.Join(dir, "COLOR.PAL")); err == nil {
+		if data, err := os.ReadFile(resfile.DataPath(dir, "COLOR.PAL")); err == nil {
 			if pal, err := gfx.ParsePalFile(data); err == nil {
 				demoPal = pal.Palette
 			}

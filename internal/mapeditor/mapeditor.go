@@ -8,7 +8,6 @@ package mapeditor
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/suglasp/max-go/internal/drawmap"
@@ -16,6 +15,7 @@ import (
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/menus"
 	"github.com/suglasp/max-go/internal/platform"
+	"github.com/suglasp/max-go/internal/resfile"
 	"github.com/suglasp/max-go/internal/settings"
 	"github.com/suglasp/max-go/internal/world"
 )
@@ -76,7 +76,7 @@ func open(ctx *menus.Context, worldIndex int) (*Editor, error) {
 	}
 	fileName = strings.TrimSpace(fileName)
 
-	worldMap, err := world.LoadMap(filepath.Join(ctx.DataDir, fileName))
+	worldMap, err := world.LoadMap(resfile.DataPath(ctx.DataDir, fileName))
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func open(ctx *menus.Context, worldIndex int) (*Editor, error) {
 	}
 
 	// COLOR.PAL stays the base palette; the map installs the terrain slots 64..159.
-	if data, err := os.ReadFile(filepath.Join(ctx.DataDir, "COLOR.PAL")); err == nil {
+	if data, err := os.ReadFile(resfile.DataPath(ctx.DataDir, "COLOR.PAL")); err == nil {
 		if palFile, err := gfx.ParsePalFile(data); err == nil {
 			editor.palette = palFile.Palette
 		}

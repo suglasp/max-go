@@ -14,6 +14,7 @@ import (
 
 	"github.com/suglasp/max-go/internal/convert"
 	"github.com/suglasp/max-go/internal/gfx"
+	"github.com/suglasp/max-go/internal/resfile"
 	"github.com/suglasp/max-go/internal/restool"
 )
 
@@ -167,7 +168,7 @@ func resolveDir(path string, rest []string) (string, bool) {
 func loadPalette(explicit, dir string) (*gfx.Palette, error) {
 	path := explicit
 	if path == "" {
-		path = filepath.Join(dir, "COLOR.PAL")
+		path = resfile.DataPath(dir, "COLOR.PAL")
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {

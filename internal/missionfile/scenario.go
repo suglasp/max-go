@@ -12,6 +12,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/suglasp/max-go/internal/resfile"
 )
 
 // Mission pairs a selectable SAVE<N> file and its SmartFile header with the matching DESCR<N> briefing when one exists.
@@ -105,7 +107,7 @@ func listMissions(dir, ext string) ([]Mission, error) {
 			continue // Skip files that do not contain a decodable V70 save.
 		}
 
-		descPath := filepath.Join(dir, "DESCR"+m[1]+"."+ext)
+		descPath := resfile.DataPath(dir, "DESCR"+m[1]+"."+ext)
 		if _, err := os.Stat(descPath); err != nil {
 			descPath = ""
 		}
@@ -140,7 +142,7 @@ func LoadMission(path string) (Mission, error) {
 	descPath := ""
 	if m := regexp.MustCompile(`(?i)^SAVE(\d+)\.([A-Za-z]+)$`).FindStringSubmatch(name); m != nil {
 		idx, _ = strconv.Atoi(m[1])
-		descPath = filepath.Join(dir, "DESCR"+m[1]+"."+m[2])
+		descPath = resfile.DataPath(dir, "DESCR"+m[1]+"."+m[2])
 		if _, err := os.Stat(descPath); err != nil {
 			descPath = ""
 		}

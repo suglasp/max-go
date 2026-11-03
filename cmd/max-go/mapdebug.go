@@ -8,7 +8,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/suglasp/max-go/internal/dbg"
@@ -17,6 +16,7 @@ import (
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/menus"
 	"github.com/suglasp/max-go/internal/platform"
+	"github.com/suglasp/max-go/internal/resfile"
 	"github.com/suglasp/max-go/internal/settings"
 	"github.com/suglasp/max-go/internal/world"
 )
@@ -31,13 +31,13 @@ func drawMapDebug(ctx *menus.Context, cfg *settings.Settings) error {
 		return err
 	}
 
-	m, err := world.LoadMap(filepath.Join(ctx.DataDir, strings.TrimSpace(name)))
+	m, err := world.LoadMap(resfile.DataPath(ctx.DataDir, strings.TrimSpace(name)))
 	if err != nil {
 		return err
 	}
 
 	var pal gfx.Palette
-	if data, err := os.ReadFile(filepath.Join(ctx.DataDir, "COLOR.PAL")); err == nil {
+	if data, err := os.ReadFile(resfile.DataPath(ctx.DataDir, "COLOR.PAL")); err == nil {
 		if pf, err := gfx.ParsePalFile(data); err == nil {
 			pal = pf.Palette
 		}
@@ -107,7 +107,7 @@ func mapViewDebug(ctx *menus.Context, cfg *settings.Settings) error {
 		return err
 	}
 
-	m, err := world.LoadMap(filepath.Join(ctx.DataDir, strings.TrimSpace(name)))
+	m, err := world.LoadMap(resfile.DataPath(ctx.DataDir, strings.TrimSpace(name)))
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func mapViewDebug(ctx *menus.Context, cfg *settings.Settings) error {
 
 	// Keep COLOR.PAL as the base and install map colors in entries 64 through 159.
 	var pal gfx.Palette
-	if data, err := os.ReadFile(filepath.Join(ctx.DataDir, "COLOR.PAL")); err == nil {
+	if data, err := os.ReadFile(resfile.DataPath(ctx.DataDir, "COLOR.PAL")); err == nil {
 		if pf, err := gfx.ParsePalFile(data); err == nil {
 			pal = pf.Palette
 		}

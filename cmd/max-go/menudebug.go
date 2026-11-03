@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/suglasp/max-go/internal/assets"
@@ -594,7 +593,7 @@ func spriteViewDebug(ctx *menus.Context, cfg *settings.Settings, tag string) err
 	dbg.Printf("sprite: %s frames=%d f0=%dx%d hot=%d,%d", tag, len(m.Frames), m.Frames[0].W, m.Frames[0].H, m.Frames[0].HotX, m.Frames[0].HotY)
 
 	var pal gfx.Palette
-	if d, err := os.ReadFile(filepath.Join(ctx.DataDir, "COLOR.PAL")); err == nil {
+	if d, err := os.ReadFile(resfile.DataPath(ctx.DataDir, "COLOR.PAL")); err == nil {
 		if pf, err := gfx.ParsePalFile(d); err == nil {
 			pal = pf.Palette
 		}

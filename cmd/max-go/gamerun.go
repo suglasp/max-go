@@ -8,7 +8,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -19,6 +18,7 @@ import (
 	"github.com/suglasp/max-go/internal/gamescreen"
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/menus"
+	"github.com/suglasp/max-go/internal/resfile"
 	"github.com/suglasp/max-go/internal/saveload"
 	"github.com/suglasp/max-go/internal/screendata"
 	"github.com/suglasp/max-go/internal/sprites"
@@ -177,7 +177,7 @@ func applyGameScreenMode(scr *gamescreen.Screen, ctx *menus.Context, mode gameSc
 // buildGameScreen loads a .WRL map and wires its panel art, portraits, attributes, and menu hooks. New games
 // and loaded games share this setup.
 func buildGameScreen(ctx *menus.Context, mapFile string) (*gamescreen.Screen, error) {
-	m, err := world.LoadMap(filepath.Join(ctx.DataDir, mapFile))
+	m, err := world.LoadMap(resfile.DataPath(ctx.DataDir, mapFile))
 
 	if err != nil {
 		return nil, err
@@ -202,7 +202,7 @@ func buildGameScreen(ctx *menus.Context, mapFile string) (*gamescreen.Screen, er
 	}
 
 	if basePal == (gfx.Palette{}) {
-		if data, err := os.ReadFile(filepath.Join(ctx.DataDir, "COLOR.PAL")); err == nil {
+		if data, err := os.ReadFile(resfile.DataPath(ctx.DataDir, "COLOR.PAL")); err == nil {
 			if pf, err := gfx.ParsePalFile(data); err == nil {
 				basePal = pf.Palette
 			}
@@ -240,7 +240,7 @@ func buildGameScreen(ctx *menus.Context, mapFile string) (*gamescreen.Screen, er
 	// Let an in-game load swap to a save's own world when its map differs (otherwise the restored
 	// units land on the wrong terrain).
 	scr.SetWorldReloader(func(name string) (*world.Map, error) {
-		return world.LoadMap(filepath.Join(ctx.DataDir, strings.TrimSpace(name)))
+		return world.LoadMap(resfile.DataPath(ctx.DataDir, strings.TrimSpace(name)))
 	})
 
 	applyLivePrefs(scr, ctx)
@@ -527,7 +527,7 @@ func runGameScreenShadow(ctx *menus.Context, worldIdx int) error {
 		return err
 	}
 
-	m, err := world.LoadMap(filepath.Join(ctx.DataDir, strings.TrimSpace(name)))
+	m, err := world.LoadMap(resfile.DataPath(ctx.DataDir, strings.TrimSpace(name)))
 	if err != nil {
 		return err
 	}
@@ -545,7 +545,7 @@ func runGameScreenShadow(ctx *menus.Context, worldIdx int) error {
 	}
 
 	if basePal == (gfx.Palette{}) {
-		if data, err := os.ReadFile(filepath.Join(ctx.DataDir, "COLOR.PAL")); err == nil {
+		if data, err := os.ReadFile(resfile.DataPath(ctx.DataDir, "COLOR.PAL")); err == nil {
 			if pf, err := gfx.ParsePalFile(data); err == nil {
 				basePal = pf.Palette
 			}

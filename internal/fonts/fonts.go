@@ -17,7 +17,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
-	"path/filepath"
+
+	"github.com/suglasp/max-go/internal/resfile"
 )
 
 // Text flags packed into the color argument (text.h). The low byte is
@@ -132,7 +133,7 @@ type Set struct {
 func LoadSet(dir string) (*Set, error) {
 	s := &Set{}
 	for i := 0; i < FontCount; i++ {
-		f, err := LoadFile(filepath.Join(dir, fmt.Sprintf("FONT%d.FON", i)))
+		f, err := LoadFile(resfile.DataPath(dir, fmt.Sprintf("FONT%d.FON", i)))
 		if err != nil {
 			return nil, err
 		}

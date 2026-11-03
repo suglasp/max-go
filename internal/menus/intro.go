@@ -179,7 +179,7 @@ func (r introReader) Read(tag string) ([]byte, error) {
 		return data, nil
 	}
 	for _, name := range []string{tag, tag + ".MVE"} {
-		if data, err := os.ReadFile(filepath.Join(r.dir, name)); err == nil {
+		if data, err := os.ReadFile(resfile.DataPath(r.dir, name)); err == nil {
 			return data, nil
 		}
 	}
@@ -198,7 +198,7 @@ func RunMVE(ctx *Context, tag string) error {
 		path += ".MVE"
 	}
 	if !filepath.IsAbs(path) {
-		path = filepath.Join(ctx.DataDir, path)
+		path = resfile.DataPath(ctx.DataDir, path)
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {

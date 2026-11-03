@@ -9,7 +9,6 @@ package menus
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/suglasp/max-go/internal/fonts"
@@ -17,6 +16,7 @@ import (
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/missionfile"
 	"github.com/suglasp/max-go/internal/platform"
+	"github.com/suglasp/max-go/internal/resfile"
 )
 
 // The briefing text box geometry and the reveal pace, from the original
@@ -60,7 +60,7 @@ func RunCampaignIntro(ctx *Context) error {
 // restarted so it plays under the story.
 // C++: menu.cpp - menu_wrap_up_game victory branch / menu_draw_mission_story_screen
 func RunCampaignVictory(ctx *Context, dir string, index int) error {
-	path := filepath.Join(dir, fmt.Sprintf("WIN%d.CAM", index))
+	path := resfile.DataPath(dir, fmt.Sprintf("WIN%d.CAM", index))
 
 	if _, err := os.Stat(path); err != nil {
 		return nil // no WIN<N>.CAM for this mission: no ending, like a mission with no victory info

@@ -22,6 +22,7 @@ import (
 	"github.com/suglasp/max-go/internal/maxsave"
 	"github.com/suglasp/max-go/internal/menus"
 	"github.com/suglasp/max-go/internal/missionfile"
+	"github.com/suglasp/max-go/internal/resfile"
 	"github.com/suglasp/max-go/internal/winloss"
 )
 
@@ -247,7 +248,7 @@ func runGameOverAfter(ctx *menus.Context, scr *gamescreen.Screen) error {
 func launchMissionFile(ctx *menus.Context, ref string) error {
 	path := ref
 	if _, err := os.Stat(path); err != nil {
-		path = filepath.Join(ctx.DataDir, ref) // not a direct path: look in the data dir
+		path = resfile.DataPath(ctx.DataDir, ref) // not a direct path: look in the data dir
 	}
 	m, err := missionfile.LoadMission(path)
 	if err != nil {

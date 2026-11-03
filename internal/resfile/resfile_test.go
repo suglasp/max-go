@@ -163,3 +163,28 @@ func TestRealGameData(t *testing.T) {
 		t.Errorf("lib.Size(ILOGO) = %d, %v; want %d", sz, ok, len(patched))
 	}
 }
+
+// TestDataPathIgnoresCase covers the lower case map names MAX.RES stores
+// against the upper case files on a case sensitive disk.
+func TestDataPathIgnoresCase(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "SNOW_1.WRL"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// A case insensitive disk opens the asked name as is, a case sensitive one
+	// needs the name found on disk: either way the path must open.
+	if got := DataPath(dir, "snow_1.wrl"); !fileExists(got) {
+		t.Fatalf("DataPath(snow_1.wrl) = %q, which does not open", got)
+	}
+
+	// No match keeps the plain join, so the open error names the missing file.
+	if got, want := DataPath(dir, "green_1.wrl"), filepath.Join(dir, "green_1.wrl"); got != want {
+		t.Fatalf("DataPath(green_1.wrl) = %q, want %q", got, want)
+	}
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}

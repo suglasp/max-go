@@ -215,6 +215,18 @@ func findFile(dir, name string) (string, error) {
 	return "", os.ErrNotExist
 }
 
+// DataPath returns the path of a loose game data file in dir, matched without
+// case sensitivity. The names stored in MAX.RES are lower case (snow_1.wrl) while
+// the files on disk are upper case, which only a case sensitive filesystem
+// notices. With no match it returns the plain join, so the caller's open error
+// still names the file.
+func DataPath(dir, name string) string {
+	if path, err := findFile(dir, name); err == nil {
+		return path
+	}
+	return filepath.Join(dir, name)
+}
+
 // Files returns the layered archives in precedence order.
 func (l *Library) Files() []*File {
 	return append([]*File(nil), l.files...)
