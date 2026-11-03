@@ -64,8 +64,7 @@ Check the version file next to the game executables.
 - Gold Refinery upgrade prices follow the original game.
 
 ### QOL
-- The build scripts build for Windows and Linux where the toolchain allows,
-  each into its own `build` folder, and pack the release archives into `release`.
+- The build scripts build for Windows and Linux where the toolchain allows, each into its own `build` folder, and pack the release archives into `release`.
 - The Linux release archive keeps the execute permissions, also when packed on Windows.
 
 
