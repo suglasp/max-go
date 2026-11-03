@@ -34,6 +34,7 @@ Check the version file next to the game executables.
 - The key list under the map shows the current keys.
 - `build-windows.cmd` builds the Linux game as well.
 - The release includes this change list (`CHANGES.md`) next to `README.md`.
+- When the game crashes, `max-go-crash.log` next to the game holds the reason.
 
 ### Fixes
 - Linux: the Custom Game map previews were empty and starting a game quit with "no such file", because data file names were matched by case.
@@ -50,6 +51,7 @@ Check the version file next to the game executables.
 - Random games ignored `-difficulty` when choosing the AI strategy.
 - A unit that could not afford its next step lost its leftover movement instead of keeping it.
 - A Commando could disable or steal a unit that was busy firing, exploding or being destroyed.
+- A Constructor destroyed while building a 2x2 building left a small rubble pile on its own cell; it now leaves the site's large pile.
 
 
 ## 1.0.0.2 (2026-10-20 - skipped release)

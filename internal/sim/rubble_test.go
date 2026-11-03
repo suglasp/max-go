@@ -424,3 +424,53 @@ func TestClearSiteCoversFootprintAndBlocks(t *testing.T) {
 		t.Errorf("after the leave slide, dozer draw pos = (%d,%d), want its own cell centre (%d,%d)", dozer.X, dozer.Y, dozer.GridX*tile+tile/2, dozer.GridY*tile+tile/2)
 	}
 }
+
+// startConstructorBuild puts a Constructor on cell (atX, atY) to work on a 2x2 Depot
+// whose site corner is (cornerX, cornerY).
+func startConstructorBuild(g *Game, atX, atY, cornerX, cornerY int) *game.UnitInfo {
+	con := game.NewUnitInfo(assets.Constrct, 0, 1, 0)
+	con.Flags = game.FlagMobileLandUnit | game.FlagConstructorUnit | game.FlagSelectable
+	con.Values = &game.UnitValues{}
+	con.InitState()
+	g.Units.Deploy(con, atX, atY)
+
+	depot := game.NewUnitInfo(assets.Depot, 0, 2, 0)
+	depot.Flags = game.FlagBuilding | game.FlagStationary | game.FlagRequiresSlab | game.FlagSelectable
+	depot.Values = &game.UnitValues{}
+	depot.Values.Set(game.AttribTurns, 5)
+	g.StartBuild(con, depot, cornerX, cornerY, 1)
+	return con
+}
+
+// TestConstructorAtWorkLeavesTheSiteRubble: a Constructor destroyed while raising a
+// 2x2 building leaves ONE large pile at the site corner, not a small one on its own
+// cell, and the build order (the site's slab and tape) goes with it.
+func TestConstructorAtWorkLeavesTheSiteRubble(t *testing.T) {
+	g := newGame(t, 16, 16)
+	con := startConstructorBuild(g, 7, 7, 6, 6)
+
+	g.DestroyUnit(con)
+
+	if large, ok := g.RubbleAt(6, 6); !ok || !large {
+		t.Errorf("site corner: RubbleAt(6,6) = (large=%v, ok=%v), want (true, true)", large, ok)
+	}
+	if n := len(g.RubbleCells()); n != 1 {
+		t.Errorf("RubbleCells = %d, want 1 (the one site pile)", n)
+	}
+	if len(g.BuildOrders()) != 0 {
+		t.Errorf("the build order outlived its Constructor: %d left", len(g.BuildOrders()))
+	}
+}
+
+// TestConstructorAtWorkOnACoastSiteLeavesNoRubble: the site pile needs all four
+// cells on land; a site touching water leaves no rubble at all.
+func TestConstructorAtWorkOnACoastSiteLeavesNoRubble(t *testing.T) {
+	g := newGameSurf(16, 16, waterAt{{6, 7}: true})
+	con := startConstructorBuild(g, 7, 7, 6, 6)
+
+	g.DestroyUnit(con)
+
+	if n := len(g.RubbleCells()); n != 0 {
+		t.Errorf("RubbleCells = %d, want 0 (the site touches water)", n)
+	}
+}

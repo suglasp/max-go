@@ -107,9 +107,10 @@ func (g *Game) DestroyUnit(u *game.UnitInfo) {
 		g.Units.Remove(br.Building)
 	}
 
+	site := g.constructionSite(u) // read before purgeUnit drops the build order
 	g.purgeUnit(u)
-	g.recordCasualty(u) // score screen tally (buildings / units lost, incl. any carried)
-	g.recordRubble(u)   // leave debris where it stood (a Bulldozer can later clear it)
+	g.recordCasualty(u)     // score screen tally (buildings / units lost, incl. any carried)
+	g.recordRubble(u, site) // leave debris where it stood (a Bulldozer can later clear it)
 	g.Units.Remove(u)
 }
 

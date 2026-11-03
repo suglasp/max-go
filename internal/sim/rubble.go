@@ -81,7 +81,13 @@ type RubbleCell struct {
 //
 // C++ ported : units_manager.cpp - UnitsManager_BuildClearing (the rubble_type
 // gate: COMMANDO/INFANTRY/CONNECTOR/HOVERING excluded + Access_IsFullyLandCovered).
-func (g *Game) recordRubble(u *game.UnitInfo) {
+//
+// site is the 2x2 build site a Constructor was working on when it died (nil
+// otherwise): its pile is the site's large one at the site corner, or none when
+// the site is not all land.
+// C++ ported : units_manager.cpp - UnitsManager_BuildClearing (CONSTRCT + ORDER_BUILD
+// moves SMLRUBLE onto the construction utility as LRGRUBLE).
+func (g *Game) recordRubble(u *game.UnitInfo, site *game.Point) {
 	if u.Flags.Has(game.FlagGroundCover) {
 		return
 	}
@@ -97,13 +103,41 @@ func (g *Game) recordRubble(u *game.UnitInfo) {
 	if !g.isFullyLandCovered(u) {
 		return // destroyed on water/coast: it sinks, no debris
 	}
+
+	x, y, large := u.GridX, u.GridY, u.Flags.Has(game.FlagBuilding)
+
+	// A Constructor at work leaves the site's large pile instead of its own small one.
+	if site != nil && !large {
+		x, y, large = site.X, site.Y, true
+		if !g.isLandAt(x, y, 2) {
+			return
+		}
+	}
+
 	if g.rubble == nil {
 		g.rubble = make(map[[2]int]rubbleSpot)
 	}
-	g.rubble[[2]int{u.GridX, u.GridY}] = rubbleSpot{
-		large:    u.Flags.Has(game.FlagBuilding),
+	g.rubble[[2]int{x, y}] = rubbleSpot{
+		large:    large,
 		material: rubbleSalvage(u),
 	}
+}
+
+// constructionSite returns the 2x2 site a Constructor is raising a building on: it
+// stands in the build pose on the site of its order. A builder parked on its
+// finished building has no site any more (the building is up, the tape is gone),
+// and Engineers build 1x1 on their own cell, so neither has one.
+// C++ ported : access.cpp - Access_GetConstructionUtility (the site's tape / cones).
+func (g *Game) constructionSite(u *game.UnitInfo) *game.Point {
+	if u.Type != assets.Constrct || !u.Building || g.buildReady[u] != nil {
+		return nil
+	}
+	for _, o := range g.builds {
+		if o.Builder == u && o.Product != nil && o.Product.Flags.Has(game.FlagBuilding) {
+			return &game.Point{X: o.GridX, Y: o.GridY}
+		}
+	}
+	return nil
 }
 
 // isFullyLandCovered reports whether every cell of u's footprint is land terrain:
@@ -116,9 +150,15 @@ func (g *Game) isFullyLandCovered(u *game.UnitInfo) bool {
 	if u.Flags.Has(game.FlagBuilding) {
 		n = 2
 	}
+	return g.isLandAt(u.GridX, u.GridY, n)
+}
+
+// isLandAt reports whether the n x n block with its corner at (cornerX, cornerY) is
+// all land terrain inside the map.
+func (g *Game) isLandAt(cornerX, cornerY, n int) bool {
 	for dy := 0; dy < n; dy++ {
 		for dx := 0; dx < n; dx++ {
-			x, y := u.GridX+dx, u.GridY+dy
+			x, y := cornerX+dx, cornerY+dy
 			if x < 0 || y < 0 || x >= g.W || y >= g.H || g.Grid.Surf == nil {
 				return false
 			}
