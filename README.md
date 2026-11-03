@@ -152,7 +152,8 @@ press `[` during play, type the rest of the code, end with `]`. Then press Enter
 
 Debugging output is controlled by the `debug` section of `max-go.json`: `"console": true` prints to the console (on Windows this also keeps the console window visible when the game is started by a double click).\
 `"log_file": true` writes to `max-go.log` next to the binary, overwritten at every game start.\
-Log lines are buffered in memory and written to disk every `log_buffer_lines` lines (default 100) so logging does not stall the game.
+Log lines are buffered in memory and written to disk every `log_buffer_lines` lines (default 100) so logging does not stall the game.\
+When the game crashes, `max-go-crash.log` next to the binary holds the reason (the error, or the Go panic trace); a run that ends normally leaves no such file.
 
 
 ## max-go Extras

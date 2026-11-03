@@ -317,6 +317,10 @@ F11 still toggles at runtime.
 Enables the debug console and `max-go.log` for this run,
 overriding `debug.console` and `debug.log_file`.
 
+Independent of these settings, a crash writes its reason (the error, or the Go
+panic trace) to `max-go-crash.log` next to the binary. A run that ends normally
+leaves no such file.
+
 ```text
 -reset
 ```

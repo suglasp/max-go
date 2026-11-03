@@ -67,11 +67,11 @@ func main() {
 	flag.Parse()
 
 	if err := ValidateCustomFlags(flags.custom); err != nil {
-		log.Fatalf("max-go: %v", err)
+		fatalf("max-go: %v", err)
 	}
 
 	if err := ValidateOverrideFlags(flags.override); err != nil {
-		log.Fatalf("max-go: %v", err)
+		fatalf("max-go: %v", err)
 	}
 
 	noSound = *flags.nosound
@@ -84,6 +84,10 @@ func main() {
 
 	initDebugLog(cfg, baseDir)
 	defer dbg.Close()
+
+	// A crash with the console hidden leaves its trace in max-go-crash.log.
+	openCrashLog(baseDir)
+	defer closeCrashLog()
 
 	dbg.Printf("base dir: %s", baseDir)
 
@@ -99,11 +103,11 @@ func main() {
 	if !*flags.demo {
 		dataDir, dirErr := cfg.ResolveDataDir()
 		if dirErr != nil {
-			log.Fatalf("max-go: %v", dirErr)
+			fatalf("max-go: %v", dirErr)
 		}
 		if !bootstrap.HasMaxRes(dataDir) {
 			if err := runDataBootstrap(p, &cfg, cfgPath, flags); err != nil {
-				log.Fatalf("max-go: %v", err)
+				fatalf("max-go: %v", err)
 			}
 			return
 		}
@@ -121,7 +125,7 @@ func main() {
 	}
 
 	if err := runApp(p, &cfg, cfgPath, fontSet, flags); err != nil {
-		log.Fatalf("max-go: %v", err)
+		fatalf("max-go: %v", err)
 	}
 }
 
@@ -131,7 +135,7 @@ func main() {
 func loadLaunchSettings(flags launchFlags) (settings.Settings, string, string) {
 	baseDir, err := settings.BaseDir()
 	if err != nil {
-		log.Fatalf("max-go: %v", err)
+		fatalf("max-go: %v", err)
 	}
 
 	// max-go.json preferred, a legacy settings.json still honored.
@@ -141,14 +145,14 @@ func loadLaunchSettings(flags launchFlags) (settings.Settings, string, string) {
 	// and all other files untouched.
 	if boolValue(flags.override.Reset) {
 		if err := settings.Default().Save(cfgPath); err != nil {
-			log.Fatalf("max-go: reset settings: %v", err)
+			fatalf("max-go: reset settings: %v", err)
 		}
 		log.Printf("max-go: %s reset to defaults", filepath.Base(cfgPath))
 	}
 
 	cfg, err := settings.LoadOrCreate(cfgPath)
 	if err != nil {
-		log.Fatalf("max-go: %v", err)
+		fatalf("max-go: %v", err)
 	}
 
 	if *flags.language != "" {
@@ -241,14 +245,14 @@ func newPlatform(cfg *settings.Settings, baseDir, cfgPath, screenshotPath string
 func runMediaPlayers(p *platform.Platform, cfg settings.Settings, flags launchFlags) bool {
 	if *flags.movie != "" {
 		if err := runMovieDebug(p, cfg, *flags.movie); err != nil {
-			log.Fatalf("max-go: %v", err)
+			fatalf("max-go: %v", err)
 		}
 		return true
 	}
 
 	if *flags.flic != "" {
 		if err := runFlicDebug(p, cfg, *flags.flic); err != nil {
-			log.Fatalf("max-go: %v", err)
+			fatalf("max-go: %v", err)
 		}
 		return true
 	}
