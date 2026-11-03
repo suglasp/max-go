@@ -33,7 +33,6 @@ type soundState struct {
 	movingUnits         map[*game.UnitInfo]bool                                              // units in motion last frame (drive start/stop detection)
 	driveSfx            map[*game.UnitInfo]int                                               // moving unit's active drive sound handle id
 	driveSfxType        map[*game.UnitInfo]game.SfxType                                      // land vs water drive variant currently held per unit
-	haltSeen            map[*game.UnitInfo]map[uint16]bool                                   // enemy IDs already within scan range per moving player unit (Halt on enemy pref)
 	ambientSfxUnit      *game.UnitInfo                                                       // unit whose ambient loop (idle hum / building hum) is playing
 	ambientSfxID        int                                                                  // ambient sound handle id
 	ambientSfxTag       string                                                               // tag currently looping (a change restarts it)
@@ -43,6 +42,9 @@ type soundState struct {
 	powerBounceSfx      int                                                                  // held rev up sound handle
 	powerBounceDue      uint64                                                               // tick the bounce cuts and shows the message
 	powerBounceShort    economy.Shortage                                                     // which resource the bounce message names
+	/* // note: unused code in Go port (step 1469: the halt check reads the team sightings, no per drive baseline)
+	haltSeen            map[*game.UnitInfo]map[uint16]bool                                   // enemy IDs already within scan range per moving player unit (Halt on enemy pref)
+	*/
 }
 
 // movementSfx maps land movement sounds to water variants for units using alternate sprite form. Personnel Carriers invert the normal choice, and coast uses the land clip.
@@ -194,68 +196,59 @@ func (s *Screen) stopPowerCue() {
 	s.sound.powerCueUnit = nil
 }
 
-// tickMovementSfx advances the sim one frame and fires movement SFX: the drive sound when a
-// unit starts moving, cut on arrival/stall, then the stop sound. The drive sound is held on a
-// per unit handle and stopped on arrival so a short hop does not play the full clip.
-// C++: UnitInfo::Move plays SFX_TYPE_DRIVE/STOP on state changes (per unit channel).
-// haltMoversOnEnemy stops a moving human or computer unit when it newly spots a hostile. Enemies already visible at move start do not retrigger it; a new move reseeds the baseline.
+// haltMoversOnEnemy stops a moving human or computer unit when its scan reveals an enemy
+// that can attack it. Only an enemy the team could NOT see before counts (a sighting from
+// the fog refresh), so an enemy already in plain sight never stops a unit, however close it
+// drives, and a unit that drives on after a halt does not crawl from halt to halt. Two
+// simplifications: the classes of a transport's passengers are not added to the mover's,
+// and the alien derelicts never enter the spotted memory, so they halt no one.
 //
-// C++ ported : access.cpp - the enemy_halt preference in Access_UpdateMapStatus.
+// C++ ported : access.cpp - Access_UpdateMapStatus (the enemy_halt branch:
+// Access_UpdateMapStatusAddUnit revealed target class & Access_GetTargetClass).
 func (s *Screen) haltMoversOnEnemy() {
-	if s.sound.haltSeen == nil {
-		s.sound.haltSeen = make(map[*game.UnitInfo]map[uint16]bool)
+	orders := s.game.MoveOrders()
+	if len(orders) == 0 {
+		s.game.DrainSightings() // nothing drives: drop what the last refresh revealed
+		return
 	}
 
-	moving := make(map[*game.UnitInfo]bool)
+	// This tick's moves may have revealed enemies; the fog drawing may be off.
+	s.game.RefreshVisibility()
+	sightings := s.game.DrainSightings()
+
+	if len(sightings) == 0 {
+		return
+	}
+
 	var halt []*game.UnitInfo
 
-	for _, o := range s.game.MoveOrders() {
+	for _, o := range orders {
 		u := o.Unit
 
 		if u.Values == nil || !s.haltingTeam(u.Team) {
 			continue
 		}
 
-		moving[u] = true
 		scan := u.Values.Get(game.AttribScan)
 
 		if scan <= 0 {
 			continue
 		}
 
-		prev, tracked := s.sound.haltSeen[u] // nil on the first tick of this move
-		cur := make(map[uint16]bool)
-		newSpot := false
+		for _, seen := range sightings {
+			e := seen.Enemy
 
-		for _, e := range s.game.Units.Units() {
-			if e.Team == u.Team || e.Team < 0 || !e.Flags.Has(game.FlagSelectable) || e.Flags.Has(game.FlagGroundCover) {
+			if seen.Team != u.Team || e == nil || e.Team == u.Team {
 				continue
 			}
 
+			// The mover's own scan revealed it, and it is a threat to the mover.
 			dx, dy := e.GridX-u.GridX, e.GridY-u.GridY
 
-			if dx*dx+dy*dy <= scan*scan {
-				cur[e.ID] = true
-
-				if tracked && !prev[e.ID] {
-					newSpot = true // an enemy that was NOT in range last tick just entered
-				}
+			if dx*dx+dy*dy <= scan*scan && s.game.CanTargetUnit(e, u) {
+				halt = append(halt, u)
+				break
 			}
-		}
-
-		// Seed the known enemy set on the first tick (no halt); afterwards halt only
-		// when a genuinely new enemy has come into range.
-		if tracked && newSpot {
-			halt = append(halt, u)
-		}
-
-		s.sound.haltSeen[u] = cur
-	}
-
-	// Forget units that are no longer moving, so a fresh move reseeds its baseline.
-	for u := range s.sound.haltSeen {
-		if !moving[u] {
-			delete(s.sound.haltSeen, u)
 		}
 	}
 
@@ -299,6 +292,10 @@ func (s *Screen) haltingTeam(team int) bool {
 	}
 }
 
+// tickMovementSfx advances the sim one frame and fires movement SFX: the drive sound when a
+// unit starts moving, cut on arrival/stall, then the stop sound. The drive sound is held on a
+// per unit handle and stopped on arrival so a short hop does not play the full clip.
+// C++: UnitInfo::Move plays SFX_TYPE_DRIVE/STOP on state changes (per unit channel).
 func (s *Screen) tickMovementSfx() {
 	if s.sound.driveSfx == nil {
 		s.sound.driveSfx = make(map[*game.UnitInfo]int)
@@ -313,11 +310,14 @@ func (s *Screen) tickMovementSfx() {
 
 	s.game.Tick()
 
-	// Halt movement when an enemy is detected: cancel a moving player unit's order
-	// once a hostile unit comes within its scan range, before recomputing who is
-	// still driving (so the halted unit gets its stop sound). C++: the enemy_halt pref.
+	// Halt movement when an enemy is detected: a mover whose scan reveals an enemy that
+	// can attack it holds its route, before recomputing who is still driving (so the
+	// halted unit gets its stop sound). With the preference off the sightings are only
+	// dropped, so they never pile up. C++: the enemy_halt pref.
 	if s.enemyHalt {
 		s.haltMoversOnEnemy()
+	} else {
+		s.game.DrainSightings()
 	}
 
 	// Units still in an active move order after the tick.

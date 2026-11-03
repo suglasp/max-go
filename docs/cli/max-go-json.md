@@ -136,7 +136,7 @@ no relaunch needed.
 | `fast_movement` | bool | `true` | "Double Unit Steps" - faster unit move animation. |
 | `follow_unit` | bool | `false` | "Follow Unit" - camera tracks the selected unit. |
 | `auto_select` | bool | `false` | "Auto-Select" - automatically select the next idle unit. |
-| `enemy_halt` | bool | `true` | "Halt on enemy detected" - a moving unit stops the instant it spots an enemy, holding the rest of its route (arrows stay up) rather than losing it; it drives on at the next turn start, or at once on Continue in its popup. |
+| `enemy_halt` | bool | `true` | "Halt on enemy detected" - a moving unit stops when its scan reveals an enemy that can attack it (one its team could not see before), holding the rest of its route (arrows stay up) rather than losing it; it drives on at the next turn start, or at once on Continue in its popup. |
 
 ## `debug`
 

@@ -85,10 +85,12 @@ func (g *Game) updateSpotted() {
 				if su == nil {
 					su = &SpottedUnit{Unit: e, Team: t, LastX: e.GridX, LastY: e.GridY, Visible: true}
 					mem[e] = su
-					g.queueReveal(su) // a brand new contact: a reveal edge
+					g.queueReveal(su)    // a brand new contact: a reveal edge
+					g.recordSighting(su) // and a halt on enemy candidate
 				} else {
 					if !su.Visible {
-						g.queueReveal(su) // a remembered contact slipping back into sight: false->true edge
+						g.queueReveal(su)    // a remembered contact slipping back into sight: false->true edge
+						g.recordSighting(su) // counts again for the halt check, unlike the latched reveal fire
 					}
 					su.LastX, su.LastY, su.Visible = e.GridX, e.GridY, true
 				}
@@ -123,6 +125,31 @@ func (g *Game) queueReveal(su *SpottedUnit) {
 	if dbg.Enabled() {
 		dbg.Printf("reveal: team %d gained sight of unit id=%d type=%v at (%d,%d) -> queued reveal-fire", su.Team, su.Unit.ID, su.Unit.Type, su.Unit.GridX, su.Unit.GridY)
 	}
+}
+
+// Sighting is one enemy that just became visible to a team: it was unseen before this
+// fog refresh, either never spotted or back out of the fog. The halt on enemy check
+// stops the team's movers on these.
+// C++ ported : access.cpp - Access_UpdateMapStatusAddUnit (the revealed target class).
+type Sighting struct {
+	Team  int
+	Enemy *game.UnitInfo
+}
+
+// recordSighting queues a hidden to visible edge for the halt on enemy check. Only
+// while turns run (reactOnReveal), so setup, landing and a load reveal nothing.
+func (g *Game) recordSighting(su *SpottedUnit) {
+	if !g.reactOnReveal {
+		return
+	}
+	g.sightings = append(g.sightings, Sighting{Team: su.Team, Enemy: su.Unit})
+}
+
+// DrainSightings returns the enemies revealed since the last call and empties the list.
+func (g *Game) DrainSightings() []Sighting {
+	out := g.sightings
+	g.sightings = nil
+	return out
 }
 
 // forgetSpotted drops a unit from every team's spotted memory - called when the unit

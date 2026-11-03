@@ -145,3 +145,67 @@ func TestSpottedByTeamNoFogModel(t *testing.T) {
 		t.Error("with no fog model, every unit is treated as spotted")
 	}
 }
+
+// sightingsOf counts the drained sightings of enemy for team.
+func sightingsOf(list []Sighting, team int, enemy *game.UnitInfo) int {
+	n := 0
+	for _, s := range list {
+		if s.Team == team && s.Enemy == enemy {
+			n++
+		}
+	}
+	return n
+}
+
+// TestSightingsOnEveryRevealEdge: once turns run, a new contact and a remembered one coming
+// back out of the fog each queue a sighting for the halt check; an enemy that stays in
+// sight does not, and the drain empties the list.
+func TestSightingsOnEveryRevealEdge(t *testing.T) {
+	g := newGame(t, 24, 12)
+	addScanner(g, 1, 0, 5, 5, 6)
+	enemy := addTankTarget(g, 2, 18, 5, 1) // out of scan
+	g.BeginTeamTurn(0)
+	g.DrainSightings()
+
+	g.Units.Move(enemy, 8, 5) // into scan: a new contact
+	g.RefreshVisibility()
+	if n := sightingsOf(g.DrainSightings(), 0, enemy); n != 1 {
+		t.Fatalf("new contact: %d sightings, want 1", n)
+	}
+
+	g.RefreshVisibility() // still in sight: no new edge
+	if n := len(g.DrainSightings()); n != 0 {
+		t.Fatalf("an enemy staying in sight queued %d sightings, want 0", n)
+	}
+
+	g.Units.Move(enemy, 18, 5) // back into the fog
+	g.RefreshVisibility()
+	g.Units.Move(enemy, 9, 5) // and out of it again
+	g.RefreshVisibility()
+	if n := sightingsOf(g.DrainSightings(), 0, enemy); n != 1 {
+		t.Errorf("remembered contact back in sight: %d sightings, want 1 (not latched like the reveal fire)", n)
+	}
+}
+
+// TestNoSightingsBeforeTurnsBegin: setup and landing reveal nothing for the halt check, and
+// a turn start drops any sighting left over from the previous turn.
+func TestNoSightingsBeforeTurnsBegin(t *testing.T) {
+	g := newGame(t, 24, 12)
+	addScanner(g, 1, 0, 5, 5, 6)
+	enemy := addTankTarget(g, 2, 8, 5, 1)
+
+	g.RefreshVisibility() // setup: turns have not begun
+	if n := len(g.DrainSightings()); n != 0 {
+		t.Fatalf("setup queued %d sightings, want 0", n)
+	}
+
+	g.BeginTeamTurn(0)
+	g.Units.Move(enemy, 18, 5)
+	g.RefreshVisibility()
+	g.Units.Move(enemy, 8, 5)
+	g.RefreshVisibility() // a sighting is now queued and never drained
+	g.BeginTeamTurn(0)
+	if n := sightingsOf(g.DrainSightings(), 0, enemy); n != 0 {
+		t.Errorf("a turn start kept %d stale sightings, want 0", n)
+	}
+}

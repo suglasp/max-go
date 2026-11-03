@@ -155,3 +155,87 @@ func TestPopupOffersContinueOnAHeldRoute(t *testing.T) {
 		t.Errorf("the unit is at (%d,%d) after Continue, want the held destination (12,2)", mover.GridX, mover.GridY)
 	}
 }
+
+// driveWithHaltChecks ticks every move to its end, running the halt check after each tick.
+func driveWithHaltChecks(s *Screen, g *sim.Game) {
+	for i := 0; i < 400 && g.ActiveOrders() > 0; i++ {
+		g.Tick()
+		s.haltMoversOnEnemy()
+	}
+}
+
+// TestNoHaltForAnEnemyTheTeamAlreadySees is the re-halt crawl: a friendly spotter already sees
+// the enemy Tank, so the mover driving into its scan range reveals nothing and must not halt.
+func TestNoHaltForAnEnemyTheTeamAlreadySees(t *testing.T) {
+	s, g := newHaltScreen(t)
+	g.State.ActiveTeam = 0
+
+	mover := haltMover(g, 0, 1, 2, 2, 20, 4)
+	_ = haltMover(g, 0, 2, 12, 6, 0, 8) // a parked friendly spotter that sees the enemy
+	_ = haltMover(g, 1, 3, 12, 2, 0, 0) // the enemy Tank, in plain sight of the spotter
+
+	g.BeginTeamTurn(0)
+	if !g.OrderMove(mover, 20, 2) {
+		t.Fatal("the move order was rejected")
+	}
+	driveWithHaltChecks(s, g)
+
+	if len(g.HeldRoute(mover)) != 0 || mover.GridX != 20 {
+		t.Errorf("the mover halted at x=%d for an enemy its team already saw", mover.GridX)
+	}
+}
+
+// TestNoHaltForAnEnemyThatCannotShootTheMover: a newly revealed enemy with no weapon (a
+// Surveyor) does not stop a Tank.
+func TestNoHaltForAnEnemyThatCannotShootTheMover(t *testing.T) {
+	s, g := newHaltScreen(t)
+	g.State.ActiveTeam = 0
+
+	mover := haltMover(g, 0, 1, 2, 2, 20, 4)
+	surveyor := haltMover(g, 1, 2, 12, 2, 0, 0)
+	surveyor.Type = assets.Surveyor
+
+	g.BeginTeamTurn(0)
+	if !g.OrderMove(mover, 20, 2) {
+		t.Fatal("the move order was rejected")
+	}
+	driveWithHaltChecks(s, g)
+
+	if len(g.HeldRoute(mover)) != 0 || mover.GridX != 20 {
+		t.Errorf("the mover halted at x=%d for an unarmed enemy", mover.GridX)
+	}
+}
+
+// TestResumedUnitDrivesOnPastAKnownEnemy: the mover halts once on a newly revealed Tank, drives
+// on at the next turn start, and does not halt again for a second Tank its team already sees.
+func TestResumedUnitDrivesOnPastAKnownEnemy(t *testing.T) {
+	s, g := newHaltScreen(t)
+	g.State.ActiveTeam = 0
+
+	mover := haltMover(g, 0, 1, 2, 2, 12, 4)
+	_ = haltMover(g, 1, 2, 9, 5, 0, 0)  // first enemy, unseen until the mover nears it
+	_ = haltMover(g, 0, 3, 18, 9, 0, 6) // a friendly spotter that sees only the second enemy
+	_ = haltMover(g, 1, 4, 16, 4, 0, 0) // second enemy beside the road, in plain sight of the spotter
+
+	g.BeginTeamTurn(0)
+	if !g.OrderMove(mover, 24, 2) {
+		t.Fatal("the move order was rejected")
+	}
+	driveWithHaltChecks(s, g)
+
+	if len(g.HeldRoute(mover)) == 0 {
+		t.Fatalf("the mover did not halt on the first, newly revealed enemy (x=%d)", mover.GridX)
+	}
+
+	for turn := 0; turn < 3 && mover.GridX != 24; turn++ {
+		g.BeginTeamTurn(0)
+		driveWithHaltChecks(s, g)
+		if len(g.HeldRoute(mover)) != 0 {
+			t.Fatalf("turn %d: the resumed mover halted again at x=%d for an enemy its team already saw", turn+1, mover.GridX)
+		}
+	}
+
+	if mover.GridX != 24 {
+		t.Errorf("the resumed mover ended at x=%d, want 24", mover.GridX)
+	}
+}

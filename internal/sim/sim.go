@@ -87,6 +87,7 @@ type Game struct {
 
 	reactOnReveal  bool             // enables reaction fire on newly seen units
 	pendingReveals []revealReaction // newly visible enemy pairs
+	sightings      []Sighting       // enemies newly visible to a team, for the halt on enemy check
 
 	disabled map[*game.UnitInfo]int // remaining disabled turns by unit
 
@@ -171,6 +172,7 @@ func (g *Game) BeginTeamTurn(team int) {
 	g.State.Teams[team].FinishedTurn = false
 	g.State.Phase = game.PhaseInGame
 	g.reactOnReveal = true // turns have begun: a fog lift on an in range enemy now reveal fires (setup did not)
+	g.sightings = nil      // a sighting belongs to the drive that made it; none carries into a new turn
 	for _, u := range g.Units.Units() {
 		if u.Team == team {
 			u.ResetMovement()

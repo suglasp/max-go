@@ -42,7 +42,6 @@ Check the version file next to the game executables.
 - The "time is running out" voice repeated below 20 seconds, and a new voice line could cut off the one still playing.
 - A shot at a builder parked on its finished building hit the hidden building; it now hits the builder, and the
   building is lost with it.
-- Loading such a builder into a transport left its building hidden; the building now appears.
 - The missile hit message showed before the missile arrived.
 - Old path arrows stayed on the map after Auto Survey or a new order replaced a halted route.
 - A unit that stopped for an enemy halfway into a cell stayed drawn between two cells and blocked clicks next to it.
@@ -52,6 +51,8 @@ Check the version file next to the game executables.
 - A unit that could not afford its next step lost its leftover movement instead of keeping it.
 - A Commando could disable or steal a unit that was busy firing, exploding or being destroyed.
 - A Constructor destroyed while building a 2x2 building left a small rubble pile on its own cell; it now leaves the site's large pile.
+- Alien derelict buildings stood without their slabs.
+- A unit that drove on after an enemy halt stopped again after one cell, every turn; it now halts only when it reveals an enemy that can attack it.
 
 
 ## 1.0.0.2 (2026-10-20 - skipped release)
