@@ -221,6 +221,12 @@ func contributes(u *game.UnitInfo) (ok, sea, land bool) {
 	if !u.Flags.Has(game.FlagSelectable) {
 		return false, false, false
 	}
+	// A unit still parked in its factory, or a building not yet revealed behind its parked builder, is idle in the
+	// original (ORDER_IDLE, ORDER_STATE_BUILDING_READY) and scans nothing until it leaves or unfolds.
+	// C++ ported : unitinfo.cpp - the output set to ORDER_IDLE + ORDER_STATE_BUILDING_READY
+	if u.HiddenUntilExpand {
+		return false, false, false
+	}
 	if u.Order == game.OrderIdle || u.Order == game.OrderDisable {
 		return false, false, false
 	}

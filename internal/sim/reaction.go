@@ -158,6 +158,11 @@ func (g *Game) shouldReact(reactor, mover *game.UnitInfo) bool {
 	if reactor.DisabledReactionFire {
 		return false
 	}
+	// A unit still parked in its factory is idle in the original and takes no shot.
+	// C++ ported : units_manager.cpp - UnitsManager_ShouldAttack (ORDER_IDLE never attacks)
+	if reactor.HiddenUntilExpand {
+		return false
+	}
 	// The simultaneous mode human gate (see the doc block above).
 	// C++ ported : units_manager.cpp:4329-4348.
 	if g.State.PlayMode == game.PlaySimultaneous && g.State.Teams[reactor.Team].Type != game.TeamComputer {

@@ -246,3 +246,18 @@ func TestSortByDistToBreaksTiesOnID(t *testing.T) {
 		}
 	}
 }
+
+// TestParkedUnitDoesNotReact checks that a unit still hidden in its factory takes no reaction shot.
+func TestParkedUnitDoesNotReact(t *testing.T) {
+	g := newGame(t, 20, 12)
+	parked := addReactor(g, assets.GunTurrt, 1, 0, 5, 5, 4, 8, reactBuilding)
+	parked.HiddenUntilExpand = true
+	tank := addTankTarget(g, 2, 7, 5, 1)
+	g.RefreshVisibility()
+
+	g.checkReactions(tank)
+
+	if tank.Hits != 30 || parked.Shots != 1 {
+		t.Errorf("a parked unit reacted (target hits %d, shots %d)", tank.Hits, parked.Shots)
+	}
+}

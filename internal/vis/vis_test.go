@@ -275,3 +275,27 @@ func TestIdleUnitNeitherScansNorIsSeen(t *testing.T) {
 		t.Error("idle enemy should not be reported visible")
 	}
 }
+
+// TestParkedUnitDoesNotScan checks that a unit still hidden in its factory (or a building not yet revealed behind its
+// parked builder) projects no coverage: a finished Corvette parked in the Shipyard does not reveal a submarine until it
+// leaves.
+func TestParkedUnitDoesNotScan(t *testing.T) {
+	sub := unit(assets.Submarne, 1, 4, 1, 0)
+	corvette := unit(assets.Corvette, 0, 4, 1, 3)
+	corvette.HiddenUntilExpand = true
+
+	v := NewView(16, 4)
+	v.Rebuild([]*game.UnitInfo{corvette, sub})
+	if v.Team(0).Complete(4, 1) != 0 {
+		t.Error("a parked unit gives scan coverage")
+	}
+	if v.VisibleToTeam(sub, 0) {
+		t.Error("a Corvette parked in its factory reveals the submarine")
+	}
+
+	corvette.HiddenUntilExpand = false // it drives out
+	v.Rebuild([]*game.UnitInfo{corvette, sub})
+	if !v.VisibleToTeam(sub, 0) {
+		t.Error("the Corvette that left its factory must reveal the submarine")
+	}
+}
