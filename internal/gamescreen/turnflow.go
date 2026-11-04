@@ -33,6 +33,9 @@ type turnFlowState struct {
 	fullTurnSeconds int          // the configured per turn budget, restored at the start of every round
 	endTurnSeconds  int          // End Turn grace: seconds left once the opponents are done (0 = off, simultaneous only)
 	graceArmed      bool         // the grace countdown has already been applied this round
+	prefsApplied    bool         // ApplyPrefs ran once (game creation); later calls only follow a changed setting
+	prefTurnTimer   int          // the turn timer setting ApplyPrefs last saw
+	prefEndTurn     int          // the End Turn Time setting ApplyPrefs last saw
 	turnStart       uint64       // tick the current interactive turn began
 	timeWarnedTurn  turnID       // the turn the "time low" voice last warned for (zero = none yet; a fresh turn re arms it)
 	heartbeat       atomic.Int64 // unix nano start of the current Run() iteration (AI turn hang watchdog)

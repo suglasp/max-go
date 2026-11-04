@@ -117,3 +117,43 @@ func TestEndTurnGraceWaitsForOpponentUnits(t *testing.T) {
 		t.Errorf("the grace fired while an enemy was still driving: budget = %d, want 180", s.turnFlow.turnSeconds)
 	}
 }
+
+// TestOptionsCloseKeepsTheRunningClock checks the L1 rule: closing the in game Options never restarts the running
+// turn clock. An End Turn Time change applies to the next countdown, a turn timer change to the next round, and an
+// unchanged setting leaves the game's own timers (a mission's or a custom game's) alone.
+func TestOptionsCloseKeepsTheRunningClock(t *testing.T) {
+	s, _ := graceScreen(t)
+	s.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 40}) // game creation
+	s.SetTurnTimer(240)                                  // the custom game's own turn timer
+	s.SetEndTurnTimer(30)                                // and its own End Turn Time
+	s.turnFlow.turnStart -= 100 * 1000                   // 100 seconds into the turn
+	start, secs := s.turnFlow.turnStart, s.turnFlow.turnSeconds
+
+	// Options closed with only End Turn Time changed (40 -> 20).
+	s.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 20})
+	if s.turnFlow.turnStart != start || s.turnFlow.turnSeconds != secs {
+		t.Errorf("the running clock restarted: start %d -> %d, seconds %d -> %d", start, s.turnFlow.turnStart, secs, s.turnFlow.turnSeconds)
+	}
+	if s.turnFlow.fullTurnSeconds != 240 {
+		t.Errorf("an unchanged turn timer overwrote the game's own one: full %d, want 240", s.turnFlow.fullTurnSeconds)
+	}
+	if s.turnFlow.endTurnSeconds != 20 {
+		t.Errorf("End Turn Time = %d, want the new 20 for the next countdown", s.turnFlow.endTurnSeconds)
+	}
+
+	// Options closed again with nothing changed: the End Turn value stays as set.
+	s.SetEndTurnTimer(25)
+	s.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 20})
+	if s.turnFlow.endTurnSeconds != 25 {
+		t.Errorf("an unchanged End Turn Time overwrote the game's value: %d, want 25", s.turnFlow.endTurnSeconds)
+	}
+
+	// The turn timer changed (180 -> 120): the next round uses it, the running clock keeps counting.
+	s.ApplyPrefs(LivePrefs{TurnTimer: 120, EndTurn: 20})
+	if s.turnFlow.turnStart != start || s.turnFlow.turnSeconds != secs {
+		t.Error("a turn timer change restarted the running clock")
+	}
+	if s.turnFlow.fullTurnSeconds != 120 {
+		t.Errorf("next round budget = %d, want the new 120", s.turnFlow.fullTurnSeconds)
+	}
+}

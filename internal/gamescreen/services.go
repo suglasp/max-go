@@ -40,6 +40,31 @@ func (s *Screen) SetTurnTimer(seconds int) {
 	s.turnFlow.turnStart = platform.Ticks()
 }
 
+// applyTimerPrefs applies the turn timer and End Turn Time settings. The first call (game creation) sets both, as
+// the setup does; a custom game or a mission may then set its own. Later calls (the Options menu closing) never
+// restart the running turn clock and only follow a setting the player changed: a new turn timer takes effect at the
+// next round, a new End Turn Time at the next countdown. An unchanged setting leaves the game's own timers alone.
+func (s *Screen) applyTimerPrefs(turnTimer, endTurn int) {
+	if !s.turnFlow.prefsApplied {
+		s.turnFlow.prefsApplied = true
+		s.turnFlow.prefTurnTimer, s.turnFlow.prefEndTurn = turnTimer, endTurn
+		s.SetTurnTimer(turnTimer)
+		s.SetEndTurnTimer(endTurn)
+
+		return
+	}
+
+	if turnTimer != s.turnFlow.prefTurnTimer {
+		s.turnFlow.prefTurnTimer = turnTimer
+		s.turnFlow.fullTurnSeconds = max(turnTimer, 0) // the next round restores this budget
+	}
+
+	if endTurn != s.turnFlow.prefEndTurn {
+		s.turnFlow.prefEndTurn = endTurn
+		s.SetEndTurnTimer(endTurn)
+	}
+}
+
 // LivePrefs contains settings a running screen can apply immediately. Plain fields keep gamescreen independent of the settings package.
 type LivePrefs struct {
 	QuickScroll    int  // edge scroll speed
@@ -57,8 +82,7 @@ type LivePrefs struct {
 // ApplyPrefs applies live game settings to a running screen. The host calls it at game creation and after the Options menu closes; that menu applies audio itself.
 func (s *Screen) ApplyPrefs(p LivePrefs) {
 	s.SetScrollSpeed(p.QuickScroll)
-	s.SetTurnTimer(p.TurnTimer)
-	s.SetEndTurnTimer(p.EndTurn)
+	s.applyTimerPrefs(p.TurnTimer, p.EndTurn)
 	s.effectsOff = !p.AnimateEffects
 	s.followUnit = p.FollowUnit
 	s.clickScroll = p.ClickScroll
