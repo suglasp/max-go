@@ -16,7 +16,7 @@ Check the version file next to the game executables.
 ## 1.0.1.1 (2026-11-03)
 
 ### Changes
-- Built on Ebitengine 2.10.5 and Go 1.26.7.
+- Bumped built version for Ebitengine 2.10.5 and Go 1.26.7.
 - Letter keys run the popup buttons of the selected unit (B = Build, S = Sentry, ...), as in the original game.
   The port's own keys moved to Ctrl: Ctrl+S status, Ctrl+R survey, Ctrl+O options, Ctrl+M resources.
 - F1 jumps to the last event, whatever its kind.
