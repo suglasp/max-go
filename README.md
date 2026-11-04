@@ -66,9 +66,9 @@ https://github.com/suglasp/max-go
 
 max-go provides the engine and tools, but it does not include the original game's data.\
 It requires data files from a legally obtained copy of the original game (`MAX.RES`, `*.WRL`, `*.WAV`, `*.FLC`, ...).\
-You can buy M.A.X. on [GOG.com](https://www.gog.com/game/m_a_x_m_a_x_2) or [Steam](https://store.steampowered.com/app/615250/MAX_Mechanized_Assault__Exploration/),\
+You can buy M.A.X. from a few online game stores, [GOG.com](https://www.gog.com/game/m_a_x_m_a_x_2), [Steam](https://store.steampowered.com/app/615250/MAX_Mechanized_Assault__Exploration/) or [Epic](https://store.epicgames.com/p/max-mechanized-assault-and-exploration-0722cb),\
 then point `data_dir` in `max-go.json` at that installation or copy the data into a local folder next to the max-go binary.\
-The executable, user-owned game data, save files, and screenshots can all live in one local folder.
+The executable, user owned game data, save files, and screenshots can all live in one local folder.
 
 If no data path is configured and `MAX.RES` is missing next to the binary, max-go can copy data from an existing media installation of GOG or Steam on the same machine, with a typed path as fallback.\
 The bootstrap shows its progress on screen. It does not download game data, and releases contain no original game data or retail assets.\
