@@ -10,7 +10,10 @@
 // NearestUnsurveyedMove serves player AutoSurvey and the AI taskSurvey routine.
 package sim
 
-import "github.com/suglasp/max-go/internal/game"
+import (
+	"github.com/suglasp/max-go/internal/dbg"
+	"github.com/suglasp/max-go/internal/game"
+)
 
 // baseSurveyRadius is how far around the team's buildings a Surveyor maps before it
 // heads out over the rest of the map.
@@ -63,20 +66,20 @@ func (g *Game) NearestUnsurveyedMoveAvoiding(u *game.UnitInfo, team int, skip fu
 	// Pass 1: the unsurveyed ground around the base.
 	if zone, reach := g.baseSurveyZone(u, team); zone != nil {
 		inZone := func(x, y int) bool { return zone[y*g.W+x] }
-		if g.ringSurveyMove(u, team, reach, inZone, skip, penalty) {
+		if g.ringSurveyMove(u, team, reach, inZone, skip, penalty, "base zone") {
 			return true
 		}
 	}
 
 	// Pass 2: the nearest unsurveyed cell anywhere.
-	return g.ringSurveyMove(u, team, maxR, nil, skip, penalty)
+	return g.ringSurveyMove(u, team, maxR, nil, skip, penalty, "whole map")
 }
 
 // ringSurveyMove rings outward from u up to maxR and orders a move to the first
 // unsurveyed, enterable, reachable cell that accept (nil = any cell) and skip let
 // through. OrderMoveAvoiding returns false for an unreachable target, so the scan
-// keeps going on the outer rings.
-func (g *Game) ringSurveyMove(u *game.UnitInfo, team, maxR int, accept func(x, y int) bool, skip func(x, y int) bool, penalty func(x, y int) int) bool {
+// keeps going on the outer rings. pass names the search for the debug log.
+func (g *Game) ringSurveyMove(u *game.UnitInfo, team, maxR int, accept func(x, y int) bool, skip func(x, y int) bool, penalty func(x, y int) int, pass string) bool {
 	for r := 1; r <= maxR; r++ {
 		for dy := -r; dy <= r; dy++ {
 			for dx := -r; dx <= r; dx++ {
@@ -108,6 +111,7 @@ func (g *Game) ringSurveyMove(u *game.UnitInfo, team, maxR int, accept func(x, y
 				}
 				// Issue the move; a nil penalty is the plain terrain route.
 				if g.OrderMoveAvoiding(u, x, y, penalty) {
+					dbg.Printf("survey: %s team %d at (%d,%d) -> (%d,%d) [%s]", u.Type.Tag(), team, u.GridX, u.GridY, x, y, pass)
 					return true
 				}
 			}
