@@ -204,6 +204,7 @@ func (g *Game) complexAdjacentTo(team, sx, sy, fp int) *economy.Complex {
 // that stalled this turn for lack of material, so the UI can prompt a refill.
 // C++: the per turn ORDER_STATE_BUILD_IN_PROGRESS step (units_manager.cpp).
 func (g *Game) AdvanceBuilds(team int) (stalled []*game.UnitInfo) {
+	g.pathShort = nil // tickBuildPaths below records this pass's short path builders
 	kept := g.builds[:0]
 	for _, o := range g.builds {
 		// Advance only orders owned by this team. ProductTeam persists ownership when an order has no builder.
@@ -234,7 +235,7 @@ func (g *Game) AdvanceBuilds(team int) (stalled []*game.UnitInfo) {
 		if !o.Done() {
 			if !progressed && o.Builder != nil {
 				stalled = append(stalled, o.Builder) // out of material this turn
-		// A running factory without raw material is ProdStalled until its order progresses again.
+				// A running factory without raw material is ProdStalled until its order progresses again.
 				if isFactoryOrder(o) {
 					o.Builder.RawStarved = true
 				}

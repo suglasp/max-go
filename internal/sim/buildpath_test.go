@@ -217,6 +217,107 @@ func TestBuildPathStopsWhenOutOfMaterial(t *testing.T) {
 	}
 }
 
+// newPathEngineer deploys a live engineer with the given storage at (x,y).
+func newPathEngineer(g *Game, storage, x, y int) *game.UnitInfo {
+	eng := game.NewUnitInfo(assets.Engineer, 0, 1, 0)
+	eng.Flags = game.FlagMobileLandUnit | game.FlagConstructorUnit | game.FlagSelectable
+	eng.Values = &game.UnitValues{}
+	eng.Values.Set(game.AttribSpeed, 8)
+	eng.Values.Set(game.AttribHits, 30)
+	eng.InitState()
+	eng.Storage = storage
+	g.Units.Deploy(eng, x, y)
+	return eng
+}
+
+// runPathTurns plays turns until the run and its orders are done, and reports whether
+// any turn named eng among the path builders stopped short of material.
+func runPathTurns(g *Game, eng *game.UnitInfo) (short bool) {
+	for turn := 0; turn < 40 && (g.BuildPathActive(eng) || g.BuildOrderFor(eng) != nil); turn++ {
+		g.BeginTeamTurn(0)
+		for _, b := range g.LastPathShortBuilders() {
+			short = short || b == eng
+		}
+		g.ResolveMovement()
+	}
+	return short
+}
+
+// TestBuildPathStopsParkedWhenNextCellUnaffordable checks a building run whose storage pays
+// for one cell only: the run ends before the second cell, the engineer stays parked on the
+// finished building with its exit markers, and no second site is started.
+func TestBuildPathStopsParkedWhenNextCellUnaffordable(t *testing.T) {
+	g := newGame(t, 24, 24)
+	eng := newPathEngineer(g, 6, 5, 5) // one ADump costs 2 turns x 2 raw = 4
+
+	template := game.NewUnitInfo(assets.ADump, 0, 2, 0)
+	template.Flags = game.FlagStationary | game.FlagRequiresSlab | game.FlagSelectable
+	template.Values = &game.UnitValues{}
+	template.Values.Set(game.AttribTurns, 2)
+	template.Values.Set(game.AttribHits, 20)
+
+	if !g.StartBuildPath(eng, template, 1, 5, 7) {
+		t.Fatal("StartBuildPath rejected the run")
+	}
+	short := runPathTurns(g, eng)
+
+	if g.BuildPathActive(eng) {
+		t.Fatal("the run did not stop before the unaffordable cell")
+	}
+	if !short {
+		t.Error("LastPathShortBuilders never named the engineer (no warning would show)")
+	}
+	if g.BuildOrderFor(eng) != nil || len(g.BuildOrders()) > 0 {
+		t.Error("a second cell was started although the storage could not pay for it")
+	}
+	if !g.IsBuildReady(eng) {
+		t.Error("the engineer was released; it must stay parked on the finished building with its exit markers")
+	}
+	built := 0
+	for _, u := range g.Units.Units() {
+		if u.Type == assets.ADump {
+			built++
+		}
+	}
+	if built != 1 {
+		t.Errorf("laid %d storage units, want 1", built)
+	}
+}
+
+// TestBuildPathRoadStopsInPlaceWhenUnaffordable checks a road run whose storage pays for one
+// cell only: the engineer stops on the road it laid, with no half built cell left behind.
+func TestBuildPathRoadStopsInPlaceWhenUnaffordable(t *testing.T) {
+	g := newGame(t, 24, 24)
+	eng := newPathEngineer(g, 3, 5, 5) // one road costs 1 turn x 2 raw = 2
+
+	template := game.NewUnitInfo(assets.Road, 0, 2, 0)
+	template.Flags = game.FlagGroundCover
+	template.Values = &game.UnitValues{}
+	template.Values.Set(game.AttribTurns, 1)
+	template.Values.Set(game.AttribHits, 2)
+
+	if !g.StartBuildPath(eng, template, 1, 5, 8) {
+		t.Fatal("StartBuildPath rejected the run")
+	}
+	short := runPathTurns(g, eng)
+
+	if g.BuildPathActive(eng) {
+		t.Fatal("the run did not stop before the unaffordable cell")
+	}
+	if !short {
+		t.Error("LastPathShortBuilders never named the engineer (no warning would show)")
+	}
+	if len(g.BuildOrders()) > 0 {
+		t.Error("a half built road cell was left behind")
+	}
+	if eng.GridX != 5 || eng.GridY != 5 {
+		t.Errorf("engineer at (%d,%d), want it on its last road at (5,5)", eng.GridX, eng.GridY)
+	}
+	if !roadAt(g, 5, 5) || roadAt(g, 5, 6) {
+		t.Error("want exactly the anchor road laid")
+	}
+}
+
 // TestPlayerMoveCancelsBuildPath verifies that a player-issued move cancels the engineer's path, while the path's own orderMoveTo steps preserve it.
 func TestPlayerMoveCancelsBuildPath(t *testing.T) {
 	g := newGame(t, 24, 24)

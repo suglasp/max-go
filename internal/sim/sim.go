@@ -99,6 +99,8 @@ type Game struct {
 
 	turnStalled []*game.UnitInfo // builders stalled this turn
 
+	pathShort []*game.UnitInfo // path builders stopped this turn before a cell they could not afford
+
 	turnPowerLost []*game.UnitInfo // units shut down for power this turn
 
 	turnLifeLost []*game.UnitInfo // units shut down for workers this turn
@@ -226,6 +228,13 @@ func refreshCarried(u *game.UnitInfo) {
 // runs once, at turn start, matching the original's GameManager_ManageEconomy).
 func (g *Game) LastStalledBuilders() []*game.UnitInfo {
 	return g.turnStalled
+}
+
+// LastPathShortBuilders returns the path builders that stopped on the most recent
+// construction pass because their storage could not pay for the next cell. The in
+// game screen reads it to raise the insufficient material warning.
+func (g *Game) LastPathShortBuilders() []*game.UnitInfo {
+	return g.pathShort
 }
 
 // resumePending re issues a move order for each of team's units holding a

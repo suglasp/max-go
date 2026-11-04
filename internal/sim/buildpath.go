@@ -11,6 +11,7 @@ import (
 	"github.com/suglasp/max-go/internal/access"
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/build"
+	"github.com/suglasp/max-go/internal/economy"
 	"github.com/suglasp/max-go/internal/game"
 )
 
@@ -220,8 +221,20 @@ func (g *Game) tickBuildPaths(team int) {
 				delete(g.buildPaths, b) // last cell laid: the normal single build exit takes over
 				continue
 			}
+			// The storage cannot pay for the next cell: end the run here. The builder stays
+			// parked on the finished building with its exit markers, as a single build does.
+			if !pathCellAffordable(b, bp) {
+				g.stopShortPath(b)
+				continue
+			}
 			g.armExpand(b)       // the building unfolds once the engineer clears its footprint
 			g.clearBuildReady(b) // free the engineer from the parked build ready state
+		}
+		// A free builder (after a road, connector, bridge or platform cell) that cannot pay
+		// for the next cell ends the run where it stands.
+		if bp.Idx < len(bp.Cells) && !pathCellAffordable(b, bp) {
+			g.stopShortPath(b)
+			continue
 		}
 		// Advance to the next cell to build, skipping leading cells that are already
 		// laid or genuinely unbuildable, but WAITING on one a unit is standing on.
@@ -291,18 +304,34 @@ func (g *Game) resumePathBuildOnArrival(b *game.UnitInfo) {
 	}
 }
 
-// abandonStalledPaths drops the Path build of any builder that stalled this turn for
-// lack of material: the order for the half finished cell is cancelled and the run cleared,
-// so the engineer stops (the caller's "needs material" message tells the player). C++:
-// UnitsManager_BuildNext's ClearBuildListAndPath when storage is insufficient.
+// abandonStalledPaths drops the rest of the Path run of any builder that stalled this
+// turn for lack of material. The started cell is kept and waits for material like a
+// single build (the caller's "needs material" message tells the player). The check
+// before each cell (pathCellAffordable) makes this a safety net only.
+// C++ ported : unitinfo.cpp - UnitInfo::UpdateProduction (a started build is never cancelled).
 func (g *Game) abandonStalledPaths(stalled []*game.UnitInfo) {
 	for _, b := range stalled {
-		if g.buildPaths[b] == nil {
-			continue
-		}
-		g.CancelBuild(b)
 		delete(g.buildPaths, b)
 	}
+}
+
+// pathCellAffordable reports whether builder's storage pays for one whole cell of
+// the run at rate 1, the same rule the Construction Menu applies to a first build.
+// C++ ported : units_manager.cpp - UnitsManager_BuildNext
+func pathCellAffordable(builder *game.UnitInfo, bp *buildPath) bool {
+	turns := 1
+	if bp.Type.Values != nil {
+		turns = max(bp.Type.Values.Get(game.AttribTurns), 1)
+	}
+	return builder.Storage >= economy.RawConsumptionRate(builder.Type, 1)*turns
+}
+
+// stopShortPath ends builder's run because it cannot pay for the next cell, and
+// records it so the in game screen shows the insufficient material warning.
+// C++ ported : unitinfo.cpp - UnitInfo::ClearBuildListAndPath
+func (g *Game) stopShortPath(builder *game.UnitInfo) {
+	delete(g.buildPaths, builder)
+	g.pathShort = append(g.pathShort, builder)
 }
 
 // CancelBuildPath drops builder's remaining Path run (the player pressed ESC or

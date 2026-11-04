@@ -359,7 +359,14 @@ func (s *Screen) announceTurnStart(team int, before map[uint16]bool) {
 
 	s.announceBuildsCompleted(team, before)
 	s.announceBuildReady(team) // "Finished building X - click a marker to move the builder out"
-	s.checkColonyStarted()     // a team's first working Eco Sphere -> colony started announce
+
+	// A path build stopped before a cell its builder cannot afford. The warning comes
+	// after the ready prompt so it is the banner left on screen.
+	if s.isHumanTeam(team) && len(s.game.LastPathShortBuilders()) > 0 {
+		s.showAlert(s.lang.Get("c529", "WARNING: insufficient material in storage to start construction."))
+	}
+
+	s.checkColonyStarted() // a team's first working Eco Sphere -> colony started announce
 }
 
 // clearSelectionForNewTurn keeps the human's selection alive across End Turn and
