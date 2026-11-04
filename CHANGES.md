@@ -7,9 +7,9 @@ Check the version file next to the game executables.
 
 ### Fixes
 - On Windows, fixed race condition that could crash the game at startup when the debug console is switched on.
-- A path build stops before a cell the Engineer cannot afford: it waits on the last finished building with its exit
-  markers (or stays on the last road) and the insufficient material warning shows, instead of starting the cell and
-  taking it down again.
+- A path build stops before a cell the Engineer cannot afford: it waits on the last finished building with its exit markers (or stays on the last road),
+  and the insufficient material warning shows, instead of starting the cell and taking it down again.
+- The hit flash and the explosion animation of a Constructor building a 2x2 building, show over the center construction site where the Constructor is drawn, instead of lower left corner.
 
 
 ## 1.0.1.1 (2026-11-03)

@@ -66,18 +66,17 @@ type explosion struct {
 // LNDEXPLD/BLDEXPLD; the LRGRUBLE/SMLRUBLE debris is the sim's rubble record).
 func (s *Screen) spawnExplosion(u *game.UnitInfo) {
 	// DestroyUnit records rubble; this path only adds the blast.
-	building := u.Flags.Has(game.FlagBuilding)
-	n := 1
 	sprite, dur := smallExplosionType, uint64(smallExplosionMS)
 
-	if building {
-		n = 2 // a 2x2 building's blast spans the footprint
+	if u.Flags.Has(game.FlagBuilding) {
 		sprite, dur = bldExplosionType, bldExplosionMS
 	}
 
+	cellX, cellY, n := effectFootprint(u)
+
 	s.effects.explosions = append(s.effects.explosions, explosion{
-		cellX:  u.GridX,
-		cellY:  u.GridY,
+		cellX:  cellX,
+		cellY:  cellY,
 		n:      n,
 		sprite: sprite,
 		dur:    dur,
@@ -92,20 +91,31 @@ func (s *Screen) spawnExplosion(u *game.UnitInfo) {
 // C++: the HITEXPLD sprite spawned at the impact point on a hit that is not fatal
 // (units_manager.cpp weapon resolution).
 func (s *Screen) spawnHitImpact(target *game.UnitInfo) {
-	n := 1
-
-	if target.Flags.Has(game.FlagBuilding) {
-		n = 2
-	}
+	cellX, cellY, n := effectFootprint(target)
 
 	s.effects.explosions = append(s.effects.explosions, explosion{
-		cellX:  target.GridX,
-		cellY:  target.GridY,
+		cellX:  cellX,
+		cellY:  cellY,
 		n:      n,
 		sprite: hitImpactType,
 		dur:    hitImpactMS,
 		start:  platform.Ticks(),
 	})
+}
+
+// effectFootprint returns the cell block an effect on u centres on: the construction site
+// for a builder posed over a 2x2 (it is drawn at the site centre, not on its own corner),
+// the 2x2 footprint for a building, else the unit's own cell.
+// C++ ported : units_manager.cpp - the explosion offset to the unit's drawn position
+func effectFootprint(u *game.UnitInfo) (cellX, cellY, n int) {
+	switch {
+	case u.Building && u.BuildFootprint >= 2:
+		return u.BuildSiteX, u.BuildSiteY, u.BuildFootprint
+	case u.Flags.Has(game.FlagBuilding):
+		return u.GridX, u.GridY, 2
+	default:
+		return u.GridX, u.GridY, 1
+	}
 }
 
 // forgetDestroyed clears selection and camera state for a unit removed through the sim's death queues.

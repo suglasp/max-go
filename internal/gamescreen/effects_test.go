@@ -48,3 +48,39 @@ func TestSpawnHitImpact(t *testing.T) {
 		t.Errorf("building impact footprint n = %d, want 2", got)
 	}
 }
+
+// TestEffectsCentreOnConstructorSite: a Constructor raising a 2x2 is drawn at the site
+// centre, so its hit flash and death blast centre on the site, not on its own corner cell.
+func TestEffectsCentreOnConstructorSite(t *testing.T) {
+	s := &Screen{}
+
+	con := game.NewUnitInfo(assets.Constrct, 0, 3, 0)
+	con.Flags = game.FlagMobileLandUnit | game.FlagConstructorUnit
+	con.SetPosition(6, 6)       // the lower right corner of the site
+	con.StartBuildPose(5, 5, 2) // a 2x2 site anchored at (5,5)
+
+	s.spawnHitImpact(con)
+	s.spawnExplosion(con)
+
+	for i, e := range s.effects.explosions {
+		if e.cellX != 5 || e.cellY != 5 || e.n != 2 {
+			t.Errorf("effect %d at (%d,%d) n=%d, want the site (5,5) n=2", i, e.cellX, e.cellY, e.n)
+		}
+	}
+
+	if got := s.effects.explosions[1].sprite; got != smallExplosionType {
+		t.Errorf("death blast sprite = %v, want the small land blast", got)
+	}
+
+	// Out of the pose the effects use the unit's own cell again.
+	con.EndBuildPose()
+	s.effects.explosions = nil
+	s.spawnHitImpact(con)
+	s.spawnExplosion(con)
+
+	for i, e := range s.effects.explosions {
+		if e.cellX != 6 || e.cellY != 6 || e.n != 1 {
+			t.Errorf("effect %d after the pose at (%d,%d) n=%d, want (6,6) n=1", i, e.cellX, e.cellY, e.n)
+		}
+	}
+}

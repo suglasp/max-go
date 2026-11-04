@@ -9,6 +9,7 @@ import (
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/dbg"
 	"github.com/suglasp/max-go/internal/game"
+	"github.com/suglasp/max-go/internal/winloss"
 	"github.com/suglasp/max-go/internal/world"
 )
 
@@ -17,6 +18,16 @@ const parkedBuildBenchZoom = 32
 
 // parkedBuildBenchAttack kills the parked Engineer in one forced shot.
 const parkedBuildBenchAttack = 200
+
+// N4 stop: the Rocket Launcher's range, shots per turn and ammo, and the hits that let each enemy Constructor
+// take several rockets, so the hit flash plays again and again before the death blast. Four rounds leave the
+// launcher shots after a short drive (moving spends its shots through the shared move and fire budget).
+const (
+	parkedBuildBenchRocketRange  = 6
+	parkedBuildBenchRocketRounds = 4
+	parkedBuildBenchRocketAmmo   = 40
+	parkedBuildBenchTargetHits   = 400
+)
 
 // parkedBuildScenario is one stop of the bench: the land block it needs, how it deploys, and its banner.
 type parkedBuildScenario struct {
@@ -38,6 +49,9 @@ type parkedBuildScenario struct {
 //   - H15: an idle Constructor and Engineer with full storage to open the Build menus (real unit descriptions,
 //     one shared Description checkbox).
 //   - H17: a running Habitat on its own: select it and scroll away, its hum pans and fades.
+//   - N4: a frozen enemy team with an idle Constructor and a Constructor raising a 2x2 (its lower right corner
+//     cell), plus a player Rocket Launcher out of range of both. Drive in and fire: every hit flash, and the
+//     blast when one dies, sits on the drawn Constructor, the working one centred on its site.
 //
 // H10: every unit here is a 2x2 minimap blip.
 //
@@ -51,6 +65,7 @@ func (s *Screen) DeployParkedBuildBench() {
 
 	var constructor, engineer, sentryConstructor, sentryEngineer *game.UnitInfo
 	var depot, turret, plant, antiAir, habitat, air, tank *game.UnitInfo
+	var standing, working *game.UnitInfo
 
 	scenarios := []parkedBuildScenario{
 		{w: 4, h: 5, title: "H13 Air Transport cannot load a parked builder",
@@ -98,6 +113,35 @@ func (s *Screen) DeployParkedBuildBench() {
 				habitat = s.benchPlaceBuilding(assets.Habitat, player, x+1, y+1, true)
 				return game.Point{X: x + 2, Y: y + 2}, habitat
 			}},
+		{w: 9, h: 5, title: "N4 hit flash on a Constructor",
+			text: "the Rocket Launcher is out of range: drive it in and fire at both enemy Constructors (End Turn to reload); each hit flash and the death blast sit on the drawn Constructor, the working one centred on its 2x2 site",
+			deploy: func(x, y int) (game.Point, *game.UnitInfo) {
+				const enemy = 1
+				turretFlags := landFlags | game.FlagTurretSprite
+
+				// The two targets stand more than the rocket blast radius (2) apart, so one rocket never hits both.
+				standing = s.deployUnit(assets.Constrct, builderFlags, enemy, 6, x+8, y)
+				working = s.deployUnit(assets.Constrct, builderFlags, enemy, 6, x+8, y+4)
+				s.startBenchSiteBuild(working, assets.LightPlt, bigFlags, x+7, y+3) // the builder sits on the lower right corner
+
+				for _, u := range []*game.UnitInfo{standing, working} {
+					u.Values.Set(game.AttribHits, parkedBuildBenchTargetHits)
+					u.Hits = parkedBuildBenchTargetHits
+				}
+
+				// The launcher starts about 7 cells from the nearest target with a range of 6: no fire until the player moves it.
+				// Upgraded: double speed, four shots a turn and a large ammo load.
+				launcher := s.deployUnit(assets.RocktLch, turretFlags, player, 2, x, y+2)
+				launcher.Values.Set(game.AttribRange, parkedBuildBenchRocketRange)
+				launcher.Values.Set(game.AttribSpeed, launcher.Values.Get(game.AttribSpeed)*2)
+				launcher.Values.Set(game.AttribRounds, parkedBuildBenchRocketRounds)
+				launcher.Values.Set(game.AttribAmmo, parkedBuildBenchRocketAmmo)
+				launcher.InitState()
+
+				s.freezeBenchTeam(enemy)
+				s.keepBenchTeamInPlay(enemy)
+				return game.Point{X: x + 4, Y: y + 2}, launcher
+			}},
 	}
 
 	for _, sc := range scenarios {
@@ -127,12 +171,42 @@ func (s *Screen) DeployParkedBuildBench() {
 	s.r.SetZoom(parkedBuildBenchZoom)
 	s.startBench("Parked builder bench. H10: every unit is a 2x2 minimap blip (1 pixel for mobile units with 2X on).")
 
-	dbg.Printf("parkedbuild bench: H13 constructor ready=%v depot hidden=%v; H14 engineer ready=%v turret hidden=%v; H2 constructor ready=%v plant hidden=%v, engineer ready=%v antiair hidden=%v; habitat running=%v",
+	dbg.Printf("parkedbuild bench: H13 constructor ready=%v depot hidden=%v; H14 engineer ready=%v turret hidden=%v; H2 constructor ready=%v plant hidden=%v, engineer ready=%v antiair hidden=%v; habitat running=%v; N4 standing=%v working posed=%v",
 		constructor != nil && s.game.IsBuildReady(constructor), depot != nil && depot.HiddenUntilExpand,
 		engineer != nil && s.game.IsBuildReady(engineer), turret != nil && turret.HiddenUntilExpand,
 		sentryConstructor != nil && s.game.IsBuildReady(sentryConstructor), plant != nil && plant.HiddenUntilExpand,
 		sentryEngineer != nil && s.game.IsBuildReady(sentryEngineer), antiAir != nil && antiAir.HiddenUntilExpand,
-		habitat != nil && habitat.Order == game.OrderPowerOn)
+		habitat != nil && habitat.Order == game.OrderPowerOn,
+		standing != nil, working != nil && working.Building)
+}
+
+// keepBenchTeamInPlay stops the default win rule from counting team as beaten while it still has units: two
+// unarmed Constructors with no Engineer can neither fight nor build, so the first End Turn would end the game.
+// Every other team keeps the default rule; the game still ends once team's last unit is gone.
+func (s *Screen) keepBenchTeamInPlay(team int) {
+	s.game.WinLossConditions = func(t int) (winloss.TeamStatus, bool) {
+		if t < 0 || t >= game.TeamCount || s.game.State.Teams[t].Type == game.TeamNone || t == team {
+			return winloss.StatusGeneric, true
+		}
+		if !s.game.TeamIsAlive(t) {
+			return winloss.StatusLost, true
+		}
+		return winloss.StatusGeneric, true
+	}
+}
+
+// startBenchSiteBuild has builder start raising a long build of type t on the 2x2 site anchored at (gx, gy),
+// so it stays posed over the site for the whole bench.
+func (s *Screen) startBenchSiteBuild(builder *game.UnitInfo, t assets.UnitType, flags game.Flags, gx, gy int) {
+	product := game.NewUnitInfo(t, builder.Team, s.spawnSeq+1, 0)
+	product.Flags = flags
+	product.Values = s.teamValues(builder.Team, t)
+	product.Values.Set(game.AttribTurns, 20)
+	product.InitState()
+	s.spawnSeq++
+
+	builder.Storage = builder.Values.Get(game.AttribStorage)
+	s.game.StartBuild(builder, product, gx, gy, 1)
 }
 
 // landBlockNear returns the top left of a w x h block of land with no unit on it, nearest to anchor and at

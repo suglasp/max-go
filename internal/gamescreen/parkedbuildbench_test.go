@@ -13,6 +13,7 @@ import (
 	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
+	"github.com/suglasp/max-go/internal/winloss"
 	"github.com/suglasp/max-go/internal/world"
 )
 
@@ -52,8 +53,8 @@ func TestParkedBuildBench(t *testing.T) {
 	s := &Screen{game: g, wmap: m, r: drawmap.New(m)}
 	s.DeployParkedBuildBench()
 
-	if n := len(s.bench.stops); n != 5 {
-		t.Fatalf("%d stops, want 5 (H13, H14, H2, H15, H17)", n)
+	if n := len(s.bench.stops); n != 6 {
+		t.Fatalf("%d stops, want 6 (H13, H14, H2, H15, H17, N4)", n)
 	}
 	checkBenchStopsApart(t, s.bench.stops)
 
@@ -76,7 +77,7 @@ func TestParkedBuildBench(t *testing.T) {
 
 	idle := 0
 	for _, u := range g.Units.Units() {
-		if (u.Type == assets.Constrct || u.Type == assets.Engineer) && !g.IsBuildReady(u) {
+		if u.Team == 0 && (u.Type == assets.Constrct || u.Type == assets.Engineer) && !g.IsBuildReady(u) {
 			idle++
 		}
 	}
@@ -85,6 +86,51 @@ func TestParkedBuildBench(t *testing.T) {
 	}
 	if habitat := benchUnit(s, assets.Habitat); habitat == nil || habitat.Order != game.OrderPowerOn {
 		t.Error("the H17 Habitat is missing or not running")
+	}
+
+	// N4: two enemy Constructors, one posed on the lower right corner of a 2x2 site, and a player Rocket
+	// Launcher out of range of both.
+	var launcher *game.UnitInfo
+	var targets []*game.UnitInfo
+	for _, u := range g.Units.Units() {
+		switch {
+		case u.Type == assets.RocktLch && u.Team == 0:
+			launcher = u
+		case u.Type == assets.Constrct && u.Team == 1:
+			targets = append(targets, u)
+		}
+	}
+	if launcher == nil || len(targets) != 2 {
+		t.Fatalf("N4: launcher %v, %d enemy Constructors, want a launcher and 2", launcher != nil, len(targets))
+	}
+	posed := 0
+	for _, c := range targets {
+		dx, dy := c.GridX-launcher.GridX, c.GridY-launcher.GridY
+		if r := launcher.Values.Get(game.AttribRange); dx*dx+dy*dy <= r*r {
+			t.Errorf("N4: the launcher starts in range of the Constructor at (%d,%d)", c.GridX, c.GridY)
+		}
+		if c.Building {
+			posed++
+			if c.BuildFootprint != 2 || c.GridX != c.BuildSiteX+1 || c.GridY != c.BuildSiteY+1 {
+				t.Errorf("N4: working Constructor at (%d,%d) site (%d,%d) n=%d, want the lower right corner of a 2x2",
+					c.GridX, c.GridY, c.BuildSiteX, c.BuildSiteY, c.BuildFootprint)
+			}
+		}
+	}
+	if posed != 1 {
+		t.Errorf("N4: %d posed enemy Constructors, want 1", posed)
+	}
+	if launcher.Shots != 4 || launcher.Ammo != 40 {
+		t.Errorf("N4: launcher shots %d ammo %d, want the upgraded 4 and 40", launcher.Shots, launcher.Ammo)
+	}
+	// The unarmed enemy team stays in play: an End Turn does not win the bench. Headless placeholder stats give
+	// every unit ammo, so empty the Constructors as the real ATTRIBS do.
+	for _, c := range targets {
+		c.Ammo = 0
+	}
+	g.UpdateEliminations()
+	if out := g.Outcome(); out != winloss.Continue {
+		t.Errorf("N4: outcome %v with both enemy Constructors alive, want the game to go on", out)
 	}
 
 	// H13: the Air Transport's Load refuses the parked Constructor; a click on it only selects it.
@@ -141,8 +187,8 @@ func TestParkedBuildBenchSnow(t *testing.T) {
 	s := benchScreen(t, "SNOW_1.WRL")
 	s.DeployParkedBuildBench()
 
-	if n := len(s.bench.stops); n != 5 {
-		t.Fatalf("%d stops on SNOW_1, want 5", n)
+	if n := len(s.bench.stops); n != 6 {
+		t.Fatalf("%d stops on SNOW_1, want 6", n)
 	}
 	checkBenchStopsApart(t, s.bench.stops)
 	if n := len(s.game.BuildReadyUnits(0)); n != 4 {
