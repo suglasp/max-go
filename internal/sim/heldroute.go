@@ -39,16 +39,23 @@ func (g *Game) HaltForEnemy(u *game.UnitInfo) {
 	// What is left of the drive: the active order's remainder, or an already shelved
 	// route if the unit was between turns when it spotted something.
 	steps := append([]paths.Step(nil), g.remainingRoute(u)...)
+	moving := g.activeOrder(u) != nil
 
 	g.cancel(u)
 	delete(g.pending, u) // the hold replaces the shelved route, so it resumes only once
 	u.AttackTarget = nil // and it is no longer chasing anything
 
-	if len(steps) == 0 {
-		return // nowhere left to go: nothing worth holding
+	if len(steps) > 0 {
+		g.holdRoute(u, steps)
 	}
 
-	g.holdRoute(u, steps)
+	// The halt ends this move as any stop does, so the enemies that can see the unit get their reaction shot. The
+	// mid cell branch above reacts once Tick settles the crossing; a shelved route between turns did not move.
+	// It runs after the hold, so a kill purges the held route with the unit.
+	// C++ ported : unitinfo.cpp - UnitInfo::MoveFinished (the halt ends the move and queues the reaction)
+	if moving {
+		g.checkReactions(u)
+	}
 }
 
 // holdRoute stores steps as u's held route.

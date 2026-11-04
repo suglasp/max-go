@@ -8,6 +8,7 @@ package sim
 import (
 	"testing"
 
+	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/game"
 )
 
@@ -243,5 +244,86 @@ func TestAnyNewRouteDropsTheHeldOne(t *testing.T) {
 	g.ResolveMovement()
 	if other.GridX != 10 || other.GridY != 4 {
 		t.Errorf("queued tank at (%d,%d), want its new destination (10,4), not the old held one", other.GridX, other.GridY)
+	}
+}
+
+// addHarmlessMover deploys an unarmed enemy vehicle with a full move budget (30 hits, no weapon).
+func addHarmlessMover(g *Game, id, team, gx, gy int) *game.UnitInfo {
+	u := game.NewUnitInfo(assets.Tank, team, id, 2)
+	u.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+	u.Values = &game.UnitValues{}
+	u.Values.Set(game.AttribHits, 30)
+	u.Values.Set(game.AttribSpeed, 16)
+	u.InitState()
+	g.Units.Deploy(u, gx, gy)
+	return u
+}
+
+// haltSetup builds a simultaneous game with a player Gun Turret (range 4) beside the route of an enemy
+// vehicle that has just started a move east, still on its first cell.
+func haltSetup(t *testing.T) (*Game, *game.UnitInfo, *game.UnitInfo) {
+	t.Helper()
+	g := newGame(t, 16, 4)
+	g.State.PlayMode = game.PlaySimultaneous
+	turret := addReactor(g, assets.GunTurrt, 1, 0, 3, 2, 4, 8, reactBuilding)
+	mover := addHarmlessMover(g, 2, 1, 1, 1)
+	g.State.ActiveTeam = 1
+	g.RefreshVisibility()
+	if !g.OrderMove(mover, 7, 1) {
+		t.Fatal("OrderMove should route across open land")
+	}
+	return g, turret, mover
+}
+
+// TestHaltedMoverDrawsReactionFire checks that a unit stopped by the enemy halt ends its move like any other stop,
+// so a player unit on Sentry in range gets its reaction shot.
+func TestHaltedMoverDrawsReactionFire(t *testing.T) {
+	g, turret, mover := haltSetup(t)
+	turret.Order = game.OrderSentry
+
+	g.HaltForEnemy(mover)
+
+	if mover.Hits >= 30 {
+		t.Errorf("the Sentry turret did not react to the halted mover (hits %d)", mover.Hits)
+	}
+	if got := len(g.DrainReactions()); got != 1 {
+		t.Errorf("reaction events = %d, want 1", got)
+	}
+	if len(g.HeldRoute(mover)) == 0 {
+		t.Error("the halted mover lost its held route")
+	}
+}
+
+// TestHaltedMoverKeepsTheSimultaneousGate checks that the halt adds no shot the reaction rules refuse: in
+// simultaneous play a player unit that is not on Sentry lets a harmless mover be.
+func TestHaltedMoverKeepsTheSimultaneousGate(t *testing.T) {
+	g, turret, mover := haltSetup(t)
+	turret.Order = game.OrderAwait
+
+	g.HaltForEnemy(mover)
+
+	if mover.Hits != 30 || turret.Shots != 1 {
+		t.Errorf("an awaiting turret fired at a harmless halted mover (hits %d, shots %d)", mover.Hits, turret.Shots)
+	}
+}
+
+// TestHaltedMoverKilledByReactionLeavesNoHeldRoute checks that a mover destroyed by the reaction to its halt leaves
+// no held route behind, and that a second halt of the dead unit does nothing.
+func TestHaltedMoverKilledByReactionLeavesNoHeldRoute(t *testing.T) {
+	g, turret, mover := haltSetup(t)
+	turret.Order = game.OrderSentry
+	turret.Values.Set(game.AttribAttack, 200)
+
+	g.HaltForEnemy(mover)
+
+	if mover.Hits > 0 {
+		t.Fatalf("the reaction did not destroy the mover (hits %d)", mover.Hits)
+	}
+	if len(g.HeldRoute(mover)) != 0 {
+		t.Error("a destroyed mover kept a held route")
+	}
+	g.HaltForEnemy(mover)
+	if len(g.HeldRoute(mover)) != 0 {
+		t.Error("halting a destroyed unit stored a route")
 	}
 }
