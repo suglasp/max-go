@@ -84,6 +84,17 @@ func rebindStdio() {
 	if err != nil {
 		return
 	}
+	swapStdio(out)
+}
+
+// replacedStdio holds the std files that swapStdio replaced, for the whole run. FreeConsole already closed their
+// handles and Windows reuses those values, so a collected file would close a handle that is no longer its own
+// (a runtime semaphore makes the game die at start). These files are never closed.
+var replacedStdio []*os.File
+
+// swapStdio points os.Stdout, os.Stderr and the log package at out, keeping the replaced files referenced.
+func swapStdio(out *os.File) {
+	replacedStdio = append(replacedStdio, os.Stdout, os.Stderr)
 	os.Stdout = out
 	os.Stderr = out
 	log.SetOutput(out)

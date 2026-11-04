@@ -5,7 +5,8 @@ Check the version file next to the game executables.
 
 ## 1.0.1.2 (in development)
 
-No changes yet.
+### Fixes
+- On Windows, fixed race condition that could crash the game at startup when the debug console is switched on.
 
 
 ## 1.0.1.1 (2026-11-03)
