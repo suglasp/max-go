@@ -37,6 +37,24 @@ func (s *Screen) canSeeTargetAt(attacker *game.UnitInfo, cellX, cellY int) bool 
 	return true
 }
 
+// canTargetVisible reports whether attacker may fire on (cellX, cellY) by a player order: the sim allows the shot (a
+// forced one when force is set) and the target is a unit the player can see, so no cursor or click ever finds an
+// enemy hidden by fog or stealth (a submerged Submarine).
+// C++ ported : game_manager.cpp - GameManager_GetMilitaryCursor (the target must be visible to the team)
+func (s *Screen) canTargetVisible(attacker *game.UnitInfo, cellX, cellY int, force bool) bool {
+	if force {
+		return s.game.CanForceAttack(attacker, cellX, cellY) && s.canSeeTargetAt(attacker, cellX, cellY)
+	}
+
+	return s.game.CanAttack(attacker, cellX, cellY) && s.canSeeTargetAt(attacker, cellX, cellY)
+}
+
+// canFarTargetVisible reports whether (cellX, cellY) holds an out of range enemy the player can see, worth a move to
+// attack.
+func (s *Screen) canFarTargetVisible(attacker *game.UnitInfo, cellX, cellY int) bool {
+	return s.game.CanFarTarget(attacker, cellX, cellY) && s.canSeeTargetAt(attacker, cellX, cellY)
+}
+
 // armAttack arms a target pick from the popup's Attack order: the unit becomes
 // selected (ENMY_PTR cursor lights valid targets) and the next left click fires.
 // C++: UnitsManager_Popup_OnClick_Attack.
@@ -327,13 +345,13 @@ func (s *Screen) handleAttackPick(mouse platform.MouseState) bool {
 		if mouse.Buttons&platform.MouseReleaseLeft != 0 {
 			if cellX, cellY, ok := s.mapCell(mouse.X, mouse.Y); ok && s.selected != nil {
 				force := s.forceModifierHeld() // SHIFT/CTRL: force attack whatever is under the pointer
-				if force && s.game.CanForceAttack(s.selected, cellX, cellY) {
+				if force && s.canTargetVisible(s.selected, cellX, cellY, true) {
 					s.attack(cellX, cellY, true)
 					s.orderInput.attackArmed = false
 					return true
 				}
 
-				if s.game.CanAttack(s.selected, cellX, cellY) {
+				if s.canTargetVisible(s.selected, cellX, cellY, false) {
 					s.attack(cellX, cellY, false)
 					s.orderInput.attackArmed = false
 					return true
@@ -443,7 +461,7 @@ func (s *Screen) handleRepairPick(mouse platform.MouseState) bool {
 // through to select or move. C++: GameManager left click ORDER_FIRE / ORDER_MOVE_TO_ATTACK.
 func (s *Screen) clickCombat(cellX, cellY int) bool {
 	if sel := s.selected; sel != nil && sel.Team == s.game.State.ActiveTeam &&
-		s.forceModifierHeld() && s.game.CanForceAttack(sel, cellX, cellY) {
+		s.forceModifierHeld() && s.canTargetVisible(sel, cellX, cellY, true) {
 		s.attack(cellX, cellY, true)
 
 		return true
@@ -453,7 +471,7 @@ func (s *Screen) clickCombat(cellX, cellY int) bool {
 	// range falls through to select/move. canSeeTargetAt blocks a blind fire into fog.
 	// C++: GameManager left click ORDER_FIRE on the enemy target cursor.
 	if sel := s.selected; sel != nil && sel.Team == s.game.State.ActiveTeam &&
-		s.game.CanAttack(sel, cellX, cellY) && s.canSeeTargetAt(sel, cellX, cellY) {
+		s.canTargetVisible(sel, cellX, cellY, false) {
 		if len(s.selectionSet()) > 1 {
 			s.orderGroupAttack(cellX, cellY) // the whole group fires (or closes on) the target
 		} else {
@@ -465,7 +483,7 @@ func (s *Screen) clickCombat(cellX, cellY int) bool {
 
 	// Enemy out of range with a mobile armed unit selected: move to attack, driving
 	// to firing range and pursuing. C++: CURSOR_FAR_TARGET -> ORDER_MOVE_TO_ATTACK.
-	if sel := s.selected; sel != nil && sel.Team == s.game.State.ActiveTeam && s.game.CanFarTarget(sel, cellX, cellY) {
+	if sel := s.selected; sel != nil && sel.Team == s.game.State.ActiveTeam && s.canFarTargetVisible(sel, cellX, cellY) {
 		if len(s.selectionSet()) > 1 {
 			s.orderGroupAttack(cellX, cellY) // the whole group pursues (in range members fire)
 		} else {

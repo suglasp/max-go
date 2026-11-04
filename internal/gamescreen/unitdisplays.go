@@ -38,6 +38,12 @@ func (s *Screen) drawUnitDisplays(view *gfx.Buffer) {
 			continue
 		}
 
+		// Only a unit the player can see gets a display: not a building hidden behind its parked builder, not an
+		// undetected stealth unit (a submerged Submarine), not an enemy in the fog. The sprite pass skips them too.
+		if u.HiddenUntilExpand || s.stealthHidden(u) || (s.fogShow && !s.unitVisibleToPlayer(u)) {
+			continue
+		}
+
 		// Footprint: a 2x2 building, else a single cell. Screen rect at the zoom.
 		n := 1
 

@@ -149,23 +149,29 @@ func (s *Screen) cursorContext() cursors.ID {
 	// force fire by clicking the target directly, without arming Attack from the popup
 	// (vanilla has no Attack order). The normal enemy attack cursor is handled by
 	// pickCursor below. C++: GameManager_GetMilitaryCursor CURSOR_ATTACK_SHIFT/CTRL.
-	if hasSelection && s.forceModifierHeld() && s.game.CanForceAttack(sel, cellX, cellY) {
+	if hasSelection && s.forceModifierHeld() && s.canTargetVisible(sel, cellX, cellY, true) {
 		return cursors.Enemy
 	}
 
+	return pickCursor(s.cellTarget(sel, cellX, cellY, hasSelection), sel, s.game.State.ActiveTeam, hasSelection)
+}
+
+// cellTarget gathers what the cursor needs to know about one map cell: the unit the player sees there and, with a
+// unit selected, whether it can attack, enter or close on that cell.
+func (s *Screen) cellTarget(sel *game.UnitInfo, cellX, cellY int, hasSelection bool) cellCursorTarget {
 	t := cellCursorTarget{occupant: s.topUnitAt(cellX, cellY)}
 
 	if hasSelection {
-		t.canAttack = s.game.CanAttack(sel, cellX, cellY)
+		t.canAttack = s.canTargetVisible(sel, cellX, cellY, false) // an enemy the player cannot see is no target
 		// canEnter reflects terrain reachability only, NOT the budget for each turn: a
 		// unit out of moves still shows the GO cursor, because clicking now queues
 		// the route for next turn (the green/blue arrows). Vanilla confirmed to
 		// keep the go here cursor at 0 moves; it just reroutes or defers the move.
 		t.canEnter = s.game.CanEnter(sel, cellX, cellY)
-		t.canFarTarget = s.game.CanFarTarget(sel, cellX, cellY)
+		t.canFarTarget = s.canFarTargetVisible(sel, cellX, cellY)
 	}
 
-	return pickCursor(t, sel, s.game.State.ActiveTeam, hasSelection)
+	return t
 }
 
 // cursorForArmedOrder returns the pointer for whichever order the player has armed from
@@ -256,11 +262,11 @@ func (s *Screen) cursorForArmedOrder(cellX, cellY int) (id cursors.ID, armed boo
 	// under the pointer is a valid target too. C++: the CURSOR_ATTACK / the
 	// CURSOR_ATTACK_SHIFT force target pick in GameManager_GetMilitaryCursor.
 	if s.orderInput.attackArmed && s.selected != nil {
-		if s.forceModifierHeld() && s.game.CanForceAttack(s.selected, cellX, cellY) {
+		if s.forceModifierHeld() && s.canTargetVisible(s.selected, cellX, cellY, true) {
 			return cursors.Enemy, true
 		}
 
-		if s.game.CanAttack(s.selected, cellX, cellY) {
+		if s.canTargetVisible(s.selected, cellX, cellY, false) {
 			return cursors.Enemy, true
 		}
 

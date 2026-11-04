@@ -290,11 +290,11 @@ func (s *Screen) orderGroupAttack(cellX, cellY int) {
 		}
 
 		switch {
-		case s.game.CanAttack(u, cellX, cellY) && s.canSeeTargetAt(u, cellX, cellY):
+		case s.canTargetVisible(u, cellX, cellY, false):
 			s.attackWith(u, cellX, cellY, false)
 			fired = true
 
-		case s.game.CanFarTarget(u, cellX, cellY):
+		case s.canFarTargetVisible(u, cellX, cellY):
 			s.game.OrderMoveToAttack(u, cellX, cellY)
 			pursued = true
 

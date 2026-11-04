@@ -11,6 +11,8 @@ Check the version file next to the game executables.
   and the insufficient material warning shows, instead of starting the next cell and taking it down again.
 - The hit flash and the explosion animation of a Constructor building a 2x2 building, show over the center construction site where the Constructor is drawn, instead of lower left corner.
 - Units that stop because they spot an enemy now draw reaction fire, so defences and units on Sentry shoot at enemies that halt in their scan range.
+- Hidden enemies, such as a submerged Submarine, no longer show through the attack cursor or the Colors, Status, Hits
+  and Ammo displays, and cannot be targeted blind.
 
 
 ## 1.0.1.1 (2026-11-03)
