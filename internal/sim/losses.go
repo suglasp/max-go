@@ -107,6 +107,14 @@ func (g *Game) DestroyUnit(u *game.UnitInfo) {
 		g.Units.Remove(br.Building)
 	}
 
+	// A factory destroyed with a finished unit still waiting inside takes that unit with it: it was never unloaded,
+	// so it is lost with the factory and leaves nothing on the factory's cells. No casualty tally, no rubble.
+	// C++ ported : units_manager.cpp - UnitsManager_DestroyUnit (SetParent(nullptr): the held output goes with the factory)
+	if br := g.buildReady[u]; br != nil && br.Factory && br.Building != nil && br.Building.HiddenUntilExpand {
+		g.purgeUnit(br.Building)
+		g.Units.Remove(br.Building)
+	}
+
 	site := g.constructionSite(u) // read before purgeUnit drops the build order
 	g.purgeUnit(u)
 	g.recordCasualty(u)     // score screen tally (buildings / units lost, incl. any carried)
@@ -178,4 +186,29 @@ func (g *Game) purgeUnit(u *game.UnitInfo) {
 		g.syncComplexes()
 		dbg.Printf("destroy: building type=%d team=%d left complex %d (complex workers before: housed=%d drawn=%d); economy reconciles next turn", u.Type, u.Team, c.ID, housedBefore, drawnBefore)
 	}
+}
+
+// DropOrphanParkedUnits removes every mobile unit that is still hidden as a parked factory output while no factory
+// holds it any more, and returns how many it removed. A save from before factories took their parked unit with them
+// can hold such a unit: invisible, yet blocking its cell. The load calls this once the build ready records are back.
+func (g *Game) DropOrphanParkedUnits() int {
+	held := make(map[*game.UnitInfo]bool)
+	for _, br := range g.buildReady {
+		if br != nil && br.Building != nil {
+			held[br.Building] = true
+		}
+	}
+
+	removed := 0
+	for _, u := range g.Units.Units() {
+		if !u.HiddenUntilExpand || held[u] || u.Flags.Has(game.FlagStationary) {
+			continue
+		}
+		dbg.Printf("load: drop %s id=%d at (%d,%d), a parked unit whose factory is gone", u.Type.Tag(), u.ID, u.GridX, u.GridY)
+		g.purgeUnit(u)
+		g.Units.Remove(u)
+		removed++
+	}
+
+	return removed
 }

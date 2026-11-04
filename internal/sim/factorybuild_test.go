@@ -332,3 +332,57 @@ func TestFactoryQueueProducesFromComplex(t *testing.T) {
 		t.Errorf("scouts produced from the complex = %d, want 1", got)
 	}
 }
+
+// TestFactoryDestroyedTakesItsParkedUnit checks that a unit still waiting in its factory dies with the factory: it
+// leaves no hidden unit behind to block the factory's cells.
+func TestFactoryDestroyedTakesItsParkedUnit(t *testing.T) {
+	g := newGame(t, 16, 16)
+	g.Resources = economy.NewResourceMap(16, 16)
+	g.MakeUnit = factoryUnitMaker(2)
+	f := placeFactory(g, 4, 2)
+	g.SetFactoryQueue(f, []assets.UnitType{assets.Tank}, 1, false)
+	buildUntilReady(t, g, f)
+	parked := g.BuildReadyInfo(f).Building
+	if parked == nil || !parked.HiddenUntilExpand {
+		t.Fatal("setup: no hidden unit parked in the factory")
+	}
+
+	g.DestroyUnit(f)
+
+	if countType(g, assets.Tank) != 0 || g.Units.ByID.Get(parked.ID) != nil {
+		t.Error("the unit parked in the destroyed factory survived")
+	}
+	for _, u := range g.Units.Cells.At(4, 2) {
+		if u == parked {
+			t.Error("the parked unit still blocks the factory's cell")
+		}
+	}
+}
+
+// TestDropOrphanParkedUnits checks the load cleanup: a hidden unit no factory holds any more is removed, while the
+// unit parked in a standing factory stays.
+func TestDropOrphanParkedUnits(t *testing.T) {
+	g := newGame(t, 16, 16)
+	g.Resources = economy.NewResourceMap(16, 16)
+	g.MakeUnit = factoryUnitMaker(2)
+	f := placeFactory(g, 4, 2)
+	g.SetFactoryQueue(f, []assets.UnitType{assets.Tank}, 1, false)
+	buildUntilReady(t, g, f)
+	kept := g.BuildReadyInfo(f).Building
+
+	orphan := game.NewUnitInfo(assets.MisslLch, 0, 900, 0)
+	orphan.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+	orphan.Values = &game.UnitValues{}
+	g.Units.Deploy(orphan, 10, 10)
+	orphan.HiddenUntilExpand = true // a save from before the fix: its factory is gone
+
+	if n := g.DropOrphanParkedUnits(); n != 1 {
+		t.Errorf("removed %d orphans, want 1", n)
+	}
+	if g.Units.ByID.Get(orphan.ID) != nil || len(g.Units.Cells.At(10, 10)) != 0 {
+		t.Error("the orphaned hidden unit is still on the map")
+	}
+	if g.Units.ByID.Get(kept.ID) == nil {
+		t.Error("the unit parked in a standing factory was removed")
+	}
+}

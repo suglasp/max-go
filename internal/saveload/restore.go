@@ -206,6 +206,10 @@ func (s *Snapshot) restoreFieldState(g *sim.Game, byID map[uint16]*game.UnitInfo
 		building := byID[brs.BuildingID] // nil if the structure was not saved
 		g.RestoreBuildReady(builder, building, assets.UnitType(brs.Product), brs.SiteX, brs.SiteY, brs.Footprint)
 	}
+
+	// A unit still parked in a factory that was destroyed before that factory took it along is an invisible blocker:
+	// it dies with its factory, so drop it now.
+	g.DropOrphanParkedUnits()
 }
 
 // restoreTurnState puts back the state of the match itself: the turn counter and phase,
