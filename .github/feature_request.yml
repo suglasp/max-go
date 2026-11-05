@@ -1,0 +1,50 @@
+name: Feature request
+description: Suggest a new feature, gameplay change or improvement for max-go
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's missing or could be better?
+      placeholder: When managing a large army it's hard to find idle units ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Your idea
+      description: Describe how it should work in-game. Mockups or sketches are welcome.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Gameplay / rules
+        - AI
+        - UI / controls
+        - Graphics / sound
+        - Multiplayer
+        - Modding / map editor
+        - Faithfulness to the original game
+        - Other
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives / workarounds
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to help implement this.

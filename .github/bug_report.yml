@@ -1,0 +1,172 @@
+name: Bug report
+description: Report a bug, crash or glitch in max-go
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! The more of this you fill in, the faster we can find and fix it.
+        **A savegame is the most useful thing you can give us.**
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug in a few sentences.
+      placeholder: My tank fired through a wall and the game froze.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Bug type
+      options:
+        - Crash / freeze
+        - Gameplay / rules (units, combat, movement, economy)
+        - AI behaviour
+        - Graphics / animation
+        - Sound / music
+        - UI / menus / controls
+        - Save / load
+        - Multiplayer / network
+        - Performance (low FPS, stutter, lag)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reproducible
+    attributes:
+      label: Can you reproduce it?
+      options:
+        - Always (every time)
+        - Often (more than half the time)
+        - Sometimes
+        - Happened once
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: What did you do right before the bug? Map, units involved, actions taken.
+      placeholder: |
+        1. Load the attached savegame
+        2. Select the tank at the north bridge
+        3. Order an attack on the enemy factory
+        4. Game freezes
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Game version
+      description: Release tag or commit hash (shown in the main menu or via `--version`).
+      placeholder: v0.4.1 / abc1234
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Game mode
+      options:
+        - Single player (vs AI)
+        - Hot seat
+        - Multiplayer (LAN)
+        - Multiplayer (online)
+        - Campaign / mission
+        - Map editor
+        - Other
+    validations:
+      required: false
+
+  - type: input
+    id: map
+    attributes:
+      label: Map / mission
+      placeholder: Green Hell, turn 42
+    validations:
+      required: false
+
+  - type: textarea
+    id: savegame
+    attributes:
+      label: Savegame
+      description: |
+        Zip your savegame (the closer to the bug, the better) and drag & drop the `.zip` here.
+        If you have a save from *before* the bug that leads straight into it, that's ideal.
+      placeholder: Drag & drop savegame.zip here
+    validations:
+      required: false
+
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots / video
+      description: Drag & drop screenshots or a short clip. Very helpful for graphics, animation and UI bugs.
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output / crash dump
+      description: Paste the console output or log file. For crashes, include the full panic / stack trace.
+      render: shell
+    validations:
+      required: false
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - Linux
+        - macOS
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: system
+    attributes:
+      label: System details
+      description: Only needed for crash, graphics or performance bugs.
+      placeholder: |
+        OS version: Windows 11 23H2 / Ubuntu 24.04
+        CPU / GPU: Ryzen 5 5600 / RTX 3060
+        GPU driver: 560.94
+        Resolution / fullscreen: 1920x1080 windowed
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Anything else?
+      description: Mods, changed settings, workarounds you found, related issues.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: I tested on the latest release or main branch.
+          required: false
