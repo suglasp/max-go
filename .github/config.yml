@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Questions & discussion
-    url: https://github.com/OWNER/REPO/discussions
+    url: https://github.com/suglasp/max-go/discussions
     about: Ask questions and discuss ideas here instead of opening an issue.
   - name: Security vulnerability
-    url: https://github.com/OWNER/REPO/security/advisories/new
+    url: https://github.com/suglasp/max-go/security/advisories/new
     about: Please report security issues privately.
