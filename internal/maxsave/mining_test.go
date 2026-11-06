@@ -9,14 +9,13 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/suglasp/max-go/internal/testutil"
 )
 
 // TestMissionMiningStationsCarryTheirAllocation checks that V70 mining bytes restore raw, fuel, gold, and deposit-cap allocations for mission stations.
 func TestMissionMiningStationsCarryTheirAllocation(t *testing.T) {
-	dir := os.Getenv("MAX_DATA_DIR")
-	if dir == "" {
-		t.Skip("MAX_DATA_DIR not set")
-	}
+	dir := testutil.DataDir(t)
 
 	// SAVE1.TRA is Mining and Storage - the lesson that is ABOUT the mining station.
 	data, err := os.ReadFile(filepath.Join(dir, "SAVE1.TRA"))

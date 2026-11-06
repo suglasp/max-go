@@ -6,13 +6,13 @@
 package gamescreen
 
 import (
-	"os"
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/flic"
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/resfile"
+	"github.com/suglasp/max-go/internal/testutil"
 )
 
 func TestPortraitResTag(t *testing.T) {
@@ -41,10 +41,7 @@ func TestPortraitFileName(t *testing.T) {
 // TestPortraitPipeline walks the real data path: F_<tag> resource -> loose .FLC
 // file -> decoded first frame, for the few units whose portraits should exist.
 func TestPortraitPipeline(t *testing.T) {
-	dir := os.Getenv("MAX_DATA_DIR")
-	if dir == "" {
-		t.Skip("MAX_DATA_DIR unset")
-	}
+	dir := testutil.DataDir(t)
 	lib, err := resfile.OpenDir(dir)
 	if err != nil {
 		t.Fatal(err)

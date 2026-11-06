@@ -7,12 +7,12 @@ package gamescreen
 
 import (
 	"math/rand"
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/landmass"
+	"github.com/suglasp/max-go/internal/testutil"
 	"github.com/suglasp/max-go/internal/world"
 )
 
@@ -89,10 +89,7 @@ func TestStartRoomNeeded(t *testing.T) {
 // TestStartSpotsHaveRoomOnRetailMaps lands 2 to 4 teams on every retail map with many seeds: each spot must sit on
 // an island holding the needed land, unless the map has no such island at all.
 func TestStartSpotsHaveRoomOnRetailMaps(t *testing.T) {
-	dir := os.Getenv("MAX_DATA_DIR")
-	if dir == "" {
-		t.Skip("game data not found (set MAX_DATA_DIR)")
-	}
+	dir := testutil.DataDir(t)
 	files, _ := filepath.Glob(filepath.Join(dir, "*.WRL"))
 	if len(files) == 0 {
 		t.Skip("no .WRL maps in MAX_DATA_DIR")

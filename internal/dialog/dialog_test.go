@@ -8,13 +8,13 @@ package dialog
 import (
 	"crypto/sha256"
 	"fmt"
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/suglasp/max-go/internal/fonts"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/gfx"
+	"github.com/suglasp/max-go/internal/testutil"
 )
 
 func TestLayout(t *testing.T) {
@@ -151,10 +151,7 @@ func solid(w, h int, color uint8) *gfx.Buffer {
 
 func loadFont5(t *testing.T) *fonts.Font {
 	t.Helper()
-	dir := os.Getenv("MAX_DATA_DIR")
-	if dir == "" {
-		t.Skip("game data not found (set MAX_DATA_DIR)")
-	}
+	dir := testutil.DataDir(t)
 	f, err := fonts.LoadFile(filepath.Join(dir, "FONT5.FON"))
 	if err != nil {
 		t.Skipf("FONT5.FON not available: %v", err)

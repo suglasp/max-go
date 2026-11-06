@@ -6,7 +6,6 @@
 package gamescreen
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -14,16 +13,14 @@ import (
 	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
+	"github.com/suglasp/max-go/internal/testutil"
 	"github.com/suglasp/max-go/internal/world"
 )
 
 // benchScreen builds a headless Screen on the retail map file (MAX_DATA_DIR), or skips the test.
 func benchScreen(t *testing.T, file string) *Screen {
 	t.Helper()
-	dir := os.Getenv("MAX_DATA_DIR")
-	if dir == "" {
-		t.Skip("game data not found (set MAX_DATA_DIR)")
-	}
+	dir := testutil.DataDir(t)
 	m, err := world.LoadMap(filepath.Join(dir, file))
 	if err != nil {
 		t.Skipf("%s: %v", file, err)

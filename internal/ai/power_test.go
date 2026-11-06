@@ -6,7 +6,6 @@
 package ai
 
 import (
-	"os"
 	"testing"
 
 	"github.com/suglasp/max-go/internal/access"
@@ -15,6 +14,7 @@ import (
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/resfile"
 	"github.com/suglasp/max-go/internal/sim"
+	"github.com/suglasp/max-go/internal/testutil"
 	"github.com/suglasp/max-go/internal/units"
 )
 
@@ -45,10 +45,7 @@ func TestAIWantsPowered(t *testing.T) {
 
 // TestAIBuildsAnArmy checks that the AI powers completed factories and produces units from real ATTRIBS data.
 func TestAIBuildsAnArmy(t *testing.T) {
-	dir := os.Getenv("MAX_DATA_DIR")
-	if dir == "" {
-		t.Skip("MAX_DATA_DIR not set: needs real ATTRIBS for a faithful economy")
-	}
+	dir := testutil.DataDir(t)
 
 	lib, err := resfile.OpenDir(dir)
 	if err != nil {

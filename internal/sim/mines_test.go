@@ -6,12 +6,12 @@
 package sim
 
 import (
-	"os"
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/resfile"
+	"github.com/suglasp/max-go/internal/testutil"
 )
 
 // addMineLayer deploys a mine layer of the given type loaded with `capacity` mines.
@@ -138,10 +138,7 @@ func TestMineDestroysWeakEnemy(t *testing.T) {
 // It is minted through the unit factory now, like any other unit, so it hits for the real
 // LANDMINE row (28 in the retail data) and the team's upgrades ride along.
 func TestLaidMineCarriesItsRealAttribs(t *testing.T) {
-	dir := os.Getenv("MAX_DATA_DIR")
-	if dir == "" {
-		t.Skip("MAX_DATA_DIR not set: needs the real ATTRIBS table")
-	}
+	dir := testutil.DataDir(t)
 
 	lib, err := resfile.OpenDir(dir)
 	if err != nil {

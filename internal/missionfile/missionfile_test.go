@@ -14,6 +14,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/suglasp/max-go/internal/testutil"
 )
 
 func TestReadInfoRetailSmartFiles(t *testing.T) {
@@ -112,11 +114,7 @@ func serializeInfo(info *Info) []byte {
 
 func dataDir(t *testing.T) string {
 	t.Helper()
-	dir := os.Getenv("MAX_DATA_DIR")
-	if dir == "" {
-		t.Skip("game data not found (set MAX_DATA_DIR)")
-	}
-	return dir
+	return testutil.DataDir(t)
 }
 
 func missionPaths(t *testing.T, dir string) []string {

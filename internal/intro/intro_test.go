@@ -14,6 +14,7 @@ import (
 
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/resfile"
+	"github.com/suglasp/max-go/internal/testutil"
 )
 
 func TestLogoPathUsesFakeClock(t *testing.T) {
@@ -67,10 +68,7 @@ func TestMissingResourceReturnsError(t *testing.T) {
 }
 
 func TestRealIntroMovieWhenDataAvailable(t *testing.T) {
-	dir := os.Getenv("MAX_DATA_DIR")
-	if dir == "" {
-		t.Skip("MAX_DATA_DIR not set")
-	}
+	dir := testutil.DataDir(t)
 	stage := newFakeStage()
 	stage.presentStep = 1000
 	err := Run(stage, dataReader{dir: dir, t: t}, Options{PlayMovie: true})

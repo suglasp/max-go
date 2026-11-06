@@ -8,12 +8,12 @@ package credits
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/suglasp/max-go/internal/fonts"
 	"github.com/suglasp/max-go/internal/gfx"
+	"github.com/suglasp/max-go/internal/testutil"
 )
 
 func TestDefaultLines(t *testing.T) {
@@ -102,10 +102,7 @@ func TestDrawSyntheticNoFontGolden(t *testing.T) {
 }
 
 func TestDrawWithFontWhenDataAvailable(t *testing.T) {
-	dir := os.Getenv("MAX_DATA_DIR")
-	if dir == "" {
-		t.Skip("MAX_DATA_DIR not set")
-	}
+	dir := testutil.DataDir(t)
 	font, err := fonts.LoadFile(filepath.Join(dir, "FONT1.FON"))
 	if err != nil {
 		t.Fatal(err)

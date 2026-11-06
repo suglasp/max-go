@@ -13,18 +13,35 @@ import (
 	"testing"
 )
 
-// DataDir returns the directory named by MAX_DATA_DIR. It skips the calling test when the variable is unset or the directory does not contain MAX.RES.
-func DataDir(t *testing.T) string {
-	t.Helper()
-
+// LookupDataDir returns the directory named by MAX_DATA_DIR and whether it holds MAX.RES. It never skips, so a fuzz target can add retail seeds when the data is there and still run its own seeds when it is not.
+func LookupDataDir() (string, bool) {
 	dir := os.Getenv("MAX_DATA_DIR")
 
 	if dir == "" {
-		t.Skip("game data not found (set MAX_DATA_DIR)")
+		return "", false
 	}
 
+	// A folder without MAX.RES is not a game data folder.
 	if _, err := os.Stat(filepath.Join(dir, "MAX.RES")); err != nil {
-		t.Skipf("game data not found in %q (set MAX_DATA_DIR): %v", dir, err)
+		return dir, false
+	}
+
+	return dir, true
+}
+
+// DataDir returns the directory named by MAX_DATA_DIR. It skips the calling test or fuzz target when the variable is unset or the directory does not contain MAX.RES.
+func DataDir(tb testing.TB) string {
+	tb.Helper()
+
+	dir, ok := LookupDataDir()
+
+	// Skip with the reason that tells the user what to set.
+	if dir == "" {
+		tb.Skip("game data not found (set MAX_DATA_DIR)")
+	}
+
+	if !ok {
+		tb.Skipf("game data not found in %q (set MAX_DATA_DIR): no MAX.RES", dir)
 	}
 
 	return dir

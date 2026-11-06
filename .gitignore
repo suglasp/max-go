@@ -69,3 +69,6 @@ max-go.log
 *.mps
 *.dmo
 *.rst
+
+# Fuzz crashers written by `go test -fuzz` may hold bytes from retail seeds: never commit them.
+**/testdata/fuzz/

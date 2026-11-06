@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/suglasp/max-go/internal/testutil"
 )
 
 // Retail M.A.X. maps are 112x112 cells.
@@ -16,11 +18,7 @@ const mapW, mapH = 112, 112
 
 func dataDir(t *testing.T) string {
 	t.Helper()
-	dir := os.Getenv("MAX_DATA_DIR")
-	if dir == "" {
-		t.Skip("game data not found (set MAX_DATA_DIR)")
-	}
-	return dir
+	return testutil.DataDir(t)
 }
 
 // loadSave reads and parses one retail save file.

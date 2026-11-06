@@ -6,20 +6,17 @@
 package gamescreen
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/suglasp/max-go/internal/fonts"
+	"github.com/suglasp/max-go/internal/testutil"
 )
 
 // loadFont5ForBanner loads the real FONT5 the banner uses (skips without data).
 func loadFont5ForBanner(t *testing.T) *fonts.Font {
 	t.Helper()
-	dir := os.Getenv("MAX_DATA_DIR")
-	if dir == "" {
-		t.Skip("game data not found (set MAX_DATA_DIR)")
-	}
+	dir := testutil.DataDir(t)
 	f, err := fonts.LoadFile(filepath.Join(dir, "FONT5.FON"))
 	if err != nil {
 		t.Skipf("FONT5.FON not available: %v", err)
