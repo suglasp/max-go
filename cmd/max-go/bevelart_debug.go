@@ -9,11 +9,11 @@ import (
 	"fmt"
 
 	"github.com/suglasp/max-go/internal/fonts"
+	"github.com/suglasp/max-go/internal/gamescreen"
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/gnw"
 	"github.com/suglasp/max-go/internal/menus"
 	"github.com/suglasp/max-go/internal/platform"
-	"github.com/suglasp/max-go/internal/sprites"
 )
 
 type bevelSample struct {
@@ -96,12 +96,12 @@ func drawBevelSampleGrid(ctx *menus.Context, win gnw.WinID) {
 			y = 60 + (i-9)*15
 		}
 		_ = ctx.Sys.Print(win, s.label, 84, x, y+2, 0)
-		if off, err := loadBevelFace(ctx, s.off); err == nil {
+		if off := gamescreen.LoadPopupFace(ctx.Lib, s.off); off != nil {
 			blitDebugArt(ctx, win, x+88, y, off)
 		} else {
 			_ = ctx.Sys.Print(win, "missing "+s.off, 110, x+88, y+2, 1)
 		}
-		if on, err := loadBevelFace(ctx, s.on); err == nil {
+		if on := gamescreen.LoadPopupFace(ctx.Lib, s.on); on != nil {
 			blitDebugArt(ctx, win, x+148, y, on)
 		} else {
 			_ = ctx.Sys.Print(win, "missing "+s.on, 110, x+148, y+2, 1)
@@ -164,7 +164,7 @@ func drawBevelWorkingPopup(ctx *menus.Context, win gnw.WinID, x, y int, running,
 		if active {
 			faceTag = tag + "_ON"
 		}
-		if face, err := loadBevelFace(ctx, faceTag); err == nil {
+		if face := gamescreen.LoadPopupFace(ctx.Lib, faceTag); face != nil {
 			blitDebugArt(ctx, win, x, y+row*24, face)
 		} else {
 			_ = ctx.Sys.Print(win, tag, 42, x, y+row*24+6, 1)
@@ -188,6 +188,8 @@ func onOff(on bool) string {
 	return "OFF"
 }
 
+/* // note: unused code in Go port
+// loadBevelFace was a copy of the popup face loader; the bench now draws through gamescreen.LoadPopupFace, the same code as the live popup.
 func loadBevelFace(ctx *menus.Context, tag string) (*gfx.Buffer, error) {
 	data, err := ctx.Lib.Read(tag)
 	if err != nil {
@@ -205,6 +207,7 @@ func loadBevelFace(ctx *menus.Context, tag string) (*gfx.Buffer, error) {
 	}
 	return buf, nil
 }
+*/
 
 func blitDebugArt(ctx *menus.Context, win gnw.WinID, x, y int, art *gfx.Buffer) {
 	buf := ctx.Sys.Buf(win)
@@ -220,6 +223,9 @@ func blitDebugArt(ctx *menus.Context, win gnw.WinID, x, y int, art *gfx.Buffer) 
 	}
 }
 
+/* // note: unused code in Go port
+// maxBevelTransparentKey was a copy of the popup transparent key test, used only by loadBevelFace above.
 func maxBevelTransparentKey(idx uint8) bool {
 	return idx == 0 || idx == 2 || idx == 3 || (idx >= 9 && idx <= 31) || (idx >= 64 && idx <= 159)
 }
+*/

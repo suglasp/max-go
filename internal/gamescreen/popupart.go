@@ -110,8 +110,8 @@ func loadPopupButtonArt(lib interface{ Read(string) ([]byte, error) }) map[strin
 	art := make(map[string]popupButtonArt, len(tags))
 
 	for _, tag := range tags {
-		up := loadPopupFace(lib, tag+"_OF")
-		down := loadPopupFace(lib, tag+"_ON")
+		up := LoadPopupFace(lib, tag+"_OF")
+		down := LoadPopupFace(lib, tag+"_ON")
 
 		if up != nil || down != nil {
 			art[tag] = popupButtonArt{up: up, down: down}
@@ -121,8 +121,9 @@ func loadPopupButtonArt(lib interface{ Read(string) ([]byte, error) }) map[strin
 	return art
 }
 
-// loadPopupFace reads one popup button face and converts its transparent colour to zero. Missing or unreadable tags return nil.
-func loadPopupFace(lib interface{ Read(string) ([]byte, error) }, tag string) *gfx.Buffer {
+// LoadPopupFace reads one popup button face and converts its transparent colour to zero. Missing or unreadable tags
+// return nil. The live popup and the -emulate bevelart bench both draw their faces through it.
+func LoadPopupFace(lib interface{ Read(string) ([]byte, error) }, tag string) *gfx.Buffer {
 	data, err := lib.Read(tag)
 
 	if err != nil {
