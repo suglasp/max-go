@@ -20,6 +20,19 @@ import (
 
 // newTestChoosePlayerMenu builds a choosePlayerMenu with its real buttons on a headless
 // gnw System, seeded with the assignment ChoosePlayer forces for a single player game.
+// clickTypeButton clicks a player type button through the live mouse path (press, then release over it), so the
+// radio group does its own work exactly as a real click would.
+func clickTypeButton(t *testing.T, m *choosePlayerMenu, col, team int) {
+	t.Helper()
+	win, ok := m.ctx.Sys.WinRect(mainWindow)
+	if !ok {
+		t.Fatal("no main window")
+	}
+	x, y := win.ULX+cpColumns[col].x+4, win.ULY+cpRowY(team)+4
+	m.ctx.Sys.CheckButtons(platform.MouseState{X: x, Y: y, Buttons: platform.MousePressLeft})
+	m.ctx.Sys.CheckButtons(platform.MouseState{X: x, Y: y, Buttons: platform.MouseReleaseLeft})
+}
+
 func newTestChoosePlayerMenu(t *testing.T) *choosePlayerMenu {
 	t.Helper()
 	dir := testutil.DataDir(t)
@@ -105,8 +118,7 @@ func TestChoosePlayerHumanSwapReleasesTheOldHumanButton(t *testing.T) {
 
 	// Team 1's Human button, driven through gnw first so the radio group does its own
 	// work exactly as a real click would, then dispatched like the input loop does.
-	humanOfTeam1 := m.typeBtns[typeColumn(game.TeamPlayer)*4+1]
-	m.ctx.Sys.PressAndRelease(humanOfTeam1)
+	clickTypeButton(t, m, typeColumn(game.TeamPlayer), 1)
 	if _, done, err := m.handleKey(cpTypeBase + typeColumn(game.TeamPlayer)*4 + 1); err != nil || done {
 		t.Fatalf("handleKey(team 1 human) = done %v, err %v", done, err)
 	}
@@ -140,7 +152,7 @@ func TestChoosePlayerRowStaysSingleAcrossTypeSwitches(t *testing.T) {
 		{2, game.TeamComputer}, {0, game.TeamPlayer}, {0, game.TeamNone},
 	} {
 		col := typeColumn(step.want)
-		m.ctx.Sys.PressAndRelease(m.typeBtns[col*4+step.team])
+		clickTypeButton(t, m, col, step.team)
 		if _, done, err := m.handleKey(cpTypeBase + col*4 + step.team); err != nil || done {
 			t.Fatalf("handleKey(team %d -> %v) = done %v, err %v", step.team, step.want, done, err)
 		}

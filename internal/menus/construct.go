@@ -90,7 +90,7 @@ func constructRoster(builder assets.UnitType) ([]buildEntry, bool) {
 // material a builder spends to build t at the requested speed, capping the speed
 // each turn by what the (depleting) material allows. C++: unitinfo.cpp
 // UnitInfo::GetTurnsToBuild(unit_type, speed, &turns).
-func turnsAndCost(builder, t assets.UnitType, speed, storage int, base int) (turns, cost int) {
+func turnsAndCost(builder assets.UnitType, speed, storage int, base int) (turns, cost int) {
 	rem := base
 	local := storage
 	for rem > 0 {
@@ -173,7 +173,7 @@ func RunConstruction(ctx *Context, builder assets.UnitType, team, storage int) (
 	if err != nil {
 		return screendata.BuildSelection{}, false, err
 	}
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	ctx.Plat.SetPalette(&pic.Palette)
 
 	oldFont := ctx.Sys.Fonts().GetFont()
@@ -338,7 +338,7 @@ func (m *constructMenu) handleKey(key int) (sel screendata.BuildSelection, done,
 		if r := (m.ctx.Plat.Mouse().Y - cbListY) / cbRowH; r >= 0 && m.scroll+r < len(m.roster) {
 			// Picking a row is audible, even when it was already the selected one.
 			// C++: UnitTypeSelector::Select plays KCARG0 (unittypeselector.cpp).
-			m.ctx.playSfx("KCARG0")
+			m.ctx.playSfx()
 			m.sel = m.scroll + r
 			m.clampScroll()
 			m.drawList()

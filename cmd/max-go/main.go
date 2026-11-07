@@ -29,7 +29,7 @@ const DEBUG_GAME = true // Flip to false for a release build
 // menuScreensHelp lists the developer screens accepted by -emulate.
 const menuScreensHelp = "planetselect, newgame, multiplayer, gameconfig, chooseplayer, clanselect, " +
 	"mapview, drawmap, sprite:<tag>, shadow, game, random, random2, build, blewup, colony, popup, bevelart, assets, soldier, apcunit, headrotate, transport, commando, mines, bulldozer, air, missile, navalfire, parkedbuild, reactionfire, spotted, aliens, factoryrun, death, win, lose, ending, " +
-	"options, prefs-game, loadgame, research, alloc, upgrade, transfer, selfdestruct, repairshop, reports, help, cargo, construct, construct-eng, factorybuild, scrollbar, listbox, saveload, save, load, credits, intro, splash, " +
+	"options, prefs-game, loadgame, research, alloc, upgrade, transfer, selfdestruct, repairshop, reports, help, cargo, construct, construct-eng, factorybuild, scrollbar, saveload, save, load, credits, intro, splash, " +
 	"setup, gamesetup, training, campaign, mission, customscenario, tips, gameconfig-mission, custom, levelup, submarine, status"
 
 type launchFlags struct {

@@ -132,7 +132,7 @@ func RunCargo(ctx *Context, lo *CargoLoadout) error {
 	if err != nil {
 		return err
 	}
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	ctx.Plat.SetPalette(&pic.Palette)
 
 	oldFont := ctx.Sys.Fonts().GetFont()
@@ -346,7 +346,7 @@ func (m *cargoMenu) handleKey(key int) (done bool, err error) {
 			// Picking a row is audible, even when it was already the selected one.
 			// C++: UnitTypeSelector::Select plays KCARG0, inherited by the purchase
 			// screen's two selectors (purchasetypeselector / cargoselector).
-			ctx.playSfx("KCARG0")
+			ctx.playSfx()
 			m.active, m.buySel = cgBuyList, m.buyScroll+r
 			m.drawBuyList()
 			m.drawCargoList()
@@ -358,7 +358,7 @@ func (m *cargoMenu) handleKey(key int) (done bool, err error) {
 		}
 	case key == 1301: // click in the Purchased (cargo) list
 		if r := (ctx.Plat.Mouse().Y - cgCargoY) / cgRowH; r >= 0 && m.cargoScroll+r < len(lo.Units) {
-			ctx.playSfx("KCARG0")
+			ctx.playSfx()
 			m.active, m.cargoSel = cgCargoList, m.cargoScroll+r
 			m.drawBuyList()
 			m.drawCargoList()
@@ -466,6 +466,6 @@ func (ctx *Context) cargoPlateButtonWithDisabled(win gnw.WinID, x, y int, upTag,
 	if bid < 0 {
 		return -1, fmt.Errorf("menus: AddButton failed for %q", label)
 	}
-	ctx.Sys.SetDisabledImages(bid, disabled, disabled, nil)
+	ctx.Sys.SetDisabledImages(bid, disabled, disabled)
 	return bid, nil
 }

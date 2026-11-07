@@ -161,7 +161,7 @@ func RunFactoryBuild(ctx *Context, factory assets.UnitType, team, storage int, q
 	if err != nil {
 		return screendata.FactorySelection{}, false, err
 	}
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	ctx.Plat.SetPalette(&pic.Palette)
 
 	oldFont := ctx.Sys.Fonts().GetFont()
@@ -357,7 +357,7 @@ func (m *factoryBuildMenu) handleKey(key int) (sel screendata.FactorySelection, 
 		if r := (ctx.Plat.Mouse().Y - fbListY) / fbRowH; r >= 0 && m.scrollAvail+r < len(m.roster) {
 			// Picking a row is audible, even when it was already the selected one.
 			// C++: UnitTypeSelector::Select plays KCARG0 (unittypeselector.cpp).
-			ctx.playSfx("KCARG0")
+			ctx.playSfx()
 			m.selAvail = m.scrollAvail + r
 			m.clampAvailScroll()
 			m.drawAvail()
@@ -371,7 +371,7 @@ func (m *factoryBuildMenu) handleKey(key int) (sel screendata.FactorySelection, 
 		if r := (ctx.Plat.Mouse().Y - fbQueueY) / fbRowH; r >= 0 && m.scrollQueue+r < len(m.queueEdit) {
 			// The queue is a selector too (C++ buildmenu.cpp cargo_selector), so it
 			// answers a pick with the same KCARG0.
-			ctx.playSfx("KCARG0")
+			ctx.playSfx()
 			m.selQueue = m.scrollQueue + r
 			m.drawQueue()
 			if m.dbl.Click(key, m.selQueue, platform.Ticks()) {

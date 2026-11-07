@@ -63,12 +63,12 @@ const colorSilver = 0xA2
 // or currentClan unchanged on cancel.
 //
 // C++: ClanSelectMenu (clanselectmenu.cpp) + menu_clan_select_menu_loop
-func ClanSelect(ctx *Context, team int, currentClan int) (int, error) {
+func ClanSelect(ctx *Context, currentClan int) (int, error) {
 	pic, err := ctx.loadBig("CLANSEL")
 	if err != nil {
 		return currentClan, err
 	}
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	ctx.Plat.SetPalette(&pic.Palette)
 
 	ctx.Sys.Fonts().SetFont(fonts.Font5)

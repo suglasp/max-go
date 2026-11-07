@@ -5,6 +5,9 @@
 // Licensed under the MIT License. See MIT.md file in the project root for full license information.
 package main
 
+/* // note: unused code in Go port
+// the -emulate listbox bench of the commented out gnw.ListBox.
+
 import (
 	"fmt"
 
@@ -164,3 +167,4 @@ func runListboxDebugLoop(ctx *menus.Context, win gnw.WinID, lb *gnw.ListBox, scr
 		}
 	}
 }
+*/

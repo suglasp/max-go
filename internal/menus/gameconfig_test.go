@@ -48,7 +48,7 @@ func newTestGameConfigMenu(t *testing.T) *gameConfigMenu {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	for _, r := range gcEditRects() {
 		img, err := ctx.loadSimple("PREFEDIT")
 		if err != nil {

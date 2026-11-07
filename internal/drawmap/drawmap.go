@@ -24,8 +24,11 @@ const (
 	MaxZoom = world.TileSize // 64, one tile at 1:1
 )
 
+/* // note: unused code in Go port
+// ZoomLevels had no reader; the zoom slider sets any level between MinZoom and MaxZoom.
 // ZoomLevels are the preset steps the in game zoom buttons cycle through.
 var ZoomLevels = []int{4, 8, 16, 32, 64}
+*/
 
 // DefaultGridColor is the land grid overlay color used when a world
 // supplies none (the original's fallback in DrawMap_RenderSimpleGridOverlay).

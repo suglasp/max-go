@@ -39,7 +39,7 @@ const attractTimeout = 60 * time.Second
 // menuMusicTag is the main-menu background track. PlayMusic is idempotent by tag, so starting it at boot and menu entry does not restart it.
 const menuMusicTag = "MAIN_MSC"
 
-// String returns the menu label of the result.
+// String returns the menu label of the result (the debug log prints the main menu choice with it).
 func (r MainMenuResult) String() string {
 	switch r {
 	case MainNewGame:
@@ -107,7 +107,7 @@ func MainMenu(ctx *Context) (MainMenuResult, error) {
 	if err != nil {
 		return MainExit, err
 	}
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	ctx.Plat.SetPalette(&pic.Palette)
 	ctx.drawMenuTitle(ctx.text("35f9", "Main Menu"))
 	ctx.setHandCursor()
@@ -238,7 +238,7 @@ func drawPortrait(ctx *Context) {
 		dbg.Printf("portrait %s: %v", tag, err)
 		return
 	}
-	ctx.drawBigAt(mainWindow, img, 16, 182)
+	ctx.drawBigAt(img, 16, 182)
 }
 
 // drawCopyright prints the bottom credit line.

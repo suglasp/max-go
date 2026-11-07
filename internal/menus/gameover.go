@@ -69,7 +69,7 @@ func RunGameOver(ctx *Context, data screendata.GameOverData) error {
 	dbg.Printf("game over screen: bg=%s outcome=%v teams=%d", bgTag, data.Outcome, len(data.Teams))
 
 	ctx.Plat.SetPalette(&bg.Palette)
-	ctx.drawBigAt(mainWindow, bg, 0, 0)
+	ctx.drawBigAt(bg, 0, 0)
 
 	ctx.Sys.Fonts().SetFont(fonts.Font5)
 	f := ctx.Sys.Fonts().Get(fonts.Font5)

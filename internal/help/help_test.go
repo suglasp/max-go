@@ -30,7 +30,7 @@ func TestParseEntriesAndLookup(t *testing.T) {
 		t.Fatalf("parsed %d sections, want 2", db.Sections())
 	}
 
-	if got := db.Section("TEST_SETUP"); len(got) != 3 {
+	if got := db.sections["TEST_SETUP"]; len(got) != 3 {
 		t.Fatalf("TEST_SETUP holds %d entries, want 3", len(got))
 	}
 
@@ -66,7 +66,7 @@ func TestParseEntriesAndLookup(t *testing.T) {
 func TestParseMalformedRectangle(t *testing.T) {
 	db := Parse([]byte("[ALLOCATE_SETUP]\r\n\r\nALLOCATE_LABEL   { 230, 5 409, 26 }\r\nAllocate.\r\n\r\n[END]\r\n"))
 
-	entries := db.Section("ALLOCATE_SETUP")
+	entries := db.sections["ALLOCATE_SETUP"]
 	if len(entries) != 1 {
 		t.Fatalf("parsed %d entries, want 1 (the missing comma must still parse)", len(entries))
 	}
@@ -109,21 +109,27 @@ func TestRetailHelpDatabase(t *testing.T) {
 		"HANGAR_SETUP", "DOCK_SETUP", "DEPOT_SETUP", "BARRACKS_SETUP", "TRANSFER_SETUP",
 		"STATS_SETUP", "UPGRADES_SETUP",
 	} {
-		if len(db.Section(section)) == 0 {
+		if len(db.sections[section]) == 0 {
 			t.Errorf("section %s is missing from the retail help", section)
 		}
 	}
 
 	// HANGAR_SETUP's DOWN_ARROW rectangle is inside out ({599,425,550,445}), so no click can hit it. Preserve those coordinates rather than swapping them.
-	for _, e := range db.Section("HANGAR_SETUP") {
-		if e.Name != "DOWN_ARROW" {
+	// The entry is found by its upper left corner (599,425); Entry.Name is unused code.
+	found := false
+	for _, e := range db.sections["HANGAR_SETUP"] {
+		if e.ULX != 599 || e.ULY != 425 {
 			continue
 		}
 
+		found = true
 		if e.LRX >= e.ULX {
 			t.Errorf("HANGAR_SETUP/DOWN_ARROW = %d,%d,%d,%d: the retail data's inside out rect changed",
 				e.ULX, e.ULY, e.LRX, e.LRY)
 		}
+	}
+	if !found {
+		t.Error("HANGAR_SETUP/DOWN_ARROW (599,425) is missing")
 	}
 
 	// A known entry, to prove the text really came through.

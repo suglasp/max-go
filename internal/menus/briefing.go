@@ -102,7 +102,7 @@ func RunMissionBriefing(ctx *Context, text string) error {
 	}
 
 	ctx.Plat.SetPalette(&bg.Palette)
-	ctx.drawBigAt(mainWindow, bg, 0, 0)
+	ctx.drawBigAt(bg, 0, 0)
 
 	f := ctx.Sys.Fonts().Get(fonts.Font1)
 	buf := ctx.Sys.Buf(mainWindow)

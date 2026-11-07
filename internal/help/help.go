@@ -32,10 +32,13 @@ const Tag = "HELP_ENG"
 // empty text exists in the data (each screen carries one for its own ? button) and reads
 // as "no help here".
 type Entry struct {
-	Name     string
 	ULX, ULY int
 	LRX, LRY int
 	Text     string
+	/* // note: unused code in Go port
+	// Name was only read by a test; Lookup matches by rectangle.
+	Name     string
+	*/
 }
 
 // Database is the parsed help file: for each section, its entries IN FILE ORDER.
@@ -131,8 +134,8 @@ func parseHeader(line string) (Entry, bool) {
 	}
 
 	return Entry{
-		Name: strings.TrimSpace(line[:open]),
-		ULX:  values[0], ULY: values[1],
+		/* Name: strings.TrimSpace(line[:open]), note: unused code in Go port, see Entry */
+		ULX: values[0], ULY: values[1],
 		LRX: values[2], LRY: values[3],
 	}, true
 }
@@ -159,8 +162,9 @@ func (d *Database) Lookup(section string, x, y int) (string, bool) {
 	return "", false
 }
 
-// Section returns a screen's entries in file order (nil when it does not exist). Only the
-// tests and tooling need this; the game asks through Lookup.
+/* // note: unused code in Go port
+// Section was only read by tests; the game asks through Lookup, the tests read the parsed map.
+// Section returns a screen's entries in file order (nil when it does not exist).
 func (d *Database) Section(name string) []Entry {
 	if d == nil {
 		return nil
@@ -168,8 +172,9 @@ func (d *Database) Section(name string) []Entry {
 
 	return d.sections[name]
 }
+*/
 
-// Sections is how many screens the database holds.
+// Sections is how many screens the database holds (the help mode refuses to start on an empty one).
 func (d *Database) Sections() int {
 	if d == nil {
 		return 0

@@ -27,12 +27,15 @@ type ButtonID int
 // Button flags (raw hex in button.c).
 const (
 	ButtonSticky      = 0x01 // stays down when clicked (checkbox/toggle)
-	ButtonPressToggle = 0x02 // sticky toggles on press instead of release
 	ButtonNoUncheck   = 0x04 // clicking a checked button does not uncheck it (radio)
 	buttonDisabled    = 0x08
 	ButtonTransparent = 0x10000 // images blit with color 0 transparency
 	buttonChecked     = 0x020000
+	/* // note: ported but unused code in Go port
+	// nothing registers a press toggle or a right mouse button; the reference never does either.
+	ButtonPressToggle = 0x02     // sticky toggles on press instead of release
 	ButtonRightActive = 0x080000 // also reacts to the right mouse button
+	*/
 )
 
 // NoValue marks an unused input code slot.
@@ -48,13 +51,20 @@ type Button struct {
 
 	onValue, offValue int // hover enter/leave
 	pValue, rValue    int // left press/release
-	rpValue, rrValue  int // right press/release
 
-	up, down, hover          *gfx.Buffer
-	disUp, disDown, disHover *gfx.Buffer
+	up, down, hover *gfx.Buffer
+	disUp, disDown  *gfx.Buffer
 
 	flags uint32
 	group *ButtonGroup
+	/* // note: ported but unused code in Go port
+	// the right press / release codes; nothing registers a right button (see SetRightValues).
+	rpValue, rrValue int // right press/release
+	*/
+	/* // note: unused code in Go port
+	// disHover was written by SetDisabledImages and never drawn; both callers passed nil.
+	disHover *gfx.Buffer
+	*/
 }
 
 // ButtonGroup limits how many buttons of a set may be checked at
@@ -73,10 +83,13 @@ func (b *Button) Checked() bool {
 	return b.flags&buttonChecked != 0
 }
 
+/* // note: ported but unused code in Go port
+// no caller asks a button for its id; a *Button never leaves the package.
 // ID returns the button id.
 func (b *Button) ID() ButtonID {
 	return b.id
 }
+*/
 
 // AddButton registers a button on a window. Image buffers may be nil
 // (down/hover default to up). Values are input codes emitted on the
@@ -102,12 +115,11 @@ func (s *System) AddButton(win WinID, ulx, uly, width, height int,
 		offValue: offValue,
 		pValue:   pValue,
 		rValue:   rValue,
-		rpValue:  NoValue,
-		rrValue:  NoValue,
-		up:       up,
-		down:     down,
-		hover:    hover,
-		flags:    flags | ButtonTransparent,
+		/* rpValue:  NoValue, rrValue:  NoValue: note: ported but unused code in Go port, see Button */
+		up:    up,
+		down:  down,
+		hover: hover,
+		flags: flags | ButtonTransparent,
 	}
 	s.nextButton++
 	s.buttons = append(s.buttons, b)
@@ -120,13 +132,13 @@ func (s *System) AddButton(win WinID, ulx, uly, width, height int,
 //
 // C++: win_register_text_button (button.c)
 func (s *System) AddTextButton(win WinID, ulx, uly int,
-	onValue, offValue, pValue, rValue int, label string, flags uint32) ButtonID {
+	onValue, offValue, pValue, rValue int, label string, flags uint32) {
 
 	s.mu.Lock()
 	w := s.find(win)
 	if w == nil {
 		s.mu.Unlock()
-		return -1
+		return
 	}
 	f := s.fonts.Font()
 	width := f.Width(label) + 16
@@ -149,10 +161,12 @@ func (s *System) AddTextButton(win WinID, ulx, uly int,
 	down.DrawBox(0, 0, width-1, height-1, 0)
 	s.mu.Unlock()
 
-	return s.AddButton(win, ulx, uly, width, height,
+	s.AddButton(win, ulx, uly, width, height,
 		onValue, offValue, pValue, rValue, up, down, nil, flags&^ButtonTransparent)
 }
 
+/* // note: ported but unused code in Go port
+// nothing registers a right button; the reference never calls win_register_right_button either.
 // SetRightValues enables right mouse press/release codes.
 //
 // C++: win_register_right_button (button.c)
@@ -165,15 +179,16 @@ func (s *System) SetRightValues(bid ButtonID, rpValue, rrValue int) {
 		b.flags |= ButtonRightActive
 	}
 }
+*/
 
 // SetDisabledImages installs the images used while disabled.
 //
 // C++: win_register_button_disable (button.c)
-func (s *System) SetDisabledImages(bid ButtonID, up, down, hover *gfx.Buffer) {
+func (s *System) SetDisabledImages(bid ButtonID, up, down *gfx.Buffer) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if b := s.findButton(bid); b != nil {
-		b.disUp, b.disDown, b.disHover = up, down, hover
+		b.disUp, b.disDown = up, down /* , b.disHover = hover: note: unused code in Go port, see Button */
 	}
 }
 
@@ -317,6 +332,8 @@ func (s *System) GroupRadioButtons(ids []ButtonID, onChange func(ButtonID)) {
 	s.GroupCheckButtons(ids, 1, onChange)
 }
 
+/* // note: unused code in Go port
+// PressAndRelease was only called by a test; keyboard shortcuts post their codes directly.
 // PressAndRelease performs a programmatic click (used for keyboard
 // shortcuts driving a button).
 //
@@ -335,6 +352,7 @@ func (s *System) PressAndRelease(bid ButtonID) {
 		s.pushEvent(code)
 	}
 }
+*/
 
 // SetButtonSoundFunc installs a hook called on press (down=true) and
 // release; the audio layer uses it for click sounds.
@@ -476,7 +494,7 @@ func (b *Button) under(x, y int) bool {
 func (s *System) topWindowAt(x, y int) *Window {
 	for i := len(s.windows) - 1; i >= 0; i-- {
 		w := s.windows[i]
-		if w.flags&WindowHidden == 0 && w.rect.Contains(x, y) {
+		if /* w.flags&WindowHidden == 0 && : note: ported but unused code in Go port, see gnw.go */ w.rect.Contains(x, y) {
 			return w
 		}
 	}
@@ -533,36 +551,38 @@ func (s *System) CheckButtons(m platform.MouseState) []int {
 	}
 
 	left := m.Buttons&platform.MousePressLeft != 0
-	right := m.Buttons&platform.MousePressRight != 0
+	/* right := m.Buttons&platform.MousePressRight != 0: note: ported but unused code in Go port, no right button */
 	releasedLeft := m.Buttons&platform.MouseReleaseLeft != 0
-	releasedRight := m.Buttons&platform.MouseReleaseRight != 0
+	/* releasedRight := m.Buttons&platform.MouseReleaseRight != 0: note: ported but unused code in Go port */
 
 	// Press.
 	if over != nil && s.clickButton == nil {
 		switch {
 		case left:
 			s.clickButton = over
-			s.clickRight = false
+			/* s.clickRight = false: note: ported but unused code in Go port */
 			s.drawButton(over, over.imageOr(over.down))
 			if s.soundFunc != nil {
 				s.soundFunc(over.id, true)
 			}
 			push(over.pValue)
-		case right && over.flags&ButtonRightActive != 0:
-			s.clickButton = over
-			s.clickRight = true
-			s.drawButton(over, over.imageOr(over.down))
-			push(over.rpValue)
+			/* // note: ported but unused code in Go port
+				// the right mouse press; nothing registers a right button.
+			case right && over.flags&ButtonRightActive != 0:
+				s.clickButton = over
+				s.clickRight = true
+				s.drawButton(over, over.imageOr(over.down))
+				push(over.rpValue)
+			*/
 		}
 	}
 
 	// Release.
-	if s.clickButton != nil &&
-		((!s.clickRight && releasedLeft) || (s.clickRight && releasedRight)) {
+	if s.clickButton != nil && releasedLeft /* || (s.clickRight && releasedRight): note: ported but unused code in Go port */ {
 		b := s.clickButton
 		s.clickButton = nil
 		if b.under(m.X, m.Y) {
-			emit = append(emit, s.handleRelease(b, s.clickRight)...)
+			emit = append(emit, s.handleRelease(b)...)
 		} else {
 			s.drawButton(b, b.stateImage())
 		}
@@ -573,7 +593,7 @@ func (s *System) CheckButtons(m platform.MouseState) []int {
 
 // handleRelease finishes a click on b and returns codes to emit;
 // callers hold s.mu.
-func (s *System) handleRelease(b *Button, rightClick bool) []int {
+func (s *System) handleRelease(b *Button) []int {
 	var emit []int
 	push := func(code int) {
 		if code != NoValue {
@@ -588,29 +608,17 @@ func (s *System) handleRelease(b *Button, rightClick bool) []int {
 					b.group.currChecked--
 				}
 				b.flags &^= buttonChecked
-				if rightClick {
-					push(b.rrValue)
-				} else {
-					push(b.rValue)
-				}
+				push(b.rValue) /* a right click pushed b.rrValue: note: ported but unused code in Go port */
 			}
 		} else if s.checkGroup(b) {
 			b.flags |= buttonChecked
-			if rightClick {
-				push(b.rpValue)
-			} else {
-				push(b.rValue)
-			}
+			push(b.rValue) /* a right click pushed b.rpValue: note: ported but unused code in Go port */
 			if b.group != nil && b.group.onChange != nil {
 				b.group.onChange(b.id)
 			}
 		}
 	} else {
-		if rightClick {
-			push(b.rrValue)
-		} else {
-			push(b.rValue)
-		}
+		push(b.rValue) /* a right click pushed b.rrValue: note: ported but unused code in Go port */
 	}
 
 	if s.soundFunc != nil {

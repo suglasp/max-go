@@ -55,10 +55,13 @@ func (m *Manager) Current() ID {
 	return m.current
 }
 
+/* // note: unused code in Go port
+// no caller reads the selected Cursor; the screen draws through Frame.
 // Cursor returns the selected Cursor, or nil when it did not load.
 func (m *Manager) Cursor() *Cursor {
 	return m.cat.Get(m.current)
 }
+*/
 
 // FrameIndex returns the current animation frame index.
 func (m *Manager) FrameIndex() int {
@@ -71,7 +74,7 @@ func (m *Manager) FrameIndex() int {
 // C++: Cursor_AnimationTick (cursor.cpp).
 func (m *Manager) Tick(elapsedMS int) {
 	c := m.cat.Get(m.current)
-	if c == nil || c.FrameCount <= 1 || elapsedMS <= 0 {
+	if c == nil || !c.Animated() || elapsedMS <= 0 {
 		return
 	}
 	m.accMS += elapsedMS

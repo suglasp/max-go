@@ -76,12 +76,15 @@ const (
 
 // slotWidget holds a built slot's button + geometry for the page.
 type slotWidget struct {
-	bid      gnw.ButtonID
 	abs      int // absolute slot number
 	ulx, uly int
-	w, h     int
 	inUse    bool
 	saveName string
+	/* // note: unused code in Go port
+	// bid, w and h were written and never read; the page finds a slot by its position.
+	bid  gnw.ButtonID
+	w, h int
+	*/
 }
 
 // saveLoadMenu is the Save/Load screen state: the paging and selection, the
@@ -324,18 +327,18 @@ func (m *saveLoadMenu) composeSlot(pos, num int, fileName, saveName, typeName st
 		blitInBox(img, f1, numStr, 0, 0, 40, img.H, 0xA2, true) // slot number
 	}
 	if inUse {
-		blitField(up, m.fnameUp, fileName, m.f5, slGreen, false)
-		blitField(dn, m.fnameDn, fileName, m.f5, slGreen, false)
-		blitField(up, m.ftypeUp, typeName, f2, slGreen, true)
-		blitField(dn, m.ftypeDn, typeName, f2, slGreen, true)
+		blitField(up, m.fnameUp, fileName, m.f5, false)
+		blitField(dn, m.fnameDn, fileName, m.f5, false)
+		blitField(up, m.ftypeUp, typeName, f2, true)
+		blitField(dn, m.ftypeDn, typeName, f2, true)
 		blitInBox(up, m.f5, saveName, slNameOffX, slNameOffY, slNameWidth, m.f5.Height+2, slNameRed, false)
 		if !m.saving { // load mode bakes the name on the down (selected) face too, in WHITE:
 			// the standard GNW list highlight (red normally, white when that slot is selected).
 			blitInBox(dn, m.f5, saveName, slNameOffX, slNameOffY, slNameWidth, m.f5.Height+2, slNameWhite, false)
 		}
 	} else {
-		blitField(up, m.fnameUp, "", m.f5, slGreen, false)
-		blitField(dn, m.fnameDn, "", m.f5, slGreen, false)
+		blitField(up, m.fnameUp, "", m.f5, false)
+		blitField(dn, m.fnameDn, "", m.f5, false)
 	}
 	return up, dn
 }
@@ -366,7 +369,7 @@ func (m *saveLoadMenu) buildScreen() {
 	m.sel = -1
 	m.textEdit = nil
 
-	m.ctx.drawBigAt(mainWindow, m.pic, 0, 0)
+	m.ctx.drawBigAt(m.pic, 0, 0)
 
 	// Title.
 	title := m.ctx.text("63e7", "Load Game Menu")
@@ -393,7 +396,7 @@ func (m *saveLoadMenu) buildScreen() {
 		}
 		m.ctx.registerButtonSfx(bid, "KCARG0")
 		m.slotBtns = append(m.slotBtns, bid)
-		m.slots = append(m.slots, slotWidget{bid: bid, abs: abs, ulx: ulx, uly: uly, w: up.W, h: up.H, inUse: inUse, saveName: saveName})
+		m.slots = append(m.slots, slotWidget{ /* bid: bid, note: unused code in Go port */ abs: abs, ulx: ulx, uly: uly /* , w: up.W, h: up.H */, inUse: inUse, saveName: saveName})
 	}
 	m.ctx.Sys.GroupRadioButtons(m.slotBtns, nil)
 
@@ -564,7 +567,7 @@ func openLooseFile(dir, name string) *os.File {
 // own (ULX,ULY) hotspot, then blits the title text inside it (green). FONT2
 // titles centre; FONT5 titles inset 5px. Caller does not hold the gnw lock.
 // C++: SaveLoadMenu_DrawSaveSlotResource.
-func blitField(dst *gfx.Buffer, field *sprites.Simple, title string, f *fonts.Font, color int, centered bool) {
+func blitField(dst *gfx.Buffer, field *sprites.Simple, title string, f *fonts.Font, centered bool) {
 	if field == nil {
 		return
 	}
@@ -579,8 +582,8 @@ func blitField(dst *gfx.Buffer, field *sprites.Simple, title string, f *fonts.Fo
 		return
 	}
 	if centered {
-		blitInBox(dst, f, title, x, y, fb.W, fb.H, color, true)
+		blitInBox(dst, f, title, x, y, fb.W, fb.H, slGreen, true)
 	} else {
-		blitInBox(dst, f, title, x+5, y, fb.W-10, fb.H, color, false)
+		blitInBox(dst, f, title, x+5, y, fb.W-10, fb.H, slGreen, false)
 	}
 }

@@ -77,13 +77,13 @@ func (ctx *Context) registerButtonSfx(bid gnw.ButtonID, tag string) {
 	}
 }
 
-// playSfx plays one sound effect by resource tag, for the places that answer a
-// click themselves instead of through a button (the list rows).
-func (ctx *Context) playSfx(tag string) {
+// playSfx plays the KCARG0 list row click, for the places that answer a click themselves instead of through a
+// button (the list rows).
+func (ctx *Context) playSfx() {
 	if ctx.Audio == nil {
 		return
 	}
-	ctx.Audio.PlaySfx(tag)
+	ctx.Audio.PlaySfx("KCARG0")
 }
 
 // text looks up a localized string by its lang_english.ini key.
@@ -163,8 +163,8 @@ func (ctx *Context) loadSimple(tag string) (*sprites.Simple, error) {
 // drawBigAt decodes nothing; it blits a decoded big image into the
 // window buffer at (x+img.ULX, y+img.ULY), the position rule of
 // WindowManager_LoadBigImage with ulx/uly == -1.
-func (ctx *Context) drawBigAt(win gnw.WinID, img *sprites.Big, x, y int) {
-	buf := ctx.Sys.Buf(win)
+func (ctx *Context) drawBigAt(img *sprites.Big, x, y int) {
+	buf := ctx.Sys.Buf(mainWindow)
 	ctx.Sys.Lock()
 	defer ctx.Sys.Unlock()
 	x += img.ULX
@@ -531,10 +531,13 @@ func toUpper(key int) int {
 	return key
 }
 
+/* // note: unused code in Go port
+// only the unreachable default branch of the main menu switch called it; every MainMenuResult has its own case.
 // NotImplemented shows a modal dialog for menu entries that are not available.
 func NotImplemented(ctx *Context, what string) {
 	messageBox(ctx, what+" is not ported yet.")
 }
+*/
 
 // Message shows a MAX style OK modal with caller provided text.
 func Message(ctx *Context, text string) {

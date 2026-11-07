@@ -56,7 +56,7 @@ func TestGameOverRendersContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("loadBig ENDGAME5: %v", err)
 	}
-	ctx.drawBigAt(mainWindow, bg, 0, 0)
+	ctx.drawBigAt(bg, 0, 0)
 	sys.Fonts().SetFont(fonts.Font5)
 	f := sys.Fonts().Get(fonts.Font5)
 	buf := sys.Buf(mainWindow)

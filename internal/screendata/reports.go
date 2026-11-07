@@ -37,13 +37,16 @@ type ReportRow struct {
 	Icon          *gfx.Buffer     // 32x32 team coloured icon, or nil
 	Stats         []ReportStatRow // the stat block, at most four rows
 	Hits, MaxHits int
-	TeamColor     int
 	Air           bool
 	Land          bool
 	Sea           bool
 	Stationary    bool
 	Producer      bool
 	Combat        bool
+	/* // note: unused code in Go port
+	// TeamColor was written once and never read; the Reports screen colours rows by team itself.
+	TeamColor     int
+	*/
 }
 
 // ReportTeam is one team's line for the Score header (and Casualties columns).

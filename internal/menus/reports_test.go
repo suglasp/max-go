@@ -70,8 +70,8 @@ func TestReportRowAtSelectsTheClickedUnit(t *testing.T) {
 		activeType:  reportUnits,
 		rowsPerPage: rpListH / rpRowH,
 		filters: []reportFilter{
-			{"", true, true, 0}, {"", true, true, 0}, {"", true, true, 0}, {"", true, true, 0},
-			{"", false, false, 0}, {"", false, false, 0}, {"", false, false, 0}, {"", false, false, 0},
+			{"", true, 0}, {"", true, 0}, {"", true, 0}, {"", true, 0},
+			{"", false, 0}, {"", false, 0}, {"", false, 0}, {"", false, 0},
 		},
 		data: screendata.ReportData{Units: []screendata.ReportRow{
 			{UnitID: 11, Land: true},

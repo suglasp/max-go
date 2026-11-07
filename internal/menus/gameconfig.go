@@ -72,7 +72,7 @@ func GameConfig(ctx *Context, g *settings.Game, mode int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	ctx.Plat.SetPalette(&pic.Palette)
 
 	buttons, err := m.buildWidgets()

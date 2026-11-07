@@ -54,9 +54,9 @@ func TestFactoryRateMathReusesConstruct(t *testing.T) {
 	if got := build.MaxBuildRate(assets.LandPlt, 1, 100000); got != 1 {
 		t.Errorf("maxBuildRate(LandPlt, 1 turn) = %d, want 1", got)
 	}
-	turns, cost := turnsAndCost(assets.LandPlt, assets.Tank, 1, 60, 5)
+	turns, cost := turnsAndCost(assets.LandPlt, 1, 60, 5)
 	if turns <= 0 || cost <= 0 {
-		t.Errorf("turnsAndCost(LandPlt, Tank) = %d turns / %d cost, want positive", turns, cost)
+		t.Errorf("turnsAndCost(LandPlt) = %d turns / %d cost, want positive", turns, cost)
 	}
 }
 

@@ -87,7 +87,7 @@ func RunTips(ctx *Context) error {
 	m.lines = wrapTips(f5, ctx.text("ceb6", tipsFallback), tipsW-4)
 
 	// Background + caption (reuse the New Game menu's MAINPIC + title).
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	ctx.Plat.SetPalette(&pic.Palette)
 	ctx.drawMenuTitle(ctx.text("04b5", "New Game Menu"))
 	ctx.setHandCursor()

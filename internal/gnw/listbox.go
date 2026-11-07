@@ -5,6 +5,9 @@
 // Licensed under the MIT License. See MIT.md file in the project root for full license information.
 package gnw
 
+/* // note: unused code in Go port
+// ListBox was only built by the -emulate listbox bench; no menu uses a list box and the reference has no list box widget.
+
 import (
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/platform"
@@ -412,3 +415,4 @@ func maxInt(a, b int) int {
 	}
 	return b
 }
+*/

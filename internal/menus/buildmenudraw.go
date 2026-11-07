@@ -96,7 +96,7 @@ func drawBuildRates(buf *gfx.Buffer, f5 *fonts.Font, buildType, builder assets.U
 			continue
 		}
 		ry := rowY[i]
-		tn, cost := turnsAndCost(builder, buildType, sp, storage, base)
+		tn, cost := turnsAndCost(builder, sp, storage, base)
 		col := cargoTan
 		if sp == rate {
 			col = colorGreen

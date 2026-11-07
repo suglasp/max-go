@@ -50,13 +50,15 @@ const (
 	rpList    = 1624 // a click inside the list area (a Units row selects that unit)
 )
 
-// reportFilter is one category checkbox: its label, the active flag, and whether
-// it is a location filter (inclusive OR) or an attribute filter (restrictive AND).
+// reportFilter is one category checkbox: its label, the active flag and its row.
 type reportFilter struct {
-	label    string
-	on       bool
+	label string
+	on    bool
+	y     int
+	/* // note: unused code in Go port
+	// location was set in the filter table and never read; reportRowMatches tells the location filters by index.
 	location bool
-	y        int
+	*/
 }
 
 // Filter checkbox indices into reportMenu.filters.
@@ -140,11 +142,10 @@ type reportMenu struct {
 // RunReports runs the Reports screen until Done/ESC. It returns the id of a unit the
 // player clicked in the Units list, or 0 when they just closed the screen - the caller
 // selects that unit and centres the map on it, so the report is a way to FIND a unit and
-// not only to read about one. center is unused for the full screen layout but kept for
-// signature parity with the other in game menus.
+// not only to read about one.
 //
 // C++: ReportMenu::ReportMenu + the get_input loop, ReportMenu::SelectUnit (reportmenu.cpp).
-func RunReports(ctx *Context, data screendata.ReportData, center gfx.Rect) (uint16, error) {
+func RunReports(ctx *Context, data screendata.ReportData) (uint16, error) {
 	pic, err := ctx.loadBig("REP_FRME")
 	if err != nil {
 		return 0, err
@@ -173,14 +174,14 @@ func RunReports(ctx *Context, data screendata.ReportData, center gfx.Rect) (uint
 		// Filter checkboxes: the four location filters default on, the four attribute
 		// filters off (reportmenu.cpp ButtonState defaults).
 		filters: []reportFilter{
-			{ctx.text("2ecc", "Air Units"), true, true, 218},
-			{ctx.text("4a3b", "Land Units"), true, true, 236},
-			{ctx.text("1c43", "Sea Units"), true, true, 254},
-			{ctx.text("4393", "Stationary Units"), true, true, 272},
-			{ctx.text("929b", "Production Units"), false, false, 312},
-			{ctx.text("1f97", "Combat Units"), false, false, 330},
-			{ctx.text("045b", "Damaged Units"), false, false, 348},
-			{ctx.text("e5ae", "Stealthy Units"), false, false, 366},
+			{ctx.text("2ecc", "Air Units"), true /* , true: the location flag, note: unused code in Go port */, 218},
+			{ctx.text("4a3b", "Land Units"), true /* , true: the location flag, note: unused code in Go port */, 236},
+			{ctx.text("1c43", "Sea Units"), true /* , true: the location flag, note: unused code in Go port */, 254},
+			{ctx.text("4393", "Stationary Units"), true /* , true: the location flag, note: unused code in Go port */, 272},
+			{ctx.text("929b", "Production Units"), false /* , false: the location flag, note: unused code in Go port */, 312},
+			{ctx.text("1f97", "Combat Units"), false /* , false: the location flag, note: unused code in Go port */, 330},
+			{ctx.text("045b", "Damaged Units"), false /* , false: the location flag, note: unused code in Go port */, 348},
+			{ctx.text("e5ae", "Stealthy Units"), false /* , false: the location flag, note: unused code in Go port */, 366},
 		},
 		pic:            pic,
 		f5:             ctx.Sys.Fonts().Get(fonts.Font5),
@@ -191,7 +192,7 @@ func RunReports(ctx *Context, data screendata.ReportData, center gfx.Rect) (uint
 		msgRowsPerPage: rpListH / rpMsgRowH,
 	}
 
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 
 	buttons := m.buildWidgets()
 	defer func() {
@@ -232,7 +233,7 @@ func (m *reportMenu) buildWidgets() []gnw.ButtonID {
 	m.typeBtns = make([]gnw.ButtonID, 4)
 	for i, lbl := range typeLabels {
 		y := 71 + i*29
-		if b, e := ctx.captionButton(mainWindow, 509, y, "DPTMNUUP", "DPTMNUDN", "", lbl, rpType0+i); e == nil {
+		if b, e := ctx.captionButton(509, y, "DPTMNUUP", "DPTMNUDN", "", lbl, rpType0+i); e == nil {
 			ctx.registerButtonSfx(b, "MBUTT0")
 			m.typeBtns[i] = b
 			buttons = append(buttons, b)
@@ -246,19 +247,19 @@ func (m *reportMenu) buildWidgets() []gnw.ButtonID {
 			buttons = append(buttons, b)
 		}
 	}
-	if b, e := ctx.captionButton(mainWindow, 509, 398, "DPTMNUUP", "DPTMNUDN", "", ctx.text("27af", "Done"), rpDone); e == nil {
+	if b, e := ctx.captionButton(509, 398, "DPTMNUUP", "DPTMNUDN", "", ctx.text("27af", "Done"), rpDone); e == nil {
 		ctx.registerButtonSfx(b, "NDONE0")
 		buttons = append(buttons, b)
 	}
-	if b, e := ctx.captionButton(mainWindow, 487, 426, "DPTUP_UP", "DPTUP_DN", "DPTUP_X", "", rpUp); e == nil {
+	if b, e := ctx.captionButton(487, 426, "DPTUP_UP", "DPTUP_DN", "DPTUP_X", "", rpUp); e == nil {
 		ctx.registerButtonSfx(b, "MBUTT0")
 		buttons = append(buttons, b)
 	}
-	if b, e := ctx.captionButton(mainWindow, 516, 426, "DPTDN_UP", "DPTDN_DN", "DPTDN_X", "", rpDown); e == nil {
+	if b, e := ctx.captionButton(516, 426, "DPTDN_UP", "DPTDN_DN", "DPTDN_X", "", rpDown); e == nil {
 		ctx.registerButtonSfx(b, "MBUTT0")
 		buttons = append(buttons, b)
 	}
-	if b, e := ctx.captionButton(mainWindow, 543, 427, "DPTHP_UP", "DPTHP_DN", "", "", rpHelp); e == nil {
+	if b, e := ctx.captionButton(543, 427, "DPTHP_UP", "DPTHP_DN", "", "", rpHelp); e == nil {
 		ctx.registerButtonSfx(b, "NHELP0")
 		buttons = append(buttons, b)
 	}

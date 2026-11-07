@@ -350,7 +350,7 @@ func wireMenuCallbacks(scr *gamescreen.Screen, ctx *menus.Context) {
 	})
 
 	scr.SetReportsFunc(func(data screendata.ReportData) (uint16, error) { // REPORTS button -> Reports screen
-		return menus.RunReports(ctx, data, gamescreen.MainMap)
+		return menus.RunReports(ctx, data)
 	})
 
 	// HELP button / ? key -> help mode: the pointer becomes a question mark and the next

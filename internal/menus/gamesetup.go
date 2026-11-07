@@ -145,7 +145,7 @@ func RunGameSetup(ctx *Context, title string, missions []missionfile.Mission, in
 	m.reflow()
 
 	// Background + caption.
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	ctx.Plat.SetPalette(&pic.Palette)
 	ctx.drawMenuTitle(title)
 	ctx.setHandCursor()

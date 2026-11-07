@@ -126,7 +126,7 @@ func RunRepairShop(ctx *Context, ops RepairShopOps) error {
 	}
 
 	// Paint the static background.
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 
 	buttons := m.buildWidgets()
 	defer func() {
@@ -171,26 +171,26 @@ func (m *repairShopMenu) buildSlotButtons() []gnw.ButtonID {
 	for p := 0; p < m.slotsPerScreen; p++ {
 		_, _, _, statX, statY := rsSlotGeom(info.IsHangar, p)
 		v := rsSlotBase + p*4
-		if b, e := ctx.captionButton(mainWindow, statX-12, statY+42, "DPTBAYUP", "DPTBAYDN", "DPTBAYDN",
+		if b, e := ctx.captionButton(statX-12, statY+42, "DPTBAYUP", "DPTBAYDN", "DPTBAYDN",
 			ctx.text("2443", "Activate"), v+rsAct); e == nil {
 			ctx.registerButtonSfx(b, "MBUTT0")
 			m.slots[p].activate = b
 			buttons = append(buttons, b)
 		}
 		if info.IsShop {
-			if b, e := ctx.captionButton(mainWindow, statX-12, statY+67, "DPTBAYUP", "DPTBAYDN", "DPTBAYDN",
+			if b, e := ctx.captionButton(statX-12, statY+67, "DPTBAYUP", "DPTBAYDN", "DPTBAYDN",
 				ctx.text("bdc0", "Reload"), v+rsRel); e == nil {
 				ctx.registerButtonSfx(b, "MBUTT0")
 				m.slots[p].reload = b
 				buttons = append(buttons, b)
 			}
-			if b, e := ctx.captionButton(mainWindow, statX+63, statY+42, "DPTBAYUP", "DPTBAYDN", "DPTBAYDN",
+			if b, e := ctx.captionButton(statX+63, statY+42, "DPTBAYUP", "DPTBAYDN", "DPTBAYDN",
 				ctx.text("1196", "Repair"), v+rsRep); e == nil {
 				ctx.registerButtonSfx(b, "MBUTT0")
 				m.slots[p].repair = b
 				buttons = append(buttons, b)
 			}
-			if b, e := ctx.captionButton(mainWindow, statX+63, statY+67, "DPTBAYUP", "DPTBAYDN", "DPTBAYDN",
+			if b, e := ctx.captionButton(statX+63, statY+67, "DPTBAYUP", "DPTBAYDN", "DPTBAYDN",
 				ctx.text("7ec0", "Upgrade"), v+rsUpg); e == nil {
 				ctx.registerButtonSfx(b, "MBUTT0")
 				m.slots[p].upgrade = b
@@ -210,7 +210,7 @@ func (m *repairShopMenu) buildColumnButtons() []gnw.ButtonID {
 	var buttons []gnw.ButtonID
 
 	if info.ShowActivateAll {
-		if b, e := ctx.captionButton(mainWindow, 511, 252, "DPTMNUUP", "DPTMNUDN", "DPTMNUDN",
+		if b, e := ctx.captionButton(511, 252, "DPTMNUUP", "DPTMNUDN", "DPTMNUDN",
 			ctx.text("0fbe", "Activate All"), rsActivateAll); e == nil {
 			ctx.registerButtonSfx(b, "MBUTT0")
 			m.actAll = b
@@ -218,19 +218,19 @@ func (m *repairShopMenu) buildColumnButtons() []gnw.ButtonID {
 		}
 	}
 	if info.ShowMaterials {
-		if b, e := ctx.captionButton(mainWindow, 511, 277, "DPTMNUUP", "DPTMNUDN", "DPTMNUDN",
+		if b, e := ctx.captionButton(511, 277, "DPTMNUUP", "DPTMNUDN", "DPTMNUDN",
 			ctx.text("e609", "Reload All"), rsReloadAll); e == nil {
 			ctx.registerButtonSfx(b, "MBUTT0")
 			m.relAll = b
 			buttons = append(buttons, b)
 		}
-		if b, e := ctx.captionButton(mainWindow, 511, 302, "DPTMNUUP", "DPTMNUDN", "DPTMNUDN",
+		if b, e := ctx.captionButton(511, 302, "DPTMNUUP", "DPTMNUDN", "DPTMNUDN",
 			ctx.text("670f", "Repair All"), rsRepairAll); e == nil {
 			ctx.registerButtonSfx(b, "MBUTT0")
 			m.repAll = b
 			buttons = append(buttons, b)
 		}
-		if b, e := ctx.captionButton(mainWindow, 511, 327, "DPTMNUUP", "DPTMNUDN", "DPTMNUDN",
+		if b, e := ctx.captionButton(511, 327, "DPTMNUUP", "DPTMNUDN", "DPTMNUDN",
 			ctx.text("003c", "Upgrade All"), rsUpgradeAll); e == nil {
 			ctx.registerButtonSfx(b, "MBUTT0")
 			m.upgAll = b
@@ -249,21 +249,21 @@ func (m *repairShopMenu) buildColumnButtons() []gnw.ButtonID {
 		}
 		ctx.Sys.Unlock()
 	}
-	if b, e := ctx.captionButton(mainWindow, 511, 372, "DPTMNUUP", "DPTMNUDN", "", ctx.text("27af", "Done"), rsDone); e == nil {
+	if b, e := ctx.captionButton(511, 372, "DPTMNUUP", "DPTMNUDN", "", ctx.text("27af", "Done"), rsDone); e == nil {
 		ctx.registerButtonSfx(b, "NDONE0")
 		buttons = append(buttons, b)
 	}
-	if b, e := ctx.captionButton(mainWindow, 504, 426, "DPTUP_UP", "DPTUP_DN", "DPTUP_X", "", rsUpArrow); e == nil {
+	if b, e := ctx.captionButton(504, 426, "DPTUP_UP", "DPTUP_DN", "DPTUP_X", "", rsUpArrow); e == nil {
 		ctx.registerButtonSfx(b, "MBUTT0")
 		m.upArrow = b
 		buttons = append(buttons, b)
 	}
-	if b, e := ctx.captionButton(mainWindow, 530, 426, "DPTDN_UP", "DPTDN_DN", "DPTDN_X", "", rsDownArrow); e == nil {
+	if b, e := ctx.captionButton(530, 426, "DPTDN_UP", "DPTDN_DN", "DPTDN_X", "", rsDownArrow); e == nil {
 		ctx.registerButtonSfx(b, "MBUTT0")
 		m.downArrow = b
 		buttons = append(buttons, b)
 	}
-	if b, e := ctx.captionButton(mainWindow, 584, 426, "DPTHP_UP", "DPTHP_DN", "", "", rsHelp); e == nil {
+	if b, e := ctx.captionButton(584, 426, "DPTHP_UP", "DPTHP_DN", "", "", rsHelp); e == nil {
 		ctx.registerButtonSfx(b, "NHELP0")
 		buttons = append(buttons, b)
 	}
@@ -493,7 +493,7 @@ func rsEnable(sys *gnw.System, bid gnw.ButtonID, on bool) {
 // faces uncaptioned (the scroll arrows / help button).
 //
 // C++: Button::SetCaption + Button::CopyUpDisabled (button.cpp).
-func (ctx *Context) captionButton(win gnw.WinID, x, y int, upTag, downTag, disTag, label string, value int) (gnw.ButtonID, error) {
+func (ctx *Context) captionButton(x, y int, upTag, downTag, disTag, label string, value int) (gnw.ButtonID, error) {
 	upImg, err := ctx.loadSimple(upTag)
 	if err != nil {
 		return -1, err
@@ -539,13 +539,13 @@ func (ctx *Context) captionButton(win gnw.WinID, x, y int, upTag, downTag, disTa
 		}
 	}
 
-	bid := ctx.Sys.AddButton(win, x, y, up.W, up.H,
+	bid := ctx.Sys.AddButton(mainWindow, x, y, up.W, up.H,
 		gnw.NoValue, gnw.NoValue, gnw.NoValue, value, up, down, nil, flags)
 	if bid < 0 {
 		return -1, fmt.Errorf("menus: AddButton failed for %s", upTag)
 	}
 	if dis != nil {
-		ctx.Sys.SetDisabledImages(bid, dis, dis, nil)
+		ctx.Sys.SetDisabledImages(bid, dis, dis)
 	}
 	return bid, nil
 }

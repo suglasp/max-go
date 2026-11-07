@@ -46,7 +46,11 @@ const (
 	ugStatsX, ugStatsY, ugStatsW, ugStatsH = 11, 293, 250, 174
 	ugCostX                                = 321
 	ugGoldX, ugGoldY, ugGoldW, ugGoldH     = 366, 276, 40, 140 // UPGRADE gold slot opening is x~366..385
-	ugArrowsX, ugRowStep                   = 283, 19
+	ugArrowsX                              = 283
+	/* // note: unused code in Go port
+	// ugRowStep had no reader; the rows step by ugRowH.
+	ugRowStep = 19
+	*/
 )
 
 // upgradeMenu is the Upgrade screen state: the unit set with its rollback
@@ -313,7 +317,7 @@ func (m *upgradeMenu) handleKey(key int) (done, commit bool) {
 			// Picking a row is audible, even when it was already the selected one.
 			// C++: UnitTypeSelector::Select plays KCARG0 (unittypeselector.cpp);
 			// AbstractUpgradeMenu drives its unit list through that same selector.
-			ctx.playSfx("KCARG0")
+			ctx.playSfx()
 			m.sel = m.scroll + r
 			m.drawList()
 			m.drawDetail()

@@ -57,7 +57,7 @@ func TestTurnsAndCost(t *testing.T) {
 		{4, 5, 56},
 	}
 	for _, c := range cases {
-		gotT, gotC := turnsAndCost(assets.Constrct, assets.MiningSt, c.speed, storage, base)
+		gotT, gotC := turnsAndCost(assets.Constrct, c.speed, storage, base)
 		if gotT != c.turns || gotC != c.cost {
 			t.Errorf("turnsAndCost speed %d = %d turns / %d cost, want %d / %d",
 				c.speed, gotT, gotC, c.turns, c.cost)
@@ -130,7 +130,7 @@ func newTestConstructMenu(t *testing.T, storage int) *constructMenu {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	sys.Fonts().SetFont(fonts.Font5)
 
 	roster, _ := constructRoster(assets.Constrct)

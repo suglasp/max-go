@@ -5,6 +5,9 @@
 // Licensed under the MIT License. See MIT.md file in the project root for full license information.
 package gnw
 
+/* // note: unused code in Go port
+// the tests of ListBox, commented out with it.
+
 import (
 	"reflect"
 	"testing"
@@ -192,3 +195,4 @@ func TestListBoxScrollbarSyncAndRegisteredButton(t *testing.T) {
 		t.Fatalf("after shrink scroll/listbar = %d/%d, want 0/0", lb.ScrollOffset(), sb.Value())
 	}
 }
+*/

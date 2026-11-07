@@ -23,12 +23,15 @@ type WinID int
 
 // Window flags (interface.h).
 const (
-	WindowUseDefaults = 0x01
 	WindowDontMoveTop = 0x02
 	WindowMoveOnTop   = 0x04
-	WindowHidden      = 0x08
 	WindowModal       = 0x10
 	WindowTransparent = 0x20
+	/* // note: ported but unused code in Go port
+	// no window asks for the defaults, and only the commented out Hide set WindowHidden.
+	WindowUseDefaults = 0x01
+	WindowHidden      = 0x08
+	*/
 )
 
 // Window is one GNW window: a screen rectangle backed by a private
@@ -43,15 +46,21 @@ type Window struct {
 	color uint8
 }
 
+/* // note: ported but unused code in Go port
+// no caller asks a window for its id; a *Window never leaves the package.
 // ID returns the window's id.
 func (w *Window) ID() WinID {
 	return w.id
 }
+*/
 
+/* // note: ported but unused code in Go port
+// callers read a window's rect through System.WinRect.
 // Rect returns the window's screen rectangle (corners inclusive).
 func (w *Window) Rect() gfx.Rect {
 	return w.rect
 }
+*/
 
 // System owns the window list and the screen they composite onto. All exported methods lock.
 // Callers that work on a window buffer directly via Buf must wrap the access in Lock/Unlock because the compositor reads the buffers from the render goroutine.
@@ -74,8 +83,8 @@ type System struct {
 	nextButton  ButtonID
 	hoverButton *Button
 	clickButton *Button
-	clickRight  bool
-	soundFunc   func(ButtonID, bool)
+	/* clickRight  bool: note: ported but unused code in Go port, no right button */
+	soundFunc func(ButtonID, bool)
 
 	WColor [6]uint8 // generated widget colors
 
@@ -243,6 +252,8 @@ func (s *System) WinRect(id WinID) (gfx.Rect, bool) {
 	return gfx.Rect{}, false
 }
 
+/* // note: ported but unused code in Go port
+// nothing shows a hidden window; the reference calls win_show only from win_add.
 // Show makes a window visible and raises it to the top of its
 // stratum unless it has WindowDontMoveTop.
 //
@@ -260,7 +271,10 @@ func (s *System) Show(id WinID) {
 	}
 	s.raise(w)
 }
+*/
 
+/* // note: ported but unused code in Go port
+// raise was only called by Show.
 // raise moves a window to the front of the z order.
 func (s *System) raise(w *Window) {
 	for i, win := range s.windows {
@@ -279,7 +293,10 @@ func (s *System) raise(w *Window) {
 	copy(s.windows[pos+1:], s.windows[pos:])
 	s.windows[pos] = w
 }
+*/
 
+/* // note: ported but unused code in Go port
+// nothing hides a window; the reference has no caller of win_hide outside gnw.c.
 // Hide makes a window invisible.
 //
 // C++: win_hide (gnw.c)
@@ -290,7 +307,10 @@ func (s *System) Hide(id WinID) {
 		w.flags |= WindowHidden
 	}
 }
+*/
 
+/* // note: ported but unused code in Go port
+// nothing moves a window; the reference has no caller of win_move outside gnw.c.
 // Move repositions a window, keeping it fully on screen.
 //
 // C++: win_move (gnw.c)
@@ -301,16 +321,23 @@ func (s *System) Move(id WinID, ulx, uly int) {
 		w.rect = clampRect(ulx, uly, w.buf.W, w.buf.H, s.screen)
 	}
 }
+*/
 
+/* // note: unused code in Go port
+// a no op stub with no caller: Composite redraws every frame.
 // Draw is a compatibility no-op because Composite redraws every visible window each frame. It preserves win_draw call sites in ported code.
 //
 // C++: win_draw (gnw.c)
 func (s *System) Draw(id WinID) {}
+*/
 
+/* // note: unused code in Go port
+// a no op stub with no caller: Composite redraws every frame.
 // DrawRect is Draw for a sub rectangle; equally a no op.
 //
 // C++: win_draw_rect (gnw.c)
 func (s *System) DrawRect(id WinID, r gfx.Rect) {}
+*/
 
 // Fill fills a region of the window with color.
 //
@@ -323,6 +350,8 @@ func (s *System) Fill(id WinID, ulx, uly, width, height int, color uint8) {
 	}
 }
 
+/* // note: ported but unused code in Go port
+// no window draws a line; the reference has no caller of win_line either.
 // Line draws a line in window coordinates.
 //
 // C++: win_line (gnw.c)
@@ -333,6 +362,7 @@ func (s *System) Line(id WinID, x1, y1, x2, y2 int, color uint8) {
 		w.buf.DrawLine(x1, y1, x2, y2, color)
 	}
 }
+*/
 
 // Box draws a hollow box in window coordinates.
 //
@@ -385,9 +415,12 @@ func (s *System) Composite(mx, my int) {
 	defer s.mu.Unlock()
 
 	for _, w := range s.windows {
+		/* // note: ported but unused code in Go port
+		// a hidden window was skipped; nothing hides a window.
 		if w.flags&WindowHidden != 0 {
 			continue
 		}
+		*/
 		clipped, ok := w.rect.Intersect(gfx.NewRect(0, 0, s.screen.W-1, s.screen.H-1))
 		if !ok {
 			continue

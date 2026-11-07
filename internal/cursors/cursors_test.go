@@ -89,8 +89,14 @@ func TestLoadTolerant(t *testing.T) {
 	if cat.Get(Path) != nil {
 		t.Fatal("Path should be absent")
 	}
-	if got := len(cat.Missing()); got != Count-1 {
-		t.Fatalf("Missing() = %d, want %d", got, Count-1)
+	missing := 0
+	for id := ID(0); int(id) < Count; id++ {
+		if cat.Get(id) == nil {
+			missing++
+		}
+	}
+	if missing != Count-1 {
+		t.Fatalf("missing cursors = %d, want %d", missing, Count-1)
 	}
 }
 
@@ -165,8 +171,10 @@ func TestLoadRealData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("not all cursors loaded: %v", err)
 	}
-	if miss := cat.Missing(); len(miss) != 0 {
-		t.Fatalf("missing cursors: %v", miss)
+	for id := ID(0); int(id) < Count; id++ {
+		if cat.Get(id) == nil {
+			t.Fatalf("cursor %d did not load", id)
+		}
 	}
 
 	checks := []struct {

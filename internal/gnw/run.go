@@ -38,6 +38,8 @@ func (s *System) GetInput() int {
 	}
 }
 
+/* // note: unused code in Go port
+// GetInputNonBlocking was only called by a test; the menus read input through GetInput.
 // GetInputNonBlocking returns the next queued input code, or -1
 // immediately when the queue is empty.
 func (s *System) GetInputNonBlocking() int {
@@ -48,6 +50,7 @@ func (s *System) GetInputNonBlocking() int {
 		return -1
 	}
 }
+*/
 
 // FlushInput discards any queued input codes. Call it on a menu to menu
 // transition so a confirm key (Return) or a stray click consumed by one screen

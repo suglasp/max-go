@@ -124,7 +124,7 @@ func runColumnMenu(ctx *Context, title string, defs []columnButton) (int, error)
 	if err != nil {
 		return platform.KeyEscape, err
 	}
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	ctx.Plat.SetPalette(&pic.Palette)
 	ctx.drawMenuTitle(title)
 	ctx.setHandCursor()

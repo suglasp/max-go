@@ -110,6 +110,8 @@ var resourceTags = [Count]string{
 	Help:      "PTR_HELP",
 }
 
+/* // note: unused code in Go port
+// no caller asks a cursor ID for its archive tag; the catalog loads by the tag table.
 // Tag returns the archive tag a cursor ID loads from.
 func (id ID) Tag() string {
 	if int(id) < Count {
@@ -117,6 +119,7 @@ func (id ID) Tag() string {
 	}
 	return ""
 }
+*/
 
 // Cursor is one decoded cursor: its pixels for each frame (palette indices),
 // hotspot, transparent colour, and animation frame count. A static cursor
@@ -191,6 +194,8 @@ func (c *Catalog) Get(id ID) *Cursor {
 	return nil
 }
 
+/* // note: unused code in Go port
+// Missing was only read by tests; the tests check the catalog through Get.
 // Missing reports the cursor IDs that did not load.
 func (c *Catalog) Missing() []ID {
 	var out []ID
@@ -201,6 +206,7 @@ func (c *Catalog) Missing() []ID {
 	}
 	return out
 }
+*/
 
 // LoadCatalog decodes every cursor from r and retains successful entries when
 // others fail. The returned error joins all decode failures. Its name avoids a

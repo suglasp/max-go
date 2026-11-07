@@ -163,8 +163,11 @@ func jumpToMenu(ctx *menus.Context, cfg *settings.Settings, name string, noMovie
 	case "scrollbar":
 		err = runScrollbarDebug(ctx)
 
+	/* // note: unused code in Go port
+	// the bench of the commented out gnw.ListBox.
 	case "listbox":
 		err = runListboxDebug(ctx)
+	*/
 
 	case "status":
 		err = runUnitStatusDebug(ctx)
@@ -270,7 +273,7 @@ func jumpToMenuScreen(ctx *menus.Context, cfg *settings.Settings, name string) (
 
 	case "clanselect":
 		var clan int
-		clan, err = menus.ClanSelect(ctx, 0, cfg.Player.Clan)
+		clan, err = menus.ClanSelect(ctx, cfg.Player.Clan)
 		dbg.Printf("clanselect: %d", clan)
 
 	default:

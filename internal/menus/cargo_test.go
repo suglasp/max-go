@@ -180,7 +180,7 @@ func newTestCargoMenu(t *testing.T, lo *CargoLoadout) *cargoMenu {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	sys.Fonts().SetFont(fonts.Font5)
 
 	m := &cargoMenu{

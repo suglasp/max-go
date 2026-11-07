@@ -616,8 +616,11 @@ func (f *menuFlow) menuLoop() error {
 			// (reachable via -emulate multiplayer) but the main button just say so.
 			menus.Message(f.ctx, "No multiplayer support in this version.")
 
-		default:
-			menus.NotImplemented(f.ctx, sel.String())
+			/* // note: unused code in Go port
+				// the switch handles all eight MainMenuResult values, so this branch could not run.
+			default:
+				menus.NotImplemented(f.ctx, sel.String())
+			*/
 		}
 	}
 }

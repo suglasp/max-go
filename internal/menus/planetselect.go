@@ -100,7 +100,7 @@ func PlanetSelect(ctx *Context, startWorld int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	ctx.Plat.SetPalette(&pic.Palette)
 	menuPal := pic.Palette
 
@@ -237,7 +237,7 @@ func drawPlanetGroup(ctx *Context, menuPal *gfx.Palette, sel int, st *planetScre
 	if err != nil {
 		return err
 	}
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 
 	// Six world previews.
 	for i := 0; i < 6; i++ {

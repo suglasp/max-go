@@ -21,11 +21,14 @@ type CargoLoadout struct {
 	TeamGold  int
 	Units     []assets.UnitType
 	Cargos    []int
-	Initial   int // count of protected mission supply units at the front of Units (C++: unit_count); 0 in a standard game
 
 	// Upgrades records purchased steps above base values, and UpgradeGold records their cost. The caller applies them before landing.
 	Upgrades    []game.UnitUpgrade
 	UpgradeGold int
+	/* // note: unused code in Go port
+	// Initial was the old Delete guard; the per type minimum (cargoMinimumTypes) replaced it.
+	Initial int // count of protected mission supply units at the front of Units (C++: unit_count); 0 in a standard game
+	*/
 }
 
 // cargoMinimumTypes are mandatory Constructor, Engineer, and Surveyor units. A fresh loadout seeds them free and protects the last of each from deletion.
@@ -49,7 +52,7 @@ func NewCargoLoadout(team, startGold int) *CargoLoadout {
 		StartGold: startGold,
 		TeamGold:  startGold,
 		Units:     append([]assets.UnitType(nil), cargoMinimumTypes...),
-		Initial:   len(cargoMinimumTypes),
+		/* Initial:   len(cargoMinimumTypes), note: unused code in Go port, see CargoLoadout */
 	}
 
 	lo.Cargos = make([]int, len(lo.Units))

@@ -79,7 +79,7 @@ func ChoosePlayer(ctx *Context, params *game.StartParams, isSinglePlayer bool, p
 		case action >= cpClanBase && action < cpClanBase+game.TeamCount:
 			// C++: EventSelectClan: Deinit, clan menu, Init
 			team := action - cpClanBase
-			clan, err := ClanSelect(ctx, team, params.Teams[team].Clan)
+			clan, err := ClanSelect(ctx, params.Teams[team].Clan)
 			if err != nil {
 				return false, err
 			}
@@ -109,7 +109,7 @@ func choosePlayerScreen(ctx *Context, params *game.StartParams, isSinglePlayer b
 	if err != nil {
 		return cpCancel, err
 	}
-	ctx.drawBigAt(mainWindow, pic, 0, 0)
+	ctx.drawBigAt(pic, 0, 0)
 	ctx.Plat.SetPalette(&pic.Palette)
 
 	m := &choosePlayerMenu{ctx: ctx, params: params, isSinglePlayer: isSinglePlayer}

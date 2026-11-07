@@ -182,6 +182,8 @@ func TestTopWindowWinsClicks(t *testing.T) {
 	}
 }
 
+/* // note: unused code in Go port
+// the test of PressAndRelease, commented out with it.
 func TestPressAndRelease(t *testing.T) {
 	s, win := newButtonSys(t)
 	var clicks []ButtonID
@@ -201,14 +203,15 @@ func TestPressAndRelease(t *testing.T) {
 		t.Errorf("sound hook calls = %v", clicks)
 	}
 }
+*/
 
 func TestTextButton(t *testing.T) {
 	s, win := newButtonSys(t)
-	bid := s.AddTextButton(win, 10, 10, NoValue, NoValue, NoValue, 55, "Done", 0)
-	if bid < 0 {
+	s.AddTextButton(win, 10, 10, NoValue, NoValue, NoValue, 55, "Done", 0)
+	if len(s.buttons) == 0 {
 		t.Fatal("AddTextButton failed")
 	}
-	r := s.findButton(bid).rect
+	r := s.buttons[len(s.buttons)-1].rect
 	if r.Width() < 10 || r.Height() < 5 {
 		t.Errorf("text button rect %+v too small", r)
 	}
