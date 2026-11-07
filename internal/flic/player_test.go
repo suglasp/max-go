@@ -39,7 +39,7 @@ func TestPlayerDrawNextAndLoop(t *testing.T) {
 	}
 	dst := gfx.New(4, 4)
 
-	if _, err := p.DrawNext(dst); err != nil {
+	if err := p.DrawNext(dst); err != nil {
 		t.Fatal(err)
 	}
 	if dst.At(1, 1) != 1 || dst.At(2, 1) != 2 || dst.At(1, 2) != 3 || dst.At(2, 2) != 4 {
@@ -47,7 +47,7 @@ func TestPlayerDrawNextAndLoop(t *testing.T) {
 	}
 
 	dst.Fill(0)
-	if _, err := p.DrawNext(dst); err != nil {
+	if err := p.DrawNext(dst); err != nil {
 		t.Fatal(err)
 	}
 	if dst.At(1, 1) != 1 || dst.At(2, 2) != 4 {
@@ -61,10 +61,10 @@ func TestPlayerDrawNextEOFWhenNotLooping(t *testing.T) {
 		t.Fatal(err)
 	}
 	dst := gfx.New(2, 2)
-	if _, err := p.DrawNext(dst); err != nil {
+	if err := p.DrawNext(dst); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := p.DrawNext(dst); !errors.Is(err, io.EOF) {
+	if err := p.DrawNext(dst); !errors.Is(err, io.EOF) {
 		t.Fatalf("second DrawNext err = %v, want io.EOF", err)
 	}
 }

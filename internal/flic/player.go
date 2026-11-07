@@ -41,24 +41,21 @@ func NewPlayer(r io.ReadSeeker, rect gfx.Rect, loop bool) (*Player, error) {
 // stream and draws the first animation frame again.
 //
 // C++: flicsmgr_advance_animation (flicsmgr.cpp)
-func (p *Player) DrawNext(dst *gfx.Buffer) (*Frame, error) {
+func (p *Player) DrawNext(dst *gfx.Buffer) error {
 	if p == nil || p.anim == nil {
-		return nil, errors.New("flic: nil player")
+		return errors.New("flic: nil player")
 	}
 	frame, err := p.anim.NextFrame()
 	if errors.Is(err, io.EOF) && p.Loop {
 		if err := p.reset(); err != nil {
-			return nil, err
+			return err
 		}
 		frame, err = p.anim.NextFrame()
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if err := DrawFrame(dst, p.Rect, frame); err != nil {
-		return nil, err
-	}
-	return frame, nil
+	return DrawFrame(dst, p.Rect, frame)
 }
 
 // reset rewinds the animation and prepares the first frame for playback.

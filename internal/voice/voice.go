@@ -5,8 +5,8 @@
 // Licensed under the MIT License. See MIT.md file in the project root for full license information.
 package voice
 
-// General announcer tags used in game. These helpers mirror the voice pools currently
-// used by internal/gamescreen without wiring any new callers.
+// General announcer tags used in game. The voice package owns every tag and pool; the game screen's line
+// table (gamescreen/voicelines.go) only points at them.
 //
 // C++ ported : game_manager.cpp - GameManager_PlayUnitStatusVoice and the
 // related SoundManager::PlayVoice call sites.
@@ -20,6 +20,15 @@ const (
 	EnemyDetectedB = "V_F071" // "Enemy spotted!"
 
 	TurnBegin = "V_F053" // "Begin."
+
+	ResearchComplete   = "V_F093" // "Research complete"
+	SubmarineDetected  = "V_F201" // "Submarine detected"
+	GraceWarning       = "V_F275" // "You are about to run out of time!"
+	GoldRefined        = "V_F276" // "Credit available!"
+	WaitingForComputer = "V_F081" // "Waiting for A.I. to finish turn."
+
+	RepairsNeededA = "V_F247" // "Unit must be repaired!"
+	RepairsNeededB = "V_F265" // "Requesting repairs!"
 
 	NoPathA = "V_F094" // "No path to destination!"
 	NoPathB = "V_F095" // "Path blocked!"
@@ -81,6 +90,7 @@ const (
 	SelectSiteB   = "V_F177" // "Choose site"
 	SelectSiteC   = "V_F278" // "Select landing site!"
 	CapturedUnit  = "V_F239" // "Unit captured!"
+	CapturedUnitB = "V_F242" // "Unit taken!"
 	DisabledUnit  = "V_F244" // "Unit disabled"
 	InfiltrateBad = "V_F012" // "Infiltration unsuccessful!"
 	AttemptFailed = "V_F007" // "Attempt failed!"
@@ -101,6 +111,8 @@ func SelectSentry() []string {
 	return []string{SelectReadyA, SelectReadyB, SelectReadyC, SelectReadyD, OnSentry}
 }
 
+/* // note: unused code in Go port
+// MoveAck was an alias of Select; a click to move speaks the select pool directly.
 // MoveAck returns the current movement acknowledgement pool. The port uses the
 // normal ready acknowledgements for confirming a click to move order (a click to
 // move reuses the vsSelectUnit ready pool, so gamescreen has no distinct caller;
@@ -108,6 +120,7 @@ func SelectSentry() []string {
 func MoveAck() []string {
 	return Select()
 }
+*/
 
 // Combat returns the direct attack acknowledgement pool.
 func Combat() []string {
@@ -137,4 +150,19 @@ func UnderAttack() []string {
 // UnitDestroyed returns the pool for a destroyed unit.
 func UnitDestroyed() []string {
 	return []string{UnitDestroyedA, UnitDestroyedB}
+}
+
+// CapturedUnits returns the pool the attacking side hears when its commando captures a unit.
+func CapturedUnits() []string {
+	return []string{CapturedUnit, CapturedUnitB}
+}
+
+// SelectDamaged returns the pool for selecting a damaged unit: the status yellow lines plus the repair calls.
+func SelectDamaged() []string {
+	return []string{StatusYellowA, StatusYellowB, RepairsNeededA, RepairsNeededB}
+}
+
+// SelectCritical returns the pool for selecting a critically damaged unit: the status red lines plus the repair calls.
+func SelectCritical() []string {
+	return []string{StatusRedA, StatusRedB, RepairsNeededA, RepairsNeededB}
 }

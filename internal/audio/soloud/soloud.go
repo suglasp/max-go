@@ -51,10 +51,13 @@ var (
 	_ audio.IntroLoopSfxBackend = (*Backend)(nil)
 )
 
+/* // note: unused code in Go port
+// New was only called by a test and equals NewWithBackend(dllPath, ""), which the game and the test use.
 // New loads the SoLoud shared library and initializes the automatic backend.
 func New(dllPath string) (*Backend, error) {
 	return newBackend(dllPath, soloudlib.SOLOUD_AUTO)
 }
+*/
 
 // NewWithBackend loads SoLoud and initializes the named device backend (see
 // BackendID); an empty or unknown name uses SoLoud's automatic choice.

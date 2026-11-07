@@ -322,13 +322,16 @@ func (m *Manager) stopMoviePCMLocked() {
 //
 // C++ ported : sound_manager.cpp - SoundManager::PlaySfx
 func (m *Manager) PlaySfx(tag string) {
-	m.PlaySfxPanned(tag, 0)
+	m.PlaySfxPannedFallback(tag, "", 0)
 }
 
+/* // note: unused code in Go port
+// PlaySfxPanned was only called by PlaySfx with pan 0; PlaySfx calls PlaySfxPannedFallback directly.
 // PlaySfxPanned plays a sound effect with stereo panning.
 func (m *Manager) PlaySfxPanned(tag string, pan float64) {
 	m.PlaySfxPannedFallback(tag, "", pan)
 }
+*/
 
 // PlaySfxPannedFallback plays the first of primary/fallback that resolves to a
 // real file, at the given pan, mirroring the C++ fallback to the default sound

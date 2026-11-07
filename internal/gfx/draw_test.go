@@ -14,9 +14,12 @@ func TestRectOps(t *testing.T) {
 	a := NewRect(0, 0, 9, 9)
 	b := NewRect(5, 5, 14, 14)
 
+	/* // note: unused code in Go port
+	// the check of Rect.Union, commented out with it.
 	if got := a.Union(b); got != NewRect(0, 0, 14, 14) {
 		t.Errorf("Union = %+v", got)
 	}
+	*/
 	clipped, ok := b.Intersect(a)
 	if !ok || clipped != NewRect(5, 5, 9, 9) {
 		t.Errorf("Intersect = %+v, %v", clipped, ok)
@@ -144,6 +147,8 @@ func TestCopies(t *testing.T) {
 		t.Error("TransCopy overwrote with transparent color 0")
 	}
 
+	/* // note: unused code in Go port
+	// the checks of MaskCopy and MaskTransCopy, commented out with them.
 	mask := New(3, 2)
 	copy(mask.Pix, []uint8{1, 1, 0, 0, 1, 1})
 
@@ -166,6 +171,7 @@ func TestCopies(t *testing.T) {
 	if dst.At(2, 1) != 0 { // src 0, mask 1: copied
 		t.Error("MaskTransCopy must copy color 0 where mask set")
 	}
+	*/
 }
 
 func TestScale(t *testing.T) {
@@ -184,6 +190,8 @@ func TestScale(t *testing.T) {
 		t.Errorf("Scale 2x2->4x4 =\n%v want\n%v", dst.Pix, want)
 	}
 
+	/* // note: unused code in Go port
+	// the check of TransScale, commented out with it.
 	src.Pix[1] = 0 // transparent
 	dst = New(4, 4)
 	dst.Fill(9)
@@ -194,8 +202,11 @@ func TestScale(t *testing.T) {
 	if dst.At(0, 0) != 1 || dst.At(3, 3) != 4 {
 		t.Error("TransScale missed opaque blocks")
 	}
+	*/
 }
 
+/* // note: unused code in Go port
+// the test of Texture, commented out with it.
 func TestTexture(t *testing.T) {
 	tex := New(2, 2)
 	copy(tex.Pix, []uint8{1, 2, 3, 4})
@@ -218,6 +229,7 @@ func TestTexture(t *testing.T) {
 		t.Errorf("Texture offset =\n%v want\n%v", b.Pix, want)
 	}
 }
+*/
 
 func TestRecolorAndSwap(t *testing.T) {
 	b := New(2, 2)
@@ -233,10 +245,13 @@ func TestRecolorAndSwap(t *testing.T) {
 		t.Errorf("Recolor = %v", b.Pix)
 	}
 
+	/* // note: unused code in Go port
+	// the check of SwapColor, commented out with it.
 	b.SwapColor(100, 2)
 	if !bytes.Equal(b.Pix, []uint8{0, 2, 100, 2}) {
 		t.Errorf("SwapColor = %v", b.Pix)
 	}
+	*/
 }
 
 func TestSubViewSharesPixels(t *testing.T) {

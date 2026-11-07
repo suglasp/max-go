@@ -64,7 +64,7 @@ func TestPortraitPipeline(t *testing.T) {
 			t.Errorf("%v: new player: %v", typ, err)
 			continue
 		}
-		if _, err := p.DrawNext(dst); err != nil {
+		if err := p.DrawNext(dst); err != nil {
 			t.Errorf("%v: draw: %v", typ, err)
 		}
 		f.Close()

@@ -114,11 +114,14 @@ func TestBlitFlags(t *testing.T) {
 		}
 	}
 
-	// Monospace: total advance is cell * len, wider than proportional.
+	// Monospace: total advance is cell * len.
+	/* // note: unused code in Go port
+	// the check of MonoWidth, commented out with it.
 	if f.MonoWidth("ii") <= f.Width("ii") {
 		t.Errorf("MonoWidth(ii)=%d not wider than Width(ii)=%d", f.MonoWidth("ii"), f.Width("ii"))
 	}
-	mw := f.MonoWidth("ii")
+	*/
+	mw := f.MonoCell() * len("ii")
 	buf = gfx.New(mw, f.Height)
 	f.Blit(buf, "ii", 0, 0x05|FlagMonospace)
 

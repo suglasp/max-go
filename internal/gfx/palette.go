@@ -163,6 +163,9 @@ func (p *Palette) RedTintTable(factor int) *[256]uint8 {
 	if factor <= 0 {
 		factor = 31
 	}
+	return p.IntensityTable3(63, 0, 0, factor)
+	/* // note: unused code in Go port
+	// the hand inlined copy of IntensityTable3(63, 0, 0, factor) it used before.
 	var t [256]uint8
 	for i := 0; i < PaletteSize; i++ {
 		r, _, _ := p.RGB(i)
@@ -171,6 +174,7 @@ func (p *Palette) RedTintTable(factor int) *[256]uint8 {
 		t[i] = p.MapColor(uint8(red), 0, 0, false)
 	}
 	return &t
+	*/
 }
 
 // BrightnessTable builds one level of the 7-level brightness recolor ramp:

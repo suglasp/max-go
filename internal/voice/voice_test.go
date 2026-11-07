@@ -15,7 +15,6 @@ func TestVoiceGroups(t *testing.T) {
 	}{
 		{"select", Select(), []string{"V_F001", "V_F004", "V_F005", "V_F006"}},
 		{"select sentry", SelectSentry(), []string{"V_F001", "V_F004", "V_F005", "V_F006", "V_F158"}},
-		{"move ack", MoveAck(), []string{"V_F001", "V_F004", "V_F005", "V_F006"}},
 		{"combat", Combat(), []string{"V_F196", "V_F198"}},
 		{"reaction fire", ReactionFire(), []string{"V_F250", "V_F251"}},
 		{"status yellow", StatusYellow(), []string{"V_F150", "V_F151"}},

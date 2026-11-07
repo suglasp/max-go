@@ -181,9 +181,7 @@ func (m *Movie) NextFrame() (*Frame, error) {
 			if len(payload) < 6 {
 				return nil, errShortOpcode(cb.opcode)
 			}
-			rate := binary.LittleEndian.Uint32(payload[0:4])
-			divider := binary.LittleEndian.Uint16(payload[4:6])
-			m.delayMS = int((rate * uint32(divider)) / 1000)
+			m.delayMS = timerDelayMS(payload)
 		case opAllocAudioBuffers:
 			if err := m.handleAudioAlloc(cb.version, payload); err != nil {
 				return nil, err
@@ -300,9 +298,7 @@ func (m *Movie) scanMetadata(r io.Reader, next control) error {
 				if len(payload) < 6 {
 					return errShortOpcode(cb.opcode)
 				}
-				rate := binary.LittleEndian.Uint32(payload[0:4])
-				divider := binary.LittleEndian.Uint16(payload[4:6])
-				m.delayMS = int((rate * uint32(divider)) / 1000)
+				m.delayMS = timerDelayMS(payload)
 			case opAllocAudioBuffers:
 				if err := m.handleAudioAlloc(cb.version, payload); err != nil {
 					return err
@@ -450,4 +446,12 @@ func readControl(b []byte) control {
 // errShortOpcode reports a truncated payload for an MVE opcode.
 func errShortOpcode(op uint8) error {
 	return fmt.Errorf("mve: opcode %#x payload truncated", op)
+}
+
+// timerDelayMS is the frame delay of a CREATE_TIMER payload (rate in microseconds times the divider) in
+// milliseconds; the caller checks the payload holds 6 bytes.
+func timerDelayMS(payload []byte) int {
+	rate := binary.LittleEndian.Uint32(payload[0:4])
+	divider := binary.LittleEndian.Uint16(payload[4:6])
+	return int((rate * uint32(divider)) / 1000)
 }

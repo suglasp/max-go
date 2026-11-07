@@ -213,6 +213,8 @@ func (b *Buffer) KeyToZero(key uint8) {
 	}
 }
 
+/* // note: ported but unused code in Go port
+// no screen masks a copy; the reference has no caller either.
 // MaskCopy copies nonzero src pixels where the mask is nonzero.
 //
 // C++: mask_buf_to_buf (grbuf.c)
@@ -228,7 +230,10 @@ func (b *Buffer) MaskCopy(src, mask *Buffer) {
 		}
 	}
 }
+*/
 
+/* // note: ported but unused code in Go port
+// no screen masks a copy; the reference has no caller either.
 // MaskTransCopy copies src pixels (including color 0) where the mask
 // is nonzero.
 //
@@ -245,6 +250,7 @@ func (b *Buffer) MaskTransCopy(src, mask *Buffer) {
 		}
 	}
 }
+*/
 
 // Scale stretches src to fill b (nearest neighbor, 16.16 fixed point
 // exactly as the original; the game depends on its rounding for tile
@@ -252,18 +258,21 @@ func (b *Buffer) MaskTransCopy(src, mask *Buffer) {
 //
 // C++: cscale (grbuf.c)
 func (b *Buffer) Scale(src *Buffer) {
-	b.scale(src, false)
+	b.scale(src)
 }
 
+/* // note: ported but unused code in Go port
+// every scaled copy is opaque; the reference has no caller either.
 // TransScale is Scale skipping color 0 in src.
 //
 // C++: trans_cscale (grbuf.c)
 func (b *Buffer) TransScale(src *Buffer) {
 	b.scale(src, true)
 }
+*/
 
 // scale copies src into b using nearest neighbor scaling.
-func (b *Buffer) scale(src *Buffer, transparent bool) {
+func (b *Buffer) scale(src *Buffer) {
 	my := (b.H << 16) / src.H
 	mx := (b.W << 16) / src.W
 
@@ -274,12 +283,11 @@ func (b *Buffer) scale(src *Buffer, transparent bool) {
 
 		for srcx := 0; srcx < src.W; srcx++ {
 			pixel := srow[srcx]
-			if !transparent || pixel != 0 {
-				for desty := my * srcy >> 16; desty < (my+my*srcy)>>16; desty++ {
-					drow := b.Pix[desty*b.Stride:]
-					for destx := dstX0 >> 16; destx < dstX1>>16; destx++ {
-						drow[destx] = pixel
-					}
+			// if !transparent || pixel != 0 { note: unused code in Go port, the color 0 skip went with TransScale
+			for desty := my * srcy >> 16; desty < (my+my*srcy)>>16; desty++ {
+				drow := b.Pix[desty*b.Stride:]
+				for destx := dstX0 >> 16; destx < dstX1>>16; destx++ {
+					drow[destx] = pixel
 				}
 			}
 			dstX0 += mx
@@ -288,6 +296,8 @@ func (b *Buffer) scale(src *Buffer, transparent bool) {
 	}
 }
 
+/* // note: ported but unused code in Go port
+// no window is textured; the reference sets GNW_texture to 0 and never loads one.
 // Texture tiles tex across the buffer view, starting at texture
 // offset (tx, ty).
 //
@@ -319,6 +329,7 @@ func (b *Buffer) Texture(tex *Buffer, tx, ty int) {
 		}
 	}
 }
+*/
 
 // Recolor maps every pixel through the 256-entry lookup table.
 //
@@ -332,6 +343,8 @@ func (b *Buffer) Recolor(table *[256]uint8) {
 	}
 }
 
+/* // note: ported but unused code in Go port
+// no screen swaps a colour; the reference swap_pulldown has no caller.
 // SwapColor exchanges all pixels of color c1 and c2.
 //
 // C++: swap_color_buf (grbuf.c)
@@ -348,6 +361,7 @@ func (b *Buffer) SwapColor(c1, c2 uint8) {
 		}
 	}
 }
+*/
 
 // abs returns the absolute value of an integer.
 func abs(v int) int {

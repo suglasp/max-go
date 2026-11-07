@@ -108,9 +108,8 @@ level 147).
 The retail 1.0.4 COLOR.PAL is 33,536 bytes: palette plus RGB555 table only,
 no intensity table.
 The original engine then leaves the table zeroed (every lookup returns palette index 0).
-This project differs deliberately: without a table,
-`ColorIntensity` returns the input color unchanged (identity),
-avoiding blacked out lighten effects.
+The port's `ColorIntensity` (which would return the input color unchanged without a table, to avoid blacked out
+lighten effects) sits in an unused code note block in `internal/gfx/palette.go`: no screen calls it.
 
 ## Plain 768-byte palettes
 

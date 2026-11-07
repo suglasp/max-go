@@ -78,19 +78,15 @@ func TestClans(t *testing.T) {
 		t.Fatalf("got %d clans", len(a.Clans))
 	}
 
-	wantNames := map[string]string{
-		"Clan A": "The Chosen",
-		"Clan B": "Crimson Path",
-		"Clan C": "Von Griffin",
-	}
+	wantNames := []string{"The Chosen", "Crimson Path", "Von Griffin"} // clans A, B, C
 
-	for _, c := range a.Clans {
+	for i, c := range a.Clans {
 		if c.Name == "" {
-			t.Errorf("%s has no name", c.Key)
+			t.Errorf("clan %d has no name", i)
 		}
 
-		if want, ok := wantNames[c.Key]; ok && c.Name != want {
-			t.Errorf("%s name = %q, want %q", c.Key, c.Name, want)
+		if i < len(wantNames) && c.Name != wantNames[i] {
+			t.Errorf("clan %d name = %q, want %q", i, c.Name, wantNames[i])
 		}
 	}
 

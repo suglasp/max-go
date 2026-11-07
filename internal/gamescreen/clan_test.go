@@ -19,7 +19,6 @@ func TestTeamValuesAppliesClanBonus(t *testing.T) {
 	s := newResearchScreen()
 	// Synthetic Clan A: the AWAC gains +2 scan and the Tank's build time is set to 7.
 	s.buildUI.clans = []assets.Clan{{
-		Key: "Clan A",
 		Mods: map[assets.UnitType][]assets.ClanMod{
 			assets.Awac: {{Attr: "scan", Delta: 2}},
 			assets.Tank: {{Attr: "turns", Delta: 7, Abs: true}},

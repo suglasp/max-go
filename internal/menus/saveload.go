@@ -479,7 +479,7 @@ func (m *saveLoadMenu) advanceBrain() {
 	}
 	buf := m.ctx.Sys.Buf(mainWindow)
 	m.ctx.Sys.Lock()
-	_, _ = m.brain.DrawNext(buf)
+	_ = m.brain.DrawNext(buf)
 	m.ctx.Sys.Unlock()
 }
 

@@ -32,6 +32,8 @@ type MultiFrame struct {
 	Opaque     []bool  // Marks pixels written by encoded runs.
 }
 
+/* // note: unused code in Go port
+// no caller measures a frame's opaque box; the draws work from W, H and the hotspot.
 // ContentBounds returns the inclusive bounds of the opaque pixels. It reports false for an empty frame, letting callers ignore transparent padding when scaling icons.
 func (f *MultiFrame) ContentBounds() (minX, minY, maxX, maxY int, ok bool) {
 	minX, minY, maxX, maxY = f.W, f.H, -1, -1
@@ -56,6 +58,7 @@ func (f *MultiFrame) ContentBounds() (minX, minY, maxX, maxY int, ok bool) {
 	}
 	return minX, minY, maxX, maxY, maxX >= 0
 }
+*/
 
 // rowDelimiter ends a frame row in both the sprite and shadow encodings.
 const rowDelimiter = 0xFF
@@ -166,11 +169,14 @@ func decodeRow(data []byte, off int, shadow bool, fr *MultiFrame, y int) error {
 	}
 }
 
+/* // note: unused code in Go port
+// no caller wraps a frame as a buffer; frames draw through Draw and DrawScaled.
 // Buffer wraps the frame pixels as a gfx.Buffer (shared, not copied).
 // Transparent pixels read back as 0; use Opaque to distinguish them.
 func (f *MultiFrame) Buffer() *gfx.Buffer {
 	return gfx.FromPix(f.Pix, f.W, f.H)
 }
+*/
 
 // Draw blits the frame into dst with its hotspot at (x, y): the
 // upper left corner lands at (x-HotX, y-HotY). Transparent pixels are

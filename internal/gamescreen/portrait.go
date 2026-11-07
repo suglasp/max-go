@@ -124,7 +124,7 @@ func (s *Screen) drawCornerFlic(buf *gfx.Buffer) {
 	if first || (s.hudArt.playFlic && now-s.portraitUI.portraitStamp >= portraitFrameMS) {
 		s.portraitUI.portraitStamp = now
 
-		if _, err := s.portraitUI.portrait.DrawNext(buf); err != nil {
+		if err := s.portraitUI.portrait.DrawNext(buf); err != nil {
 			s.clearPortrait()
 			s.restoreFrame(buf, CornerFlic)
 		}

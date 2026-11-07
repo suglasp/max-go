@@ -80,49 +80,49 @@ type voiceLine struct {
 // voiceLines maps each state to its lines. Tags come from the female F###.WAV set in compare/_voice_lines.txt. Priorities keep status and destruction above acknowledgements and ambient orders. Enemy detection uses a five-second debounce.
 var voiceLines = [vsStateCount]voiceLine{
 	vsSelectUnit:        {voice.Select(), "select", 10, 250},
-	vsEnemyDetected:     {[]string{"V_F070", "V_F071"}, "enemy detected", 40, 5000},
-	vsTurnBegin:         {[]string{"V_F053"}, "turn begin", 25, 500},
-	vsBuildComplete:     {[]string{"V_F162", "V_F163", "V_F164", "V_F165"}, "build complete", 20, 500},
-	vsUnitComplete:      {[]string{"V_F166", "V_F169", "V_F215", "V_F216", "V_F217"}, "unit complete", 20, 500},
-	vsNewUnits:          {[]string{"V_F206", "V_F207"}, "new units", 20, 500},
-	vsResearch:          {[]string{"V_F093"}, "research complete", 20, 500},
+	vsEnemyDetected:     {[]string{voice.EnemyDetectedA, voice.EnemyDetectedB}, "enemy detected", 40, 5000},
+	vsTurnBegin:         {[]string{voice.TurnBegin}, "turn begin", 25, 500},
+	vsBuildComplete:     {voice.ConstructionComplete(), "build complete", 20, 500},
+	vsUnitComplete:      {voice.FactoryUnitComplete(), "unit complete", 20, 500},
+	vsNewUnits:          {voice.FactoryMultipleNewUnits(), "new units", 20, 500},
+	vsResearch:          {[]string{voice.ResearchComplete}, "research complete", 20, 500},
 	vsStatusYellow:      {voice.StatusYellow(), "status yellow", 50, 2000},
 	vsStatusRed:         {voice.StatusRed(), "status red", 55, 2000},
 	vsUnderAttack:       {voice.UnderAttack(), "under attack", 50, 2000},
 	vsUnitDestroyed:     {voice.UnitDestroyed(), "unit destroyed", 60, 1500},
-	vsNoPath:            {[]string{"V_F094", "V_F095"}, "no path", 15, 500},
-	vsStorageFuelFull:   {[]string{"V_F057"}, "fuel storage full", 15, 1000},
-	vsStorageRawFull:    {[]string{"V_F061"}, "raw storage full", 15, 1000},
-	vsStorageGoldFull:   {[]string{"V_F066"}, "gold storage full", 15, 1000},
-	vsGameSaved:         {[]string{"V_F013"}, "game saved", 15, 500},
-	vsSurveying:         {[]string{"V_F191", "V_F192"}, "surveying", 10, 250},
+	vsNoPath:            {[]string{voice.NoPathA, voice.NoPathB}, "no path", 15, 500},
+	vsStorageFuelFull:   {[]string{voice.StorageFuel}, "fuel storage full", 15, 1000},
+	vsStorageRawFull:    {[]string{voice.StorageRaw}, "raw storage full", 15, 1000},
+	vsStorageGoldFull:   {[]string{voice.StorageGold}, "gold storage full", 15, 1000},
+	vsGameSaved:         {[]string{voice.GameSaved}, "game saved", 15, 500},
+	vsSurveying:         {[]string{voice.SurveyingA, voice.SurveyingB}, "surveying", 10, 250},
 	vsAttacking:         {voice.Combat(), "attacking", 10, 250},
-	vsLayingMines:       {[]string{"V_F181", "V_F182"}, "laying mines", 10, 250},
-	vsRemovingMines:     {[]string{"V_F186", "V_F187"}, "removing mines", 10, 250},
-	vsClearing:          {[]string{"V_F171"}, "clearing", 10, 250},
-	vsOnSentry:          {[]string{"V_F158"}, "on sentry", 10, 250},
-	vsBuilding:          {[]string{"V_F284"}, "building", 10, 250},
-	vsMovementExhausted: {[]string{"V_F145"}, "movement exhausted", 10, 250},
-	vsAmmoLow:           {[]string{"V_F138", "V_F270", "V_F271"}, "ammo low", 30, 1000},
-	vsAmmoDepleted:      {[]string{"V_F142"}, "ammo depleted", 35, 1000},
-	vsTransferComplete:  {[]string{"V_F224"}, "transfer complete", 15, 500},
-	vsRepaired:          {[]string{"V_F210", "V_F211", "V_F219", "V_F220"}, "repaired", 15, 500},
-	vsReloaded:          {[]string{"V_F085", "V_F089"}, "reloaded", 15, 500},
-	vsTimeWarn:          {[]string{"V_F272", "V_F273"}, "time warning", 45, 1000},
+	vsLayingMines:       {[]string{voice.LayingMinesA, voice.LayingMinesB}, "laying mines", 10, 250},
+	vsRemovingMines:     {[]string{voice.RemovingMinesA, voice.RemovingMinesB}, "removing mines", 10, 250},
+	vsClearing:          {[]string{voice.ClearingArea}, "clearing", 10, 250},
+	vsOnSentry:          {[]string{voice.OnSentry}, "on sentry", 10, 250},
+	vsBuilding:          {[]string{voice.FactoryBuilding}, "building", 10, 250},
+	vsMovementExhausted: {[]string{voice.MovementExhausted}, "movement exhausted", 10, 250},
+	vsAmmoLow:           {[]string{voice.AmmoLowA, voice.AmmoLowB, voice.AmmoLowC}, "ammo low", 30, 1000},
+	vsAmmoDepleted:      {[]string{voice.AmmoDepleted}, "ammo depleted", 35, 1000},
+	vsTransferComplete:  {[]string{voice.TransferDone}, "transfer complete", 15, 500},
+	vsRepaired:          {[]string{voice.RepairedAllA, voice.RepairedAllB, voice.RepairedOneA, voice.RepairedOneB}, "repaired", 15, 500},
+	vsReloaded:          {[]string{voice.ReloadedA, voice.ReloadedB}, "reloaded", 15, 500},
+	vsTimeWarn:          {[]string{voice.TimeWarningA, voice.TimeWarningB}, "time warning", 45, 1000},
 	// Game over lines from enterGameOver; top priority so nothing talks over the result.
-	vsMissionSuccess: {[]string{"V_F283"}, "mission success", 100, 500},
-	vsMissionFailed:  {[]string{"V_F010"}, "mission failed", 100, 500},
+	vsMissionSuccess: {[]string{voice.MissionWon}, "mission success", 100, 500},
+	vsMissionFailed:  {[]string{voice.MissionLost}, "mission failed", 100, 500},
 	// "Select site" / "Choose site" / "Select landing site!" - spoken when the
 	// custom game landing site select opens. C++: GameManager_SelectSite PlayVoice.
-	vsSelectSite: {[]string{"V_F176", "V_F177", "V_F278"}, "select landing site", 30, 0},
+	vsSelectSite: {[]string{voice.SelectSiteA, voice.SelectSiteB, voice.SelectSiteC}, "select landing site", 30, 0},
 	// Commando infiltration outcomes for the attacking side: capture, disable, or failure. The failure pool uses F007 and F012; F010 is reserved for the game-over defeat line.
-	vsUnitCaptured:     {[]string{"V_F239", "V_F242"}, "unit captured", 35, 500},
-	vsUnitDisabled:     {[]string{"V_F244"}, "unit disabled", 35, 500},
-	vsInfiltrateFailed: {[]string{"V_F007", "V_F012"}, "infiltration failed", 30, 500},
+	vsUnitCaptured:     {voice.CapturedUnits(), "unit captured", 35, 500},
+	vsUnitDisabled:     {[]string{voice.DisabledUnit}, "unit disabled", 35, 500},
+	vsInfiltrateFailed: {[]string{voice.AttemptFailed, voice.InfiltrateBad}, "infiltration failed", 30, 500},
 	// The victim hears capture, disable, or exposed-infiltrator outcomes. These lines take priority over selection acknowledgements. The exposed-infiltrator pool uses F012.
-	vsUnitSeized:         {[]string{"V_F243"}, "own unit seized", 55, 500},
-	vsUnitNotFunctioning: {[]string{"V_F249"}, "own unit not functioning", 55, 500},
-	vsInfiltrateDetected: {[]string{"V_F012"}, "enemy infiltrator caught", 45, 500},
+	vsUnitSeized:         {[]string{voice.OwnUnitSeized}, "own unit seized", 55, 500},
+	vsUnitNotFunctioning: {[]string{voice.OwnUnitStopped}, "own unit not functioning", 55, 500},
+	vsInfiltrateDetected: {[]string{voice.InfiltrateBad}, "enemy infiltrator caught", 45, 500},
 	// Selecting a unit (or defense building) ON GUARD: the "Ready!" select pool with
 	// F158 "On sentry" mixed in, so a pick is sometimes "Ready", sometimes "On sentry".
 	// The original plays a fixed V_F158 for a mobile sentry unit and nothing for a
@@ -137,7 +137,7 @@ var voiceLines = [vsStateCount]voiceLine{
 	// "Gold is now being refined" - spoken once, the first time a Gold Refinery on the
 	// player's base produces spendable credit (the team's gold balance first rises from
 	// refining). C++: unitinfo.cpp UpdateProduction COMMTWR (!gold_reserves && GetGold()>0).
-	vsGoldRefined: {[]string{"V_F276"}, "first gold refined", 20, 500},
+	vsGoldRefined: {[]string{voice.GoldRefined}, "first gold refined", 20, 500},
 	// "Unit firing!" / "Unit engaging target!" - spoken when one of the player's own
 	// units takes an opportunity (reaction) shot it was not ordered to. The 1s cooldown
 	// collapses a multi reactor sweep to one cue. C++: units_manager.cpp - the player team
@@ -147,12 +147,12 @@ var voiceLines = [vsStateCount]voiceLine{
 	// first reveals a hostile submarine, DISTINCT from the general "Enemy detected!"
 	// (F070) which covers surface units. Same 5s debounce as enemy detected.
 	// C++: unitinfo.cpp - the V_M201/V_F201 sub detection cue.
-	vsSubmarineDetected: {[]string{"V_F201"}, "submarine detected", 40, 5000},
+	vsSubmarineDetected: {[]string{voice.SubmarineDetected}, "submarine detected", 40, 5000},
 	// Selecting a damaged unit uses status or repair calls. The damaged selection pools include F247 and F265, while notifyDamage keeps the pure status pools.
-	vsSelectDamaged:  {[]string{"V_F150", "V_F151", "V_F247", "V_F265"}, "select (damaged)", 10, 250},
-	vsSelectCritical: {[]string{"V_F154", "V_F155", "V_F247", "V_F265"}, "select (critical)", 10, 250},
+	vsSelectDamaged:  {voice.SelectDamaged(), "select (damaged)", 10, 250},
+	vsSelectCritical: {voice.SelectCritical(), "select (critical)", 10, 250},
 	// "You are about to run out of time!" replaces the normal 20-second warning while the End Turn grace countdown runs. C++: game_manager.cpp:2165 GameManager_DrawTurnTimer.
-	vsGraceWarn: {[]string{"V_F275"}, "grace time warning", 45, 1000},
+	vsGraceWarn: {[]string{voice.GraceWarning}, "grace time warning", 45, 1000},
 	// "Waiting for A.I. to finish turn." plays in simultaneous mode when a computer team's units still move after End Turn. F080 and F075 belong to networking and are not used here.
-	vsWaitingForOpponents: {[]string{"V_F081"}, "waiting for the computer", 25, 5000},
+	vsWaitingForOpponents: {[]string{voice.WaitingForComputer}, "waiting for the computer", 25, 5000},
 }

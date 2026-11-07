@@ -14,14 +14,20 @@ import (
 type videoState struct {
 	wBlocks, hBlocks int
 	w, h             int
+	/* // note: unused code in Go port
+	// stride was only read by the commented out mode 10 / unpack4 decoders.
 	stride           int
-	cur, prev        []byte
-	conf             [256]int
-	lut2             [256]uint16
-	lut3             [256]uint16
+	*/
+	cur, prev []byte
+	conf      [256]int
+	lut2      [256]uint16
+	lut3      [256]uint16
+	/* // note: unused code in Go port
+	// lut4 / lut5 / lut6 were only read by the commented out mode 10 / unpack4 decoders.
 	lut4             [16]uint32
 	lut5             [256]uint32
 	lut6             [256]uint32
+	*/
 }
 
 // config allocates frame buffers for block-based MVE video geometry.
@@ -29,7 +35,7 @@ func (v *videoState) config(widthBlocks, heightBlocks, stride int) error {
 	if widthBlocks <= 0 || heightBlocks <= 0 || stride <= 0 {
 		return fmt.Errorf("mve: invalid video geometry %dx%d stride %d", widthBlocks, heightBlocks, stride)
 	}
-	v.wBlocks, v.hBlocks, v.stride = widthBlocks, heightBlocks, stride
+	v.wBlocks, v.hBlocks = widthBlocks, heightBlocks /* , v.stride = stride: note: unused code in Go port, see videoState */
 	v.w = widthBlocks * 8
 	v.h = heightBlocks * 8 * stride
 	v.cur = make([]byte, v.w*v.h)
@@ -531,6 +537,8 @@ func (v *videoState) initLUTs() {
 		v.lut3[n] = uint16(byte(x)) | uint16(byte(14))<<8
 		n++
 	}
+	/* // note: unused code in Go port
+	// the lut4 / lut5 / lut6 tables (see videoState).
 	two := [2]byte{0xc3, 0xc1}
 	for i := 0; i < 16; i++ {
 		var b [4]byte
@@ -552,6 +560,7 @@ func (v *videoState) initLUTs() {
 			uint32(cVals[i%4])<<16 |
 			uint32(eVals[(i/4)%4])<<24
 	}
+	*/
 }
 
 // repeat2 packs one byte twice into a 16-bit lane inside a uint32.

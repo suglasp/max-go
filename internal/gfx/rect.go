@@ -37,6 +37,8 @@ func (r Rect) Height() int {
 	return r.LRY - r.ULY
 }
 
+/* // note: ported but unused code in Go port
+// no caller joins two rects; the reference has no caller either.
 // Union returns the smallest rectangle containing both r and o.
 //
 // C++: rect_min_bound (rect.c)
@@ -56,6 +58,7 @@ func (r Rect) Union(o Rect) Rect {
 	}
 	return u
 }
+*/
 
 // Intersect clips r against bound, returning ok=false when the two do
 // not overlap (corners inclusive, as in GNW).

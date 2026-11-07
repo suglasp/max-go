@@ -55,13 +55,18 @@ func (f *Font) MonoCell() int {
 	return max + f.Spacing
 }
 
+/* // note: ported but unused code in Go port
+// every message box passes monospace = false; the reference never reaches it either.
 // MonoWidth returns the pixel width of str in monospace mode.
 //
 // C++: Text_GetMonospaceWidth
 func (f *Font) MonoWidth(str string) int {
 	return f.MonoCell() * len(str)
 }
+*/
 
+/* // note: ported but unused code in Go port
+// no caller sizes a text buffer this way; the reference never calls Text_GetSize either.
 // Size returns Width(str) * Height, the buffer size needed for the
 // string.
 //
@@ -69,6 +74,7 @@ func (f *Font) MonoWidth(str string) int {
 func (f *Font) Size(str string) int {
 	return f.Width(str) * f.Height
 }
+*/
 
 // Blit renders str into dst starting at the buffer origin, drawing at
 // most maxWidth pixels (and never outside dst). color packs the
@@ -130,9 +136,12 @@ type Color struct {
 
 // Standard menu text colors (fonts.cpp).
 var (
-	ColorGold         = Color{165, 175, 199}
-	ColorDarkOrange   = Color{5, 56, 199}
+	ColorGold       = Color{165, 175, 199}
+	ColorDarkOrange = Color{5, 56, 199}
+	/* // note: ported but unused code in Go port
+	// a disabled caption in vanilla is a blank plate (DOS check 2026-11-07), so the reference default is unused.
 	ColorDarkGray     = Color{179, 215, 199}
+	*/
 	ColorBrightBrown  = Color{164, 173, 199}
 	ColorBrightYellow = Color{162, 8, 199}
 	ColorBrightSilver = Color{162, 172, 199}

@@ -41,7 +41,7 @@ func testDLL(t *testing.T) string {
 }
 
 func TestMissingDLLReturnsError(t *testing.T) {
-	be, err := New(filepath.Join(t.TempDir(), "missing-soloud.dll"))
+	be, err := NewWithBackend(filepath.Join(t.TempDir(), "missing-soloud.dll"), "")
 
 	if err == nil {
 		be.Close()
