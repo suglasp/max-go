@@ -29,7 +29,8 @@ const DEBUG_GAME = true // Flip to false for a release build
 // menuScreensHelp lists the developer screens accepted by -emulate.
 const menuScreensHelp = "planetselect, newgame, multiplayer, gameconfig, chooseplayer, clanselect, " +
 	"mapview, drawmap, sprite:<tag>, shadow, game, random, random2, build, blewup, colony, popup, bevelart, assets, soldier, apcunit, headrotate, transport, commando, mines, bulldozer, air, missile, navalfire, parkedbuild, reactionfire, spotted, aliens, factoryrun, death, win, lose, ending, " +
-	"options, prefs-game, loadgame, research, alloc, upgrade, transfer, selfdestruct, repairshop, reports, help, cargo, construct, construct-eng, factorybuild, scrollbar, listbox, saveload, save, load, credits, intro, splash"
+	"options, prefs-game, loadgame, research, alloc, upgrade, transfer, selfdestruct, repairshop, reports, help, cargo, construct, construct-eng, factorybuild, scrollbar, listbox, saveload, save, load, credits, intro, splash, " +
+	"setup, gamesetup, training, campaign, mission, customscenario, tips, gameconfig-mission, custom, levelup, submarine, status"
 
 type launchFlags struct {
 	demo       *bool
@@ -74,11 +75,15 @@ func main() {
 		fatalf("max-go: %v", err)
 	}
 
+	if *flags.difficulty > 5 {
+		fatalf("max-go: flag -difficulty must be an integer from 0 to 5 (Clueless..God)")
+	}
+
 	noSound = *flags.nosound
 	showAStarPath = *flags.setAStar
 	difficultyOverride = *flags.difficulty
 	npcOverride = *flags.npc
-	derelictsLevel = benchDerelictsLevel(*flags.custom.Derelicts) // -derelicts for the quick start benches
+	derelictsLevel = resourceDensity(*flags.custom.Derelicts) // -derelicts for the quick start benches (empty = Rare)
 
 	cfg, baseDir, cfgPath := loadLaunchSettings(flags)
 
@@ -183,11 +188,7 @@ func loadLaunchSettings(flags launchFlags) (settings.Settings, string, string) {
 	// -difficulty overrides the computer opponent tier for this run.
 	// Copy it to settings.Game.Opponent so the setup screen shows the chosen tier too.
 	if difficultyOverride >= 0 {
-		opponent := difficultyOverride
-		if opponent > 5 {
-			opponent = 5
-		}
-		cfg.Game.Opponent = opponent
+		cfg.Game.Opponent = difficultyOverride
 	}
 
 	// -widescreen changes this run's game view without persisting video.widescreen.
@@ -552,7 +553,7 @@ func flagValueHint(name string) string {
 		return " <Poor|Medium|Rich>"
 
 	case "derelicts":
-		return " <Rare|Common>"
+		return " <None|Rare|Common>"
 
 	case "startcredit", "credit":
 		return " <Low|Limited|Normal|High|TooMuch>"

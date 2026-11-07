@@ -173,7 +173,7 @@ func jumpToMenu(ctx *menus.Context, cfg *settings.Settings, name string, noMovie
 
 	default:
 		if tag, ok := strings.CutPrefix(name, "sprite:"); ok {
-			err = spriteViewDebug(ctx, cfg, tag)
+			err = spriteViewDebug(ctx, tag)
 		} else {
 			dbg.Printf("unknown -emulate %q", name)
 		}
@@ -579,7 +579,7 @@ func runUnitStatusDebug(ctx *menus.Context) error {
 // spriteViewDebug renders a multi frame unit sprite (resource tag, e.g.
 // sprite:BOMBER) cycling through its frames, drawn once per team color so
 // the team color remap is visible.
-func spriteViewDebug(ctx *menus.Context, cfg *settings.Settings, tag string) error {
+func spriteViewDebug(ctx *menus.Context, tag string) error {
 	data, err := ctx.Lib.Read(resfileTag(tag))
 	if err != nil {
 		return err

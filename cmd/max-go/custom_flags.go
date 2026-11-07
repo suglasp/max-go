@@ -36,18 +36,18 @@ type CustomGameFlags struct {
 // C++ ported : gameconfigmenu.cpp - GameConfigMenu event handlers.
 func registerCustomFlags(fs *flag.FlagSet) *CustomGameFlags {
 	flags := &CustomGameFlags{}
-	flags.TurnLimit = fs.String("turnlimit", "", "custom game turn timer seconds (the setup screen Turn Time): none or 60..250")
+	flags.TurnLimit = fs.String("turnlimit", "", "custom game turn timer seconds (the setup screen Turn Time): 60..250")
 	fs.StringVar(flags.TurnLimit, "turns", "", "alias of -turnlimit")
-	flags.EndTurn = fs.String("endturn", "", "custom game end of turn grace seconds: none or 15..90")
-	flags.Score = fs.String("score", "", "custom game score victory target: none, Low, Medium, High")
-	flags.Duration = fs.String("duration", "", "custom game duration victory turn count: none or 1..9999")
+	flags.EndTurn = fs.String("endturn", "", "custom game end of turn grace seconds: 15..90")
+	flags.Score = fs.String("score", "", "custom game score victory target: Low, Medium, High")
+	flags.Duration = fs.String("duration", "", "custom game duration victory turn count: 1..9999")
 	flags.TurnBased = fs.Bool("turnbased", false, "custom game play mode: turn-based")
 	flags.Simultane = fs.Bool("simultane", false, "custom game play mode: simultaneous")
 	flags.Raw = fs.String("raw", "Medium", "custom game raw density: Poor, Medium, Rich")
 	flags.Fuel = fs.String("fuel", "Medium", "custom game fuel density: Poor, Medium, Rich")
 	flags.Gold = fs.String("gold", "Medium", "custom game gold density: Poor, Medium, Rich")
 	flags.Derelicts = fs.String("derelicts", "", "custom game alien derelict density: none, Rare, Common")
-	flags.StartCredit = fs.String("startcredit", "", "custom game starting credits: none, Low, Limited, Normal, High, TooMuch")
+	flags.StartCredit = fs.String("startcredit", "", "custom game starting credits: Low, Limited, Normal, High, TooMuch")
 	fs.StringVar(flags.StartCredit, "credit", "", "alias of -startcredit")
 	return flags
 }
@@ -135,9 +135,7 @@ func applyCustomGameFlags(g *settings.Game, cf *CustomGameFlags, provided map[st
 
 	// -startcredit: the landing purchase budget bucket.
 	if s := strings.TrimSpace(stringValue(cf.StartCredit)); s != "" {
-		if v := startCreditValue(s); v >= 0 {
-			g.StartGold = v
-		}
+		g.StartGold = startCreditValue(s)
 	}
 
 	// -derelicts: neutral alien derelict density.
@@ -201,8 +199,6 @@ func resourceDensity(v string) int {
 // matching gcCreditValues in the setup screen. Returns -1 for an unknown label.
 func startCreditValue(v string) int {
 	switch strings.ToLower(strings.TrimSpace(v)) {
-	case "none":
-		return 0
 	case "low":
 		return 50
 	case "limited":

@@ -768,6 +768,8 @@ var npcOverride = 1
 // games read cfg.Game.AlienDerelicts because the benches have no setup screen.
 var derelictsLevel = 1
 
+/* // note: unused code in Go port
+// benchDerelictsLevel repeated resourceDensity (custom_flags.go) for every validated -derelicts value; main now calls resourceDensity.
 // benchDerelictsLevel maps -derelicts to the density used by random benches.
 // An empty value defaults to Rare, while None disables derelicts.
 func benchDerelictsLevel(v string) int {
@@ -782,6 +784,7 @@ func benchDerelictsLevel(v string) int {
 		return 1
 	}
 }
+*/
 
 // npcCount resolves how many computer opponents a game fields, clamped to 1..3
 // (there are 4 team slots: one player plus up to three NPCs). It answers for a
