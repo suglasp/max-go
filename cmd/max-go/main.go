@@ -75,8 +75,8 @@ func main() {
 		fatalf("max-go: %v", err)
 	}
 
-	if *flags.difficulty > 5 {
-		fatalf("max-go: flag -difficulty must be an integer from 0 to 5 (Clueless..God)")
+	if err := validateDifficulty(*flags.difficulty); err != nil {
+		fatalf("max-go: %v", err)
 	}
 
 	noSound = *flags.nosound

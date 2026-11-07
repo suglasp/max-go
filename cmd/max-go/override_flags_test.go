@@ -184,6 +184,20 @@ func TestApplyLaunchOverridesDataDirBeatsEnv(t *testing.T) {
 	}
 }
 
+// TestValidateDifficulty checks the -difficulty range: unset (-1) and the six tiers pass, the rest is refused.
+func TestValidateDifficulty(t *testing.T) {
+	for n := -1; n <= 5; n++ {
+		if err := validateDifficulty(n); err != nil {
+			t.Errorf("validateDifficulty(%d) = %v, want nil", n, err)
+		}
+	}
+	for _, n := range []int{-5, -2, 6, 99} {
+		if err := validateDifficulty(n); err == nil {
+			t.Errorf("validateDifficulty(%d) accepted an out of range tier", n)
+		}
+	}
+}
+
 // TestLanguageFlagNeverReachesDisk checks that -language sets the running config only: a menu save keeps the
 // language key out of max-go.json.
 func TestLanguageFlagNeverReachesDisk(t *testing.T) {

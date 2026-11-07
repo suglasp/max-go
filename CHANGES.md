@@ -6,7 +6,7 @@ Check the version file next to the game executables.
 ## 1.0.1.2 (release candidate)
 
 ### Changes
-- The `-difficulty` launch option now refuses a value above 5 with an error, instead of quietly treating it as 5 (the tiers are 0 Clueless to 5 God).
+- The `-difficulty` launch option now refuses a value outside 0 to 5 with an error, instead of quietly treating a higher value as 5 or ignoring a negative one (the tiers are 0 Clueless to 5 God).
 - `max-go.json` no longer carries a `language` setting by default; the game reads its texts from `LANG.RES`. Add `"language": "en-us"` by hand to use a loose `lang-en-us.ini` again; `-language` now applies to one run only and is never saved.
 
 ### Fixes

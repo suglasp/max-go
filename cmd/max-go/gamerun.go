@@ -252,10 +252,6 @@ func buildGameScreen(ctx *menus.Context, mapFile string) (*gamescreen.Screen, er
 // applyLivePrefs pushes the changeable game prefs into a running screen, so the in game
 // Options menu takes effect at once and not only on the next load.
 func applyLivePrefs(scr *gamescreen.Screen, ctx *menus.Context) {
-	if ctx.Settings == nil {
-		return
-	}
-
 	scr.ApplyPrefs(gamescreen.LivePrefs{
 		QuickScroll:    ctx.Settings.Prefs.QuickScroll,
 		TurnTimer:      ctx.Settings.Game.TurnTimer,

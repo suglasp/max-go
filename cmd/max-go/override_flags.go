@@ -99,6 +99,15 @@ func overrideForRun[T comparable](cfg *settings.Settings, field func(*settings.S
 	})
 }
 
+// validateDifficulty checks the -difficulty value: -1 (the default) leaves the tier unset, 0..5 picks
+// Clueless..God. Anything else is refused, since there is no tier past God.
+func validateDifficulty(n int) error {
+	if n < -1 || n > 5 {
+		return fmt.Errorf("flag -difficulty must be an integer from 0 to 5 (Clueless..God), got %d", n)
+	}
+	return nil
+}
+
 // applyLanguageFlag sets the -language code for this run only, so a menu save never writes it to max-go.json.
 func applyLanguageFlag(cfg *settings.Settings, language string) {
 	if language = strings.TrimSpace(language); language != "" {
