@@ -99,6 +99,13 @@ func overrideForRun[T comparable](cfg *settings.Settings, field func(*settings.S
 	})
 }
 
+// applyLanguageFlag sets the -language code for this run only, so a menu save never writes it to max-go.json.
+func applyLanguageFlag(cfg *settings.Settings, language string) {
+	if language = strings.TrimSpace(language); language != "" {
+		overrideForRun(cfg, func(s *settings.Settings) *string { return &s.Language }, language)
+	}
+}
+
 // audioBackendName maps -audio values to settings backend names. Both native
 // and default select Ebitengine's built in backend.
 func audioBackendName(v string) string {

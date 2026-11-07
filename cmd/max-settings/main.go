@@ -185,7 +185,7 @@ func confirm(reader *bufio.Reader, out *os.File, prompt string) bool {
 func settingFields(cfg settings.Settings) []field {
 	fields := []field{
 		stringField("data_dir", func(s settings.Settings) string { return s.DataDir }, func(s *settings.Settings, v string) { s.DataDir = v }),
-		selectField("language", settings.SupportedLanguages, func(s settings.Settings) string { return s.Language }, func(s *settings.Settings, v string) { s.Language = v }),
+		selectField("language", append([]string{languageDefault}, settings.SupportedLanguages...), func(s settings.Settings) string { return languageChoice(s.Language) }, func(s *settings.Settings, v string) { s.Language = languageValue(v) }),
 		selectField("audio.backend", []string{settings.BackendDefault, settings.BackendEbiten, settings.BackendSoLoud, settings.BackendMiniAudio}, func(s settings.Settings) string { return s.Audio.Backend }, func(s *settings.Settings, v string) { s.Audio.Backend = v }),
 		selectField("audio.soloud_backend", []string{"auto", "miniaudio", "wasapi", "winmm", "xaudio2", "sdl2", "portaudio", "openal", "alsa", "coreaudio"}, func(s settings.Settings) string { return s.Audio.SoLoudBackend }, func(s *settings.Settings, v string) { s.Audio.SoLoudBackend = v }),
 		intField("audio.music_volume", func(s settings.Settings) int { return s.Audio.MusicVolume }, func(s *settings.Settings, v int) { s.Audio.MusicVolume = v }),
@@ -279,6 +279,25 @@ func boolField(name string, get func(settings.Settings) bool, set func(*settings
 
 		return nil
 	}}
+}
+
+// languageDefault is the language choice that leaves the key out of max-go.json, so the game reads LANG.RES.
+const languageDefault = "default"
+
+// languageChoice shows an empty language setting as the default choice.
+func languageChoice(language string) string {
+	if language == "" {
+		return languageDefault
+	}
+	return language
+}
+
+// languageValue stores the default choice as an empty language setting.
+func languageValue(choice string) string {
+	if choice == languageDefault {
+		return ""
+	}
+	return choice
 }
 
 func selectField(name string, allowed []string, get func(settings.Settings) string, set func(*settings.Settings, string)) field {

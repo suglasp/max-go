@@ -100,4 +100,13 @@ func TestLangResSources(t *testing.T) {
 	if got := s.Get("d28e", ""); got != "Override" {
 		t.Errorf("with a loose ini d28e = %q, want Override", got)
 	}
+
+	// With no language set (the max-go.json default) the loose ini is skipped and LANG.RES answers.
+	s, err = loadStrings(dir, "", langRes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := s.Get("d28e", ""); got == "Override" || got == "" {
+		t.Errorf("with no language set d28e = %q, want the LANG_EN text", got)
+	}
 }

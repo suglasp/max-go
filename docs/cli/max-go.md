@@ -243,11 +243,12 @@ where `auto` picks the aspect closest to the monitor at startup.
 -language <lang>
 ```
 
-Overrides the UI string file for this run.
-The bundled default language is `en-us` (entry `LANG_EN` in `LANG.RES`, see `docs/formats/lang-res.md`);
+Sets the UI language for this run only; it is never saved to `max-go.json`.
+The bundled default language is `en-us` (entry `LANG_EN` in `LANG.RES`, see `docs/formats/lang-res.md`).
+With a language set (this flag or the optional `language` key in `max-go.json`),
 an added `lang-<code>.ini` in the configured data directory or next to the executable overrides `LANG.RES`,
 and missing keys fall back to English.
-Without the flag the `language` value in `max-go.json` is used.
+Without the flag and without the key, the game reads its texts from `LANG.RES`.
 Note the FON fonts are byte based,
 so a translation is limited to the ASCII/8-bit glyph set (Cyrillic needs a matching FON codepage and is not supported).
 

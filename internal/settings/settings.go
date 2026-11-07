@@ -95,8 +95,8 @@ func IsSupportedLanguage(name string) bool {
 
 // Settings is the root of settings.json.
 type Settings struct {
-	DataDir  string            `json:"data_dir"` // Original game-data directory; empty uses the binary directory.
-	Language string            `json:"language"` // Bundled lang-<code>.ini choice; invalid values use en-us.
+	DataDir  string            `json:"data_dir"`           // Original game-data directory; empty uses the binary directory.
+	Language string            `json:"language,omitempty"` // Optional language code; absent or empty reads the texts from LANG.RES, an unsupported code counts as absent.
 	Audio    Audio             `json:"audio"`
 	Video    Video             `json:"video"`
 	Player   Player            `json:"player"`
@@ -220,7 +220,7 @@ type Prefs struct {
 func Default() Settings {
 	return Settings{
 		DataDir:  "",
-		Language: LangEnglish,
+		Language: "", // no language key in max-go.json: the texts come from LANG.RES
 		Audio: Audio{
 			Backend:       BackendDefault,
 			SoLoudBackend: "auto",
@@ -348,8 +348,8 @@ func (s *Settings) Validate() {
 			}
 		}
 	}
-	if !IsSupportedLanguage(s.Language) {
-		s.Language = LangEnglish
+	if s.Language != "" && !IsSupportedLanguage(s.Language) {
+		s.Language = "" // an unknown code counts as absent: the texts come from LANG.RES
 	}
 }
 

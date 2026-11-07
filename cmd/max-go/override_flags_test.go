@@ -184,6 +184,39 @@ func TestApplyLaunchOverridesDataDirBeatsEnv(t *testing.T) {
 	}
 }
 
+// TestLanguageFlagNeverReachesDisk checks that -language sets the running config only: a menu save keeps the
+// language key out of max-go.json.
+func TestLanguageFlagNeverReachesDisk(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "max-go.json")
+	if err := settings.Default().Save(path); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := settings.Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	applyLanguageFlag(&cfg, " en-us ")
+	if cfg.Language != settings.LangEnglish {
+		t.Fatalf("running language = %q, want en-us", cfg.Language)
+	}
+	if err := cfg.Save(path); err != nil {
+		t.Fatal(err)
+	}
+	onDisk, err := settings.Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if onDisk.Language != "" {
+		t.Errorf("-language leaked into the file: %q", onDisk.Language)
+	}
+
+	applyLanguageFlag(&cfg, "") // no flag: nothing changes
+	if cfg.Language != settings.LangEnglish {
+		t.Errorf("an empty flag changed the language to %q", cfg.Language)
+	}
+}
+
 func TestAudioBackendName(t *testing.T) {
 	cases := map[string]string{
 		"native":    settings.BackendEbiten,

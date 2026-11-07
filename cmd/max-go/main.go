@@ -160,9 +160,7 @@ func loadLaunchSettings(flags launchFlags) (settings.Settings, string, string) {
 		fatalf("max-go: %v", err)
 	}
 
-	if *flags.language != "" {
-		cfg.Language = *flags.language
-	}
+	applyLanguageFlag(&cfg, *flags.language) // -language is for this run only, never saved
 
 	// Apply explicit Custom Game flags before setup or quick start reads the settings.
 	// Default flag values do not replace saved resource levels.

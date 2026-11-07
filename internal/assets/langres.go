@@ -89,16 +89,19 @@ func langResStrings(lib *resfile.Library, language string) (Strings, string, boo
 	return nil, "", false
 }
 
-// loadStrings picks the language strings: a loose lang-<code>.ini wins (the override for translators and
-// testing), then LANG.RES, then the built in English fallback (an empty table).
+// loadStrings picks the language strings. With no language set (the max-go.json default) it reads LANG.RES. A set
+// language looks for a loose lang-<code>.ini first (the override for translators and testing), then LANG.RES. The
+// built in English fallback (an empty table) comes last.
 func loadStrings(dataDir, language string, langRes *resfile.Library) (Strings, error) {
-	s, err := loadLanguageStrings(dataDir, language)
-	if err == nil {
-		return s, nil
-	}
+	if language != "" {
+		s, err := loadLanguageStrings(dataDir, language)
+		if err == nil {
+			return s, nil
+		}
 
-	if !errors.Is(err, fs.ErrNotExist) {
-		return nil, err
+		if !errors.Is(err, fs.ErrNotExist) {
+			return nil, err
+		}
 	}
 
 	if langRes != nil {

@@ -1,6 +1,5 @@
 {
   "data_dir": "",
-  "language": "en-us",
   "audio": {
     "backend": "default",
     "soloud_backend": "auto",

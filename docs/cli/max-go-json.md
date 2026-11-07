@@ -49,7 +49,7 @@ so launching with an override flag never permanently changes the saved file - on
 | JSON key | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `data_dir` | string | `""` | Original game-data directory. Empty means "resolve automatically" - see below. |
-| `language` | string | `"en-us"` | Bundled `lang-<code>.ini` choice. Only `en-us` ships today; any other value falls back to `en-us` on load (`Validate`). |
+| `language` | string | absent | Optional, left out by default. Absent or empty: the game reads its texts from `LANG.RES`. Add it by hand (for example `"language": "en-us"`) to enable it: the game then looks for a loose `lang-<code>.ini` in the data folder or next to the executable first, then `LANG.RES`. Only `en-us` ships today; an unsupported code counts as absent (`Validate`). The game keeps a key you added when it rewrites the file. |
 | `audio` | object | see below | |
 | `video` | object | see below | |
 | `player` | object | see below | |
