@@ -74,9 +74,7 @@ type Screen struct {
 	gameGoal          string // GOAL panel text
 	missionTitle      string // a scripted mission's title, kept so a save can put its briefing back (v22)
 	missionBriefing   string // a scripted mission's DESCR text, the other half of the same
-	noMovie           bool   // skips win and loss movies
-	winMovieTag       string // victory movie resource tag
-	loseMovieTag      string // defeat movie resource tag
+	noMovie           bool   // skips the landing cinematic
 	landingMovieTag   string // landing movie resource tag
 	alienDerelicts    int    // custom game derelict density
 	customOpponents   int    // custom game opponent count
@@ -146,6 +144,10 @@ type Screen struct {
 	camera     cameraState     // viewport state
 	turnFlow   turnFlowState   // turn flow and watchdog state
 	bench      benchState      // -emulate bench stops (Tab)
+	/* // note: unported C++ code (mission victory / defeat story screen)
+	winMovieTag       string // victory movie resource tag
+	loseMovieTag      string // defeat movie resource tag
+	*/
 }
 
 // New builds the screen for a loaded map.
@@ -214,7 +216,7 @@ func New(sys *gnw.System, plat *platform.Platform, m *world.Map, basePal gfx.Pal
 	s.attachGameServices()
 	s.lib = lib
 	s.effects.colRubble = pal.MapColor(72, 72, 72, true)
-	s.effects.colHazard = pal.MapColor(255, 210, 0, true)
+	/* s.effects.colHazard = pal.MapColor(255, 210, 0, true): note: unused code in Go port, see effectsState */
 
 	s.loadHudArt()
 	s.loadGauges()
@@ -273,7 +275,7 @@ func (s *Screen) loadHudArt() {
 
 	// Lower strip Reports / Help buttons (the art carries its own label/icon).
 	s.hudArt.reptArt = loadSimpleArt(lib, "REPT_OFF")
-	s.hudArt.reptOnArt = loadSimpleArt(lib, "REPT_ON")
+	/* s.hudArt.reptOnArt = loadSimpleArt(lib, "REPT_ON"): note: unused code in Go port, see hudArtState */
 	s.hudArt.helpArt = loadSimpleArt(lib, "HELP_OF")
 	s.hudArt.helpOnArt = loadSimpleArt(lib, "HELP_ON")
 	s.hudArt.untbtnUp = loadSimpleArt(lib, "UNTBTN_U")

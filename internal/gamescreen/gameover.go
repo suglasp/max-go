@@ -73,6 +73,7 @@ func (s *Screen) enterGameOver(o winloss.Outcome) {
 	s.gameOver = true
 	s.outcome = o
 
+	/* // note: unported C++ code (mission victory / defeat story screen)
 	// Mission win/lose movie before the score screen (skirmish tags are empty).
 	// C++ ported : menu.cpp - menu_draw_mission_story_screen / Movie_Play(video).
 	if !s.noMovie && s.hooks.movieFn != nil {
@@ -88,6 +89,7 @@ func (s *Screen) enterGameOver(o winloss.Outcome) {
 			}
 		}
 	}
+	*/
 
 	if s.hooks.musicFn != nil {
 		tag := loseMusicTag

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Ext is the save game file extension.
@@ -67,3 +68,29 @@ func List(baseDir string) ([]string, error) {
 	return names, nil
 }
 */
+
+// SlotSummary reads the save in a one based slot and returns the name the Save / Load screen shows for it: the
+// entered save name, or "Turn N MAP" for an older save without one. ok is false for an empty or unreadable slot.
+func SlotSummary(baseDir string, slot int) (name string, ok bool) {
+	path, found := FindSlot(baseDir, slot) // save<N>, or legacy slot%02d
+	if !found {
+		return "", false
+	}
+
+	f, err := os.Open(path)
+	if err != nil {
+		return "", false
+	}
+	defer f.Close()
+
+	snap, err := Load(f)
+	if err != nil {
+		return "", false
+	}
+
+	name = snap.Name
+	if name == "" { // older saves without a name: fall back to turn/map
+		name = fmt.Sprintf("Turn %d %s", snap.Turn, strings.TrimSuffix(strings.ToUpper(snap.MapName), ".WRL"))
+	}
+	return name, true
+}

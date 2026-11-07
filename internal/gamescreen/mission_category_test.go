@@ -70,7 +70,7 @@ func spokePlacementPrompt(played []string) bool {
 func TestMissionCategoryRidesTheSim(t *testing.T) {
 	s, g := newClickScreen(t)
 
-	if got := s.MissionCategory(); got != game.MissionNone {
+	if got := s.game.Mission; got != game.MissionNone {
 		t.Errorf("a fresh game reports %v, want none", got)
 	}
 

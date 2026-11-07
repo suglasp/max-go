@@ -294,9 +294,11 @@ func (s *Screen) adjustStored(u *game.UnitInfo, c *economy.Complex, ctype econom
 		cap = u.Values.Get(game.AttribStorage)
 	}
 
-	u.Storage = clampStore(u.Storage+delta, cap)
+	u.Storage = max(0, min(u.Storage+delta, cap))
 }
 
+/* // note: unused code in Go port
+// clampStore repeated the builtins; adjustStored writes max(0, min(v, cap)).
 // clampStore clamps a storage value to [0, capacity].
 func clampStore(v, cap int) int {
 	if v < 0 {
@@ -309,6 +311,7 @@ func clampStore(v, cap int) int {
 
 	return v
 }
+*/
 
 // unitsAdjacent reports whether two units touch (their footprints are within
 // one cell), the proximity the X-Fer order requires.

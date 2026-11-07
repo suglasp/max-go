@@ -310,7 +310,7 @@ func (f *menuFlow) launchMission(m missionfile.Mission, teamTypesFn func(*missio
 		return winloss.Continue, err
 	}
 
-	scr.SetNoMovie(f.noMovie)               // honour -nomovie for mission win/lose movies
+	scr.SetNoMovie(f.noMovie)               // honour -nomovie for the landing cinematic
 	scr.SetPlayMode(f.cfg.Game.PlayMode)    // turn based or simultaneous, per the campaign/mission setup screen / -simultane
 	scr.SetEndTurnTimer(f.cfg.Game.EndTurn) // the simultaneous End Turn grace period
 	scr.SetMissionCategory(category)        // training trims the build roster, locks the AI and speaks the build prompt

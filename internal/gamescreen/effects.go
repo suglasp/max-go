@@ -24,7 +24,6 @@ import (
 type effectsState struct {
 	explosions  []explosion                 // destroyed unit's short expanding flash
 	colRubble   uint8                       // rubble marker colour
-	colHazard   uint8                       // "under construction" yellow/black hazard stripe colour
 	bldMrk      []*sprites.MultiFrame       // BLDMRK1..5 exit markers around a just finished structure (build ready flow)
 	bulbFrame   *sprites.MultiFrame         // BULB "thinking" sprite flashed over a unit while its move is deferred
 	bulbUnit    *game.UnitInfo              // unit showing the bulb (nil = none)
@@ -38,6 +37,10 @@ type effectsState struct {
 	loadInto    *game.UnitInfo              // building popup Load armed; next click picks a unit to suck up
 	loading     map[*game.UnitInfo]*loadJob // in progress suck ups
 	loadStamp   uint64                      // suck up animation timestamp
+	/* // note: unused code in Go port
+	// colHazard coloured the placeholder stripe the real ground cover sprites replaced; nothing draws it.
+	colHazard   uint8                       // "under construction" yellow/black hazard stripe colour
+	*/
 }
 
 // explosionMS is how long a primitive (with no sprite) destruction flash lives.

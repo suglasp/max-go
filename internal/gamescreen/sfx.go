@@ -30,7 +30,6 @@ type soundState struct {
 	sfxPosFn            func(primary, fallback string, pan, volScale float64)                // plays a unit sound at a pan and positional volume
 	sfxHeldVolumeFn     func(id int, volScale float64)                                       // fades a live held sound as the unit or the view moves
 	channelsReversed    bool                                                                 // settings channels_reversed: swap left and right
-	movingUnits         map[*game.UnitInfo]bool                                              // units in motion last frame (drive start/stop detection)
 	driveSfx            map[*game.UnitInfo]int                                               // moving unit's active drive sound handle id
 	driveSfxType        map[*game.UnitInfo]game.SfxType                                      // land vs water drive variant currently held per unit
 	ambientSfxUnit      *game.UnitInfo                                                       // unit whose ambient loop (idle hum / building hum) is playing
@@ -44,6 +43,10 @@ type soundState struct {
 	powerBounceShort    economy.Shortage                                                     // which resource the bounce message names
 	/* // note: unused code in Go port (step 1469: the halt check reads the team sightings, no per drive baseline)
 	haltSeen            map[*game.UnitInfo]map[uint16]bool                                   // enemy IDs already within scan range per moving player unit (Halt on enemy pref)
+	*/
+	/* // note: unused code in Go port
+	// movingUnits was the old drive start / stop detection; the driveSfx map does that now.
+	movingUnits         map[*game.UnitInfo]bool                                              // units in motion last frame (drive start/stop detection)
 	*/
 }
 
@@ -371,7 +374,7 @@ func (s *Screen) tickMovementSfx() {
 
 	s.updateHeldSfxPositions(afterDriving)
 
-	s.sound.movingUnits = afterDriving
+	/* s.sound.movingUnits = afterDriving: note: unused code in Go port, see soundState */
 
 	// Follow Unit: keep the camera centred on the selected unit while it moves.
 	// C++ ported : game_manager.cpp - the follow_unit preference scrolling the view.

@@ -299,10 +299,10 @@ func (s *Screen) drawRoutes(view *gfx.Buffer) {
 				continue
 			}
 
-			startX := clampInt(px-1, 0, view.W-1)
-			startY := clampInt(py-1, 0, view.H-1)
-			endX := clampInt(px+1, 0, view.W-1)
-			endY := clampInt(py+1, 0, view.H-1)
+			startX := max(0, min(px-1, view.W-1))
+			startY := max(0, min(py-1, view.H-1))
+			endX := max(0, min(px+1, view.W-1))
+			endY := max(0, min(py+1, view.H-1))
 			view.DrawBox(startX, startY, endX, endY, 0xFF)
 		}
 	}

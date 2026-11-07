@@ -84,23 +84,29 @@ func (s *Screen) SetNoMovie(skip bool) {
 	s.noMovie = skip
 }
 
-// SetMovieFunc installs the hook that plays an MVE by resource tag at game
-// over (wired by the campaign/mission launcher; nil for skirmish).
+// SetMovieFunc installs the hook that plays an MVE by resource tag: the landing cinematic when the player
+// confirms the landing site.
 func (s *Screen) SetMovieFunc(fn func(tag string) error) {
 	s.hooks.movieFn = fn
 }
 
+/* // note: unported C++ code (mission victory / defeat story screen)
+// nothing feeds a per mission victory movie; vanilla has none.
 // SetWinMovieTag sets the MVE resource tag played on victory (mission specific;
 // empty = no movie).
 func (s *Screen) SetWinMovieTag(tag string) {
 	s.winMovieTag = tag
 }
+*/
 
+/* // note: unported C++ code (mission victory / defeat story screen)
+// nothing feeds a per mission defeat movie; vanilla has none.
 // SetLoseMovieTag sets the MVE resource tag played on defeat (mission specific;
 // empty = no movie).
 func (s *Screen) SetLoseMovieTag(tag string) {
 	s.loseMovieTag = tag
 }
+*/
 
 // SetLandingMovieTag sets the intro cinematic played when the player confirms the
 // landing site (the custom game MAXMVE1; empty = none), through the movie hook.

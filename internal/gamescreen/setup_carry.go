@@ -54,10 +54,13 @@ func (s *Screen) SetMissionCategory(c game.MissionCategory) {
 	s.game.Mission = c
 }
 
+/* // note: unused code in Go port
+// MissionCategory was only read by a test; the test reads s.game.Mission.
 // MissionCategory reports the running mission's kind (MissionNone in a free game).
 func (s *Screen) MissionCategory() game.MissionCategory {
 	return s.game.Mission
 }
+*/
 
 // SetTeamUpgrades applies the attribute upgrades a team bought on the PURCHASE screen
 // before it lands, plus the gold they cost (for the score screen tally). Every unit the

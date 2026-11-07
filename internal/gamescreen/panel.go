@@ -48,13 +48,17 @@ type hudArtState struct {
 	playDown, pauseDown                 bool                        // pressed visual held state
 	playFlic                            bool                        // gates whether drawCornerFlic advances frames
 	reptArt, helpArt                    *gfx.Buffer                 // REPORTS/HELP button rest face
-	reptOnArt, helpOnArt                *gfx.Buffer                 // REPORTS/HELP button pressed face
+	helpOnArt                           *gfx.Buffer                 // HELP button pressed face
 	helpBtnDown                         bool                        // pressed visual held state
 	untbtnUp, untbtnDown                *gfx.Buffer                 // unit/building order popup button rest/pressed art
 	popupArt                            map[string]popupButtonArt   // per order popup button art, keyed by tag
 	popupBevelArt                       bool                        // draw the bevel faces instead of the retail uniform face (zero value keeps the retail look)
 	panelTopArt, panelBtmArt            *gfx.Buffer                 // landing sequence left column panels (logo / Cancel/Help)
 	pnlCancelArt, pnlHelpArt            *gfx.Buffer                 // Cancel/Help buttons on the bottom landing panel
+	/* // note: unused code in Go port
+	// reptOnArt loaded REPT_ON a second time; the pressed REPORTS face comes from panelFaces.
+	reptOnArt *gfx.Buffer // REPORTS button pressed face
+	*/
 }
 
 // panelLabelGreen is the pressed/active label colour (the green ramp the vanilla

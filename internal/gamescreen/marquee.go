@@ -175,12 +175,12 @@ func (s *Screen) commitMarquee() {
 // to the world extent.
 func (s *Screen) mapPixel(px, py int) (int, int) {
 	z := s.r.Zoom()
-	px = clampInt(px, MainMap.ULX, MainMap.LRX)
-	py = clampInt(py, MainMap.ULY, MainMap.LRY)
+	px = max(MainMap.ULX, min(px, MainMap.LRX))
+	py = max(MainMap.ULY, min(py, MainMap.LRY))
 	wx := (s.camera.scrollX + px - MainMap.ULX) * tileMapPx / z
 	wy := (s.camera.scrollY + py - MainMap.ULY) * tileMapPx / z
 
-	return clampInt(wx, 0, s.wmap.W*tileMapPx-1), clampInt(wy, 0, s.wmap.H*tileMapPx-1)
+	return max(0, min(wx, s.wmap.W*tileMapPx-1)), max(0, min(wy, s.wmap.H*tileMapPx-1))
 }
 
 // drawMarquee outlines the active drag box in yellow while dragging. The view sub
@@ -192,10 +192,10 @@ func (s *Screen) drawMarquee(view *gfx.Buffer) {
 		return
 	}
 
-	x0 := clampInt(min(s.dragBox.marqueeAX, s.dragBox.marqueeX)-MainMap.ULX, 0, view.W-1)
-	y0 := clampInt(min(s.dragBox.marqueeAY, s.dragBox.marqueeY)-MainMap.ULY, 0, view.H-1)
-	x1 := clampInt(max(s.dragBox.marqueeAX, s.dragBox.marqueeX)-MainMap.ULX, 0, view.W-1)
-	y1 := clampInt(max(s.dragBox.marqueeAY, s.dragBox.marqueeY)-MainMap.ULY, 0, view.H-1)
+	x0 := max(0, min(min(s.dragBox.marqueeAX, s.dragBox.marqueeX)-MainMap.ULX, view.W-1))
+	y0 := max(0, min(min(s.dragBox.marqueeAY, s.dragBox.marqueeY)-MainMap.ULY, view.H-1))
+	x1 := max(0, min(max(s.dragBox.marqueeAX, s.dragBox.marqueeX)-MainMap.ULX, view.W-1))
+	y1 := max(0, min(max(s.dragBox.marqueeAY, s.dragBox.marqueeY)-MainMap.ULY, view.H-1))
 
 	boxClipped(view, x0, y0, x1-x0+1, y1-y0+1, gfx.ColorYellow)
 }
@@ -240,8 +240,8 @@ func (s *Screen) orderGroupMoveTo(destX, destY int) {
 			continue
 		}
 
-		tx := clampInt(u.GridX+vecX, 0, s.wmap.W-1)
-		ty := clampInt(u.GridY+vecY, 0, s.wmap.H-1)
+		tx := max(0, min(u.GridX+vecX, s.wmap.W-1))
+		ty := max(0, min(u.GridY+vecY, s.wmap.H-1))
 		s.executeMove(u, tx, ty)
 		s.game.SetMoveDelay(u, moved*groupDepartStagger)
 		moved++
@@ -299,8 +299,8 @@ func (s *Screen) orderGroupAttack(cellX, cellY int) {
 			pursued = true
 
 		case canTakeMoveOrder(u): // a non attacker still advances with the group
-			tx := clampInt(u.GridX+vecX, 0, s.wmap.W-1)
-			ty := clampInt(u.GridY+vecY, 0, s.wmap.H-1)
+			tx := max(0, min(u.GridX+vecX, s.wmap.W-1))
+			ty := max(0, min(u.GridY+vecY, s.wmap.H-1))
 			s.executeMove(u, tx, ty)
 		}
 	}

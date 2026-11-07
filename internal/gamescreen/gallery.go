@@ -162,8 +162,8 @@ func (s *Screen) DeployGallery() {
 
 	s.fogShow = false
 	s.r.SetZoom(galleryZoom)
-	s.camera.scrollX = clampInt((landX0-1)*s.r.Zoom(), 0, 1<<30)
-	s.camera.scrollY = clampInt((landY0-1)*s.r.Zoom(), 0, 1<<30)
+	s.camera.scrollX = max(0, min((landX0-1)*s.r.Zoom(), 1<<30))
+	s.camera.scrollY = max(0, min((landY0-1)*s.r.Zoom(), 1<<30))
 	vw, vh := viewSize(MainMap)
 	s.camera.scrollX, s.camera.scrollY = s.r.ClampScroll(s.camera.scrollX, s.camera.scrollY, vw, vh)
 	s.startBench("Assets gallery: every building and land unit on the snow, the naval units on the water, each animating with its name below. Scroll to see them all.")

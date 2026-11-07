@@ -764,6 +764,6 @@ func (s *Screen) drawBuildCursor(view *gfx.Buffer) {
 		color = gfx.ColorGreen
 	}
 
-	view.DrawBox(clampInt(startX, 0, view.W-1), clampInt(startY, 0, view.H-1),
-		clampInt(endX, 0, view.W-1), clampInt(endY, 0, view.H-1), color)
+	view.DrawBox(max(0, min(startX, view.W-1)), max(0, min(startY, view.H-1)),
+		max(0, min(endX, view.W-1)), max(0, min(endY, view.H-1)), color)
 }

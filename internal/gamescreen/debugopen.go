@@ -261,8 +261,8 @@ func (s *Screen) DebugSpawn() {
 	vw, vh := viewSize(MainMap)
 	z := s.r.Zoom()
 
-	cellX := clampInt((s.camera.scrollX+vw/2)/z, 0, s.wmap.W-2)
-	cellY := clampInt((s.camera.scrollY+vh/2)/z, 0, s.wmap.H-2)
+	cellX := max(0, min((s.camera.scrollX+vw/2)/z, s.wmap.W-2))
+	cellY := max(0, min((s.camera.scrollY+vh/2)/z, s.wmap.H-2))
 
 	for i := range debugUnitTypes {
 		s.selected = s.deployAt(cellX+i%3, cellY+i/3)
@@ -370,16 +370,16 @@ func (s *Screen) DebugBuild() {
 	cellX, cellY := s.debugBuildSite()
 
 	// Base strip (row cellY+3), each building abutting the next: ONE connected complex.
-	s.debugPlaceBuilding(assets.MiningSt, cellX+0, cellY+3, true, game.OrderPowerOn) // 2x2 (cols 0,1)
-	s.debugPlaceBuilding(assets.PowGen, cellX+2, cellY+3, false, game.OrderPowerOn)  // 1x1 (col 2)
-	s.debugPlaceBuilding(assets.FDump, cellX+3, cellY+3, false, game.OrderPowerOn)   // fuel tank (col 3)
-	s.debugPlaceBuilding(assets.GoldSm, cellX+4, cellY+3, false, game.OrderPowerOn)  // gold vault (col 4)
-	s.debugPlaceBuilding(assets.ADump, cellX+5, cellY+3, false, game.OrderPowerOn)   // material storage (col 5)
-	s.debugPlaceBuilding(assets.LandPlt, cellX+6, cellY+3, true, game.OrderPowerOn)  // Heavy Vehicle Plant (cols 6,7)
-	s.debugPlaceBuilding(assets.Research, cellX+8, cellY+3, true, game.OrderPowerOn) // Research Centre (cols 8,9)
+	s.debugPlaceBuilding(assets.MiningSt, cellX+0, cellY+3, true) // 2x2 (cols 0,1)
+	s.debugPlaceBuilding(assets.PowGen, cellX+2, cellY+3, false)  // 1x1 (col 2)
+	s.debugPlaceBuilding(assets.FDump, cellX+3, cellY+3, false)   // fuel tank (col 3)
+	s.debugPlaceBuilding(assets.GoldSm, cellX+4, cellY+3, false)  // gold vault (col 4)
+	s.debugPlaceBuilding(assets.ADump, cellX+5, cellY+3, false)   // material storage (col 5)
+	s.debugPlaceBuilding(assets.LandPlt, cellX+6, cellY+3, true)  // Heavy Vehicle Plant (cols 6,7)
+	s.debugPlaceBuilding(assets.Research, cellX+8, cellY+3, true) // Research Centre (cols 8,9)
 	// A large Power Station directly NORTH of the Heavy Vehicle Plant, abutting it so
 	// it joins the complex and powers the factory.
-	s.debugPlaceBuilding(assets.PowerStn, cellX+6, cellY+1, true, game.OrderPowerOn)
+	s.debugPlaceBuilding(assets.PowerStn, cellX+6, cellY+1, true)
 
 	// Allocate the research centre to a topic so it RUNS (hums + advances) at once;
 	// the player can open Research and deallocate to see it fall idle (the gating).
@@ -441,9 +441,8 @@ func (s *Screen) debugBuildSite() (int, int) {
 	return cellX, cellY
 }
 
-// debugPlaceBuilding lands a finished building into the team's complex network; big = 2x2.
-// order lets the Research Centre start powered OFF (test the run gating).
-func (s *Screen) debugPlaceBuilding(t assets.UnitType, gx, gy int, big bool, order game.Order) *game.UnitInfo {
+// debugPlaceBuilding lands a finished, powered on building into the team's complex network; big = 2x2.
+func (s *Screen) debugPlaceBuilding(t assets.UnitType, gx, gy int, big bool) {
 	flags := game.FlagStationary | game.FlagSelectable | game.FlagRequiresSlab
 
 	if big {
@@ -458,16 +457,14 @@ func (s *Screen) debugPlaceBuilding(t assets.UnitType, gx, gy int, big bool, ord
 	u.Flags = flags
 	u.Values = s.teamValues(s.game.State.ActiveTeam, t)
 	u.InitState()
-	u.Order = order
+	u.Order = game.OrderPowerOn
 	u.State = game.OrderStateExecutingOrder
 	s.spawnSeq++
 	s.game.PlaceBuilding(u, gx, gy)
-
-	return u
 }
 
 // debugPlaceCargoTruck deploys a full load cargo truck, for X-Fer.
-func (s *Screen) debugPlaceCargoTruck(t assets.UnitType, gx, gy int) *game.UnitInfo {
+func (s *Screen) debugPlaceCargoTruck(t assets.UnitType, gx, gy int) {
 	u := game.NewUnitInfo(t, s.game.State.ActiveTeam, s.spawnSeq+1, 0)
 	u.Flags = flagsLand
 	u.Values = s.teamValues(s.game.State.ActiveTeam, t)
@@ -482,8 +479,6 @@ func (s *Screen) debugPlaceCargoTruck(t assets.UnitType, gx, gy int) *game.UnitI
 	u.Storage = cap // full, so there is cargo to transfer out
 	s.spawnSeq++
 	s.game.Units.Deploy(u, gx, gy)
-
-	return u
 }
 
 // deployIdleBuilder drops a selectable builder (constructor / engineer) of the

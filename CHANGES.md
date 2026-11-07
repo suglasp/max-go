@@ -21,6 +21,9 @@ Check the version file next to the game executables.
 - Changing the turn timer or End Turn Time in the in game Options no longer restarts the running turn clock; the new values apply from the next turn (End Turn Time from its next countdown).
 - The launch help no longer offers `none` for `-turnlimit`, `-endturn`, `-score`, `-duration` and `-startcredit`, which never accepted it; `-derelicts` lists its `None` choice.
 
+### Improvements
+- Commented leftover or unused code parts, that came with writing benches or scaffolding code parts of the game, while the project becomes more and more mature.
+
 
 ## 1.0.1.1 (2026-11-03)
 

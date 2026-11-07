@@ -45,6 +45,20 @@ func (s *Screen) SlotInfo(slot int) (fileName, saveName, typeName string, inUse 
 		return fileName, "", "", false
 	}
 
+	name, ok := saveload.SlotSummary(s.baseDir, slot)
+	if !ok {
+		return fileName, "", "", false
+	}
+
+	return fileName, name, "Custom", true
+	/* // note: unused code in Go port
+	// the find / open / load / name fallback, now shared with the debug Save / Load bench in saveload.SlotSummary.
+	fileName = slotName(slot)
+
+	if s.baseDir == "" {
+		return fileName, "", "", false
+	}
+
 	path, ok := saveload.FindSlot(s.baseDir, slot) // save<N>, or legacy slot%02d
 
 	if !ok {
@@ -72,6 +86,7 @@ func (s *Screen) SlotInfo(slot int) (fileName, saveName, typeName string, inUse 
 	}
 
 	return fileName, name, "Custom", true
+	*/
 }
 
 // Save writes the current game to slot (1-based) under the given save name.

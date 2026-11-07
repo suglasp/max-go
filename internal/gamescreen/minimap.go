@@ -190,8 +190,8 @@ func (s *Screen) minimap2xOrigin(mmW, mmH int) (int, int) {
 	mw, mh := s.r.MapPixels()
 	cellX := (s.camera.scrollX + vw/2) * mmW / mw
 	cellY := (s.camera.scrollY + vh/2) * mmH / mh
-	ox := clamp(cellX-mmW/4, 0, mmW-mmW/2)
-	oy := clamp(cellY-mmH/4, 0, mmH-mmH/2)
+	ox := max(0, min(cellX-mmW/4, mmW-mmW/2))
+	oy := max(0, min(cellY-mmH/4, mmH-mmH/2))
 	return ox, oy
 }
 
@@ -221,7 +221,7 @@ func (s *Screen) minimapCellAtOrigin(mx, my, ox, oy int) (int, int, bool) {
 	srcY := oy + (my-Minimap.ULY)/2
 	cellX := srcX * s.wmap.W / mmW
 	cellY := srcY * s.wmap.H / mmH
-	return clamp(cellX, 0, s.wmap.W-1), clamp(cellY, 0, s.wmap.H-1), true
+	return max(0, min(cellX, s.wmap.W-1)), max(0, min(cellY, s.wmap.H-1)), true
 }
 
 // drawMinimapButtons draws the 2X and TNT toggle buttons (pressed art when
@@ -243,7 +243,7 @@ func (s *Screen) drawZoomSlider(buf *gfx.Buffer) {
 	// overshoots the right edge (which the track redraw can't erase, leaving a
 	// half knob ghost).
 	kw := s.minimap.zoomKnob.W
-	x := clamp(ZoomTrack.ULX+zoomKnobOffset(s.r.Zoom())-kw/2, ZoomTrack.ULX, ZoomTrack.LRX-kw+1)
+	x := max(ZoomTrack.ULX, min(ZoomTrack.ULX+zoomKnobOffset(s.r.Zoom())-kw/2, ZoomTrack.LRX-kw+1))
 	blitArtKeyed(buf, s.minimap.zoomKnob, x, ZoomTrack.ULY+1)
 }
 
@@ -273,7 +273,7 @@ func zoomFromSliderX(mx, curZoom int) int {
 		return curZoom
 	}
 
-	x := clamp(mx-(ZoomSlider.ULX+14), 0, span)
+	x := max(0, min(mx-(ZoomSlider.ULX+14), span))
 	return drawmap.MaxZoom - x*(drawmap.MaxZoom-drawmap.MinZoom)/span
 }
 

@@ -151,7 +151,7 @@ func minimapCell(mx, my, mapW, mapH int) (int, int, bool) {
 	mw, mh := viewSize(Minimap)
 	cellX := (mx - Minimap.ULX) * mapW / mw
 	cellY := (my - Minimap.ULY) * mapH / mh
-	return clamp(cellX, 0, mapW-1), clamp(cellY, 0, mapH-1), true
+	return max(0, min(cellX, mapW-1)), max(0, min(cellY, mapH-1)), true
 }
 
 // edgeScroll returns the per-frame scroll delta for a mouse near a screen edge. It simplifies the original's map-edge scroll windows to the screen border.
@@ -175,6 +175,8 @@ func edgeScroll(mx, my, step int) (int, int) {
 	return dx, dy
 }
 
+/* // note: unused code in Go port
+// clamp repeated the builtins; callers write max(lo, min(v, hi)).
 // clamp constrains v to the inclusive lo..hi range.
 func clamp(v, lo, hi int) int {
 	if v < lo {
@@ -187,12 +189,15 @@ func clamp(v, lo, hi int) int {
 
 	return v
 }
+*/
 
 // inRect reports whether (x, y) lies inside a GNW inclusive corner rect.
 func inRect(r gfx.Rect, x, y int) bool {
 	return x >= r.ULX && x <= r.LRX && y >= r.ULY && y <= r.LRY
 }
 
+/* // note: unused code in Go port
+// clampInt repeated clamp and the builtins; callers write max(lo, min(v, hi)).
 // clampInt clamps v to [lo, hi].
 func clampInt(v, lo, hi int) int {
 	if v < lo {
@@ -205,3 +210,4 @@ func clampInt(v, lo, hi int) int {
 
 	return v
 }
+*/

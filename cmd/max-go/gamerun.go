@@ -39,7 +39,7 @@ func runGameScreen(ctx *menus.Context, worldIdx int, mode gameScreenMode, noMovi
 		return err
 	}
 
-	scr.SetNoMovie(noMovie) // honour -nomovie for win/lose mission movies
+	scr.SetNoMovie(noMovie) // honour -nomovie for the landing cinematic
 
 	applyGameScreenMode(scr, ctx, mode)
 
@@ -384,7 +384,7 @@ func wireAudioCallbacks(scr *gamescreen.Screen, ctx *menus.Context) {
 	scr.SetVoiceFunc(ctx.Audio.PlayVoice)                                      // announcer voice (e.g. colony started)
 	scr.SetVoicePlayingFunc(ctx.Audio.VoicePlaying)                            // lets the voice queue space back to back lines (team end of turn voices)
 	scr.SetMusicFunc(ctx.Audio.PlayMusic)                                      // win/lose jingle at game over
-	scr.SetMovieFunc(func(tag string) error { return menus.RunMVE(ctx, tag) }) // mission win/lose cut scene
+	scr.SetMovieFunc(func(tag string) error { return menus.RunMVE(ctx, tag) }) // the landing cinematic
 }
 
 // gameMusicTag picks a planet's background track by terrain: the 24 worlds run in four blocks

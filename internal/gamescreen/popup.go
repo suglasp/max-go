@@ -230,8 +230,8 @@ func (s *Screen) openUnitPopup(mx, my int) bool {
 		s.orderInput.popupX = ux - popupMenuWidth - 2 // flip to the unit's left
 	}
 
-	s.orderInput.popupX = clampInt(s.orderInput.popupX, MainMap.ULX, MainMap.LRX-popupMenuWidth)
-	s.orderInput.popupY = clampInt(s.orderInput.popupY, MainMap.ULY, MainMap.LRY-h)
+	s.orderInput.popupX = max(MainMap.ULX, min(s.orderInput.popupX, MainMap.LRX-popupMenuWidth))
+	s.orderInput.popupY = max(MainMap.ULY, min(s.orderInput.popupY, MainMap.LRY-h))
 	s.orderInput.popupOpen = true
 	return true
 }

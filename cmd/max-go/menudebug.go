@@ -38,6 +38,15 @@ type debugSaveLoadOps struct {
 // SlotInfo reads slot metadata from the saves folder for the debug screen.
 func (o debugSaveLoadOps) SlotInfo(slot int) (fileName, saveName, typeName string, inUse bool) {
 	fileName = fmt.Sprintf("save%d", slot)
+	name, ok := saveload.SlotSummary(o.baseDir, slot)
+	if !ok {
+		return fileName, "", "", false
+	}
+
+	return fileName, name, "Custom", true
+	/* // note: unused code in Go port
+	// the find / open / load / name fallback, now shared with the game screen in saveload.SlotSummary.
+	fileName = fmt.Sprintf("save%d", slot)
 	path, ok := saveload.FindSlot(o.baseDir, slot) // save<N>, or legacy slot%02d
 	if !ok {
 		return fileName, "", "", false
@@ -60,6 +69,7 @@ func (o debugSaveLoadOps) SlotInfo(slot int) (fileName, saveName, typeName strin
 	}
 
 	return fileName, name, "Custom", true
+	*/
 }
 
 // Save logs the request because the debug target has no game to capture.

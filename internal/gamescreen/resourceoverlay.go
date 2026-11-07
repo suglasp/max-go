@@ -109,10 +109,10 @@ func (s *Screen) drawResourceOverlay(view *gfx.Buffer) {
 
 	z := s.r.Zoom()
 	team := s.game.State.PlayerTeam
-	tx0 := clampInt(s.camera.scrollX/z, 0, s.wmap.W-1)
-	ty0 := clampInt(s.camera.scrollY/z, 0, s.wmap.H-1)
-	tx1 := clampInt((s.camera.scrollX+view.W-1)/z, 0, s.wmap.W-1)
-	ty1 := clampInt((s.camera.scrollY+view.H-1)/z, 0, s.wmap.H-1)
+	tx0 := max(0, min(s.camera.scrollX/z, s.wmap.W-1))
+	ty0 := max(0, min(s.camera.scrollY/z, s.wmap.H-1))
+	tx1 := max(0, min((s.camera.scrollX+view.W-1)/z, s.wmap.W-1))
+	ty1 := max(0, min((s.camera.scrollY+view.H-1)/z, s.wmap.H-1))
 
 	for ty := ty0; ty <= ty1; ty++ {
 		for tx := tx0; tx <= tx1; tx++ {
@@ -262,10 +262,10 @@ func (s *Screen) drawAccessOverlay(view *gfx.Buffer) {
 	u := s.selected
 	d := access.UnitDesc{Type: u.Type, Flags: u.Flags, LandType: access.LandTypeForUnit(u.Type, u.Flags)}
 	z := s.r.Zoom()
-	tx0 := clampInt(s.camera.scrollX/z, 0, s.wmap.W-1)
-	ty0 := clampInt(s.camera.scrollY/z, 0, s.wmap.H-1)
-	tx1 := clampInt((s.camera.scrollX+view.W-1)/z, 0, s.wmap.W-1)
-	ty1 := clampInt((s.camera.scrollY+view.H-1)/z, 0, s.wmap.H-1)
+	tx0 := max(0, min(s.camera.scrollX/z, s.wmap.W-1))
+	ty0 := max(0, min(s.camera.scrollY/z, s.wmap.H-1))
+	tx1 := max(0, min((s.camera.scrollX+view.W-1)/z, s.wmap.W-1))
+	ty1 := max(0, min((s.camera.scrollY+view.H-1)/z, s.wmap.H-1))
 
 	for ty := ty0; ty <= ty1; ty++ {
 		for tx := tx0; tx <= tx1; tx++ {
@@ -273,10 +273,10 @@ func (s *Screen) drawAccessOverlay(view *gfx.Buffer) {
 				continue
 			}
 
-			startX := clampInt(tx*z-s.camera.scrollX, 0, view.W-1)
-			startY := clampInt(ty*z-s.camera.scrollY, 0, view.H-1)
-			endX := clampInt(tx*z-s.camera.scrollX+z-1, 0, view.W-1)
-			endY := clampInt(ty*z-s.camera.scrollY+z-1, 0, view.H-1)
+			startX := max(0, min(tx*z-s.camera.scrollX, view.W-1))
+			startY := max(0, min(ty*z-s.camera.scrollY, view.H-1))
+			endX := max(0, min(tx*z-s.camera.scrollX+z-1, view.W-1))
+			endY := max(0, min(ty*z-s.camera.scrollY+z-1, view.H-1))
 			view.DrawBox(startX, startY, endX, endY, gfx.ColorRed)
 		}
 	}
@@ -294,10 +294,10 @@ func (s *Screen) drawFog(view *gfx.Buffer) {
 	}
 
 	z := s.r.Zoom()
-	tx0 := clampInt(s.camera.scrollX/z, 0, s.wmap.W-1)
-	ty0 := clampInt(s.camera.scrollY/z, 0, s.wmap.H-1)
-	tx1 := clampInt((s.camera.scrollX+view.W-1)/z, 0, s.wmap.W-1)
-	ty1 := clampInt((s.camera.scrollY+view.H-1)/z, 0, s.wmap.H-1)
+	tx0 := max(0, min(s.camera.scrollX/z, s.wmap.W-1))
+	ty0 := max(0, min(s.camera.scrollY/z, s.wmap.H-1))
+	tx1 := max(0, min((s.camera.scrollX+view.W-1)/z, s.wmap.W-1))
+	ty1 := max(0, min((s.camera.scrollY+view.H-1)/z, s.wmap.H-1))
 
 	for ty := ty0; ty <= ty1; ty++ {
 		for tx := tx0; tx <= tx1; tx++ {
@@ -307,10 +307,10 @@ func (s *Screen) drawFog(view *gfx.Buffer) {
 				continue
 			}
 
-			startX := clampInt(tx*z-s.camera.scrollX, 0, view.W-1)
-			startY := clampInt(ty*z-s.camera.scrollY, 0, view.H-1)
-			endX := clampInt(tx*z-s.camera.scrollX+z-1, 0, view.W-1)
-			endY := clampInt(ty*z-s.camera.scrollY+z-1, 0, view.H-1)
+			startX := max(0, min(tx*z-s.camera.scrollX, view.W-1))
+			startY := max(0, min(ty*z-s.camera.scrollY, view.H-1))
+			endX := max(0, min(tx*z-s.camera.scrollX+z-1, view.W-1))
+			endY := max(0, min(ty*z-s.camera.scrollY+z-1, view.H-1))
 
 			if fog == vis.FogUnseen {
 				view.Sub(startX, startY, endX-startX+1, endY-startY+1).Fill(gfx.ColorBlack)
