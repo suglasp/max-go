@@ -160,17 +160,5 @@ func (t *taskBulldozer) ensureBulldozer() {
 
 // countBulldozers counts the team's bulldozers, including any still in production.
 func (t *taskBulldozer) countBulldozers() int {
-	g := t.ctx.Game
-	n := 0
-	for _, u := range g.Units.Units() {
-		if u.Team == t.team && sim.IsBulldozer(u) {
-			n++
-		}
-	}
-	for _, o := range g.BuildOrders() {
-		if o.Builder != nil && o.Builder.Team == t.team && o.Product != nil && o.Product.Type == assets.Bulldozr {
-			n++
-		}
-	}
-	return n
+	return buildingCount(t.ctx.Game, t.team, assets.Bulldozr)
 }

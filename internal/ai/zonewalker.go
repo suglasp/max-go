@@ -24,7 +24,7 @@ type zoneWalker struct {
 	distance       int // radius squared, the disc test threshold
 	x, y           int // the current cell
 	limitX, limitY int
-	mapW, mapH     int
+	mapW           int
 }
 
 // newZoneWalker positions the walker at the first cell of the disc.
@@ -35,7 +35,6 @@ func newZoneWalker(center game.Point, radius, mapW, mapH int) *zoneWalker {
 		radius:   radius,
 		distance: radius * radius,
 		mapW:     mapW,
-		mapH:     mapH,
 	}
 
 	w.limitY = w.startY + radius

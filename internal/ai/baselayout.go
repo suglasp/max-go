@@ -9,6 +9,7 @@ package ai
 import (
 	"github.com/suglasp/max-go/internal/access"
 	"github.com/suglasp/max-go/internal/game"
+	"github.com/suglasp/max-go/internal/sim"
 )
 
 // A builder that can reach at least minRoamCells drivable cells is not boxed in. A
@@ -26,7 +27,7 @@ const minRoamCells = 12
 // so findSite never seals its own builder inside the base. The builder must already be
 // out of the cell hash (findSite removes it for its whole run).
 func (t *taskManageBuildings) preservesEscape(builder *game.UnitInfo, x, y, fp int) bool {
-	blocked := footprintSet(x, y, fp)
+	blocked := sim.FootprintCells(x, y, fp)
 	seeds := t.borderSeeds(x, y, fp, blocked)
 
 	return t.roamReaches(builder, seeds, blocked, minRoamCells)
@@ -97,6 +98,8 @@ func (t *taskManageBuildings) roamReaches(builder *game.UnitInfo, seeds [][2]int
 	return count >= threshold
 }
 
+/* // note: unused code in Go port
+// footprintSet duplicated sim.FootprintCells byte for byte; baselayout now calls sim.FootprintCells.
 // footprintSet returns the cells a fp x fp structure at (x, y) occupies, as a set.
 func footprintSet(x, y, fp int) map[[2]int]bool {
 	cells := make(map[[2]int]bool, fp*fp)
@@ -107,6 +110,7 @@ func footprintSet(x, y, fp int) map[[2]int]bool {
 	}
 	return cells
 }
+*/
 
 // borderSeeds returns the in bounds border cells around a footprint that are not part
 // of it - the cells a builder would step out onto, the flood seeds for preservesEscape.

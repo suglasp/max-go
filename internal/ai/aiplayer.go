@@ -74,21 +74,19 @@ func (p *AiPlayer) Init(team, clan int, ctx *aiContext) {
 // landmass) leaves the strategy Random, which the first BeginTurn resolves to the
 // clan default. C++: AiPlayer::SelectStrategy (the terrain scoring half; see
 // strategy.go for the reductions).
-func (p *AiPlayer) SelectStrategy(decided []Strategy) bool {
+func (p *AiPlayer) SelectStrategy(decided []Strategy) {
 	p.strategy = StrategyRandom
 	if p.ctx == nil || p.ctx.Game == nil {
-		return true
+		return
 	}
 
 	continents := findContinents(p.ctx.Game)
 	if len(continents) == 0 {
-		return true // no viable landmass: BeginTurn's clan fallback resolves the Random
+		return // no viable landmass: BeginTurn's clan fallback resolves the Random
 	}
 
 	p.strategy = pickStrategy(scoreStrategies(continents, aiTier), decided)
 	dbg.Printf("ai: team %d strategy = %s (continents=%d, tier=%d)", p.team, strategyName(p.strategy), len(continents), aiTier)
-
-	return true
 }
 
 // GetStrategy returns the committed strategy. C++: AiPlayer::GetStrategy.

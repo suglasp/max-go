@@ -38,7 +38,7 @@ func TestExitLeavesClosedGroup(t *testing.T) {
 		id++
 	}
 
-	blocked := footprintCells(siteX, siteY, 1)
+	blocked := FootprintCells(siteX, siteY, 1)
 	if g.connectsToOpen(con, siteX, siteY-1, blocked) {
 		t.Fatal("test setup: (10,9) should be a sealed pocket, not open")
 	}

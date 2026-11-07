@@ -173,7 +173,7 @@ func (g *Game) findBuildingSite(b *game.UnitInfo, team, gx, gy int) (int, int, b
 // C++: Access_FindReachableSpot (access.cpp), reduced to a ring search.
 func (g *Game) findReachableSpot(u *game.UnitInfo, gx, gy, fp int) (int, int, bool) {
 	d := access.UnitDesc{Type: u.Type, Flags: u.Flags, LandType: access.LandTypeForUnit(u.Type, u.Flags)}
-	blocked := footprintCells(gx, gy, fp) // the finished building the exiting unit leaves behind
+	blocked := FootprintCells(gx, gy, fp) // the finished building the exiting unit leaves behind
 	const exteriorReach = 16              // an exit to open ground within this radius is plenty; keep the scan bounded
 	fbX, fbY, haveFb := 0, 0, false
 	for r := 1; r <= g.W+g.H; r++ {
@@ -251,8 +251,8 @@ func (g *Game) connectsToOpen(u *game.UnitInfo, sx, sy int, blocked map[[2]int]b
 	return count >= openThreshold
 }
 
-// footprintCells returns the cells a fp x fp structure at (x, y) occupies, as a set.
-func footprintCells(x, y, fp int) map[[2]int]bool {
+// FootprintCells returns the cells a fp x fp structure at (x, y) occupies, as a set.
+func FootprintCells(x, y, fp int) map[[2]int]bool {
 	cells := make(map[[2]int]bool, fp*fp)
 	for cy := y; cy < y+fp; cy++ {
 		for cx := x; cx < x+fp; cx++ {

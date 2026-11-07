@@ -125,7 +125,7 @@ func reminderTask(r Reminder) Task {
 // The third pass is INERT until a transport task exists: nothing overrides Type(), so
 // every task reads as TaskTypeGeneric and the first two passes take them all. The pass
 // is kept because it is the original's scheduling and is what the unported TaskTransport
-// (cargo truck material delivery) will need. TODO sec S.
+// (ferrying units by air or sea transporter) will need. TODO sec S.
 func (m *TaskManager) BeginTurn(team int) {
 	for _, t := range m.tasks {
 		if t.Team() == team && t.Type() != TaskTypeTransport {

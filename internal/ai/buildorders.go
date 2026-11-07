@@ -112,8 +112,9 @@ func nextBuilding(g *sim.Game, team int, orders []buildSpec) (buildSpec, bool) {
 	return buildSpec{}, false
 }
 
-// buildingCount tallies a team's structures of a type, including ones still
-// under construction (so an in flight order counts against the desired total).
+// buildingCount tallies a team's units of a type, structures and mobile units alike,
+// including ones still in production (so an in flight order counts against the desired
+// total). The unit producers and the bulldozer task count through it too.
 func buildingCount(g *sim.Game, team int, t assets.UnitType) int {
 	n := 0
 	for _, u := range g.Units.Units() {

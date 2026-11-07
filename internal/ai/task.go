@@ -12,9 +12,9 @@ package ai
 //
 // UNWIRED, kept on purpose: no task overrides Type() yet, so every task here reads as
 // TaskTypeGeneric and the manager's transport pass never picks one up. The two kinds
-// below are the landing pad for the unported TaskTransport (the AI hauling material by
-// cargo truck) and TaskObtainUnits; the scheduling that awaits them is in
-// TaskManager.BeginTurn. TODO sec S.
+// below are the landing pad for the unported TaskTransport (ferrying a unit that has no
+// land route aboard an air or sea transporter) and TaskObtainUnits; the scheduling that
+// awaits them is in TaskManager.BeginTurn. TODO sec S.
 type TaskType uint8
 
 const (

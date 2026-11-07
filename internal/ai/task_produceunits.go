@@ -90,22 +90,7 @@ func (t *taskProduceUnits) ensureRecon() {
 // teamUnitCount counts how many of a type the task's team currently fields
 // (including ones still in production), so chooseProduct can balance the mix.
 func (t *taskProduceUnits) teamUnitCount(unitType assets.UnitType) int {
-	g := t.ctx.Game
-	n := 0
-
-	for _, u := range g.Units.Units() {
-		if u.Team == t.team && u.Type == unitType {
-			n++
-		}
-	}
-
-	for _, o := range g.BuildOrders() {
-		if o.Builder != nil && o.Builder.Team == t.team && o.Product != nil && o.Product.Type == unitType {
-			n++
-		}
-	}
-
-	return n
+	return buildingCount(t.ctx.Game, t.team, unitType)
 }
 
 // isIdleFactory reports whether f is one of this team's factories that is free

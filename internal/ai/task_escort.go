@@ -237,7 +237,7 @@ func escortAssignments(g *sim.Game, team int) map[*game.UnitInfo]*game.UnitInfo 
 		bestRank, bestD := 2, 1<<30
 
 		for _, guard := range guards {
-			if used[guard] || isAirUnit(guard) != isAirUnit(target) {
+			if used[guard] || sim.IsAirUnit(guard) != sim.IsAirUnit(target) {
 				continue
 			}
 
@@ -282,11 +282,14 @@ func escortableTarget(u *game.UnitInfo, team int) bool {
 	return false
 }
 
+/* // note: unused code in Go port
+// isAirUnit duplicated sim.IsAirUnit (the same FlagMobileAirUnit test); the escort pairing now calls sim.IsAirUnit.
 // isAirUnit reports whether u moves through the air (so an air mover is escorted by an
 // air guard, not a tank that cannot keep up).
 func isAirUnit(u *game.UnitInfo) bool {
 	return u.Flags.Has(game.FlagMobileAirUnit)
 }
+*/
 
 // unarmedSupportType reports whether t is a mobile unit that carries no weapon in the real
 // ATTRIBS - a recon, cargo or utility unit: a Surveyor, Scanner, Supply / Gold truck,
