@@ -10,6 +10,7 @@ package sim
 import (
 	"math"
 
+	"github.com/suglasp/max-go/internal/access"
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/combat"
 	"github.com/suglasp/max-go/internal/game"
@@ -173,7 +174,7 @@ func (g *Game) attackArea(attacker *game.UnitInfo, cx, cy, radius int) {
 					continue
 				}
 				seen[u] = true
-				victims = append(victims, victim{u, projApproxDistance(dx, dy)})
+				victims = append(victims, victim{u, access.ApproximateDistance(dx, dy)})
 			}
 		}
 	}
@@ -190,6 +191,8 @@ func (g *Game) attackArea(attacker *game.UnitInfo, cx, cy, radius int) {
 	g.RefreshVisibility()
 }
 
+/* // note: unused code in Go port
+// projApproxDistance repeated access.ApproximateDistance, which the area damage spread now calls.
 // projApproxDistance is the octile metric (2*long + short) the area damage spread
 // uses as the attackPotential. C++ ported : access.cpp - Access_GetApproximateDistance.
 func projApproxDistance(dx, dy int) int {
@@ -204,6 +207,7 @@ func projApproxDistance(dx, dy int) int {
 	}
 	return 2*dy + dx
 }
+*/
 
 // advance moves the projectile up to speed pixels toward its target, reporting
 // arrival (within one step).

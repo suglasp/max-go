@@ -7,6 +7,7 @@
 package gamescreen
 
 import (
+	"github.com/suglasp/max-go/internal/build"
 	"github.com/suglasp/max-go/internal/dbg"
 	"github.com/suglasp/max-go/internal/economy"
 	"github.com/suglasp/max-go/internal/game"
@@ -312,12 +313,14 @@ func clampStore(v, cap int) int {
 // unitsAdjacent reports whether two units touch (their footprints are within
 // one cell), the proximity the X-Fer order requires.
 func unitsAdjacent(a, b *game.UnitInfo) bool {
-	ax0, ay0, an := a.GridX, a.GridY, footprint(a)
-	bx0, by0, bn := b.GridX, b.GridY, footprint(b)
+	ax0, ay0, an := a.GridX, a.GridY, build.Footprint(a.Flags)
+	bx0, by0, bn := b.GridX, b.GridY, build.Footprint(b.Flags)
 	// Expand a's box by one cell and test intersection with b's box.
 	return ax0-1 <= bx0+bn-1 && bx0 <= ax0+an && ay0-1 <= by0+bn-1 && by0 <= ay0+an
 }
 
+/* // note: unused code in Go port
+// footprint repeated build.Footprint, which the adjacency check now calls.
 // footprint returns a unit's cell span (2 for 2x2 buildings, else 1).
 func footprint(u *game.UnitInfo) int {
 	if u.Flags.Has(game.FlagBuilding) {
@@ -326,6 +329,7 @@ func footprint(u *game.UnitInfo) int {
 
 	return 1
 }
+*/
 
 // handleXferPick resolves an armed X-Fer pick: a left click picks the adjacent unit to
 // trade cargo with, a right click or a click off the map cancels. Returns whether it

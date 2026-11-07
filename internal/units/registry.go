@@ -118,10 +118,13 @@ func (h *MapHash) At(x, y int) []*game.UnitInfo {
 	return h.cells[game.Point{X: x, Y: y}]
 }
 
+/* // note: unused code in Go port
+// ported but unused: the port builds a new Manager instead of clearing the hash.
 // Clear empties the hash. C++: MapHash::Clear.
 func (h *MapHash) Clear() {
 	clear(h.cells)
 }
+*/
 
 // UnitHash maps a unit id to its instance.
 //
@@ -150,10 +153,13 @@ func (h *UnitHash) Get(id uint16) *game.UnitInfo {
 	return h.byID[id]
 }
 
+/* // note: unused code in Go port
+// ported but unused: the port builds a new Manager instead of clearing the hash.
 // Clear empties the hash. C++: UnitHash::Clear.
 func (h *UnitHash) Clear() {
 	clear(h.byID)
 }
+*/
 
 // All returns every registered unit, in unspecified order. Callers that
 // need determinism (e.g. the turn loop) sort by ID.

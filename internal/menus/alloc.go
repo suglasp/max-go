@@ -331,7 +331,7 @@ func (m *allocMenu) addMining(t economy.CargoType) {
 	if c.AddMining(rmap, t, 1) > 0 {
 		return // had spare capacity
 	}
-	raw, fuel, gold, _ := c.MiningTotals()
+	raw, fuel, gold := c.MiningTotals()
 	donors := []allocDonor{{economy.CargoRaw, raw}, {economy.CargoFuel, fuel}, {economy.CargoGold, gold}}
 	best := -1
 	for i, d := range donors {

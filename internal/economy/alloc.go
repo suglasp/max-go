@@ -47,9 +47,8 @@ func stationDeposit(rmap *ResourceMap, u *game.UnitInfo, t CargoType) int {
 	return 0
 }
 
-// MiningTotals sums the complex's current per resource mining plus the unused
-// station capacity (each active mining station mines at most 16 units total).
-func (c *Complex) MiningTotals() (raw, fuel, gold, free int) {
+// MiningTotals sums the complex's current per resource mining over its active mining stations.
+func (c *Complex) MiningTotals() (raw, fuel, gold int) {
 	for _, u := range c.Members {
 		if u.Type != assets.MiningSt || !active(u) {
 			continue
@@ -57,7 +56,6 @@ func (c *Complex) MiningTotals() (raw, fuel, gold, free int) {
 		raw += u.RawMining
 		fuel += u.FuelMining
 		gold += u.GoldMining
-		free += 16 - (u.RawMining + u.FuelMining + u.GoldMining)
 	}
 	return
 }
@@ -146,7 +144,7 @@ func (c *Complex) AutoBalanceFuel(rmap *ResourceMap) {
 	if burn <= 0 {
 		return // no fuel burning generators: nothing to cover
 	}
-	_, fuel, _, _ := c.MiningTotals()
+	_, fuel, _ := c.MiningTotals()
 	need := burn - fuel
 	if need <= 0 {
 		return // already extracting enough fuel

@@ -149,7 +149,7 @@ but its tail uses `SmartFileReader::ReadObject` for `path`,
 `complex`,
 `parent`,
 and `enemy_unit` - the SmartFile **shared object graph**,
-where each object is written once and referenced by index afterwards. `internal/maxsave` ports that (`Reader.ReadObject` + a class registry) along with `FileLoad` for `UnitValues`,
+where each object is written once and referenced by index afterwards. `internal/maxsave` ports that (`Reader.ReadObjectTyped` / `ReadObjectAs` + a class registry) along with `FileLoad` for `UnitValues`,
 `Complex`,
 the `UnitPath` subclasses and the `SmartObjectArray` build list.
 

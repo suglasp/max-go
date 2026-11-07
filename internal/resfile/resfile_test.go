@@ -142,7 +142,7 @@ func TestRealGameData(t *testing.T) {
 	}
 
 	for _, tag := range []string{"ILOGO", "FONT_1", "D_DEFALT", "SC_SCHEM"} {
-		if !lib.Has(tag) {
+		if _, err := lib.Read(tag); err != nil {
 			t.Errorf("library is missing expected tag %q", tag)
 		}
 	}
@@ -158,9 +158,6 @@ func TestRealGameData(t *testing.T) {
 	}
 	if !bytes.Equal(patched, viaLib) {
 		t.Error("lib.Read(ILOGO) did not return the PATCHES.RES version")
-	}
-	if sz, ok := lib.Size("ILOGO"); !ok || sz != len(patched) {
-		t.Errorf("lib.Size(ILOGO) = %d, %v; want %d", sz, ok, len(patched))
 	}
 }
 

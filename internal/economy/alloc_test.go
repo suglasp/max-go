@@ -48,10 +48,10 @@ func TestAllocAddReduce(t *testing.T) {
 		t.Errorf("ReduceMining raw 4 = %d, raw=%d", got, u.RawMining)
 	}
 
-	// MiningTotals reflects the state + free capacity (16 - 2 - 5 - 3 = 6).
-	raw, fuel, gold, free := c.MiningTotals()
-	if raw != 2 || fuel != 5 || gold != 3 || free != 6 {
-		t.Errorf("MiningTotals = %d/%d/%d free %d, want 2/5/3 free 6", raw, fuel, gold, free)
+	// MiningTotals reflects the state.
+	raw, fuel, gold := c.MiningTotals()
+	if raw != 2 || fuel != 5 || gold != 3 {
+		t.Errorf("MiningTotals = %d/%d/%d, want 2/5/3", raw, fuel, gold)
 	}
 }
 
@@ -90,10 +90,4 @@ func TestMiningHeadroomRespectsPerStationLimits(t *testing.T) {
 		t.Errorf("MiningHeadroom(fuel) = %d, want 0 (A has no spare slots, B has no fuel deposit)", got)
 	}
 
-	// The naive pooled MiningTotals free count (0 + 14 = 14) is NOT the right
-	// answer here - recorded so a future change does not "fix" this test by
-	// reintroducing the pooled formula.
-	if _, _, _, free := c.MiningTotals(); free != 14 {
-		t.Fatalf("test setup drifted: pooled free = %d, want 14 (the overstated total this fix avoids)", free)
-	}
 }

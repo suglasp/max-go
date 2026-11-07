@@ -280,7 +280,7 @@ func (s *Screen) Load(slot int) error {
 // gap - nothing in the port ever installs them (they need the Lua scripter layer), so a
 // mission runs the default elimination rule whether it is freshly launched or reloaded.
 func (s *Screen) restoreGoalBlock(snap *saveload.Snapshot) {
-	if game.MissionCategory(snap.Mission) != game.MissionNone && snap.MissionBrief != "" {
+	if game.MissionCategory(snap.Mission).IsMission() && snap.MissionBrief != "" {
 		s.SetMissionGoal(snap.MissionTitle, snap.MissionBrief)
 
 		return

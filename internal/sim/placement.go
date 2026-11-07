@@ -95,6 +95,8 @@ func (g *Game) laySlab(u *game.UnitInfo) {
 	g.Units.Deploy(slab, u.GridX, u.GridY)
 }
 
+/* // note: unused code in Go port
+// Land is only read by tests; the live landing is gamescreen deployStartBase (tested in startbase_land_test.go).
 // Land deploys a team's starting colony at mining site (gx, gy): places the mine
 // (first complex + large slab + initial mining), drops gold into it, adds powerGen
 // on an adjacent site, and scatters the loadout onto nearby reachable cells. mine
@@ -129,7 +131,10 @@ func (g *Game) Land(team, gx, gy, gold int, mine, powerGen *game.UnitInfo, loado
 	g.RefreshVisibility()
 	return c
 }
+*/
 
+/* // note: unused code in Go port
+// findBuildingSite was only called by Land; the live landing places buildings with adjacentSite.
 // findBuildingSite finds a valid placement for a building next to the origin
 // footprint at (gx, gy). It first tries the four sites flush against each side
 // (sliding along that side), which abut the origin so the new building joins
@@ -166,6 +171,7 @@ func (g *Game) findBuildingSite(b *game.UnitInfo, team, gx, gy int) (int, int, b
 	}
 	return 0, 0, false
 }
+*/
 
 // findReachableSpot searches outward from (gx, gy) for the nearest free,
 // accessible single cell for a mobile unit.

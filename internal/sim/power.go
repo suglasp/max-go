@@ -34,6 +34,8 @@ func (g *Game) ComplexOf(u *game.UnitInfo) *economy.Complex {
 	return g.Networks[u.Team].ComplexOf(u)
 }
 
+/* // note: unused code in Go port
+// PowerShort has no caller; the game screen reads u.PowerStarved for the power alert.
 // PowerShort reports whether any of team's complexes is in a power DEFICIT this turn -
 // a powered consumer (factories are cut first) was starved by the balance. The in game
 // screen flashes the red "not enough power" alert when true. C++: the power deficit warning.
@@ -45,6 +47,7 @@ func (g *Game) PowerShort(team int) bool {
 	}
 	return false
 }
+*/
 
 // PowerOnConsumer tries to power building u on. Returns false (caller BOUNCEs it,
 // "not enough power") when even all generators cannot cover u's draw on top of the

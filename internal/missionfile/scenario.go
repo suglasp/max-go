@@ -20,7 +20,6 @@ import (
 type Mission struct {
 	Index       int    // Numeric suffix and display order.
 	SavePath    string // Absolute SAVE path.
-	DescPath    string // Absolute DESCR path, or empty.
 	Title       string // SmartFile save name.
 	Description string // DESCR briefing text, or empty.
 	Info        *Info  // Decoded SmartFile header.
@@ -120,7 +119,6 @@ func listMissions(dir, ext string) ([]Mission, error) {
 		missions = append(missions, Mission{
 			Index:       idx,
 			SavePath:    savePath,
-			DescPath:    descPath,
 			Title:       title,
 			Description: desc,
 			Info:        info,
@@ -156,7 +154,6 @@ func LoadMission(path string) (Mission, error) {
 	return Mission{
 		Index:       idx,
 		SavePath:    path,
-		DescPath:    descPath,
 		Title:       title,
 		Description: desc,
 		Info:        info,

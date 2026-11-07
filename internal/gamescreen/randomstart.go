@@ -461,7 +461,7 @@ func (s *Screen) deployStartBase(team int, center game.Point, roster []unitSpec,
 	// connectors and reached by a span of bridge pieces (so it powers up and the
 	// shore reads as developed). A landlocked base skips it.
 	if coastal {
-		s.placeCoastalShipyard(team, center, placed, taken, rng)
+		s.placeCoastalShipyard(team, center, placed, taken)
 	}
 
 	// Mobile units on the nearest passable, unoccupied cells.

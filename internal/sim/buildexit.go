@@ -28,13 +28,16 @@ import (
 // "Finished building X" prompt, the green "New X available" flash over the new
 // building, and the animated exit markers.
 type BuildReady struct {
-	Product     assets.UnitType // the finished unit's type (for the prompt text)
-	Building    *game.UnitInfo  // a constructor: the placed structure (hidden, then unfolds); a FACTORY: the produced unit parked on the plant, awaiting its drive out
-	SiteX       int             // finished footprint origin
-	SiteY       int
-	Footprint   int  // 1 (engineer / 1x1) or 2 (constructor / 2x2 / factory)
-	Factory     bool // true = a building's output: Building is the MOBILE unit that drives out (no unfold), keyed by the building itself (factory production OR depot unload)
+	Product   assets.UnitType // the finished unit's type (for the prompt text)
+	Building  *game.UnitInfo  // a constructor: the placed structure (hidden, then unfolds); a FACTORY: the produced unit parked on the plant, awaiting its drive out
+	SiteX     int             // finished footprint origin
+	SiteY     int
+	Footprint int  // 1 (engineer / 1x1) or 2 (constructor / 2x2 / factory)
+	Factory   bool // true = a building's output: Building is the MOBILE unit that drives out (no unfold), keyed by the building itself (factory production OR depot unload)
+	/* // note: unused code in Go port
+	// FromStorage was only set by the commented out EjectStoredUnit; a storage bay now unloads to an adjacent cell.
 	FromStorage bool // true = the unit was UNLOADED from a Depot/Hangar/Dock bay (an existing unit), not freshly produced - so no "New X available" flash / "Finished building" prompt
+	*/
 }
 
 // cardinalRing lists the perimeter walk, for each direction, that traces the exit

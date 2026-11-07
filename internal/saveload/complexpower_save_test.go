@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
+	"github.com/suglasp/max-go/internal/economy"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
 )
@@ -43,7 +44,7 @@ func TestSaveRestorePreservesComplexPower(t *testing.T) {
 		t.Fatal("setup: the eco-sphere and generator are not in one complex")
 	}
 	c.Fuel = 50 // the fuel pool a running base accumulates
-	if !c.CanPower(eco) {
+	if c.StartShortage(eco) == economy.ShortagePower {
 		t.Fatal("precondition: the eco-sphere should be powerable in memory (generator + fuel)")
 	}
 
@@ -73,7 +74,7 @@ func TestSaveRestorePreservesComplexPower(t *testing.T) {
 	if c2.Fuel <= 0 {
 		t.Errorf("after load: complex fuel pool = %d, want 50 (the rebuilt complex must keep its stores)", c2.Fuel)
 	}
-	if !c2.CanPower(eco2) {
+	if c2.StartShortage(eco2) == economy.ShortagePower {
 		t.Error("after load: the eco-sphere is no longer powerable (the 'not enough power' bug)")
 	}
 }

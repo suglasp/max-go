@@ -8,7 +8,6 @@ package gamescreen
 
 import (
 	"github.com/suglasp/max-go/internal/dbg"
-	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/objectives"
 	"github.com/suglasp/max-go/internal/sim"
 )
@@ -44,5 +43,5 @@ var _ objectives.Query = (*sim.Game)(nil)
 //
 // C++ ported : menu.cpp - the victory_status passed to menu_draw_game_over_screen
 func (s *Screen) missionRunsAnObjective() bool {
-	return s.game.Mission != game.MissionNone && s.game.WinLossConditions != nil
+	return s.game.Mission.IsMission() && s.game.WinLossConditions != nil
 }

@@ -49,8 +49,8 @@ func TestLifeShedPowersOffUnstaffedConsumers(t *testing.T) {
 			t.Errorf("eco-sphere %d order = %v, want OrderPowerOn (kept; balance restored)", i, gh.Order)
 		}
 	}
-	if c.Workers < 0 {
-		t.Errorf("complex Workers = %d, want >= 0 after the life shed", c.Workers)
+	if w := c.workerSurplus(); w < 0 {
+		t.Errorf("complex worker surplus = %d, want >= 0 after the life shed", w)
 	}
 	if shed := c.LastLifeShed(); len(shed) != 1 || shed[0] != res {
 		t.Errorf("LastLifeShed = %v, want exactly the research centre", shed)

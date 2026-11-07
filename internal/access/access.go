@@ -388,6 +388,8 @@ func (g *Grid) IsAnyLandPresent(x, y int, building bool) bool {
 	return g.surfaceAt(x, y) == world.SurfaceLand
 }
 
+/* // note: unused code in Go port
+// IsFullyLandCovered repeated isFullyLandCovered in sim (the rubble check), the only live user of the rule.
 // IsFullyLandCovered reports whether the cell (or all of a building's 4 cells) is land.
 //
 // C++ ported : access.cpp - Access_IsFullyLandCovered
@@ -397,4 +399,22 @@ func (g *Grid) IsFullyLandCovered(x, y int, building bool) bool {
 	}
 
 	return g.surfaceAt(x, y) == world.SurfaceLand
+}
+*/
+
+// ApproximateDistance is the rough octile metric (2*long + short) of an offset, used by the resource
+// spread and the area damage spread.
+//
+// C++ ported : access.cpp - Access_GetApproximateDistance
+func ApproximateDistance(dx, dy int) int {
+	if dx < 0 {
+		dx = -dx
+	}
+	if dy < 0 {
+		dy = -dy
+	}
+	if dx >= dy {
+		return 2*dx + dy
+	}
+	return 2*dy + dx
 }

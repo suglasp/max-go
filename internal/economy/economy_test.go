@@ -95,10 +95,7 @@ func TestCargoArithmetic(t *testing.T) {
 	if a.Raw != 13 || a.Power != 4 {
 		t.Errorf("Add wrong: %+v", a)
 	}
-	a.Sub(Cargo{Fuel: 5})
-	if a.Fuel != 0 {
-		t.Errorf("Sub wrong: %+v", a)
-	}
+	a.Fuel -= 5
 	if a.Get(CargoRaw) != 13 || a.Get(CargoGold) != 2 || a.Get(CargoFuel) != 0 {
 		t.Error("Get returned wrong bucket")
 	}
@@ -168,35 +165,36 @@ func TestSetInitialMining(t *testing.T) {
 	}
 }
 
+// TestCanPower checks the power part of the live power on gate (StartShortage).
 func TestCanPower(t *testing.T) {
 	c := NewComplex(1)
 	factory := &game.UnitInfo{Type: assets.LandPlt} // draws power
 	c.Grow(factory)
 
-	if c.CanPower(factory) {
+	if c.StartShortage(factory) != ShortagePower {
 		t.Error("isolated factory with no generator should NOT power")
 	}
 	gen := &game.UnitInfo{Type: assets.PowGen}
 	c.Grow(gen)
 	c.Fuel = 10
-	if !c.CanPower(factory) {
+	if c.StartShortage(factory) == ShortagePower {
 		t.Error("factory with a fuelled generator should power")
 	}
 	c.Fuel = 0
-	if c.CanPower(factory) {
+	if c.StartShortage(factory) != ShortagePower {
 		t.Error("a generator with no fuel cannot power the factory")
 	}
-	if !c.CanPower(gen) {
+	if c.StartShortage(gen) == ShortagePower {
 		t.Error("a generator always powers itself")
 	}
-	if !c.CanPower(&game.UnitInfo{Type: assets.ADump}) {
+	if c.StartShortage(&game.UnitInfo{Type: assets.ADump}) == ShortagePower {
 		t.Error("a building that needs no power always powers")
 	}
 	// A base that mines its own fuel sustains itself: it powers a consumer even
 	// with an empty pool (c.Fuel is still 0 here) - the generator runs regardless of
 	// fuel STOCK and the per turn balance refills the pool from mining.
 	c.Grow(&game.UnitInfo{Type: assets.MiningSt, FuelMining: 4})
-	if !c.CanPower(factory) {
+	if c.StartShortage(factory) == ShortagePower {
 		t.Error("a fuel-mining base should power a consumer even at 0 fuel stock")
 	}
 }
@@ -270,8 +268,8 @@ func TestComplexBalanceTurn(t *testing.T) {
 	if c.Material != 28 {
 		t.Errorf("material after 2 turns = %d, want 28 (accumulated)", c.Material)
 	}
-	if c.Power != 4 {
-		t.Errorf("power = %d, want 4 (recomputed, not accumulated)", c.Power)
+	if p := c.activeGeneratorOutput() - c.consumerPowerDemand(); p != 4 {
+		t.Errorf("spare power = %d, want 4 (recomputed, not accumulated)", p)
 	}
 
 	// Shrinking the last member empties the complex.
@@ -346,13 +344,10 @@ func TestCapStoresWastesWhatTheBaseCannotHold(t *testing.T) {
 
 	c.Material, c.Fuel, c.Gold = 40, 12, 9
 
-	wasted := c.CapStores()
+	c.CapStores()
 
 	if c.Material != 25 {
 		t.Errorf("material = %d, want 25 (the mine's capacity)", c.Material)
-	}
-	if wasted.Raw != 15 {
-		t.Errorf("wasted raw = %d, want 15 (40 mined, 25 held)", wasted.Raw)
 	}
 	// A mine stores no fuel and no gold: with no Fuel Tank and no Gold Vault, both spill.
 	if c.Fuel != 0 || c.Gold != 0 {
@@ -363,7 +358,7 @@ func TestCapStoresWastesWhatTheBaseCannotHold(t *testing.T) {
 	c.Grow(building(assets.ADump, 0, 6, 5, game.OrderPowerOn, 50))
 	c.Material = 40
 
-	if wasted := c.CapStores(); wasted.Raw != 0 || c.Material != 40 {
-		t.Errorf("with a Storage Unit: material = %d wasted = %d, want 40 kept and none wasted", c.Material, wasted.Raw)
+	if c.CapStores(); c.Material != 40 {
+		t.Errorf("with a Storage Unit: material = %d, want 40 kept", c.Material)
 	}
 }

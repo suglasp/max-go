@@ -20,7 +20,7 @@ import (
 // C++: ORDER_MOVE; a new order calls ClearBuildListAndPath (game_manager.cpp).
 func (g *Game) OrderMove(u *game.UnitInfo, cx, cy int) bool {
 	delete(g.buildPaths, u) // a fresh manual move cancels any Path build
-	delete(g.held, u)       // and supersedes a route held by an enemy halt
+	g.ClearHeldRoute(u)     // and supersedes a route held by an enemy halt
 	u.AttackTarget = nil    // and cancels any move to attack pursuit (orderMoveTo preserves it)
 	return g.orderMoveTo(u, cx, cy)
 }
@@ -55,7 +55,7 @@ func (g *Game) orderMoveToAvoiding(u *game.UnitInfo, cx, cy int, penalty func(x,
 	}
 	g.cancel(u)
 	delete(g.pending, u) // a fresh explicit order supersedes any queued route
-	delete(g.held, u)    // and any route held by an enemy halt (Auto Survey, the AI, a Path build)
+	g.ClearHeldRoute(u)  // and any route held by an enemy halt (Auto Survey, the AI, a Path build)
 	steps, cost, ok := g.findRouteAvoiding(u, cx, cy, penalty)
 	if !ok {
 		return false
@@ -80,7 +80,7 @@ func (g *Game) QueueMove(u *game.UnitInfo, cx, cy int) bool {
 	}
 	g.cancel(u)             // drop any active order; the unit is not moving this turn
 	delete(g.buildPaths, u) // a fresh manual route supersedes a Path build
-	delete(g.held, u)       // and a route held by an enemy halt
+	g.ClearHeldRoute(u)     // and a route held by an enemy halt
 	u.AttackTarget = nil    // and any move to attack pursuit
 	// Mirror the mid path pending state: the unit holds OrderMove with its route
 	// shelved (see the move state machine), so it reads as en route and resumes.
@@ -114,7 +114,7 @@ func (g *Game) cancel(u *game.UnitInfo) {
 func (g *Game) CancelOrder(u *game.UnitInfo) {
 	g.cancel(u)
 	delete(g.pending, u)
-	delete(g.held, u)    // an explicit Stop means the player is done with that route
+	g.ClearHeldRoute(u)  // an explicit Stop means the player is done with that route
 	u.AttackTarget = nil // an explicit Stop also ends a move to attack pursuit
 }
 

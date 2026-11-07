@@ -327,6 +327,8 @@ func (g *Game) ClearSite(u *game.UnitInfo) (x, y, footprint int, ok bool) {
 	return 0, 0, 0, false
 }
 
+/* // note: unused code in Go port
+// ClearTurnsLeft repeated ClearJobTurnsLeft, which the status display reads.
 // ClearTurnsLeft is how many more turns the bulldozer needs to finish the pile
 // (0 if it is not clearing), for the status display.
 func (g *Game) ClearTurnsLeft(u *game.UnitInfo) int {
@@ -335,6 +337,7 @@ func (g *Game) ClearTurnsLeft(u *game.UnitInfo) int {
 	}
 	return 0
 }
+*/
 
 // StopClearRubble cancels a clear in progress and frees the bulldozer (the
 // vanilla StopRemove toggle); the cones+tape come off and the rubble is left.

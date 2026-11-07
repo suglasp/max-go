@@ -50,34 +50,26 @@ func TestFindSyntheticComponents(t *testing.T) {
 	}
 
 	want := []struct {
-		size                   int
-		minX, minY, maxX, maxY int
-		cells                  []game.Point
+		size  int
+		cells []game.Point
 	}{
 		{
-			size: 3, minX: 0, minY: 0, maxX: 1, maxY: 1,
+			size:  3,
 			cells: []game.Point{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: 1}},
 		},
 		{
-			size: 3, minX: 3, minY: 3, maxX: 5, maxY: 3,
+			size:  3,
 			cells: []game.Point{{X: 3, Y: 3}, {X: 4, Y: 3}, {X: 5, Y: 3}},
 		},
 		{
-			size: 2, minX: 4, minY: 1, maxX: 5, maxY: 1,
+			size:  2,
 			cells: []game.Point{{X: 4, Y: 1}, {X: 5, Y: 1}},
 		},
 	}
 	for i, w := range want {
 		c := comps[i]
-		if c.ID != i {
-			t.Errorf("component %d ID = %d, want %d", i, c.ID, i)
-		}
 		if c.Size() != w.size {
 			t.Errorf("component %d size = %d, want %d", i, c.Size(), w.size)
-		}
-		if c.MinX != w.minX || c.MinY != w.minY || c.MaxX != w.maxX || c.MaxY != w.maxY {
-			t.Errorf("component %d bounds = (%d,%d)-(%d,%d), want (%d,%d)-(%d,%d)",
-				i, c.MinX, c.MinY, c.MaxX, c.MaxY, w.minX, w.minY, w.maxX, w.maxY)
 		}
 		if len(c.Cells) != len(w.cells) {
 			t.Fatalf("component %d cell count = %d, want %d", i, len(c.Cells), len(w.cells))
@@ -112,10 +104,6 @@ func TestFindSolidLand(t *testing.T) {
 	if comps[0].Size() != 6 {
 		t.Errorf("solid component size = %d, want 6", comps[0].Size())
 	}
-	if comps[0].MinX != 0 || comps[0].MinY != 0 || comps[0].MaxX != 2 || comps[0].MaxY != 1 {
-		t.Errorf("solid component bounds = (%d,%d)-(%d,%d), want (0,0)-(2,1)",
-			comps[0].MinX, comps[0].MinY, comps[0].MaxX, comps[0].MaxY)
-	}
 }
 
 func TestFindUsesFourWayConnectivity(t *testing.T) {
@@ -136,15 +124,14 @@ func TestStableSortForEqualSizes(t *testing.T) {
 		t.Fatalf("component count = %d, want 3", len(comps))
 	}
 	for i, c := range comps {
-		if c.ID != i {
-			t.Errorf("component %d ID = %d, want %d", i, c.ID, i)
-		}
 		if gotX := c.Cells[0].X; gotX != i*2 {
 			t.Errorf("component %d starts at x=%d, want %d", i, gotX, i*2)
 		}
 	}
 }
 
+/* // note: unused code in Go port
+// the test of LargeEnough, commented out with it.
 func TestLargeEnough(t *testing.T) {
 	comps := []Component{
 		{ID: 0, Cells: make([]game.Point, 5)},
@@ -159,6 +146,7 @@ func TestLargeEnough(t *testing.T) {
 		t.Fatalf("LargeEnough IDs = %d,%d, want 0,2", got[0].ID, got[1].ID)
 	}
 }
+*/
 
 func TestFindOnRetailMaps(t *testing.T) {
 	dir := testutil.DataDir(t)

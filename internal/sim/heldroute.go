@@ -134,7 +134,7 @@ func (g *Game) resumeHeld(team int) {
 			continue
 		}
 
-		delete(g.held, u) // OrderMove lays a fresh, current route
+		g.ClearHeldRoute(u) // OrderMove lays a fresh, current route
 
 		if len(steps) == 0 || u.Building || g.buildReady[u] != nil || g.IsDisabled(u) {
 			dbg.Printf("resume: %s at (%d,%d) dropped its held route", u.Type.Tag(), u.GridX, u.GridY)
@@ -157,7 +157,7 @@ func (g *Game) ContinueHeldRoute(u *game.UnitInfo) bool {
 	}
 
 	dest := steps[len(steps)-1].To
-	delete(g.held, u) // OrderMove lays a fresh, current route
+	g.ClearHeldRoute(u) // OrderMove lays a fresh, current route
 
 	return g.OrderMove(u, dest.X, dest.Y)
 }

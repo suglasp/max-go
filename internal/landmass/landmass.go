@@ -8,15 +8,15 @@
 package landmass
 
 import (
+	"slices"
+
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/world"
 )
 
 // Component is one connected landmass.
 type Component struct {
-	ID                     int
-	Cells                  []game.Point
-	MinX, MinY, MaxX, MaxY int
+	Cells []game.Point
 }
 
 // Size is the number of land cells in the component.
@@ -45,27 +45,12 @@ func Find(m *world.Map) []Component {
 			visited[start] = true
 			queue = append(queue[:0], start)
 			cells := make([]int, 0, 64)
-			minX, maxX := x, x
-			minY, maxY := y, y
 
 			for head := 0; head < len(queue); head++ {
 				idx := queue[head]
 				cells = append(cells, idx)
 				cx := idx % m.W
 				cy := idx / m.W
-				if cx < minX {
-					minX = cx
-				}
-				if cx > maxX {
-					maxX = cx
-				}
-				if cy < minY {
-					minY = cy
-				}
-				if cy > maxY {
-					maxY = cy
-				}
-
 				if cx > 0 {
 					addIfLand(m, visited, &queue, idx-1, cx-1, cy)
 				}
@@ -80,27 +65,22 @@ func Find(m *world.Map) []Component {
 				}
 			}
 
-			sortInts(cells)
+			slices.Sort(cells)
 			points := make([]game.Point, len(cells))
 			for i, idx := range cells {
 				points[i] = game.Point{X: idx % m.W, Y: idx / m.W}
 			}
 
-			comps = append(comps, Component{
-				Cells: points,
-				MinX:  minX, MinY: minY,
-				MaxX: maxX, MaxY: maxY,
-			})
+			comps = append(comps, Component{Cells: points})
 		}
 	}
 
-	stableSortBySizeDesc(comps)
-	for i := range comps {
-		comps[i].ID = i
-	}
+	slices.SortStableFunc(comps, func(a, b Component) int { return b.Size() - a.Size() }) // largest first, ties keep scan order
 	return comps
 }
 
+/* // note: unused code in Go port
+// LargeEnough is only read by its own test; no caller filters components by size.
 // LargeEnough returns components with Size >= minCells, preserving order.
 func LargeEnough(comps []Component, minCells int) []Component {
 	out := make([]Component, 0, len(comps))
@@ -111,6 +91,7 @@ func LargeEnough(comps []Component, minCells int) []Component {
 	}
 	return out
 }
+*/
 
 // isLand reports whether a surface byte counts as land for component search.
 func isLand(surface uint8) bool {
@@ -126,6 +107,8 @@ func addIfLand(m *world.Map, visited []bool, queue *[]int, idx, x, y int) {
 	*queue = append(*queue, idx)
 }
 
+/* // note: unused code in Go port
+// stableSortBySizeDesc repeated slices.SortStableFunc, which Find now calls.
 // stableSortBySizeDesc orders components from largest to smallest.
 func stableSortBySizeDesc(comps []Component) {
 	for i := 1; i < len(comps); i++ {
@@ -137,7 +120,10 @@ func stableSortBySizeDesc(comps []Component) {
 		comps[j+1] = c
 	}
 }
+*/
 
+/* // note: unused code in Go port
+// sortInts repeated slices.Sort, which Find now calls.
 // sortInts sorts values in ascending order.
 func sortInts(values []int) {
 	if len(values) < 2 {
@@ -161,7 +147,10 @@ func sortInts(values []int) {
 		}
 	}
 }
+*/
 
+/* // note: unused code in Go port
+// partition was only called by sortInts.
 // partition partitions values for quicksort and returns the pivot index.
 func partition(values []int, lo, hi int) int {
 	mid := lo + (hi-lo)/2
@@ -187,3 +176,4 @@ func partition(values []int, lo, hi int) int {
 	values[store], values[hi] = values[hi], values[store]
 	return store
 }
+*/

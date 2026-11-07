@@ -23,8 +23,6 @@ type Complex struct {
 	Material  int
 	Fuel      int
 	Gold      int
-	Power     int
-	Workers   int
 	Buildings int
 
 	Members []*game.UnitInfo
@@ -223,12 +221,10 @@ func (c *Complex) BalanceTurn(difficultyFactor int) Cargo {
 
 	// Apply the net, clamping stores at zero (a fuel deficit empties the tank but
 	// never goes negative; more fuel mining clears the shortage).
-	c.Material = maxInt(0, c.Material+net.Raw)
-	c.Fuel = maxInt(0, c.Fuel+net.Fuel)
-	c.Gold = maxInt(0, c.Gold+net.Gold)
-	c.CapStores()                                                 // a base cannot hold more than its storage: the rest spills
-	c.Power = c.activeGeneratorOutput() - c.consumerPowerDemand() // spare power (>=0 after the shed)
-	c.Workers = net.Life
+	c.Material = max(0, c.Material+net.Raw)
+	c.Fuel = max(0, c.Fuel+net.Fuel)
+	c.Gold = max(0, c.Gold+net.Gold)
+	c.CapStores()    // a base cannot hold more than its storage: the rest spills
 	c.redistribute() // mirror the pooled stores into the member buildings' cargo bars
 	return net
 }
@@ -265,22 +261,16 @@ func (c *Complex) RefineGold(availableGold int) int {
 // turn, so a mine that out produces the base's storage simply spills its output on the
 // ground. The cure, then as now, is to build storage units.
 //
-// It returns what was lost, per cargo, so a caller can tell the player.
+// The spill is silent: no message tells the player, as in the original.
 //
 // C++ ported : access.cpp - Access_UpdateResourcesTotal (the per turn rebuild from
 // inventory) + unitinfo.cpp - UnitInfo::UpdateProduction (storage = min(pool, capacity)).
-func (c *Complex) CapStores() (wasted Cargo) {
+func (c *Complex) CapStores() {
 	_, capacity := c.CargoInfo()
 
-	wasted.Raw = maxInt(0, c.Material-capacity.Raw)
-	wasted.Fuel = maxInt(0, c.Fuel-capacity.Fuel)
-	wasted.Gold = maxInt(0, c.Gold-capacity.Gold)
-
-	c.Material = minInt(c.Material, capacity.Raw)
-	c.Fuel = minInt(c.Fuel, capacity.Fuel)
-	c.Gold = minInt(c.Gold, capacity.Gold)
-
-	return wasted
+	c.Material = min(c.Material, capacity.Raw)
+	c.Fuel = min(c.Fuel, capacity.Fuel)
+	c.Gold = min(c.Gold, capacity.Gold)
 }
 
 // redistribute fills the member buildings' cargo bars from the pooled raw/fuel/gold each
@@ -305,6 +295,8 @@ func (c *Complex) redistribute() {
 	}
 }
 
+/* // note: unused code in Go port
+// maxInt repeated the builtin max, which the economy now calls.
 // maxInt returns the larger of two ints (stores clamp at zero).
 func maxInt(a, b int) int {
 	if a > b {
@@ -312,7 +304,10 @@ func maxInt(a, b int) int {
 	}
 	return b
 }
+*/
 
+/* // note: unused code in Go port
+// minInt repeated the builtin min, which the economy now calls.
 // minInt returns the smaller of two ints (stores clamp at capacity).
 func minInt(a, b int) int {
 	if a < b {
@@ -321,7 +316,10 @@ func minInt(a, b int) int {
 
 	return b
 }
+*/
 
+/* // note: unused code in Go port
+// CanPower is only read by tests; the live power on gate is StartShortage, which shares hasPowerSupply.
 // CanPower reports whether the complex can run unit u: u makes its own power or
 // needs none, or the complex has a generator AND a fuel source (fuel in stock OR a
 // member mining fuel). A base on a raw+fuel deposit sustains itself even at 0 stock
@@ -334,6 +332,7 @@ func (c *Complex) CanPower(u *game.UnitInfo) bool {
 	}
 	return c.hasPowerSupply()
 }
+*/
 
 // isGenerator reports whether a type produces power (a power generator or station).
 func isGenerator(t assets.UnitType) bool {
@@ -369,8 +368,7 @@ const (
 )
 
 // workerSurplus is the complex's FREE worker count right now: active habitats house
-// minus active personnel consumers draw, computed LIVE from members (not the once per
-// turn c.Workers snapshot) so a just destroyed habitat lowers it immediately. A
+// minus active personnel consumers draw, computed LIVE from members so a just destroyed habitat lowers it immediately. A
 // consumer powered ON but inactive is not counted, so surplus >= its need means it
 // can be staffed.
 func (c *Complex) workerSurplus() int {
@@ -401,6 +399,8 @@ func (c *Complex) StartShortage(u *game.UnitInfo) Shortage {
 	return ShortageNone
 }
 
+/* // note: unused code in Go port
+// HasActiveGenerator is only read by a test; the live checks use hasGeneratorMember (the optimizer powers idle generators off).
 // HasActiveGenerator reports whether any active member produces power, so the
 // complex can run its power consuming buildings. A detached complex with no
 // generator cannot power its consumers at all.
@@ -412,6 +412,7 @@ func (c *Complex) HasActiveGenerator() bool {
 	}
 	return false
 }
+*/
 
 // hasGeneratorMember reports whether the complex has a generator at all (on OR off,
 // but not disabled) - a power SOURCE it can switch on. Distinct from
@@ -786,6 +787,8 @@ func isFactory(t assets.UnitType) bool {
 	return false
 }
 
+/* // note: unused code in Go port
+// PowerShort is only read by Game.PowerShort, which has no caller; the alert reads u.PowerStarved.
 // PowerShort reports whether any of the complex's powered on consumers was starved
 // for power this turn (a deficit cut it). The in game screen reads this to flash the
 // "not enough power" alert. C++: the power deficit warning.
@@ -797,3 +800,4 @@ func (c *Complex) PowerShort() bool {
 	}
 	return false
 }
+*/

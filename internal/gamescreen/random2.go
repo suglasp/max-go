@@ -274,7 +274,7 @@ func (s *Screen) placeBigBaseBuildings(team int, center game.Point, coastal bool
 	// A coastal base adds the shipyard at the shore, wired into the complex with
 	// connectors and reached by a span of bridge pieces.
 	if coastal {
-		s.placeCoastalShipyard(team, center, placed, taken, rng)
+		s.placeCoastalShipyard(team, center, placed, taken)
 	}
 
 	s.layBigRoads(team, center, taken)
@@ -542,7 +542,7 @@ func (s *Screen) layBigRoads(team int, center game.Point, taken map[game.Point]b
 // edge adjacent to the base mass) runs a short connector chain back to it so it joins
 // the complex and powers up. Does nothing if no coastal shipyard site fits. C++: a coastal
 // base's naval yard wired into the primary complex.
-func (s *Screen) placeCoastalShipyard(team int, center game.Point, placed []placedBuilding, taken map[game.Point]bool, rng *rand.Rand) {
+func (s *Screen) placeCoastalShipyard(team int, center game.Point, placed []placedBuilding, taken map[game.Point]bool) {
 	shipFlags := game.FlagStationary | game.FlagBuilding | game.FlagRequiresSlab | game.FlagSelectable
 	d := access.UnitDesc{Type: assets.Shipyard, Flags: shipFlags, LandType: access.LandTypeForUnit(assets.Shipyard, shipFlags)}
 	valid := func(x, y int) bool {

@@ -63,6 +63,8 @@ func (c *Cargo) Add(o Cargo) {
 	c.FreeCapacity += o.FreeCapacity
 }
 
+/* // note: unused code in Go port
+// Sub is only read by a test; the economy subtracts per field.
 // Sub subtracts other from c (operator-=).
 func (c *Cargo) Sub(o Cargo) {
 	c.Gold -= o.Gold
@@ -72,6 +74,7 @@ func (c *Cargo) Sub(o Cargo) {
 	c.Life -= o.Life
 	c.FreeCapacity -= o.FreeCapacity
 }
+*/
 
 // Get returns the amount of a mined resource type (raw/fuel/gold only).
 //

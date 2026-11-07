@@ -272,4 +272,4 @@ unit brightness levels): see `gfx.Palette.DarkeningTable`/`RedTintTable`/`Bright
 wired in by `units.NewSpriteCache`/ `SetPalette` (`internal/units/sprite.go`).
 - Per zoom scaled drawing: `MultiFrame.DrawScaled`/`DrawScaledCentered`/
 `DrawShadowScaled` (`internal/sprites/multi.go`),
-consumed by `units.SpriteCache.DrawUnit`/`DrawFrame`/`DrawEffect` (`internal/units/sprite.go`) for tactical unit rendering.
+consumed by `units.SpriteCache.DrawUnit`/`DrawFrameAtPixel`/`DrawEffect` (`internal/units/sprite.go`) for tactical unit rendering.

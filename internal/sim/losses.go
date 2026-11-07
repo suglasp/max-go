@@ -87,7 +87,7 @@ func purgeCarriedResidue(g *Game, u *game.UnitInfo) {
 	for _, c := range u.Carried {
 		delete(g.disabled, c)
 		delete(g.pending, c)
-		delete(g.held, c)
+		g.ClearHeldRoute(c)
 		purgeCarriedResidue(g, c)
 	}
 }
@@ -130,7 +130,7 @@ func (g *Game) purgeUnit(u *game.UnitInfo) {
 	g.dropPursuitOf(u)         // any unit chasing this one drops its dangling pursuit pointer
 	g.forgetSpotted(u)         // and every team forgets it (no chasing a ghost cell)
 	delete(g.pending, u)       // drop any queued route so we keep no stale pointer
-	delete(g.held, u)          // and any route it was holding after an enemy halt
+	g.ClearHeldRoute(u)        // and any route it was holding after an enemy halt
 	delete(g.buildExits, u)    // drop any pending build exit drive likewise
 	delete(g.buildReady, u)    // drop any build ready record likewise
 	delete(g.pendingExpand, u) // drop any pending unfold keyed by this building

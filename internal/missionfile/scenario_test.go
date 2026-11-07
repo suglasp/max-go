@@ -36,9 +36,6 @@ func TestListScenarios(t *testing.T) {
 
 	// SAVE1.SCE pairs with DESCR1.SCE, whose briefing starts with "Objective:".
 	first := missions[0]
-	if filepath.Base(first.DescPath) != "DESCR1.SCE" {
-		t.Fatalf("scenario 1 DescPath = %q, want DESCR1.SCE", first.DescPath)
-	}
 	if !strings.HasPrefix(first.Description, "Objective:") {
 		t.Fatalf("scenario 1 briefing = %q, want it to start with %q", first.Description, "Objective:")
 	}

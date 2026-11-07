@@ -128,6 +128,8 @@ func TestRecordUpgradeGold(t *testing.T) {
 	}
 }
 
+/* // note: unused code in Go port
+// tested Land, commented out with it; TestDeployStartBaseCountsRoster (skipped, DC-F8) covers the live landing.
 // TestTeamStatsLandingRoster: the landing colony counts its mine + power
 // generator as buildings (the mine also as a mine) and its deployed loadout as
 // units built.
@@ -159,3 +161,4 @@ func TestTeamStatsLandingRoster(t *testing.T) {
 		t.Errorf("UnitsBuilt = %d, want 2 (the landed roster)", ts.UnitsBuilt)
 	}
 }
+*/

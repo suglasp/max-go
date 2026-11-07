@@ -669,10 +669,6 @@ func TestLandPresenceForBuildingFootprint(t *testing.T) {
 		t.Error("building footprint touching land should report land present")
 	}
 
-	if g.IsFullyLandCovered(1, 1, true) {
-		t.Error("partly-water footprint is not fully land covered")
-	}
-
 	// A single cell (not a building) query only looks at its own cell.
 	if g.IsAnyLandPresent(1, 1, false) {
 		t.Error("non-building water cell should report no land")

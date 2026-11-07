@@ -25,7 +25,7 @@ func TestIdleUnpoweredShipyard(t *testing.T) {
 	store := building(assets.ADump, 0, 7, 5, game.OrderPowerOn, 40)
 	detached.Grow(yard)
 	detached.Grow(store)
-	if detached.HasActiveGenerator() {
+	if detached.hasGeneratorMember() {
 		t.Fatal("a shipyard+store complex has no generator")
 	}
 	detached.BalanceTurn(4)
@@ -43,7 +43,7 @@ func TestIdleUnpoweredShipyard(t *testing.T) {
 	powered.Grow(yard2)
 	powered.Grow(gen)
 	powered.Fuel = 50 // fuel for the generator to burn
-	if !powered.HasActiveGenerator() {
+	if !powered.hasGeneratorMember() {
 		t.Fatal("a complex with a power station has a generator")
 	}
 	powered.BalanceTurn(4)

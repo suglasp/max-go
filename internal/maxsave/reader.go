@@ -119,9 +119,12 @@ func (r *Reader) U8() uint8 {
 	return b[0]
 }
 
+/* // note: unused code in Go port
+// I8 is only read by a test; the save format has no signed byte field.
 func (r *Reader) I8() int8 {
 	return int8(r.U8())
 }
+*/
 
 func (r *Reader) U16() uint16 {
 	b := r.take(2)
@@ -147,10 +150,13 @@ func (r *Reader) I32() int32 {
 	return int32(r.U32())
 }
 
+/* // note: unused code in Go port
+// Bool is only read by a test; the loaders read flags with U8.
 // Bool reads a one byte boolean.
 func (r *Reader) Bool() bool {
 	return r.U8() != 0
 }
+*/
 
 // Index reads an object or back reference index: uint16 on V70, uint32 on V71.
 //
@@ -172,6 +178,8 @@ func (r *Reader) Count() uint32 {
 	return r.U32()
 }
 
+/* // note: unused code in Go port
+// String is only read by a test; the retail format stores no length prefixed string.
 // String reads a length prefixed string (uint32 length, then bytes).
 //
 // C++ ported : smartfile.hpp - SmartFileReader::Read(std::string&)
@@ -182,7 +190,10 @@ func (r *Reader) String() string {
 	}
 	return string(r.Bytes(int(n)))
 }
+*/
 
+/* // note: unused code in Go port
+// ReadObject repeated ReadObjectTyped (registry class) and ReadObjectAs (caller class); the loaders use those two.
 // ReadObject resolves the next shared-object reference. Zero is nil, an existing index is a back reference, and the next sequential index introduces a typed object.
 // New objects enter the table before FileLoad runs so references encountered during loading can resolve them.
 //
@@ -210,6 +221,7 @@ func (r *Reader) ReadObject() FileObject {
 	obj.FileLoad(r)
 	return obj
 }
+*/
 
 // ReadObjectTyped reads a shared object whose class the FILE decides: the stored class
 // index picks the reader out of the registry. An index the registry does not know falls

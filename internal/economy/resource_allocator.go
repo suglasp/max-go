@@ -5,7 +5,10 @@
 // Licensed under the MIT License. See MIT.md file in the project root for full license information.
 package economy
 
-import "github.com/suglasp/max-go/internal/game"
+import (
+	"github.com/suglasp/max-go/internal/access"
+	"github.com/suglasp/max-go/internal/game"
+)
 
 // resource_allocator.go scatters the raw/fuel/gold deposits across a new map at
 // game start: a normal background level everywhere plus concentrated lodes,
@@ -239,22 +242,6 @@ func AllocateResourcesWith(rmap *ResourceMap, w, h int, starts []game.Point, rng
 	}
 }
 
-// approxDistance is the roughly octile metric the spread uses (2*long + short).
-//
-// C++ ported : access.cpp - Access_GetApproximateDistance
-func approxDistance(dx, dy int) int {
-	if dx < 0 {
-		dx = -dx
-	}
-	if dy < 0 {
-		dy = -dy
-	}
-	if dx >= dy {
-		return 2*dx + dy
-	}
-	return 2*dy + dx
-}
-
 // zoneLevel sums the amounts in the 2x2 block at (gx,gy), clamped to the map.
 //
 // C++ ported : resource_allocator.cpp - ResourceAllocator::GetZoneResoureLevel
@@ -355,7 +342,7 @@ func (m *matAlloc) optimize(px, py, level, value int) {
 	level *= 100
 	for gx := lrx; gx < ulx; gx += 2 {
 		for gy := lry; gy < uly; gy += 2 {
-			df := (approxDistance(px-gx, py-gy)*10)/m.concDiff + 10
+			df := (access.ApproximateDistance(px-gx, py-gy)*10)/m.concDiff + 10
 			val := level / (df * df)
 			idx := gy*m.w + gx
 			if val > int(m.cmap[idx]&caAmount) {

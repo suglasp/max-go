@@ -9,6 +9,7 @@ package sim
 
 import (
 	"github.com/suglasp/max-go/internal/assets"
+	"github.com/suglasp/max-go/internal/build"
 	"github.com/suglasp/max-go/internal/game"
 )
 
@@ -23,6 +24,8 @@ func IsCommando(u *game.UnitInfo) bool {
 	return u != nil && u.Type == assets.Commando
 }
 
+/* // note: unused code in Go port
+// footprintOf repeated build.Footprint, which commandoAdjacent now calls.
 // footprintOf is the cell edge of a unit's footprint (2 for a building, else 1).
 func footprintOf(u *game.UnitInfo) int {
 	if u.Flags.Has(game.FlagBuilding) {
@@ -30,13 +33,14 @@ func footprintOf(u *game.UnitInfo) int {
 	}
 	return 1
 }
+*/
 
 // commandoAdjacent reports whether the commando is in the target footprint's eight-cell neighborhood. A 2x2 building's full envelope counts.
 // Disable and steal require adjacency in the original. They do not use ATTRIB_RANGE or ATTRIB_SCAN.
 //
 // C++ ported : game_manager.cpp - GameManager_IsUnitNextToPosition
 func commandoAdjacent(c, target *game.UnitInfo) bool {
-	fp := footprintOf(target)
+	fp := build.Footprint(target.Flags)
 	return axisGap(c.GridX, target.GridX, target.GridX+fp-1) <= 1 &&
 		axisGap(c.GridY, target.GridY, target.GridY+fp-1) <= 1
 }

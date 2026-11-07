@@ -75,8 +75,6 @@ type UnitInfo struct {
 	TurretImageBase    int
 	FiringImageBase    int
 	ConnectorImageBase int
-	ImageIndex         int
-	TurretImageIndex   int
 	ImageIndexMax      int
 
 	Brightness uint8
@@ -136,8 +134,6 @@ func NewUnitInfo(unitType assets.UnitType, team, id int, angle uint8) *UnitInfo 
 		TurretTarget: angle & 0x07,
 		Brightness:   0xFF,
 	}
-	u.ImageIndex = u.ImageBase + int(u.Angle)
-	u.TurretImageIndex = u.TurretImageBase + int(u.Angle)
 	return u
 }
 
@@ -294,11 +290,9 @@ func (u *UnitInfo) BeginClearLeave(footprint int) {
 func (u *UnitInfo) SetAngle(dir uint8) {
 	diff := int(dir) - int(u.Angle)
 	u.Angle = dir & 0x07
-	u.ImageIndex = (u.ImageIndex &^ 0x07) | int(u.Angle)
 	if u.Flags.Has(FlagCanHeadRotate) {
 		u.TurretAngle = uint8((int(u.TurretAngle) + diff) & 0x07)
 		u.TurretTarget = uint8((int(u.TurretTarget) + diff) & 0x07)
-		u.TurretImageIndex = u.TurretImageBase + int(u.TurretAngle)
 	}
 }
 
@@ -436,6 +430,8 @@ func TargetAngle(dx, dy int) uint8 {
 	}
 }
 
+/* // note: unused code in Go port
+// AimTurret is only read by its test; aiming runs through AimTurretAt and StepTurret.
 // AimTurret snaps the gun to face dir (0..7): a unit that rotates its head does so
 // alone, while other units turn the whole body.
 //
@@ -450,6 +446,7 @@ func (u *UnitInfo) AimTurret(dir uint8) {
 	}
 	u.SetAngle(dir)
 }
+*/
 
 // AimTurretAt sets the head's desired facing (0..7) without snapping; StepTurret rotates to it.
 // Units without independent head rotation turn their whole body at once.
@@ -474,7 +471,6 @@ func (u *UnitInfo) StepTurret() bool {
 		step = -1
 	}
 	u.TurretAngle = uint8((int(u.TurretAngle) + step) & 0x07)
-	u.TurretImageIndex = u.TurretImageBase + int(u.TurretAngle)
 	return true
 }
 

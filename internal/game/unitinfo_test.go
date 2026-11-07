@@ -152,6 +152,8 @@ func TestFiringAngle(t *testing.T) {
 	}
 }
 
+/* // note: unused code in Go port
+// the test of AimTurret, commented out with it; TestStepTurret covers the live aim.
 func TestAimTurret(t *testing.T) {
 	// A turreted unit rotates only its turret; the body keeps its facing.
 	turreted := NewUnitInfo(0, 0, 1, 0)
@@ -179,6 +181,7 @@ func TestAimTurret(t *testing.T) {
 		t.Errorf("turret-sprite-only aim body/turret = %d/%d, want 4/0", bodyTurner.Angle, bodyTurner.TurretAngle)
 	}
 }
+*/
 
 func TestStepTurret(t *testing.T) {
 	u := NewUnitInfo(0, 0, 1, 0)

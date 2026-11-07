@@ -132,8 +132,8 @@ func TestClearSmallRubble(t *testing.T) {
 	if !g.IsClearingRubble(dozer) || dozer.Order != game.OrderClear {
 		t.Errorf("after StartClearRubble: clearing=%v order=%v", g.IsClearingRubble(dozer), dozer.Order)
 	}
-	if g.ClearTurnsLeft(dozer) != clearSmallTurns {
-		t.Errorf("ClearTurnsLeft = %d, want %d", g.ClearTurnsLeft(dozer), clearSmallTurns)
+	if n, _ := g.ClearJobTurnsLeft(dozer); n != clearSmallTurns {
+		t.Errorf("ClearJobTurnsLeft = %d, want %d", n, clearSmallTurns)
 	}
 
 	g.tickClearing(0) // one turn of work
@@ -269,8 +269,8 @@ func TestClearLargeRubble(t *testing.T) {
 	if !g.StartClearRubble(dozer) {
 		t.Fatal("StartClearRubble returned false on a large pile")
 	}
-	if g.ClearTurnsLeft(dozer) != clearLargeTurns {
-		t.Fatalf("ClearTurnsLeft = %d, want %d", g.ClearTurnsLeft(dozer), clearLargeTurns)
+	if n, _ := g.ClearJobTurnsLeft(dozer); n != clearLargeTurns {
+		t.Fatalf("ClearJobTurnsLeft = %d, want %d", n, clearLargeTurns)
 	}
 
 	// A clearing bulldozer cannot move and gets no budget.

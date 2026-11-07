@@ -48,36 +48,35 @@ func (g *Game) OrderMoveToAttack(attacker *game.UnitInfo, cellX, cellY int) bool
 // advancePursuit is one step of a move to attack order (port of PursueEnemy): it
 // fires when the target is in range, otherwise paths again toward the target's current
 // position. It runs on the initial order, on each move completion (arrival), and at
-// the start of the unit's team turn (resume across turns). It reports whether a fresh
-// move was started. A spent, dead, gone or unreachable target ends the pursuit.
+// the start of the unit's team turn (resume across turns). A spent, dead, gone or unreachable target ends the pursuit.
 //
 // C++ ported : units_manager.cpp - UnitsManager_PursueEnemy.
-func (g *Game) advancePursuit(unit *game.UnitInfo) bool {
+func (g *Game) advancePursuit(unit *game.UnitInfo) {
 	target := unit.AttackTarget
 	if target == nil {
-		return false
+		return
 	}
 	// The target died or left the map: drop the pursuit.
 	if target.Hits <= 0 || target.GridX < 0 || target.GridY < 0 {
 		unit.AttackTarget = nil
-		return false
+		return
 	}
 	// Out of ammo for good (not just shots spent this turn): cannot fire even after
 	// closing, so give up. A reload is the player's job. C++: PursueEnemy ammo>0 gate.
 	if unit.Ammo <= 0 {
 		unit.AttackTarget = nil
-		return false
+		return
 	}
 	// In weapon range with a shot ready: fire and finish the order.
 	if combat.CanAttack(unit, target, g.Grid.Surf) {
 		g.Attack(unit, target.GridX, target.GridY)
 		unit.AttackTarget = nil
-		return false
+		return
 	}
 	// In range but out of shots this turn (the move/fire budget was spent driving here):
 	// hold the target; next turn's refill lets it fire. C++: the shared budget stall.
 	if combat.InRange(unit, target.GridX, target.GridY, unit.Values.Get(game.AttribRange)) {
-		return false
+		return
 	}
 	// Still out of range: drive to the nearest reachable firing cell (a standoff at
 	// weapon range), falling back to closing to an adjacent cell.
@@ -87,15 +86,15 @@ func (g *Game) advancePursuit(unit *game.UnitInfo) bool {
 	}
 	for _, c := range g.FiringApproachCells(unit, target.GridX, target.GridY, rng) {
 		if g.orderMoveTo(unit, c.X, c.Y) {
-			return true
+			return
 		}
 	}
 	for _, c := range g.AdjacentApproachCells(unit, target.GridX, target.GridY) {
 		if g.orderMoveTo(unit, c.X, c.Y) {
-			return true
+			return
 		}
 	}
-	return false // no reachable approach: stay put, keep the target for a later turn
+	// no reachable approach: stay put, keep the target for a later turn
 }
 
 // SetMoveDelay holds a unit's fresh move order still for a few animation frames before it

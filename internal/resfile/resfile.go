@@ -122,10 +122,13 @@ func NormTag(tag string) string {
 	return strings.ToUpper(strings.TrimSpace(tag))
 }
 
+/* // note: unused code in Go port
+// Path has no caller; nothing asks an open archive where it came from.
 // Path returns the file path the archive was opened from.
 func (f *File) Path() string {
 	return f.path
 }
+*/
 
 // Tags returns all tags in index order.
 func (f *File) Tags() []string {
@@ -232,6 +235,8 @@ func (l *Library) Files() []*File {
 	return append([]*File(nil), l.files...)
 }
 
+/* // note: unused code in Go port
+// Library.Has is only read by a test; the game looks tags up through Read.
 // Has reports whether any archive contains tag.
 func (l *Library) Has(tag string) bool {
 	for _, f := range l.files {
@@ -241,7 +246,10 @@ func (l *Library) Has(tag string) bool {
 	}
 	return false
 }
+*/
 
+/* // note: unused code in Go port
+// Library.Size is only read by a test; restool reads File.Size directly.
 // Size returns the stored size from the first archive containing tag.
 func (l *Library) Size(tag string) (size int, ok bool) {
 	for _, f := range l.files {
@@ -251,6 +259,7 @@ func (l *Library) Size(tag string) (size int, ok bool) {
 	}
 	return 0, false
 }
+*/
 
 // Read returns the resource data from the first archive that has it.
 func (l *Library) Read(tag string) ([]byte, error) {
