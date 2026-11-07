@@ -16,7 +16,14 @@ import (
 
 // Component is one connected landmass.
 type Component struct {
+	/* // note: unused code in Go port
+	// ID and the bounding box were only read by tests; callers use the slice index (Find returns the largest first).
+	ID                     int
+	*/
 	Cells []game.Point
+	/* // note: unused code in Go port
+	MinX, MinY, MaxX, MaxY int
+	*/
 }
 
 // Size is the number of land cells in the component.
@@ -45,12 +52,31 @@ func Find(m *world.Map) []Component {
 			visited[start] = true
 			queue = append(queue[:0], start)
 			cells := make([]int, 0, 64)
+			/* // note: unused code in Go port
+			// the bounding box of the component (see the Component fields).
+			minX, maxX := x, x
+			minY, maxY := y, y
+			*/
 
 			for head := 0; head < len(queue); head++ {
 				idx := queue[head]
 				cells = append(cells, idx)
 				cx := idx % m.W
 				cy := idx / m.W
+				/* // note: unused code in Go port
+				if cx < minX {
+					minX = cx
+				}
+				if cx > maxX {
+					maxX = cx
+				}
+				if cy < minY {
+					minY = cy
+				}
+				if cy > maxY {
+					maxY = cy
+				}
+				*/
 				if cx > 0 {
 					addIfLand(m, visited, &queue, idx-1, cx-1, cy)
 				}
@@ -71,11 +97,22 @@ func Find(m *world.Map) []Component {
 				points[i] = game.Point{X: idx % m.W, Y: idx / m.W}
 			}
 
-			comps = append(comps, Component{Cells: points})
+			comps = append(comps, Component{
+				Cells: points,
+				/* // note: unused code in Go port
+				MinX:  minX, MinY: minY,
+				MaxX: maxX, MaxY: maxY,
+				*/
+			})
 		}
 	}
 
 	slices.SortStableFunc(comps, func(a, b Component) int { return b.Size() - a.Size() }) // largest first, ties keep scan order
+	/* // note: unused code in Go port
+	for i := range comps {
+		comps[i].ID = i
+	}
+	*/
 	return comps
 }
 

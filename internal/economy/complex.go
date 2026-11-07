@@ -18,11 +18,16 @@ import (
 // explicit (Members), keeping the package self contained and testable.
 // C++: class Complex (complex.hpp / complex.cpp).
 type Complex struct {
-	ID        int
-	Team      int
-	Material  int
-	Fuel      int
-	Gold      int
+	ID       int
+	Team     int
+	Material int
+	Fuel     int
+	Gold     int
+	/* // note: unused code in Go port
+	// Power / Workers were a stale per turn snapshot nothing read; spare power and the worker surplus are computed live.
+	Power     int
+	Workers   int
+	*/
 	Buildings int
 
 	Members []*game.UnitInfo
@@ -224,7 +229,12 @@ func (c *Complex) BalanceTurn(difficultyFactor int) Cargo {
 	c.Material = max(0, c.Material+net.Raw)
 	c.Fuel = max(0, c.Fuel+net.Fuel)
 	c.Gold = max(0, c.Gold+net.Gold)
-	c.CapStores()    // a base cannot hold more than its storage: the rest spills
+	c.CapStores() // a base cannot hold more than its storage: the rest spills
+	/* // note: unused code in Go port
+	// the writes of the Power / Workers snapshot (see the Complex fields).
+	c.Power = c.activeGeneratorOutput() - c.consumerPowerDemand() // spare power (>=0 after the shed)
+	c.Workers = net.Life
+	*/
 	c.redistribute() // mirror the pooled stores into the member buildings' cargo bars
 	return net
 }

@@ -192,6 +192,12 @@ func movieAudioContext(format mve.AudioFormat) (*ebiaudio.Context, bool) {
 
 func moviePCMBytes(samples []int16, format mve.AudioFormat) []byte {
 	channels := format.Channels
+	/* // note: unused code in Go port
+	// movieAudioContext already rejects every format without 1 or 2 channels, so channels is never 0 here.
+	if channels <= 0 {
+		channels = 2
+	}
+	*/
 
 	outChannels := channels
 	if outChannels == 1 {

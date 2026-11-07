@@ -87,6 +87,11 @@ const (
 type MouseState struct {
 	X, Y    int
 	Buttons uint32
+	/* // note: unused code in Go port
+	// WheelX / WheelY were written every frame and never read; wheel input reaches the game through ConsumeWheelY.
+	WheelX  int
+	WheelY  int
+	*/
 }
 
 // Config configures the platform window.
@@ -469,7 +474,7 @@ func (p *Platform) pollMouse() {
 	x, y := ebiten.CursorPosition()
 	left := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 	right := ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight)
-	_, wy := ebiten.Wheel()
+	_, wy := ebiten.Wheel() // wx, note: unused code in Go port: the horizontal wheel only fed MouseState.WheelX
 
 	var buttons uint32
 	if left {
@@ -489,7 +494,7 @@ func (p *Platform) pollMouse() {
 
 	p.mu.Lock()
 	p.wheelAccum += quantizeWheel(wy, &p.wheelRemainder)
-	p.mouse = MouseState{X: x, Y: y, Buttons: buttons}
+	p.mouse = MouseState{X: x, Y: y, Buttons: buttons /* , WheelX: int(wx), WheelY: int(wy): note: unused code in Go port */}
 	p.mu.Unlock()
 }
 

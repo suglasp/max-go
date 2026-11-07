@@ -25,6 +25,10 @@ type zoneWalker struct {
 	x, y           int // the current cell
 	limitX, limitY int
 	mapW           int
+	/* // note: unused code in Go port
+	// mapH was set and never read; the mapH parameter of newZoneWalker still clamps limitY.
+	mapH int
+	*/
 }
 
 // newZoneWalker positions the walker at the first cell of the disc.
@@ -35,6 +39,9 @@ func newZoneWalker(center game.Point, radius, mapW, mapH int) *zoneWalker {
 		radius:   radius,
 		distance: radius * radius,
 		mapW:     mapW,
+		/* // note: unused code in Go port
+		mapH:     mapH,
+		*/
 	}
 
 	w.limitY = w.startY + radius

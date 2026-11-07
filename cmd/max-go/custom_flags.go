@@ -135,6 +135,12 @@ func applyCustomGameFlags(g *settings.Game, cf *CustomGameFlags, provided map[st
 
 	// -startcredit: the landing purchase budget bucket.
 	if s := strings.TrimSpace(stringValue(cf.StartCredit)); s != "" {
+		/* // note: unused code in Go port
+		// ValidateCustomFlags already refused a bad label, and a valid one always maps to >= 0.
+		if v := startCreditValue(s); v >= 0 {
+			g.StartGold = v
+		}
+		*/
 		g.StartGold = startCreditValue(s)
 	}
 
@@ -199,6 +205,11 @@ func resourceDensity(v string) int {
 // matching gcCreditValues in the setup screen. Returns -1 for an unknown label.
 func startCreditValue(v string) int {
 	switch strings.ToLower(strings.TrimSpace(v)) {
+	/* // note: unused code in Go port
+	// ValidateCustomFlags refuses none for -startcredit, and the help no longer offers it.
+	case "none":
+		return 0
+	*/
 	case "low":
 		return 50
 	case "limited":

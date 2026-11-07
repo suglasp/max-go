@@ -46,6 +46,10 @@ func runGameScreen(ctx *menus.Context, worldIdx int, mode gameScreenMode, noMovi
 	// Start the terrain background music for actual gameplay (not the gallery /
 	// inspection views). The win/lose jingle takes over at game over.
 	switch mode {
+	/* // note: unused code in Go port
+	// no caller runs gameScreenPlain; every caller passes a named mode.
+	case gameScreenPlain, gameScreenDemo, gameScreenRandom, gameScreenRandom2, gameScreenCustom:
+	*/
 	case gameScreenDemo, gameScreenRandom, gameScreenRandom2, gameScreenCustom:
 		startGameMusic(ctx, gameMusicTag(worldIdx))
 	}
@@ -220,17 +224,36 @@ func buildGameScreen(ctx *menus.Context, mapFile string) (*gamescreen.Screen, er
 	scr.SetClans(ctx.Assets.Clans)               // per team clan stat bonuses
 	scr.SetSaveInfo(ctx.Plat.BaseDir(), mapFile) // F9/F5 save load
 
+	/* // note: unused code in Go port
+	// ctx.Settings is never nil: the only menus.Context is built with Settings set; the call below runs unguarded.
+	if ctx.Settings != nil {
+		scr.SetPopupVanillaLook(ctx.Settings.Video.PopupVanillaLook) // order popup: retail face or bevel art
+	}
+	*/
 	scr.SetPopupVanillaLook(ctx.Settings.Video.PopupVanillaLook) // order popup: retail face or bevel art
 
 	// The in game debug UI (F2 menu, developer keys U/A/V/B, key hint) is on in a DEBUG_GAME dev build,
 	// and otherwise opt in at runtime via the max-go.json debug.menu flag. (-emulate stays DEBUG_GAME only;
 	// the custom game launch flags register in every build.)
+	/* // note: unused code in Go port
+	// ctx.Settings is never nil, so the debug flag is read unguarded below.
+	debugUI := DEBUG_GAME
+	if ctx.Settings != nil {
+		debugUI = debugUI || ctx.Settings.Debug.Menu
+	}
+	*/
 	debugUI := DEBUG_GAME || ctx.Settings.Debug.Menu
 
 	scr.SetDebug(debugUI)
 
 	// Apply remappable action keys when building the game. Changes from max-settings take effect on
 	// the next run because the Options menu does not edit key bindings.
+	/* // note: unused code in Go port
+	// ctx.Settings is never nil; the call below runs unguarded.
+	if ctx.Settings != nil {
+		scr.SetKeybinds(ctx.Settings.Keybinds)
+	}
+	*/
 	scr.SetKeybinds(ctx.Settings.Keybinds)
 
 	scr.SetShowAStarPath(showAStarPath) // -set-a-star debug: draw the white A* path
@@ -271,6 +294,17 @@ func applyLivePrefs(scr *gamescreen.Screen, ctx *menus.Context) {
 func wireMenuCallbacks(scr *gamescreen.Screen, ctx *menus.Context) {
 	scr.SetOptionsFunc(func() error { // O / PREFERENCES (centred in the viewport)
 		err := menus.RunOptions(ctx, gamescreen.MainMap)
+		/* // note: unused code in Go port
+		// ctx.Settings is never nil and settings.ResolvePath never returns an empty SettingsPath; both run unguarded below.
+		if ctx.Settings != nil {
+			applyLivePrefs(scr, ctx) // apply prefs changes to the running game
+			if ctx.SettingsPath != "" {
+				if e := ctx.Settings.Save(ctx.SettingsPath); e != nil { // persist so settings.json matches
+					dbg.Printf("settings save: %v", e)
+				}
+			}
+		}
+		*/
 		applyLivePrefs(scr, ctx)                                // apply prefs changes to the running game
 		if e := ctx.Settings.Save(ctx.SettingsPath); e != nil { // persist so settings.json matches
 			dbg.Printf("settings save: %v", e)
@@ -551,7 +585,7 @@ func applyBenchCustomFlags(scr *gamescreen.Screen, ctx *menus.Context) {
 		scr.SetStartGold(benchStartGold)
 	}
 
-	if benchVictoryProvided {
+	if benchVictoryProvided /* && ctx.Settings != nil: note: unused code in Go port, ctx.Settings is never nil */ {
 		scr.SetVictory(winloss.VictoryType(ctx.Settings.Game.VictoryType), ctx.Settings.Game.VictoryLimit)
 	}
 }

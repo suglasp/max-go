@@ -18,8 +18,12 @@ import (
 
 // Mission pairs a selectable SAVE<N> file and its SmartFile header with the matching DESCR<N> briefing when one exists.
 type Mission struct {
-	Index       int    // Numeric suffix and display order.
-	SavePath    string // Absolute SAVE path.
+	Index    int    // Numeric suffix and display order.
+	SavePath string // Absolute SAVE path.
+	/* // note: unused code in Go port
+	// DescPath was only read by a test; the briefing text is read into Description at load.
+	DescPath    string // Absolute DESCR path, or empty.
+	*/
 	Title       string // SmartFile save name.
 	Description string // DESCR briefing text, or empty.
 	Info        *Info  // Decoded SmartFile header.
@@ -117,8 +121,11 @@ func listMissions(dir, ext string) ([]Mission, error) {
 			title = strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
 		}
 		missions = append(missions, Mission{
-			Index:       idx,
-			SavePath:    savePath,
+			Index:    idx,
+			SavePath: savePath,
+			/* // note: unused code in Go port
+			DescPath:    descPath,
+			*/
 			Title:       title,
 			Description: desc,
 			Info:        info,
@@ -152,8 +159,11 @@ func LoadMission(path string) (Mission, error) {
 		title = strings.TrimSuffix(name, filepath.Ext(name))
 	}
 	return Mission{
-		Index:       idx,
-		SavePath:    path,
+		Index:    idx,
+		SavePath: path,
+		/* // note: unused code in Go port
+		DescPath:    descPath,
+		*/
 		Title:       title,
 		Description: desc,
 		Info:        info,

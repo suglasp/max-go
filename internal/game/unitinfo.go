@@ -75,7 +75,12 @@ type UnitInfo struct {
 	TurretImageBase    int
 	FiringImageBase    int
 	ConnectorImageBase int
-	ImageIndexMax      int
+	/* // note: unused code in Go port
+	// ImageIndex / TurretImageIndex were written and never read; the sprite draw picks frames from the angles.
+	ImageIndex         int
+	TurretImageIndex   int
+	*/
+	ImageIndexMax int
 
 	Brightness uint8
 
@@ -134,6 +139,11 @@ func NewUnitInfo(unitType assets.UnitType, team, id int, angle uint8) *UnitInfo 
 		TurretTarget: angle & 0x07,
 		Brightness:   0xFF,
 	}
+	/* // note: unused code in Go port
+	// the frame index writes (see the UnitInfo fields).
+	u.ImageIndex = u.ImageBase + int(u.Angle)
+	u.TurretImageIndex = u.TurretImageBase + int(u.Angle)
+	*/
 	return u
 }
 
@@ -290,9 +300,11 @@ func (u *UnitInfo) BeginClearLeave(footprint int) {
 func (u *UnitInfo) SetAngle(dir uint8) {
 	diff := int(dir) - int(u.Angle)
 	u.Angle = dir & 0x07
+	/* u.ImageIndex = (u.ImageIndex &^ 0x07) | int(u.Angle): note: unused code in Go port, see the UnitInfo fields */
 	if u.Flags.Has(FlagCanHeadRotate) {
 		u.TurretAngle = uint8((int(u.TurretAngle) + diff) & 0x07)
 		u.TurretTarget = uint8((int(u.TurretTarget) + diff) & 0x07)
+		/* u.TurretImageIndex = u.TurretImageBase + int(u.TurretAngle): note: unused code in Go port, see the UnitInfo fields */
 	}
 }
 
@@ -471,6 +483,7 @@ func (u *UnitInfo) StepTurret() bool {
 		step = -1
 	}
 	u.TurretAngle = uint8((int(u.TurretAngle) + step) & 0x07)
+	/* u.TurretImageIndex = u.TurretImageBase + int(u.TurretAngle): note: unused code in Go port, see the UnitInfo fields */
 	return true
 }
 
