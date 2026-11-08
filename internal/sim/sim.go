@@ -138,6 +138,10 @@ type PendingRoute struct {
 // passability grid reads the map surface and the live unit hash.
 func New(p *game.StartParams, m *world.Map) *Game {
 	mgr := units.NewManager()
+	grid := &access.Grid{W: m.W, H: m.H, Surf: m, Units: mgr.Cells}
+	return NewWithGrid(game.NewGameState(p), mgr, grid, m.W, m.H)
+	/* // note: unused code in Go port
+	// the same body as NewWithGrid, New now builds through it
 	v := vis.NewView(m.W, m.H)
 	v.Surf = m
 	return &Game{
@@ -148,10 +152,11 @@ func New(p *game.StartParams, m *world.Map) *Game {
 		W:     m.W,
 		H:     m.H,
 	}
+	*/
 }
 
-// NewWithGrid builds a game over an explicit grid and dimensions, for tests
-// and the AI harness that supply a synthetic map.
+// NewWithGrid builds a game over an explicit grid and dimensions. New uses it
+// for a loaded map; tests pass a synthetic one.
 func NewWithGrid(state *game.GameState, mgr *units.Manager, grid *access.Grid, w, h int) *Game {
 	v := vis.NewView(w, h)
 	v.Surf = grid.Surf // access.SurfaceSource also satisfies vis.SurfaceSource

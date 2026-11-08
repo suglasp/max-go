@@ -16,10 +16,13 @@ import (
 // Retail M.A.X. maps are 112x112 cells.
 const mapW, mapH = 112, 112
 
+/* // note: unused code in Go port
+// a one line wrapper of testutil.DataDir; the tests call it directly
 func dataDir(t *testing.T) string {
 	t.Helper()
 	return testutil.DataDir(t)
 }
+*/
 
 // loadSave reads and parses one retail save file.
 func loadSave(t *testing.T, path string) *GameState {
@@ -36,7 +39,7 @@ func loadSave(t *testing.T, path string) *GameState {
 }
 
 func TestLoadCampaign1Units(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	gs := loadSave(t, filepath.Join(dir, "SAVE1.CAM"))
 
 	if len(gs.Units) == 0 {
@@ -61,7 +64,7 @@ func TestLoadCampaign1Units(t *testing.T) {
 
 // TestLoadOptions checks the options block against the ranges used by retail scenarios, catching an offset error before it shifts later records.
 func TestLoadOptions(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	gs := loadSave(t, filepath.Join(dir, "SAVE1.SCE"))
 	o := gs.Options
 	if o.VictoryType != 0 && o.VictoryType != 1 {
@@ -100,7 +103,7 @@ func TestLoadOptions(t *testing.T) {
 
 // TestLoadAllMissions checks record alignment from the header through the unit lists across every retail campaign, scenario, training, and multiplayer save.
 func TestLoadAllMissions(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		t.Fatal(err)

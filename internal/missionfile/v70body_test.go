@@ -9,13 +9,15 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/suglasp/max-go/internal/testutil"
 )
 
 // Retail M.A.X. maps are 112x112 cells.
 const testMapW, testMapH = 112, 112
 
 func TestReadMissionMap(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	f, err := os.Open(filepath.Join(dir, "SAVE1.SCE"))
 	if err != nil {
 		t.Fatal(err)
@@ -67,7 +69,7 @@ func TestReadMissionMap(t *testing.T) {
 
 // TestReadMissionMapAllScenarios checks the 224-byte prefix and surface-map alignment across every retail scenario.
 func TestReadMissionMapAllScenarios(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	missions, err := ListScenarios(dir)
 	if err != nil {
 		t.Fatal(err)

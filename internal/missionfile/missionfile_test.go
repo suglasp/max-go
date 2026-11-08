@@ -19,7 +19,7 @@ import (
 )
 
 func TestReadInfoRetailSmartFiles(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	paths := missionPaths(t, dir)
 	if len(paths) == 0 {
 		t.Fatalf("no retail SmartFile V70 mission files found in %s", dir)
@@ -48,7 +48,7 @@ func TestReadInfoRetailSmartFiles(t *testing.T) {
 }
 
 func TestReadInfoSAVE1Golden(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	f, err := os.Open(filepath.Join(dir, "SAVE1.SCE"))
 	if err != nil {
 		t.Fatal(err)
@@ -79,7 +79,7 @@ func TestReadInfoErrors(t *testing.T) {
 }
 
 func TestReadInfoRejectsRetailDescriptionText(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	f, err := os.Open(filepath.Join(dir, "DESCR1.SCE"))
 	if err != nil {
 		t.Fatal(err)
@@ -112,10 +112,13 @@ func serializeInfo(info *Info) []byte {
 	return []byte(b.String())
 }
 
+/* // note: unused code in Go port
+// a one line wrapper of testutil.DataDir; the tests call it directly
 func dataDir(t *testing.T) string {
 	t.Helper()
 	return testutil.DataDir(t)
 }
+*/
 
 func missionPaths(t *testing.T, dir string) []string {
 	t.Helper()

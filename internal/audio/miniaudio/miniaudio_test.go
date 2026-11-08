@@ -6,7 +6,6 @@
 package miniaudio
 
 import (
-	"encoding/binary"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	ma "miniaudio"
 
 	"github.com/suglasp/max-go/internal/audio"
+	"github.com/suglasp/max-go/internal/testutil"
 )
 
 // testDLL locates the platform-specific miniaudio library used by smoke tests.
@@ -60,7 +60,7 @@ func TestNullEngineBackendSmoke(t *testing.T) {
 	dir := t.TempDir()
 	wavPath := filepath.Join(dir, "tone.wav")
 
-	if err := os.WriteFile(wavPath, testWAV(), 0o644); err != nil {
+	if err := os.WriteFile(wavPath, testutil.SilentWAV(), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -81,7 +81,7 @@ func TestNullEngineBackendSmoke(t *testing.T) {
 	held.SetPan(0.25)
 	held.Stop()
 
-	memHeld, err := be.PlaySfxHeldMem(testWAV(), 0.5, 0.25, true)
+	memHeld, err := be.PlaySfxHeldMem(testutil.SilentWAV(), 0.5, 0.25, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,6 +125,8 @@ func TestNullEngineMoviePCMSmoke(t *testing.T) {
 	be.StopPCM()
 }
 
+/* // note: unused code in Go port
+// the same bytes in both audio adapter tests; they call testutil.SilentWAV
 func testWAV() []byte {
 	const (
 		sampleRate    = 22050
@@ -152,3 +154,4 @@ func testWAV() []byte {
 
 	return out
 }
+*/

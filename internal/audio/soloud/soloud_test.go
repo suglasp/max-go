@@ -6,7 +6,6 @@
 package soloud
 
 import (
-	"encoding/binary"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	soloudlib "soloud"
 
 	"github.com/suglasp/max-go/internal/settings"
+	"github.com/suglasp/max-go/internal/testutil"
 )
 
 // testDLL locates the platform-specific SoLoud library used by smoke tests.
@@ -66,7 +66,7 @@ func TestNoSoundBackendSmoke(t *testing.T) {
 	dir := t.TempDir()
 	wavPath := filepath.Join(dir, "tone.wav")
 
-	if err := os.WriteFile(wavPath, testWAV(), 0o644); err != nil {
+	if err := os.WriteFile(wavPath, testutil.SilentWAV(), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -86,7 +86,7 @@ func TestNoSoundBackendSmoke(t *testing.T) {
 	}
 	held.Stop()
 
-	memHeld, err := be.PlaySfxHeldMem(testWAV(), 0.5, 0.25, true)
+	memHeld, err := be.PlaySfxHeldMem(testutil.SilentWAV(), 0.5, 0.25, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,6 +109,8 @@ func TestNoSoundBackendSmoke(t *testing.T) {
 	be.StopAll()
 }
 
+/* // note: unused code in Go port
+// the same bytes in both audio adapter tests; they call testutil.SilentWAV
 func testWAV() []byte {
 	const (
 		sampleRate    = 22050
@@ -136,6 +138,7 @@ func testWAV() []byte {
 
 	return out
 }
+*/
 
 // TestBackendIDKnowsEverySettingsBackend checks that every SoLoud backend the settings offer maps to its own SoLoud
 // constant: only "auto" may resolve to SOLOUD_AUTO.

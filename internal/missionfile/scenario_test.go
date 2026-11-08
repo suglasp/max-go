@@ -9,10 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/suglasp/max-go/internal/testutil"
 )
 
 func TestListScenarios(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	missions, err := ListScenarios(dir)
 	if err != nil {
 		t.Fatal(err)
@@ -42,7 +44,7 @@ func TestListScenarios(t *testing.T) {
 }
 
 func TestListCampaign(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	missions, err := ListCampaign(dir)
 	if err != nil {
 		t.Fatal(err)
@@ -68,7 +70,7 @@ func TestListCampaign(t *testing.T) {
 }
 
 func TestListTraining(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	missions, err := ListTraining(dir)
 	if err != nil {
 		t.Fatal(err)
@@ -84,7 +86,7 @@ func TestListTraining(t *testing.T) {
 }
 
 func TestListMultiScenarios(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	missions, err := ListMultiScenarios(dir)
 	if err != nil {
 		t.Fatal(err)
@@ -106,7 +108,7 @@ func TestListMultiScenarios(t *testing.T) {
 }
 
 func TestListDemos(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	missions, err := ListDemos(dir)
 	if err != nil {
 		t.Fatal(err)
@@ -130,7 +132,7 @@ func TestListDemos(t *testing.T) {
 }
 
 func TestReadDescription(t *testing.T) {
-	dir := dataDir(t)
+	dir := testutil.DataDir(t)
 	text, err := ReadDescription(filepath.Join(dir, "DESCR1.SCE"))
 	if err != nil {
 		t.Fatal(err)
