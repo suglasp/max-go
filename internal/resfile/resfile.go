@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	headerSize = 12     // id[4] + index offset + index size
-	entrySize  = 16     // tag[8] + data offset + data size
-	magic      = "RES0" // Magic header
+	HeaderSize = 12     // id[4] + index offset + index size; exported for the archive tools
+	EntrySize  = 16     // tag[8] + data offset + data size
+	Magic      = "RES0" // Magic header
 	TagLen     = 8      // TagLen is the maximum length of a resource tag.
 )
 
@@ -55,12 +55,12 @@ func OpenFile(path string) (*File, error) {
 
 // index reads a RES directory table and records each entry's file offset.
 func index(f *os.File, path string) (*File, error) {
-	var hdr [headerSize]byte
+	var hdr [HeaderSize]byte
 	if _, err := f.ReadAt(hdr[:], 0); err != nil {
 		return nil, fmt.Errorf("resfile: %s: read header: %w", path, err)
 	}
-	if string(hdr[:4]) != magic {
-		return nil, fmt.Errorf("resfile: %s: bad magic %q, want %q", path, hdr[:4], magic)
+	if string(hdr[:4]) != Magic {
+		return nil, fmt.Errorf("resfile: %s: bad magic %q, want %q", path, hdr[:4], Magic)
 	}
 	indexOffset := int32(binary.LittleEndian.Uint32(hdr[4:8]))
 	indexSize := int32(binary.LittleEndian.Uint32(hdr[8:12]))
@@ -69,7 +69,7 @@ func index(f *os.File, path string) (*File, error) {
 	if err != nil {
 		return nil, err
 	}
-	if indexOffset < headerSize || indexSize < 0 || indexSize%entrySize != 0 ||
+	if indexOffset < HeaderSize || indexSize < 0 || indexSize%EntrySize != 0 ||
 		int64(indexOffset)+int64(indexSize) > st.Size() {
 		return nil, fmt.Errorf("resfile: %s: corrupt index (offset=%d size=%d filesize=%d)",
 			path, indexOffset, indexSize, st.Size())
@@ -80,7 +80,7 @@ func index(f *os.File, path string) (*File, error) {
 		return nil, fmt.Errorf("resfile: %s: read index: %w", path, err)
 	}
 
-	n := int(indexSize) / entrySize
+	n := int(indexSize) / EntrySize
 	rf := &File{
 		path:    path,
 		f:       f,
@@ -88,7 +88,7 @@ func index(f *os.File, path string) (*File, error) {
 		tags:    make([]string, 0, n),
 	}
 	for i := 0; i < n; i++ {
-		rec := raw[i*entrySize : (i+1)*entrySize]
+		rec := raw[i*EntrySize : (i+1)*EntrySize]
 		tag := NormTag(string(rec[:TagLen]))
 		if tag == "" {
 			continue

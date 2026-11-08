@@ -10,7 +10,6 @@ package miniaudio
 
 import (
 	"fmt"
-	"math"
 	"sync"
 
 	ma "miniaudio"
@@ -92,7 +91,7 @@ func (b *Backend) PlayMusic(path string, loop bool, volume float64) error {
 		return fmt.Errorf("audio/miniaudio: load music %s: %w", path, err)
 	}
 	snd.SetLooping(loop)
-	snd.SetVolume(clampVolume(volume))
+	snd.SetVolume(audio.ClampVolume32(volume))
 
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -131,7 +130,7 @@ func (b *Backend) SetMusicVolume(volume float64) {
 	defer b.mu.Unlock()
 
 	if b.music != nil {
-		b.music.SetVolume(clampVolume(volume))
+		b.music.SetVolume(audio.ClampVolume32(volume))
 	}
 }
 
@@ -142,8 +141,8 @@ func (b *Backend) PlaySfx(path string, volume, pan float64) error {
 		return fmt.Errorf("audio/miniaudio: load sfx %s: %w", path, err)
 	}
 
-	snd.SetVolume(clampVolume(volume))
-	snd.SetPan(clampPan(pan))
+	snd.SetVolume(audio.ClampVolume32(volume))
+	snd.SetPan(audio.ClampPan32(pan))
 	if err := snd.Start(); err != nil {
 		snd.Destroy()
 		return err
@@ -183,8 +182,8 @@ func (b *Backend) PlaySfxHeld(path string, volume, pan float64, loop bool) (audi
 		return nil, fmt.Errorf("audio/miniaudio: load sfx %s: %w", path, err)
 	}
 
-	snd.SetVolume(clampVolume(volume))
-	snd.SetPan(clampPan(pan))
+	snd.SetVolume(audio.ClampVolume32(volume))
+	snd.SetPan(audio.ClampPan32(pan))
 	snd.SetLooping(loop)
 
 	if err := snd.Start(); err != nil {
@@ -219,8 +218,8 @@ func (b *Backend) PlaySfxHeldMem(wav []byte, volume, pan float64, loop bool) (au
 		return nil, fmt.Errorf("audio/miniaudio: load held mem sfx: %w", err)
 	}
 
-	snd.SetVolume(clampVolume(volume))
-	snd.SetPan(clampPan(pan))
+	snd.SetVolume(audio.ClampVolume32(volume))
+	snd.SetPan(audio.ClampPan32(pan))
 	snd.SetLooping(loop)
 
 	if err := snd.Start(); err != nil {
@@ -258,7 +257,7 @@ func (h *heldSound) SetPan(pan float64) {
 	defer h.b.mu.Unlock()
 
 	if h.snd != nil {
-		h.snd.SetPan(clampPan(pan))
+		h.snd.SetPan(audio.ClampPan32(pan))
 	}
 }
 
@@ -268,7 +267,7 @@ func (h *heldSound) SetVolume(volume float64) {
 	defer h.b.mu.Unlock()
 
 	if h.snd != nil {
-		h.snd.SetVolume(clampVolume(volume))
+		h.snd.SetVolume(audio.ClampVolume32(volume))
 	}
 }
 
@@ -297,7 +296,7 @@ func (b *Backend) PlayVoice(path string, volume float64) error {
 		return fmt.Errorf("audio/miniaudio: load voice %s: %w", path, err)
 	}
 
-	snd.SetVolume(clampVolume(volume))
+	snd.SetVolume(audio.ClampVolume32(volume))
 
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -344,7 +343,7 @@ func (b *Backend) StartPCM(format audio.PCMFormat, volume float64) error {
 		return fmt.Errorf("audio/miniaudio: movie stream: %w", err)
 	}
 
-	if err := stream.SetVolume(clampVolume(volume)); err != nil {
+	if err := stream.SetVolume(audio.ClampVolume32(volume)); err != nil {
 		stream.Destroy()
 
 		return err
@@ -465,6 +464,8 @@ func (b *Backend) Close() error {
 	return nil
 }
 
+/* // note: unused code in Go port
+// a copy of the SoLoud adapter's helper; both adapters call audio.ClampVolume32.
 // clampVolume normalizes a 0..1 volume to miniaudio's float32 scale.
 func clampVolume(v float64) float32 {
 	if math.IsNaN(v) || v < 0 {
@@ -477,7 +478,10 @@ func clampVolume(v float64) float32 {
 
 	return float32(v)
 }
+*/
 
+/* // note: unused code in Go port
+// a copy of the SoLoud adapter's helper; both adapters call audio.ClampPan32.
 // clampPan normalizes a stereo pan to [-1, 1].
 func clampPan(v float64) float32 {
 	if math.IsNaN(v) {
@@ -494,3 +498,4 @@ func clampPan(v float64) float32 {
 
 	return float32(v)
 }
+*/

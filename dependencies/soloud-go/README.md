@@ -92,7 +92,7 @@ Conventions used by the port:
 - The DLL picks its backend at `Init()` time (SDL2 if `SDL2.dll` is found,
   otherwise WinMM, etc.). Keep `SDL2.dll` next to the SoLoud DLL or let it
   fall back.
-- Linux/macOS: build SoLoud as a shared library (`libsoloud.so` /
-  `libsoloud.dylib`) and pass its path to `soloud.LoadPath`.
+- Linux/macOS: build SoLoud as a shared library (`libsoloud_x64.so` /
+  `libsoloud_x64.dylib`, the names `soloud.Load` opens) or pass its path to `soloud.LoadPath`.
 - `soloud.LoadPath`/`soloud.Load` must be called once before any other
   function of the package.

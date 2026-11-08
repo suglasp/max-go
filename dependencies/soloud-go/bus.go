@@ -95,13 +95,13 @@ func (b *Bus) AnnexSound(aVoiceHandle uint32) {
 // CalcFFT returns a copy of the 256-float FFT data in the bus visualization buffer.
 // Enable visualization before calling it.
 func (b *Bus) CalcFFT() []float32 {
-	return copyFloats(busCalcFFT(b.ptr), 256)
+	return copyFloats(busCalcFFT(b.ptr))
 }
 
 // GetWave returns a copy of the 256-float waveform data in the bus visualization buffer.
 // Enable visualization before calling it.
 func (b *Bus) GetWave() []float32 {
-	return copyFloats(busGetWave(b.ptr), 256)
+	return copyFloats(busGetWave(b.ptr))
 }
 
 func (b *Bus) GetApproximateVolume(aChannel uint32) float32 {

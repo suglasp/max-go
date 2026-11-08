@@ -14,6 +14,7 @@ func openLibrary(path string) (uintptr, error) {
 	return uintptr(h), err
 }
 
-func defaultLibName() string {
+// DefaultLibName is the platform's default library file name, the name Load opens and the game looks for next to its exe.
+func DefaultLibName() string {
 	return "miniaudio_x64.dll"
 }

@@ -501,13 +501,13 @@ func (s *Soloud) SetVisualizationEnable(aEnable bool) {
 // CalcFFT returns a copy of the 256-float FFT data in the visualization buffer.
 // Enable visualization before calling it.
 func (s *Soloud) CalcFFT() []float32 {
-	return copyFloats(soloudCalcFFT(s.ptr), 256)
+	return copyFloats(soloudCalcFFT(s.ptr))
 }
 
 // GetWave returns a copy of the 256-float waveform data in the visualization buffer.
 // Enable visualization before calling it.
 func (s *Soloud) GetWave() []float32 {
-	return copyFloats(soloudGetWave(s.ptr), 256)
+	return copyFloats(soloudGetWave(s.ptr))
 }
 
 func (s *Soloud) GetApproximateVolume(aChannel uint32) float32 {
@@ -586,29 +586,26 @@ func (s *Soloud) Set3dSourceDopplerFactor(aVoiceHandle uint32, aDopplerFactor fl
 // Mix fills aBuffer with aSamples interleaved stereo float samples.
 // It only works with the NULLDRIVER backend.
 func (s *Soloud) Mix(aBuffer []float32, aSamples uint32) {
-	var p *float32
-	if len(aBuffer) > 0 {
-		p = &aBuffer[0]
-	}
+	p := slicePtr(aBuffer)
 	soloudMix(s.ptr, p, aSamples)
 }
 
 // MixSigned16 fills aBuffer with aSamples interleaved stereo 16-bit samples.
 // It only works with the NULLDRIVER backend.
 func (s *Soloud) MixSigned16(aBuffer []int16, aSamples uint32) {
-	var p *int16
-	if len(aBuffer) > 0 {
-		p = &aBuffer[0]
-	}
+	p := slicePtr(aBuffer)
 	soloudMixSigned16(s.ptr, p, aSamples)
 }
 
-// copyFloats copies n floats from a C pointer into a fresh Go slice.
-func copyFloats(p *float32, n int) []float32 {
+// waveSize is the length of the FFT and wave buffers SoLoud hands back (always 256 floats).
+const waveSize = 256
+
+// copyFloats copies waveSize floats from a C pointer into a fresh Go slice.
+func copyFloats(p *float32) []float32 {
 	if p == nil {
 		return nil
 	}
-	out := make([]float32, n)
-	copy(out, unsafe.Slice(p, n))
+	out := make([]float32, waveSize)
+	copy(out, unsafe.Slice(p, waveSize))
 	return out
 }

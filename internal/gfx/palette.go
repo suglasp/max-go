@@ -22,6 +22,11 @@ const (
 
 	rgb555Count = 1 << 15
 	palFileTag  = 0x4E455743 // 'NEWC', little endian
+
+	// PalFileBaseSize is a COLOR.PAL without the intensity table: the palette plus the RGB555 nearest index table.
+	PalFileBaseSize = PaletteSize*PaletteStride + rgb555Count
+	// PalFileFullSize adds the 'NEWC' tag and its 256x256 intensity table.
+	PalFileFullSize = PalFileBaseSize + 4 + PaletteSize*PaletteSize
 )
 
 // GNW color indices into the system palette (color.h). Note that the
@@ -72,7 +77,7 @@ type PalFile struct {
 
 // ParsePalFile parses COLOR.PAL data.
 func ParsePalFile(data []byte) (*PalFile, error) {
-	const baseSize = PaletteSize*PaletteStride + rgb555Count
+	const baseSize = PalFileBaseSize
 	if len(data) < baseSize {
 		return nil, fmt.Errorf("gfx: COLOR.PAL too short: %d bytes, want >= %d", len(data), baseSize)
 	}

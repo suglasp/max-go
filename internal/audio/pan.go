@@ -97,3 +97,18 @@ func clampPan(v float64) float64 {
 
 	return v
 }
+
+// ClampVolume32 normalizes a 0..1 volume to the float32 scale the SoLoud and miniaudio backends take; NaN and
+// negatives become 0.
+func ClampVolume32(v float64) float32 {
+	if math.IsNaN(v) || v < 0 {
+		return 0
+	}
+
+	return float32(min(v, 1))
+}
+
+// ClampPan32 normalizes a stereo pan to [-1, 1] as float32 for the SoLoud and miniaudio backends; NaN becomes 0.
+func ClampPan32(v float64) float32 {
+	return float32(clampPan(v))
+}

@@ -37,9 +37,9 @@ func writeArchive(t *testing.T, name string, entries map[string][]byte, order []
 	var data bytes.Buffer
 	var index bytes.Buffer
 
-	data.Write(make([]byte, headerSize)) // Reserve the header until the index offset is known.
+	data.Write(make([]byte, HeaderSize)) // Reserve the header until the index offset is known.
 	for _, tag := range order {
-		var rec [entrySize]byte
+		var rec [EntrySize]byte
 		copy(rec[:TagLen], tag)
 		binary.LittleEndian.PutUint32(rec[8:12], uint32(data.Len()))
 		binary.LittleEndian.PutUint32(rec[12:16], uint32(len(entries[tag])))
@@ -50,7 +50,7 @@ func writeArchive(t *testing.T, name string, entries map[string][]byte, order []
 	data.Write(index.Bytes())
 
 	out := data.Bytes()
-	copy(out[:4], magic)
+	copy(out[:4], Magic)
 	binary.LittleEndian.PutUint32(out[4:8], uint32(indexOffset))
 	binary.LittleEndian.PutUint32(out[8:12], uint32(index.Len()))
 

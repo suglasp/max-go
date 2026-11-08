@@ -21,12 +21,16 @@ import (
 	"github.com/suglasp/max-go/internal/resfile"
 )
 
+const manifestName = "_res_manifest.txt"
+
+/* // note: unused code in Go port
+// the RES0 layout repeated resfile; restool reads resfile.HeaderSize / EntrySize / Magic.
 const (
-	manifestName = "_res_manifest.txt"
-	headerSize   = 12
-	entrySize    = 16
-	magic        = "RES0"
+	headerSize = 12
+	entrySize  = 16
+	magic      = "RES0"
 )
+*/
 
 // ManifestName is the metadata file used to preserve archive order during unpack and repack operations.
 const ManifestName = manifestName
@@ -46,11 +50,14 @@ type manifestEntry struct {
 	Hash string
 }
 
+/* // note: unused code in Go port
+// ManifestEntry was only returned by the commented out ReadManifest; Pack reads the manifest rows itself.
 // ManifestEntry pairs a resource tag with the raw file containing its bytes.
 type ManifestEntry struct {
 	Tag  string
 	File string
 }
+*/
 
 // convertedExts lists max-convert output files that Pack ignores when no manifest is available.
 var convertedExts = map[string]bool{
@@ -174,7 +181,7 @@ func writeArchive(dir, outPath string, manifest []manifestEntry) error {
 		payloads = append(payloads, payload{tag: tag, data: data})
 	}
 
-	var total int64 = headerSize + int64(len(payloads)*entrySize)
+	var total int64 = resfile.HeaderSize + int64(len(payloads)*resfile.EntrySize)
 	for _, p := range payloads {
 		total += int64(len(p.data))
 	}
@@ -194,11 +201,11 @@ func writeArchive(dir, outPath string, manifest []manifestEntry) error {
 		}
 	}()
 
-	if _, err := f.Write(make([]byte, headerSize)); err != nil {
+	if _, err := f.Write(make([]byte, resfile.HeaderSize)); err != nil {
 		f.Close()
 		return err
 	}
-	index := make([]byte, len(payloads)*entrySize)
+	index := make([]byte, len(payloads)*resfile.EntrySize)
 	for i, p := range payloads {
 		pos, err := f.Seek(0, io.SeekCurrent)
 		if err != nil {
@@ -209,7 +216,7 @@ func writeArchive(dir, outPath string, manifest []manifestEntry) error {
 			f.Close()
 			return fmt.Errorf("restool: entry %s too large", p.tag)
 		}
-		rec := index[i*entrySize : (i+1)*entrySize]
+		rec := index[i*resfile.EntrySize : (i+1)*resfile.EntrySize]
 		copy(rec[:resfile.TagLen], p.tag)
 		binary.LittleEndian.PutUint32(rec[8:12], uint32(pos))
 		binary.LittleEndian.PutUint32(rec[12:16], uint32(len(p.data)))
@@ -227,8 +234,8 @@ func writeArchive(dir, outPath string, manifest []manifestEntry) error {
 		f.Close()
 		return err
 	}
-	var hdr [headerSize]byte
-	copy(hdr[:4], magic)
+	var hdr [resfile.HeaderSize]byte
+	copy(hdr[:4], resfile.Magic)
 	binary.LittleEndian.PutUint32(hdr[4:8], uint32(indexOffset))
 	binary.LittleEndian.PutUint32(hdr[8:12], uint32(len(index)))
 	if _, err := f.WriteAt(hdr[:], 0); err != nil {

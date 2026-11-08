@@ -17,7 +17,8 @@ func openLibrary(path string) (uintptr, error) {
 	return purego.Dlopen(path, purego.RTLD_NOW|purego.RTLD_GLOBAL)
 }
 
-func defaultLibName() string {
+// DefaultLibName is the platform's default library file name, the name Load opens and the game looks for next to its exe.
+func DefaultLibName() string {
 	if runtime.GOOS == "darwin" {
 		return "libminiaudio_x64.dylib"
 	}

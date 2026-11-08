@@ -19,7 +19,7 @@ func testLibPath() string {
 	if path := os.Getenv("SOLOUD_DLL"); path != "" {
 		return path
 	}
-	name := defaultLibName()
+	name := DefaultLibName()
 	if runtime.GOOS == "linux" {
 		name = "libsoloud_x64.so"
 	}

@@ -15,9 +15,9 @@ import (
 var libHandle uintptr
 
 // Load loads the SoLoud shared library using the platform default name and binds all C API functions.
-// The library is soloud_x64.dll or soloud_x86.dll on Windows and libsoloud.so or libsoloud.dylib elsewhere. Call Load before any other package function.
+// The library is soloud_x64.dll or soloud_x86.dll on Windows and libsoloud_x64.so or libsoloud_x64.dylib elsewhere. Call Load before any other package function.
 func Load() error {
-	return LoadPath(defaultLibName())
+	return LoadPath(DefaultLibName())
 }
 
 // LoadPath loads the SoLoud shared library from an explicit path and binds all C API functions.
@@ -132,6 +132,17 @@ func filterPtr(f Filter) uintptr {
 	return f.filterHandle()
 }
 
+// slicePtr returns a pointer to the first element of s, or nil for an empty slice (C takes a null pointer then).
+func slicePtr[T any](s []T) *T {
+	if len(s) == 0 {
+		return nil
+	}
+
+	return &s[0]
+}
+
+/* // note: unused code in Go port
+// bytePtr was the byte only form of slicePtr.
 func bytePtr(b []byte) *byte {
 	if len(b) == 0 {
 		return nil
@@ -139,3 +150,4 @@ func bytePtr(b []byte) *byte {
 
 	return &b[0]
 }
+*/

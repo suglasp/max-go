@@ -17,7 +17,7 @@ var libHandle uintptr
 // Load loads the miniaudio wrapper library using the platform default name and binds all wrapper functions.
 // The library is miniaudio_x64.dll on Windows and libminiaudio_x64.so or .dylib elsewhere. Call Load before anything else.
 func Load() error {
-	return LoadPath(defaultLibName())
+	return LoadPath(DefaultLibName())
 }
 
 // LoadPath loads the wrapper library from an explicit path and binds all functions.

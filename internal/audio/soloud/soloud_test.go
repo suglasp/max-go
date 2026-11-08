@@ -11,6 +11,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	soloudlib "soloud"
+
+	"github.com/suglasp/max-go/internal/settings"
 )
 
 // testDLL locates the platform-specific SoLoud library used by smoke tests.
@@ -122,4 +126,15 @@ func testWAV() []byte {
 	binary.LittleEndian.PutUint32(out[40:44], uint32(dataBytes))
 
 	return out
+}
+
+// TestBackendIDKnowsEverySettingsBackend checks that every SoLoud backend the settings offer maps to its own SoLoud
+// constant: only "auto" may resolve to SOLOUD_AUTO.
+func TestBackendIDKnowsEverySettingsBackend(t *testing.T) {
+	for _, name := range settings.SoLoudBackends {
+		got := BackendID(name)
+		if (got == soloudlib.SOLOUD_AUTO) != (name == "auto") {
+			t.Errorf("BackendID(%q) = %d, the settings list and BackendID disagree", name, got)
+		}
+	}
 }

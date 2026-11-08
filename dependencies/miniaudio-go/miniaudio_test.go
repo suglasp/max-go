@@ -17,7 +17,7 @@ func loadForTest(t *testing.T) {
 	t.Helper()
 	path := os.Getenv("MINIAUDIO_DLL")
 	if path == "" {
-		path = filepath.Join("..", "miniaudio-bin", defaultLibName())
+		path = filepath.Join("..", "miniaudio-bin", DefaultLibName())
 	}
 	if _, err := os.Stat(path); err != nil {
 		t.Skipf("wrapper library not built (%s); run capi/build_windows.sh or build_linux.sh", path)

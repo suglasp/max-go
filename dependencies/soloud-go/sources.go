@@ -28,7 +28,6 @@ var (
 	monotoneSetParams   func(uintptr, int32) int32
 	monotoneSetParamsEx func(uintptr, int32, int32) int32
 	monotoneLoad        func(uintptr, string) int32
-	monotoneLoadMem     func(uintptr, *byte, uint32) int32
 	monotoneLoadMemEx   func(uintptr, *byte, uint32, bool, bool) int32
 	monotoneLoadFile    func(uintptr, uintptr) int32
 
@@ -38,7 +37,6 @@ var (
 
 	openmptCreate    func() uintptr
 	openmptLoad      func(uintptr, string) int32
-	openmptLoadMem   func(uintptr, *byte, uint32) int32
 	openmptLoadMemEx func(uintptr, *byte, uint32, bool, bool) int32
 	openmptLoadFile  func(uintptr, uintptr) int32
 
@@ -53,7 +51,6 @@ var (
 	sfxrCreate          func() uintptr
 	sfxrResetParams     func(uintptr)
 	sfxrLoadParams      func(uintptr, string) int32
-	sfxrLoadParamsMem   func(uintptr, *byte, uint32) int32
 	sfxrLoadParamsMemEx func(uintptr, *byte, uint32, bool, bool) int32
 	sfxrLoadParamsFile  func(uintptr, uintptr) int32
 	sfxrLoadPreset      func(uintptr, int32, int32) int32
@@ -66,7 +63,6 @@ var (
 	tedSidCreate        func() uintptr
 	tedSidLoad          func(uintptr, string) int32
 	tedSidLoadToMem     func(uintptr, string) int32
-	tedSidLoadMem       func(uintptr, *byte, uint32) int32
 	tedSidLoadMemEx     func(uintptr, *byte, uint32, bool, bool) int32
 	tedSidLoadFileToMem func(uintptr, uintptr) int32
 	tedSidLoadFile      func(uintptr, uintptr) int32
@@ -82,25 +78,33 @@ var (
 
 	wavCreate          func() uintptr
 	wavLoad            func(uintptr, string) int32
-	wavLoadMem         func(uintptr, *byte, uint32) int32
 	wavLoadMemEx       func(uintptr, *byte, uint32, bool, bool) int32
 	wavLoadFile        func(uintptr, uintptr) int32
 	wavLoadRawWave8    func(uintptr, *byte, uint32) int32
 	wavLoadRawWave8Ex  func(uintptr, *byte, uint32, float32, uint32) int32
 	wavLoadRawWave16   func(uintptr, *int16, uint32) int32
 	wavLoadRawWave16Ex func(uintptr, *int16, uint32, float32, uint32) int32
-	wavLoadRawWave     func(uintptr, *float32, uint32) int32
 	wavLoadRawWaveEx   func(uintptr, *float32, uint32, float32, uint32, bool, bool) int32
 	wavGetLength       func(uintptr) float64
 
 	wavStreamCreate        func() uintptr
 	wavStreamLoad          func(uintptr, string) int32
-	wavStreamLoadMem       func(uintptr, *byte, uint32) int32
 	wavStreamLoadMemEx     func(uintptr, *byte, uint32, bool, bool) int32
 	wavStreamLoadToMem     func(uintptr, string) int32
 	wavStreamLoadFile      func(uintptr, uintptr) int32
 	wavStreamLoadFileToMem func(uintptr, uintptr) int32
 	wavStreamGetLength     func(uintptr) float64
+
+	/* // note: unused code in Go port
+	// bound but never called: every wrapper calls the Ex variant or loads from a path.
+	monotoneLoadMem func(uintptr, *byte, uint32) int32
+	openmptLoadMem func(uintptr, *byte, uint32) int32
+	sfxrLoadParamsMem func(uintptr, *byte, uint32) int32
+	tedSidLoadMem func(uintptr, *byte, uint32) int32
+	wavLoadMem func(uintptr, *byte, uint32) int32
+	wavLoadRawWave func(uintptr, *float32, uint32) int32
+	wavStreamLoadMem func(uintptr, *byte, uint32) int32
+	*/
 )
 
 func registerSources() {
@@ -120,7 +124,6 @@ func registerSources() {
 	reg(&monotoneSetParams, "Monotone_setParams")
 	reg(&monotoneSetParamsEx, "Monotone_setParamsEx")
 	reg(&monotoneLoad, "Monotone_load")
-	reg(&monotoneLoadMem, "Monotone_loadMem")
 	reg(&monotoneLoadMemEx, "Monotone_loadMemEx")
 	reg(&monotoneLoadFile, "Monotone_loadFile")
 
@@ -130,7 +133,6 @@ func registerSources() {
 
 	reg(&openmptCreate, "Openmpt_create")
 	reg(&openmptLoad, "Openmpt_load")
-	reg(&openmptLoadMem, "Openmpt_loadMem")
 	reg(&openmptLoadMemEx, "Openmpt_loadMemEx")
 	reg(&openmptLoadFile, "Openmpt_loadFile")
 
@@ -145,7 +147,6 @@ func registerSources() {
 	reg(&sfxrCreate, "Sfxr_create")
 	reg(&sfxrResetParams, "Sfxr_resetParams")
 	reg(&sfxrLoadParams, "Sfxr_loadParams")
-	reg(&sfxrLoadParamsMem, "Sfxr_loadParamsMem")
 	reg(&sfxrLoadParamsMemEx, "Sfxr_loadParamsMemEx")
 	reg(&sfxrLoadParamsFile, "Sfxr_loadParamsFile")
 	reg(&sfxrLoadPreset, "Sfxr_loadPreset")
@@ -158,7 +159,6 @@ func registerSources() {
 	reg(&tedSidCreate, "TedSid_create")
 	reg(&tedSidLoad, "TedSid_load")
 	reg(&tedSidLoadToMem, "TedSid_loadToMem")
-	reg(&tedSidLoadMem, "TedSid_loadMem")
 	reg(&tedSidLoadMemEx, "TedSid_loadMemEx")
 	reg(&tedSidLoadFileToMem, "TedSid_loadFileToMem")
 	reg(&tedSidLoadFile, "TedSid_loadFile")
@@ -174,25 +174,32 @@ func registerSources() {
 
 	reg(&wavCreate, "Wav_create")
 	reg(&wavLoad, "Wav_load")
-	reg(&wavLoadMem, "Wav_loadMem")
 	reg(&wavLoadMemEx, "Wav_loadMemEx")
 	reg(&wavLoadFile, "Wav_loadFile")
 	reg(&wavLoadRawWave8, "Wav_loadRawWave8")
 	reg(&wavLoadRawWave8Ex, "Wav_loadRawWave8Ex")
 	reg(&wavLoadRawWave16, "Wav_loadRawWave16")
 	reg(&wavLoadRawWave16Ex, "Wav_loadRawWave16Ex")
-	reg(&wavLoadRawWave, "Wav_loadRawWave")
 	reg(&wavLoadRawWaveEx, "Wav_loadRawWaveEx")
 	reg(&wavGetLength, "Wav_getLength")
 
 	reg(&wavStreamCreate, "WavStream_create")
 	reg(&wavStreamLoad, "WavStream_load")
-	reg(&wavStreamLoadMem, "WavStream_loadMem")
 	reg(&wavStreamLoadMemEx, "WavStream_loadMemEx")
 	reg(&wavStreamLoadToMem, "WavStream_loadToMem")
 	reg(&wavStreamLoadFile, "WavStream_loadFile")
 	reg(&wavStreamLoadFileToMem, "WavStream_loadFileToMem")
 	reg(&wavStreamGetLength, "WavStream_getLength")
+
+	/* // note: unused code in Go port, the binds of the never called func vars above
+	reg(&monotoneLoadMem, "Monotone_loadMem")
+	reg(&openmptLoadMem, "Openmpt_loadMem")
+	reg(&sfxrLoadParamsMem, "Sfxr_loadParamsMem")
+	reg(&tedSidLoadMem, "TedSid_loadMem")
+	reg(&wavLoadMem, "Wav_loadMem")
+	reg(&wavLoadRawWave, "Wav_loadRawWave")
+	reg(&wavStreamLoadMem, "WavStream_loadMem")
+	*/
 }
 
 /*
@@ -218,7 +225,7 @@ func (m *Monotone) Load(aFilename string) error {
 
 // LoadMem loads from memory. The data is copied, so the slice may be modified or collected afterwards.
 func (m *Monotone) LoadMem(aMem []byte) error {
-	err := toErr(monotoneLoadMemEx(m.ptr, bytePtr(aMem), uint32(len(aMem)), true, false))
+	err := toErr(monotoneLoadMemEx(m.ptr, slicePtr(aMem), uint32(len(aMem)), true, false))
 	runtime.KeepAlive(aMem)
 	return err
 }
@@ -263,7 +270,7 @@ func (o *Openmpt) Load(aFilename string) error {
 
 // LoadMem loads from memory. The data is copied.
 func (o *Openmpt) LoadMem(aMem []byte) error {
-	err := toErr(openmptLoadMemEx(o.ptr, bytePtr(aMem), uint32(len(aMem)), true, false))
+	err := toErr(openmptLoadMemEx(o.ptr, slicePtr(aMem), uint32(len(aMem)), true, false))
 	runtime.KeepAlive(aMem)
 	return err
 }
@@ -321,7 +328,7 @@ func (s *Sfxr) LoadParams(aFilename string) error {
 
 // LoadParamsMem loads sfxr parameters from memory. The data is copied.
 func (s *Sfxr) LoadParamsMem(aMem []byte) error {
-	err := toErr(sfxrLoadParamsMemEx(s.ptr, bytePtr(aMem), uint32(len(aMem)), true, false))
+	err := toErr(sfxrLoadParamsMemEx(s.ptr, slicePtr(aMem), uint32(len(aMem)), true, false))
 	runtime.KeepAlive(aMem)
 	return err
 }
@@ -375,7 +382,7 @@ func (t *TedSid) LoadToMem(aFilename string) error {
 
 // LoadMem loads from memory. The data is copied.
 func (t *TedSid) LoadMem(aMem []byte) error {
-	err := toErr(tedSidLoadMemEx(t.ptr, bytePtr(aMem), uint32(len(aMem)), true, false))
+	err := toErr(tedSidLoadMemEx(t.ptr, slicePtr(aMem), uint32(len(aMem)), true, false))
 	runtime.KeepAlive(aMem)
 	return err
 }
@@ -444,7 +451,7 @@ func (w *Wav) Load(aFilename string) error {
 // LoadMem loads an encoded sound file (wav, ogg, mp3, flac) from memory.
 // The data is copied, so the slice may be modified or collected afterwards.
 func (w *Wav) LoadMem(aMem []byte) error {
-	err := toErr(wavLoadMemEx(w.ptr, bytePtr(aMem), uint32(len(aMem)), true, false))
+	err := toErr(wavLoadMemEx(w.ptr, slicePtr(aMem), uint32(len(aMem)), true, false))
 	runtime.KeepAlive(aMem)
 	return err
 }
@@ -455,31 +462,25 @@ func (w *Wav) LoadFile(aFile uintptr) error {
 // LoadRawWave8 loads raw unsigned 8-bit sample data. It defaults to 44.1 kHz mono; use LoadRawWave8Ex for other formats.
 // SoLoud copies the data.
 func (w *Wav) LoadRawWave8(aMem []byte) error {
-	err := toErr(wavLoadRawWave8(w.ptr, bytePtr(aMem), uint32(len(aMem))))
+	err := toErr(wavLoadRawWave8(w.ptr, slicePtr(aMem), uint32(len(aMem))))
 	runtime.KeepAlive(aMem)
 	return err
 }
 func (w *Wav) LoadRawWave8Ex(aMem []byte, aSamplerate float32, aChannels uint32) error {
-	err := toErr(wavLoadRawWave8Ex(w.ptr, bytePtr(aMem), uint32(len(aMem)), aSamplerate, aChannels))
+	err := toErr(wavLoadRawWave8Ex(w.ptr, slicePtr(aMem), uint32(len(aMem)), aSamplerate, aChannels))
 	runtime.KeepAlive(aMem)
 	return err
 }
 
 // LoadRawWave16 loads raw signed 16-bit sample data. The data is copied by SoLoud.
 func (w *Wav) LoadRawWave16(aMem []int16) error {
-	var p *int16
-	if len(aMem) > 0 {
-		p = &aMem[0]
-	}
+	p := slicePtr(aMem)
 	err := toErr(wavLoadRawWave16(w.ptr, p, uint32(len(aMem))))
 	runtime.KeepAlive(aMem)
 	return err
 }
 func (w *Wav) LoadRawWave16Ex(aMem []int16, aSamplerate float32, aChannels uint32) error {
-	var p *int16
-	if len(aMem) > 0 {
-		p = &aMem[0]
-	}
+	p := slicePtr(aMem)
 	err := toErr(wavLoadRawWave16Ex(w.ptr, p, uint32(len(aMem)), aSamplerate, aChannels))
 	runtime.KeepAlive(aMem)
 	return err
@@ -493,10 +494,7 @@ func (w *Wav) LoadRawWave(aMem []float32) error {
 // LoadRawWaveEx loads raw float sample data with an explicit sample rate and channel count.
 // The data is copied.
 func (w *Wav) LoadRawWaveEx(aMem []float32, aSamplerate float32, aChannels uint32) error {
-	var p *float32
-	if len(aMem) > 0 {
-		p = &aMem[0]
-	}
+	p := slicePtr(aMem)
 	err := toErr(wavLoadRawWaveEx(w.ptr, p, uint32(len(aMem)), aSamplerate, aChannels, true, false))
 	runtime.KeepAlive(aMem)
 	return err
@@ -524,7 +522,7 @@ func (w *WavStream) Load(aFilename string) error {
 
 // LoadMem streams an encoded sound file from memory. The data is copied.
 func (w *WavStream) LoadMem(aData []byte) error {
-	err := toErr(wavStreamLoadMemEx(w.ptr, bytePtr(aData), uint32(len(aData)), true, false))
+	err := toErr(wavStreamLoadMemEx(w.ptr, slicePtr(aData), uint32(len(aData)), true, false))
 	runtime.KeepAlive(aData)
 	return err
 }

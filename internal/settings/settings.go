@@ -79,6 +79,10 @@ func (m *WidescreenMode) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// SoLoudBackends lists the SoLoud device backends audio.soloud_backend may name, in the order max-settings offers
+// them; "auto" lets SoLoud choose.
+var SoLoudBackends = []string{"auto", "miniaudio", "wasapi", "winmm", "xaudio2", "sdl2", "portaudio", "openal", "alsa", "coreaudio"}
+
 // SupportedLanguages lists the bundled UI languages. The loader still
 // accepts lang-<code>.ini files dropped in through the command line hook.
 var SupportedLanguages = []string{LangEnglish}
@@ -300,9 +304,9 @@ func (s *Settings) Validate() {
 	if s.Audio.SoLoudBackend == "" {
 		s.Audio.SoLoudBackend = "auto"
 	}
-	s.Audio.MusicVolume = clamp(s.Audio.MusicVolume, 0, 100)
-	s.Audio.SfxVolume = clamp(s.Audio.SfxVolume, 0, 100)
-	s.Audio.VoiceVolume = clamp(s.Audio.VoiceVolume, 0, 100)
+	s.Audio.MusicVolume = max(0, min(s.Audio.MusicVolume, 100))
+	s.Audio.SfxVolume = max(0, min(s.Audio.SfxVolume, 100))
+	s.Audio.VoiceVolume = max(0, min(s.Audio.VoiceVolume, 100))
 	if s.Video.WindowScale < 1 || s.Video.WindowScale > 8 {
 		s.Video.WindowScale = 2
 	}
@@ -353,6 +357,8 @@ func (s *Settings) Validate() {
 	}
 }
 
+/* // note: unused code in Go port
+// clamp repeated the builtins; callers write max(lo, min(v, hi)).
 // clamp constrains v to the inclusive lo..hi range.
 func clamp(v, lo, hi int) int {
 	if v < lo {
@@ -363,6 +369,7 @@ func clamp(v, lo, hi int) int {
 	}
 	return v
 }
+*/
 
 // Load reads settings from path.
 func Load(path string) (Settings, error) {

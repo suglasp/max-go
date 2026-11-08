@@ -9,7 +9,6 @@ package soloud
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"sync"
 	"time"
@@ -137,7 +136,7 @@ func (b *Backend) PlayMusic(path string, loop bool, volume float64) error {
 	}
 	b.stopMusicLocked()
 	b.music = stream
-	b.musicHandle = b.engine.PlayEx(stream, clampVolume(volume), 0, false, 0)
+	b.musicHandle = b.engine.PlayEx(stream, audio.ClampVolume32(volume), 0, false, 0)
 	return nil
 }
 
@@ -165,7 +164,7 @@ func (b *Backend) SetMusicVolume(volume float64) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.engine != nil && b.musicHandle != noVoice && b.engine.IsValidVoiceHandle(b.musicHandle) {
-		b.engine.SetVolume(b.musicHandle, clampVolume(volume))
+		b.engine.SetVolume(b.musicHandle, audio.ClampVolume32(volume))
 	}
 }
 
@@ -180,7 +179,7 @@ func (b *Backend) PlaySfx(path string, volume, pan float64) error {
 	if b.engine == nil {
 		return fmt.Errorf("audio/soloud: backend closed")
 	}
-	b.engine.PlayEx(wav, clampVolume(volume), clampPan(pan), false, 0)
+	b.engine.PlayEx(wav, audio.ClampVolume32(volume), audio.ClampPan32(pan), false, 0)
 	return nil
 }
 
@@ -198,7 +197,7 @@ func (b *Backend) PlaySfxHeld(path string, volume, pan float64, loop bool) (audi
 	if b.engine == nil {
 		return nil, fmt.Errorf("audio/soloud: backend closed")
 	}
-	handle := b.engine.PlayEx(wav, clampVolume(volume), clampPan(pan), false, 0)
+	handle := b.engine.PlayEx(wav, audio.ClampVolume32(volume), audio.ClampPan32(pan), false, 0)
 	if handle != noVoice {
 		b.engine.SetLooping(handle, loop)
 	}
@@ -220,7 +219,7 @@ func (b *Backend) PlaySfxHeldMem(wavBytes []byte, volume, pan float64, loop bool
 		wav.Destroy()
 		return nil, fmt.Errorf("audio/soloud: backend closed")
 	}
-	handle := b.engine.PlayEx(wav, clampVolume(volume), clampPan(pan), false, 0)
+	handle := b.engine.PlayEx(wav, audio.ClampVolume32(volume), audio.ClampPan32(pan), false, 0)
 	if handle != noVoice {
 		b.engine.SetLooping(handle, loop)
 	}
@@ -241,7 +240,7 @@ func (b *Backend) PlaySfxHeldMemIntroLoop(introLoopWAV []byte, loopStart time.Du
 		wav.Destroy()
 		return nil, fmt.Errorf("audio/soloud: backend closed")
 	}
-	handle := b.engine.PlayEx(wav, clampVolume(volume), clampPan(pan), false, 0)
+	handle := b.engine.PlayEx(wav, audio.ClampVolume32(volume), audio.ClampPan32(pan), false, 0)
 	if handle != noVoice {
 		// Loop back to the region start (not 0): the voice plays the whole clip
 		// [0, end) once, then repeats [loopStart, end) seamlessly.
@@ -279,7 +278,7 @@ func (h *heldSound) SetPan(pan float64) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.engine != nil && h.handle != noVoice {
-		b.engine.SetPan(h.handle, clampPan(pan))
+		b.engine.SetPan(h.handle, audio.ClampPan32(pan))
 	}
 }
 
@@ -293,7 +292,7 @@ func (h *heldSound) SetVolume(volume float64) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.engine != nil && h.handle != noVoice {
-		b.engine.SetVolume(h.handle, clampVolume(volume))
+		b.engine.SetVolume(h.handle, audio.ClampVolume32(volume))
 	}
 }
 
@@ -370,7 +369,7 @@ func (b *Backend) PlayVoice(path string, volume float64) error {
 	}
 	b.stopVoiceLocked()
 	b.voice = wav
-	b.voiceHandle = b.engine.PlayEx(wav, clampVolume(volume), 0, false, 0)
+	b.voiceHandle = b.engine.PlayEx(wav, audio.ClampVolume32(volume), 0, false, 0)
 	return nil
 }
 
@@ -433,6 +432,8 @@ func (b *Backend) stopHeldLocked() {
 	b.held = nil
 }
 
+/* // note: unused code in Go port
+// a copy of the miniaudio adapter's helper; both adapters call audio.ClampVolume32.
 // clampVolume normalizes user volume values to SoLoud's accepted range.
 func clampVolume(v float64) float32 {
 	if math.IsNaN(v) || v < 0 {
@@ -443,7 +444,10 @@ func clampVolume(v float64) float32 {
 	}
 	return float32(v)
 }
+*/
 
+/* // note: unused code in Go port
+// a copy of the miniaudio adapter's helper; both adapters call audio.ClampPan32.
 // clampPan normalizes stereo pan values to SoLoud's accepted range.
 func clampPan(v float64) float32 {
 	if math.IsNaN(v) {
@@ -457,3 +461,4 @@ func clampPan(v float64) float32 {
 	}
 	return float32(v)
 }
+*/

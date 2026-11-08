@@ -17,7 +17,8 @@ func openLibrary(path string) (uintptr, error) {
 	return uintptr(h), err
 }
 
-func defaultLibName() string {
+// DefaultLibName is the platform's default library file name, the name Load opens and the game looks for next to its exe.
+func DefaultLibName() string {
 	if runtime.GOARCH == "386" {
 		return "soloud_x86.dll"
 	}

@@ -12,8 +12,11 @@ import "unsafe"
 // The audio thread drains the buffer in C and emits silence on underrun. Stream is independent of Engine and has no host-language callback.
 type Stream struct {
 	h        uintptr
-	format   Format
 	channels uint32
+	/* // note: unused code in Go port
+	// format was stored and never read; the C side keeps the sample format.
+	format Format
+	*/
 }
 
 var (
@@ -43,7 +46,7 @@ func NewStream(format Format, channels, sampleRate, capacityFrames uint32) (*Str
 	if h == 0 {
 		return nil, errCreate("stream")
 	}
-	return &Stream{h: h, format: format, channels: channels}, nil
+	return &Stream{h: h /* , format: format: note: unused code in Go port, see Stream */, channels: channels}, nil
 }
 
 // Destroy stops and frees the stream and its device.

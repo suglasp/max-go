@@ -20,10 +20,13 @@ import (
 	"github.com/suglasp/max-go/internal/sprites"
 )
 
+/* // note: unused code in Go port
+// rgb555Count repeated the gfx size; the shape check reads gfx.PalFileBaseSize / PalFileFullSize.
 // rgb555Count is the size of COLOR.PAL's RGB555 nearest index table that
 // follows the 768-byte palette; used here only to recognise a resource
 // shaped like COLOR.PAL.
 const rgb555Count = 32768
+*/
 
 // Format selects the image encoder.
 type Format int
@@ -201,7 +204,7 @@ func ConvertResource(tag string, data []byte, pal *gfx.Palette, format Format) (
 	// (palette + RGB555 table, optionally + the NEWC intensity table).
 	// Sizes are matched exactly so large images are not mistaken for one.
 	switch len(data) {
-	case 768, 768 + rgb555Count, 768 + rgb555Count + 4 + 65536:
+	case gfx.PaletteSize * gfx.PaletteStride, gfx.PalFileBaseSize, gfx.PalFileFullSize:
 		if img, ok := paletteStripFromBytes(data); ok {
 			return imgExt, encode(img, format), true
 		}

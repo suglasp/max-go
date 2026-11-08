@@ -187,7 +187,7 @@ func settingFields(cfg settings.Settings) []field {
 		stringField("data_dir", func(s settings.Settings) string { return s.DataDir }, func(s *settings.Settings, v string) { s.DataDir = v }),
 		selectField("language", append([]string{languageDefault}, settings.SupportedLanguages...), func(s settings.Settings) string { return languageChoice(s.Language) }, func(s *settings.Settings, v string) { s.Language = languageValue(v) }),
 		selectField("audio.backend", []string{settings.BackendDefault, settings.BackendEbiten, settings.BackendSoLoud, settings.BackendMiniAudio}, func(s settings.Settings) string { return s.Audio.Backend }, func(s *settings.Settings, v string) { s.Audio.Backend = v }),
-		selectField("audio.soloud_backend", []string{"auto", "miniaudio", "wasapi", "winmm", "xaudio2", "sdl2", "portaudio", "openal", "alsa", "coreaudio"}, func(s settings.Settings) string { return s.Audio.SoLoudBackend }, func(s *settings.Settings, v string) { s.Audio.SoLoudBackend = v }),
+		selectField("audio.soloud_backend", settings.SoLoudBackends, func(s settings.Settings) string { return s.Audio.SoLoudBackend }, func(s *settings.Settings, v string) { s.Audio.SoLoudBackend = v }),
 		intField("audio.music_volume", func(s settings.Settings) int { return s.Audio.MusicVolume }, func(s *settings.Settings, v int) { s.Audio.MusicVolume = v }),
 		intField("audio.sfx_volume", func(s settings.Settings) int { return s.Audio.SfxVolume }, func(s *settings.Settings, v int) { s.Audio.SfxVolume = v }),
 		intField("audio.voice_volume", func(s settings.Settings) int { return s.Audio.VoiceVolume }, func(s *settings.Settings, v int) { s.Audio.VoiceVolume = v }),

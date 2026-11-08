@@ -19,9 +19,9 @@ func writeTestArchive(t *testing.T, entries map[string][]byte, order []string) s
 	t.Helper()
 	var out bytes.Buffer
 	var index bytes.Buffer
-	out.Write(make([]byte, headerSize))
+	out.Write(make([]byte, resfile.HeaderSize))
 	for _, tag := range order {
-		var rec [entrySize]byte
+		var rec [resfile.EntrySize]byte
 		copy(rec[:8], tag)
 		binary.LittleEndian.PutUint32(rec[8:12], uint32(out.Len()))
 		binary.LittleEndian.PutUint32(rec[12:16], uint32(len(entries[tag])))
@@ -31,7 +31,7 @@ func writeTestArchive(t *testing.T, entries map[string][]byte, order []string) s
 	indexOffset := out.Len()
 	out.Write(index.Bytes())
 	buf := out.Bytes()
-	copy(buf[:4], magic)
+	copy(buf[:4], resfile.Magic)
 	binary.LittleEndian.PutUint32(buf[4:8], uint32(indexOffset))
 	binary.LittleEndian.PutUint32(buf[8:12], uint32(index.Len()))
 

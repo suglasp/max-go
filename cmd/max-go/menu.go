@@ -10,9 +10,11 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
+
+	miniaudiolib "miniaudio"
+	soloudlib "soloud"
 
 	"github.com/suglasp/max-go/internal/ai"
 	"github.com/suglasp/max-go/internal/assets"
@@ -863,6 +865,9 @@ func soLoudDLLPath() string {
 		return ""
 	}
 
+	name := soloudlib.DefaultLibName()
+	/* // note: unused code in Go port
+	// the name table the binding now owns (soloudlib.DefaultLibName).
 	name := "libsoloud_x64.so"
 	if runtime.GOOS == "windows" {
 		name = "soloud_x64.dll"
@@ -873,6 +878,7 @@ func soLoudDLLPath() string {
 	} else if runtime.GOOS == "darwin" {
 		name = "libsoloud_x64.dylib"
 	}
+	*/
 
 	path := filepath.Join(baseDir, name)
 	if _, err := os.Stat(path); err == nil {
@@ -893,12 +899,16 @@ func miniAudioDLLPath() string {
 		return ""
 	}
 
+	name := miniaudiolib.DefaultLibName()
+	/* // note: unused code in Go port
+	// the name table the binding now owns (miniaudiolib.DefaultLibName).
 	name := "libminiaudio_x64.so"
 	if runtime.GOOS == "windows" {
 		name = "miniaudio_x64.dll"
 	} else if runtime.GOOS == "darwin" {
 		name = "libminiaudio_x64.dylib"
 	}
+	*/
 
 	path := filepath.Join(baseDir, name)
 	if _, err := os.Stat(path); err == nil {
