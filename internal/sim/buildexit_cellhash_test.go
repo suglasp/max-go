@@ -21,8 +21,8 @@ func TestBuildExitClearsStaleCellHash(t *testing.T) {
 	g := newGame(t, 24, 24)
 	g.Resources = economy.NewResourceMap(24, 24)
 
-	c := constructorAt(g, 0, 7, 8) // adjacent to the site's west edge
-	siteX, siteY := 8, 8           // 2x2 footprint (8,8)..(9,9)
+	c := addConstructor(g, assets.Constrct, 0, 7, 8, 16, 30, 40) // adjacent to the site's west edge
+	siteX, siteY := 8, 8                                         // 2x2 footprint (8,8)..(9,9)
 	g.StartBuild(c, miningProduct(), siteX, siteY, 1)
 	g.BeginTeamTurn(0) // one refilled turn finishes the one turn build
 
@@ -74,8 +74,8 @@ func TestBuildExitAfterSentryEndsPose(t *testing.T) {
 		siteX   int
 		siteY   int
 	}{
-		{"constructor 2x2", func(g *Game) *game.UnitInfo { return constructorAt(g, 0, 7, 8) }, miningProduct, 8, 8},
-		{"engineer 1x1", func(g *Game) *game.UnitInfo { return engineerAt(g, 0, 8, 8) }, turretProduct, 8, 8},
+		{"constructor 2x2", func(g *Game) *game.UnitInfo { return addConstructor(g, assets.Constrct, 0, 7, 8, 16, 30, 40) }, miningProduct, 8, 8},
+		{"engineer 1x1", func(g *Game) *game.UnitInfo { return addConstructor(g, assets.Engineer, 0, 8, 8, 16, 20, 40) }, turretProduct, 8, 8},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -109,6 +109,8 @@ func TestBuildExitAfterSentryEndsPose(t *testing.T) {
 	}
 }
 
+/* // note: unused code in Go port
+// addConstructor(g, assets.Engineer, team, gx, gy, 16, 20, 40) builds the same unit, see fixture_test.go
 // engineerAt deploys a healthy mobile engineer with movement budget and cargo at a cell for the build exit tests.
 func engineerAt(g *Game, team, gx, gy int) *game.UnitInfo {
 	e := game.NewUnitInfo(assets.Engineer, team, 1, 0)
@@ -122,6 +124,7 @@ func engineerAt(g *Game, team, gx, gy int) *game.UnitInfo {
 	g.Units.Deploy(e, gx, gy)
 	return e
 }
+*/
 
 // turretProduct builds a one turn 1x1 gun turret product, a real building an engineer parks on.
 func turretProduct() *game.UnitInfo {
@@ -139,8 +142,8 @@ var parkedBuilderCases = []struct {
 	builder func(g *Game) *game.UnitInfo
 	product func() *game.UnitInfo
 }{
-	{"constructor 2x2", func(g *Game) *game.UnitInfo { return constructorAt(g, 0, 7, 8) }, miningProduct},
-	{"engineer 1x1", func(g *Game) *game.UnitInfo { return engineerAt(g, 0, 8, 8) }, turretProduct},
+	{"constructor 2x2", func(g *Game) *game.UnitInfo { return addConstructor(g, assets.Constrct, 0, 7, 8, 16, 30, 40) }, miningProduct},
+	{"engineer 1x1", func(g *Game) *game.UnitInfo { return addConstructor(g, assets.Engineer, 0, 8, 8, 16, 20, 40) }, turretProduct},
 }
 
 // parkOnFinishedBuilding builds a one turn product at (8,8) and returns the parked builder and its hidden building.

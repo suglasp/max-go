@@ -8,6 +8,7 @@ package sim
 import (
 	"testing"
 
+	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/economy"
 )
 
@@ -17,7 +18,7 @@ func TestStartBuildClearsQueuedRoute(t *testing.T) {
 	g := newGame(t, 24, 24)
 	g.Resources = economy.NewResourceMap(24, 24)
 
-	c := constructorAt(g, 0, 7, 8)
+	c := addConstructor(g, assets.Constrct, 0, 7, 8, 16, 30, 40)
 	g.SetPendingDestination(c, 12, 8) // a route shelved before the build (0 move points)
 	if !g.HasPendingRoute(c) {
 		t.Fatal("setup: constructor should have a shelved route before building")
@@ -36,7 +37,7 @@ func TestResumePendingSkipsBuildReadyBuilder(t *testing.T) {
 	g := newGame(t, 24, 24)
 	g.Resources = economy.NewResourceMap(24, 24)
 
-	c := constructorAt(g, 0, 7, 8)
+	c := addConstructor(g, assets.Constrct, 0, 7, 8, 16, 30, 40)
 	g.StartBuild(c, miningProduct(), 8, 8, 1)
 	g.BeginTeamTurn(0) // one refilled turn finishes the one turn build; the builder parks build ready
 

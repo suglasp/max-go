@@ -24,7 +24,7 @@ func wall1x1(g *Game, id, gx, gy int) *game.UnitInfo {
 // TestExitLeavesClosedGroup verifies that the AI skips a nearby enclosed pocket and sends the builder to a reachable exterior cell.
 func TestExitLeavesClosedGroup(t *testing.T) {
 	g := newGame(t, 20, 20)
-	con := constructorAt(g, 0, 2, 2) // only its type/flags matter to the exit query
+	con := addConstructor(g, assets.Constrct, 0, 2, 2, 16, 30, 40) // only its type/flags matter to the exit query
 
 	const siteX, siteY = 10, 10 // a 1x1 finished footprint the builder leaves behind
 	// Wall every cell around the site except the north cell (10,9), then seal that cell

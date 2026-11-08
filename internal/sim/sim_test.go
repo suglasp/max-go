@@ -380,6 +380,8 @@ func TestHeadlessConstructorBuild(t *testing.T) {
 	}
 }
 
+/* // note: unused code in Go port
+// addConstructor(g, assets.Constrct, team, gx, gy, 16, 30, 40) builds the same unit, see fixture_test.go
 // constructorAt deploys a healthy mobile constructor with movement budget and
 // cargo at a cell for the build exit tests.
 func constructorAt(g *Game, team, gx, gy int) *game.UnitInfo {
@@ -394,6 +396,7 @@ func constructorAt(g *Game, team, gx, gy int) *game.UnitInfo {
 	g.Units.Deploy(c, gx, gy)
 	return c
 }
+*/
 
 // miningProduct builds a one turn 2x2 mining station product.
 func miningProduct() *game.UnitInfo {
@@ -413,8 +416,8 @@ func TestBuilderBuildReadyAndExit(t *testing.T) {
 	g := newGame(t, 24, 24)
 	g.Resources = economy.NewResourceMap(24, 24)
 
-	c := constructorAt(g, 0, 7, 8) // adjacent to the site's west edge
-	siteX, siteY := 8, 8           // 2x2 footprint (8,8)..(9,9)
+	c := addConstructor(g, assets.Constrct, 0, 7, 8, 16, 30, 40) // adjacent to the site's west edge
+	siteX, siteY := 8, 8                                         // 2x2 footprint (8,8)..(9,9)
 	g.StartBuild(c, miningProduct(), siteX, siteY, 1)
 
 	// One refilled turn latches the build (constructor is adjacent) and finishes it.
@@ -502,7 +505,7 @@ func TestComputerBuilderAutoExits(t *testing.T) {
 	g := NewWithGrid(game.NewGameState(p), mgr, grid, 24, 24)
 	g.Resources = economy.NewResourceMap(24, 24)
 
-	c := constructorAt(g, 0, 7, 8)
+	c := addConstructor(g, assets.Constrct, 0, 7, 8, 16, 30, 40)
 	siteX, siteY := 8, 8
 	g.StartBuild(c, miningProduct(), siteX, siteY, 1)
 

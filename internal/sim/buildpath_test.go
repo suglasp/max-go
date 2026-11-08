@@ -217,6 +217,8 @@ func TestBuildPathStopsWhenOutOfMaterial(t *testing.T) {
 	}
 }
 
+/* // note: unused code in Go port
+// addConstructor(g, assets.Engineer, 0, x, y, 8, 30, storage) builds the same unit, see fixture_test.go
 // newPathEngineer deploys a live engineer with the given storage at (x,y).
 func newPathEngineer(g *Game, storage, x, y int) *game.UnitInfo {
 	eng := game.NewUnitInfo(assets.Engineer, 0, 1, 0)
@@ -229,6 +231,7 @@ func newPathEngineer(g *Game, storage, x, y int) *game.UnitInfo {
 	g.Units.Deploy(eng, x, y)
 	return eng
 }
+*/
 
 // runPathTurns plays turns until the run and its orders are done, and reports whether
 // any turn named eng among the path builders stopped short of material.
@@ -248,7 +251,7 @@ func runPathTurns(g *Game, eng *game.UnitInfo) (short bool) {
 // finished building with its exit markers, and no second site is started.
 func TestBuildPathStopsParkedWhenNextCellUnaffordable(t *testing.T) {
 	g := newGame(t, 24, 24)
-	eng := newPathEngineer(g, 6, 5, 5) // one ADump costs 2 turns x 2 raw = 4
+	eng := addConstructor(g, assets.Engineer, 0, 5, 5, 8, 30, 6) // one ADump costs 2 turns x 2 raw = 4
 
 	template := game.NewUnitInfo(assets.ADump, 0, 2, 0)
 	template.Flags = game.FlagStationary | game.FlagRequiresSlab | game.FlagSelectable
@@ -288,7 +291,7 @@ func TestBuildPathStopsParkedWhenNextCellUnaffordable(t *testing.T) {
 // cell only: the engineer stops on the road it laid, with no half built cell left behind.
 func TestBuildPathRoadStopsInPlaceWhenUnaffordable(t *testing.T) {
 	g := newGame(t, 24, 24)
-	eng := newPathEngineer(g, 3, 5, 5) // one road costs 1 turn x 2 raw = 2
+	eng := addConstructor(g, assets.Engineer, 0, 5, 5, 8, 30, 3) // one road costs 1 turn x 2 raw = 2
 
 	template := game.NewUnitInfo(assets.Road, 0, 2, 0)
 	template.Flags = game.FlagGroundCover

@@ -27,6 +27,8 @@ func addBomber(g *Game, id, gx, gy, team int) *game.UnitInfo {
 	return u
 }
 
+/* // note: unused code in Go port
+// addTankTarget(g, id, gx, gy, 1) builds the same tank, see fixture_test.go
 // addEnemyTarget deploys a team 1 ground tank to be shot at.
 func addEnemyTarget(g *Game, id, gx, gy int) *game.UnitInfo {
 	u := game.NewUnitInfo(assets.Tank, 1, id, 0)
@@ -38,13 +40,14 @@ func addEnemyTarget(g *Game, id, gx, gy int) *game.UnitInfo {
 	g.Units.Deploy(u, gx, gy)
 	return u
 }
+*/
 
 // TestBomberLaunchesProjectile: a missile firer's Attack spawns a flying projectile,
 // spends the shot, and deals NO immediate damage (it resolves on arrival).
 func TestBomberLaunchesProjectile(t *testing.T) {
 	g := newGame(t, 24, 8)
 	bomber := addBomber(g, 1, 2, 4, 0)
-	enemy := addEnemyTarget(g, 2, 8, 4)
+	enemy := addTankTarget(g, 2, 8, 4, 1)
 
 	res, ok := g.Attack(bomber, 8, 4)
 	if !ok {
@@ -69,7 +72,7 @@ func TestBomberLaunchesProjectile(t *testing.T) {
 func TestProjectileResolvesOnArrival(t *testing.T) {
 	g := newGame(t, 24, 8)
 	bomber := addBomber(g, 1, 2, 4, 0)
-	enemy := addEnemyTarget(g, 2, 8, 4)
+	enemy := addTankTarget(g, 2, 8, 4, 1)
 	if _, ok := g.Attack(bomber, 8, 4); !ok {
 		t.Fatal("attack not ok")
 	}
@@ -92,7 +95,7 @@ func TestProjectileResolvesOnArrival(t *testing.T) {
 func TestResolveMovementFlushesProjectiles(t *testing.T) {
 	g := newGame(t, 24, 8)
 	bomber := addBomber(g, 1, 2, 4, 0)
-	enemy := addEnemyTarget(g, 2, 8, 4)
+	enemy := addTankTarget(g, 2, 8, 4, 1)
 	g.Attack(bomber, 8, 4)
 	g.ResolveMovement()
 	if len(g.ActiveProjectiles()) != 0 {
@@ -140,7 +143,7 @@ func TestLauncherLaunchesProjectile(t *testing.T) {
 	launcher.Values.Set(game.AttribHits, 16)
 	launcher.InitState()
 	g.Units.Deploy(launcher, 2, 4)
-	enemy := addEnemyTarget(g, 2, 9, 4)
+	enemy := addTankTarget(g, 2, 9, 4, 1)
 
 	if _, ok := g.Attack(launcher, 9, 4); !ok {
 		t.Fatal("rocket launcher Attack not ok")
@@ -152,18 +155,6 @@ func TestLauncherLaunchesProjectile(t *testing.T) {
 	if enemy.Hits >= 30 {
 		t.Error("rocket did not damage the target on arrival")
 	}
-}
-
-// addTankTarget deploys a ground tank for the given team (splash hits friend or foe).
-func addTankTarget(g *Game, id, gx, gy, team int) *game.UnitInfo {
-	u := game.NewUnitInfo(assets.Tank, team, id, 0)
-	u.Flags = game.FlagMobileLandUnit | game.FlagSelectable
-	u.Values = &game.UnitValues{}
-	u.Values.Set(game.AttribHits, 30)
-	u.Values.Set(game.AttribArmor, 2)
-	u.Hits = 30
-	g.Units.Deploy(u, gx, gy)
-	return u
 }
 
 // TestRocketLauncherSplashDamage: the Rocket Launcher's blast radius
@@ -222,7 +213,7 @@ func TestCombatKillQueuesCasualty(t *testing.T) {
 	gun.Values.Set(game.AttribHits, 30)
 	gun.InitState()
 	g.Units.Deploy(gun, 2, 4)
-	enemy := addEnemyTarget(g, 2, 4, 4) // 30 hits, armor 2
+	enemy := addTankTarget(g, 2, 4, 4, 1) // 30 hits, armor 2
 
 	res, ok := g.Attack(gun, 4, 4)
 	if !ok || !res.Destroyed {
@@ -243,7 +234,7 @@ func TestMissileKillUsesImpactNotCasualty(t *testing.T) {
 	g := newGame(t, 24, 8)
 	bomber := addBomber(g, 1, 2, 4, 0)
 	bomber.Values.Set(game.AttribAttack, 60) // ensure the rocket kills on arrival
-	enemy := addEnemyTarget(g, 2, 8, 4)
+	enemy := addTankTarget(g, 2, 8, 4, 1)
 	if _, ok := g.Attack(bomber, 8, 4); !ok {
 		t.Fatal("attack not ok")
 	}
@@ -272,7 +263,7 @@ func TestNonMissileAttackIsInstant(t *testing.T) {
 	gun.Values.Set(game.AttribHits, 30)
 	gun.InitState()
 	g.Units.Deploy(gun, 2, 4)
-	enemy := addEnemyTarget(g, 2, 4, 4)
+	enemy := addTankTarget(g, 2, 4, 4, 1)
 
 	res, ok := g.Attack(gun, 4, 4)
 	if !ok {
