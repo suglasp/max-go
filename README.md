@@ -50,7 +50,7 @@ It also adds these quality of life (QOL) features:
 - Support for rich set of sound libraries (Oto, SoLoud and standalone MiniAudio driver)
 
 
-Future QOL features are on the roadmap. 
+Future QOL features are on the roadmap (Touchscreen, Xbox Controller, Deck support, improved game Unit logic, bugfixes, ...)
 
 
 ## Source repository
