@@ -112,7 +112,7 @@ func (r *Renderer) MapPixels() (w, h int) {
 // ClampScroll keeps a viewport of size (vw, vh) inside the scaled map.
 func (r *Renderer) ClampScroll(scrollX, scrollY, vw, vh int) (int, int) {
 	mw, mh := r.MapPixels()
-	return clamp(scrollX, 0, max0(mw-vw)), clamp(scrollY, 0, max0(mh-vh))
+	return max(0, min(scrollX, max(0, mw-vw))), max(0, min(scrollY, max(0, mh-vh)))
 }
 
 // scaledTile returns tile id scaled to zoom x zoom, building and caching
@@ -148,9 +148,9 @@ func (r *Renderer) scaledTile(id uint16) *gfx.Buffer {
 // viewport's top left corner in scaled map pixels.
 func (r *Renderer) Render(dst *gfx.Buffer, scrollX, scrollY int) {
 	z := r.zoom
-	tx0, ty0 := clamp(scrollX/z, 0, r.m.W-1), clamp(scrollY/z, 0, r.m.H-1)
-	tx1 := clamp((scrollX+dst.W-1)/z, 0, r.m.W-1)
-	ty1 := clamp((scrollY+dst.H-1)/z, 0, r.m.H-1)
+	tx0, ty0 := max(0, min(scrollX/z, r.m.W-1)), max(0, min(scrollY/z, r.m.H-1))
+	tx1 := max(0, min((scrollX+dst.W-1)/z, r.m.W-1))
+	ty1 := max(0, min((scrollY+dst.H-1)/z, r.m.H-1))
 	for ty := ty0; ty <= ty1; ty++ {
 		for tx := tx0; tx <= tx1; tx++ {
 			tile := r.scaledTile(r.m.TileIDs[ty*r.m.W+tx])
@@ -206,8 +206,8 @@ func (r *Renderer) MinimapBox(dst *gfx.Buffer, scrollX, scrollY, vw, vh int, box
 	mw, mh := r.MapPixels()
 	bx0 := scrollX * dst.W / mw
 	by0 := scrollY * dst.H / mh
-	bx1 := clamp((scrollX+vw-1)*dst.W/mw, 0, dst.W-1)
-	by1 := clamp((scrollY+vh-1)*dst.H/mh, 0, dst.H-1)
+	bx1 := max(0, min((scrollX+vw-1)*dst.W/mw, dst.W-1))
+	by1 := max(0, min((scrollY+vh-1)*dst.H/mh, dst.H-1))
 	hline(dst, by0, bx0, bx1, boxColor)
 	hline(dst, by1, bx0, bx1, boxColor)
 	vline(dst, bx0, by0, by1, boxColor)
@@ -250,6 +250,8 @@ func vline(b *gfx.Buffer, x, startY, endY int, c uint8) {
 	}
 }
 
+/* // note: unused code in Go port
+// clamp repeated the builtins (lo was always 0); callers write max(lo, min(v, hi)).
 // clamp constrains v to the inclusive lo..hi range.
 func clamp(v, lo, hi int) int {
 	if v < lo {
@@ -260,7 +262,10 @@ func clamp(v, lo, hi int) int {
 	}
 	return v
 }
+*/
 
+/* // note: unused code in Go port
+// the helper repeated the builtin max (max(0, v)); callers use it directly.
 // max0 clamps negative values up to zero.
 func max0(v int) int {
 	if v < 0 {
@@ -268,3 +273,4 @@ func max0(v int) int {
 	}
 	return v
 }
+*/

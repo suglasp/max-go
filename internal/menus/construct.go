@@ -153,10 +153,15 @@ type constructMenu struct {
 	at       []assets.UnitAttributes
 	listRows int
 
-	statIcons     map[string]*gfx.Buffer
-	portraitCache map[assets.UnitType]*sprites.Big
-
 	rateX1, rateX2, rateX4 gnw.ButtonID
+	/* // note: unused code in Go port
+	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+	statIcons map[string]*gfx.Buffer
+	*/
+	/* // note: unused code in Go port
+	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+	portraitCache map[assets.UnitType]*sprites.Big
+	*/
 }
 
 // RunConstruction shows the construction menu for builder (Constrct/Engineer) of
@@ -180,21 +185,21 @@ func RunConstruction(ctx *Context, builder assets.UnitType, team, storage int) (
 	defer ctx.Sys.Fonts().SetFont(oldFont)
 
 	m := &constructMenu{
-		ctx:           ctx,
-		builder:       builder,
-		team:          team,
-		storage:       storage,
-		roster:        roster,
-		rate:          1,
-		maxRate:       1,
-		pic:           pic,
-		f5:            ctx.Sys.Fonts().Get(fonts.Font5),
-		buf:           ctx.Sys.Buf(mainWindow),
-		sc:            units.NewSpriteCache(ctx.Lib, &pic.Palette),
-		at:            ctx.Assets.Attribs,
-		listRows:      (cbListLRY - cbListY) / cbRowH, // 11
-		statIcons:     map[string]*gfx.Buffer{},
-		portraitCache: map[assets.UnitType]*sprites.Big{},
+		ctx:      ctx,
+		builder:  builder,
+		team:     team,
+		storage:  storage,
+		roster:   roster,
+		rate:     1,
+		maxRate:  1,
+		pic:      pic,
+		f5:       ctx.Sys.Fonts().Get(fonts.Font5),
+		buf:      ctx.Sys.Buf(mainWindow),
+		sc:       units.NewSpriteCache(ctx.Lib, &pic.Palette),
+		at:       ctx.Assets.Attribs,
+		listRows: (cbListLRY - cbListY) / cbRowH, // 11
+		/* statIcons: map[string]*gfx.Buffer{}, note: unused code in Go port, see the struct */
+		/* portraitCache: map[assets.UnitType]*sprites.Big{}, note: unused code in Go port, see the struct */
 	}
 
 	buttons := m.buildWidgets(hasPath)
@@ -357,6 +362,8 @@ func (m *constructMenu) turnsBase(t assets.UnitType) int {
 	return 0
 }
 
+/* // note: unused code in Go port
+// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
 // statIcon caches a keyed gauge icon (I_HITS/I_ARMOR/...).
 func (m *constructMenu) statIcon(tag string) *gfx.Buffer {
 	if b, ok := m.statIcons[tag]; ok {
@@ -373,7 +380,10 @@ func (m *constructMenu) statIcon(tag string) *gfx.Buffer {
 	m.statIcons[tag] = b
 	return b
 }
+*/
 
+/* // note: unused code in Go port
+// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
 // loadPortrait caches a buildable's portrait art; nil when the type has none.
 func (m *constructMenu) loadPortrait(t assets.UnitType) *sprites.Big {
 	if b, ok := m.portraitCache[t]; ok {
@@ -388,6 +398,7 @@ func (m *constructMenu) loadPortrait(t assets.UnitType) *sprites.Big {
 	m.portraitCache[t] = b
 	return b
 }
+*/
 
 // drawList repaints the buildable list: icon + name + turns (red when the
 // builder can't afford the build at rate 1). C++: BuildUnitTypeSelector::Draw.
@@ -403,7 +414,7 @@ func (m *constructMenu) drawList() {
 		// Name: wrapped to nameW, the whole block vertically centred in
 		// the 32px row (C++: ReportStats_DrawListItem -> Text_TextBox(name,
 		// ulx+35, uly, full-35, 32, color, false) auto wraps and centres vertically).
-		lines := wrapText(m.f5, e.name, cbNameW)
+		lines := wrapLines(m.f5, e.name, cbNameW, 0)
 		lh := m.f5.Height + 1
 		top := y + (cbRowH-len(lines)*lh)/2
 		for li, ln := range lines {
@@ -432,12 +443,12 @@ func (m *constructMenu) drawDetail() {
 		return
 	}
 	t := m.roster[m.sel].t
-	drawBuildPortrait(m.buf, m.f5, m.sc, t, m.team, m.roster[m.sel].name, cbPrevX, cbPrevY, cbPrevW, cbPrevH, m.ctx.unitDescription(t), m.loadPortrait)
+	drawBuildPortrait(m.buf, m.f5, m.sc, t, m.team, m.roster[m.sel].name, cbPrevX, cbPrevY, cbPrevW, cbPrevH, m.ctx.unitDescription(t), m.ctx.loadPortrait)
 	if int(t) >= len(m.at) {
 		return
 	}
 	rows := buildStatRows(game.NewUnitValues(m.at[t]), t, m.builder, m.turnsBase(t))
-	drawBuildStatRows(m.buf, m.f5, rows, cbStatX, cbStatY, cbStatW, cbStatH, m.statIcon)
+	drawBuildStatRows(m.buf, m.f5, rows, cbStatX, cbStatY, cbStatW, cbStatH, m.ctx.statIcon)
 }
 
 // drawRates repaints the turns + cost numbers beside each Build X1/X2/X4

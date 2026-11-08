@@ -395,10 +395,10 @@ func (m *repairShopMenu) drawBar() {
 	if m.info.RawCapacity > 0 {
 		fill = m.info.RawMaterials * bh / m.info.RawCapacity
 	}
-	fill = clampInt(fill, 0, bh)
+	fill = max(0, min(fill, bh))
 	if m.barBuf != nil && fill > 0 {
-		w := minInt(bw, m.barBuf.W)
-		h := minInt(fill, m.barBuf.H)
+		w := min(bw, m.barBuf.W)
+		h := min(fill, m.barBuf.H)
 		// Anchor the gradient to the bottom of both bar and gauge image.
 		buf.Sub(bx, by+bh-h, w, h).TransCopy(m.barBuf.Sub(0, m.barBuf.H-h, w, h))
 	}
@@ -447,27 +447,27 @@ func rsSlotGeom(isHangar bool, p int) (ulx, uly, wellW, statX, statY int) {
 // rsStatRow draws one "label  cur/max" readout: the value coloured green over
 // half, gold over a quarter, red below (the original's SI_/EI_ gauge tint),
 // the label in gold beside it. C++: ReportStats_DrawRow, reduced to the text.
-func rsStatRow(buf *gfx.Buffer, f *fonts.Font, x, y, w, h int, label string, cur, max int) {
-	if max <= 0 {
+func rsStatRow(buf *gfx.Buffer, f *fonts.Font, x, y, w, h int, label string, cur, maxValue int) {
+	if maxValue <= 0 {
 		return
 	}
-	cur = clampInt(cur, 0, max)
+	cur = max(0, min(cur, maxValue))
 	color := 0x02 // green
 	switch {
-	case cur*4 <= max:
+	case cur*4 <= maxValue:
 		color = 0x01 // red
-	case cur*2 <= max:
+	case cur*2 <= maxValue:
 		color = 0xA2 // gold
 	}
 	blitInBox(buf, f, label, x, y, 40, h, 0xA2, false)
-	blitInBox(buf, f, fmt.Sprintf("%d/%d", cur, max), x+42, y, w-42, h, color, false)
+	blitInBox(buf, f, fmt.Sprintf("%d/%d", cur, maxValue), x+42, y, w-42, h, color, false)
 }
 
 // rsRestore copies a region of the background frame back into the window buffer,
 // clipped. The caller holds the gnw lock. C++: Image::Write (the bg_*_area).
 func rsRestore(buf, bg *gfx.Buffer, x, y, w, h int) {
-	w = minInt(w, minInt(buf.W, bg.W)-x)
-	h = minInt(h, minInt(buf.H, bg.H)-y)
+	w = min(w, min(buf.W, bg.W)-x)
+	h = min(h, min(buf.H, bg.H)-y)
 	if w <= 0 || h <= 0 || x < 0 || y < 0 {
 		return
 	}

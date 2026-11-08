@@ -116,13 +116,19 @@ type cargoMenu struct {
 	at  []assets.UnitAttributes
 
 	baseVals, curVals map[assets.UnitType]*game.UnitValues // immutable specs and displayed upgrade values
-	statIcons         map[string]*gfx.Buffer
-	portraitCache     map[assets.UnitType]*sprites.Big
-	upRows            []cargoStepRow // visible attribute steppers and their row positions
+	upRows            []cargoStepRow                       // visible attribute steppers and their row positions
 
 	buyBtn, deleteBtn gnw.ButtonID
 
 	dbl menuDoubleClick
+	/* // note: unused code in Go port
+	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+	statIcons map[string]*gfx.Buffer
+	*/
+	/* // note: unused code in Go port
+	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+	portraitCache map[assets.UnitType]*sprites.Big
+	*/
 }
 
 // RunCargo edits a CARGOPIC loadout in place. Done commits changes; Cancel or Escape restores the entry state
@@ -139,22 +145,22 @@ func RunCargo(ctx *Context, lo *CargoLoadout) error {
 	defer ctx.Sys.Fonts().SetFont(oldFont)
 
 	m := &cargoMenu{
-		ctx:           ctx,
-		lo:            lo,
-		active:        cgBuyList,
-		buyRows:       cgBuyH / cgRowH,
-		cargoRows:     cgCargoH / cgRowH,
-		pic:           pic,
-		f5:            ctx.Sys.Fonts().Get(fonts.Font5),
-		buf:           ctx.Sys.Buf(mainWindow),
-		sc:            units.NewSpriteCache(ctx.Lib, &pic.Palette),
-		at:            ctx.Assets.Attribs,
-		baseVals:      map[assets.UnitType]*game.UnitValues{},
-		curVals:       map[assets.UnitType]*game.UnitValues{},
-		statIcons:     map[string]*gfx.Buffer{},
-		portraitCache: map[assets.UnitType]*sprites.Big{},
-		buyBtn:        -1,
-		deleteBtn:     -1,
+		ctx:       ctx,
+		lo:        lo,
+		active:    cgBuyList,
+		buyRows:   cgBuyH / cgRowH,
+		cargoRows: cgCargoH / cgRowH,
+		pic:       pic,
+		f5:        ctx.Sys.Fonts().Get(fonts.Font5),
+		buf:       ctx.Sys.Buf(mainWindow),
+		sc:        units.NewSpriteCache(ctx.Lib, &pic.Palette),
+		at:        ctx.Assets.Attribs,
+		baseVals:  map[assets.UnitType]*game.UnitValues{},
+		curVals:   map[assets.UnitType]*game.UnitValues{},
+		/* statIcons: map[string]*gfx.Buffer{}, note: unused code in Go port, see the struct */
+		/* portraitCache: map[assets.UnitType]*sprites.Big{}, note: unused code in Go port, see the struct */
+		buyBtn:    -1,
+		deleteBtn: -1,
 	}
 	// Rollback snapshot for Cancel.
 	m.entry = *lo
@@ -334,7 +340,7 @@ func (m *cargoMenu) handleKey(key int) (done bool, err error) {
 		if m.cargoSel < len(lo.Units) && int(lo.Units[m.cargoSel]) < len(at) {
 			st := at[lo.Units[m.cargoSel]].Storage
 			top, bot := cgCrgY+25, cgCrgY+25+(cgCrgH-25)
-			my := clampInt(ctx.Plat.Mouse().Y, top, bot)
+			my := max(top, min(ctx.Plat.Mouse().Y, bot))
 			m.loadCargoTo(st * (bot - my) / (bot - top))
 		}
 	case key == 1102: // Buy
@@ -402,6 +408,8 @@ func wrapTwoLines(f *fonts.Font, label string, w int) []string {
 	return []string{l1, l2}
 }
 
+/* // note: unused code in Go port
+// wrapText repeated wrapLines without a row limit; callers use wrapLines(f, text, w, 0).
 // wrapText greedily splits text into lines that each fit width w (unlimited
 // lines): for the multi line description overlay.
 func wrapText(f *fonts.Font, text string, w int) []string {
@@ -424,6 +432,7 @@ func wrapText(f *fonts.Font, text string, w int) []string {
 	}
 	return lines
 }
+*/
 
 // cargoPlateButtonWithDisabled builds a Cargo screen captioned button with a
 // real disabled face. The generic plateButton helper has no disabled image hook,

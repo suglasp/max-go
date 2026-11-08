@@ -132,10 +132,10 @@ func (m *cargoMenu) loadCargoTo(target int) {
 		return
 	}
 	st := m.at[ut].Storage
-	target = clampInt(target/5*5, 0, st/5*5)
+	target = max(0, min(target/5*5, st/5*5))
 	cur := m.lo.Cargos[m.cargoSel]
 	if cost := (target - cur) / 5; cost > m.lo.TeamGold { // can't afford the increase
-		target = clampInt(cur+m.lo.TeamGold*5, 0, st/5*5)
+		target = max(0, min(cur+m.lo.TeamGold*5, st/5*5))
 	}
 	if target == cur {
 		return

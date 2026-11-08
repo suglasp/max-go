@@ -16,7 +16,6 @@ import (
 	"github.com/suglasp/max-go/internal/fonts"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/gfx"
-	"github.com/suglasp/max-go/internal/sprites"
 )
 
 // drawStaticText paints the header captions and the chrome yellow separator
@@ -94,6 +93,8 @@ func (m *cargoMenu) drawCargoList() {
 	}
 }
 
+/* // note: unused code in Go port
+// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
 // statIcon caches a keyed gauge icon (I_ARMOR/I_HITS/... keyed transparent).
 func (m *cargoMenu) statIcon(tag string) *gfx.Buffer {
 	if b, ok := m.statIcons[tag]; ok {
@@ -110,7 +111,10 @@ func (m *cargoMenu) statIcon(tag string) *gfx.Buffer {
 	m.statIcons[tag] = b
 	return b
 }
+*/
 
+/* // note: unused code in Go port
+// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
 // loadPortrait caches the P_* BIG image per roster unit, loaded on first use.
 func (m *cargoMenu) loadPortrait(t assets.UnitType) *sprites.Big {
 	if b, ok := m.portraitCache[t]; ok {
@@ -125,6 +129,7 @@ func (m *cargoMenu) loadPortrait(t assets.UnitType) *sprites.Big {
 	m.portraitCache[t] = b
 	return b
 }
+*/
 
 // drawDetail repaints the left preview (the unit's large portrait) and the
 // stats panel. C++: AbstractUpgradeMenu::DrawUnitInfo + DrawUnitStats.
@@ -142,9 +147,9 @@ func (m *cargoMenu) drawDetail() {
 	if !ok {
 		return
 	}
-	if big := m.loadPortrait(t); big != nil {
-		bw := minInt(big.W, cgPrevW)
-		bh := minInt(big.H, cgPrevH)
+	if big := m.ctx.loadPortrait(t); big != nil {
+		bw := min(big.W, cgPrevW)
+		bh := min(big.H, cgPrevH)
 		m.buf.Sub(cgPrevX, cgPrevY, bw, bh).Copy(big.Buffer().Sub(0, 0, bw, bh))
 	} else {
 		// No portrait resource: fall back to the unit icon + name.
@@ -154,7 +159,7 @@ func (m *cargoMenu) drawDetail() {
 	// Description checkbox: overlay the unit's description text on the portrait.
 	// C++: AbstractUpgradeMenu::DrawUnitInfo draws base_unit.GetDescription().
 	if desc := m.ctx.unitDescription(t); desc != "" {
-		for i, ln := range wrapText(m.f5, desc, cgPrevW-20) {
+		for i, ln := range wrapLines(m.f5, desc, cgPrevW-20, 0) {
 			// C++: Text_TextBox(..., GNW_TEXT_OUTLINE | 0xA2), tan with an outline.
 			blitInBox(m.buf, m.f5, ln, cgPrevX+10, cgPrevY+8+i*(m.f5.Height+2), cgPrevW-20, m.f5.Height+2, cargoTan|fonts.FlagOutline, false)
 		}
@@ -174,18 +179,18 @@ func (m *cargoMenu) drawDetail() {
 				blitInBox(m.buf, m.f5, s, cgStatX+24-vw, ry, vw, 17, cargoGold, false)
 			}
 			blitInBox(m.buf, m.f5, r.label, cgStatX+28, ry, 48, 17, cargoTan, false)
-			drawGauge(m.buf, m.statIcon(r.icon), r.count, cgStatX+76, ry, cgStatW-76, cgStatX, cgStatX+cgStatW, cgStatY+cgStatH)
+			drawGauge(m.buf, m.ctx.statIcon(r.icon), r.count, cgStatX+76, ry, cgStatW-76, cgStatX, cgStatX+cgStatW, cgStatY+cgStatH)
 			m.buf.Sub(cgStatX+2, ry+17, cgStatW-4, 1).Fill(colorRed) // separator
 			// Upgrade stepper on each row (only for upgradeable rows): '<' '>' +
 			// the gold upgrade cost. C++: the upgrade_controls / cost_background.
 			if r.upgradeable {
-				blitIcon(m.buf, m.statIcon("UPGLFT_U"), 283, ry)
-				blitIcon(m.buf, m.statIcon("UPGRGT_U"), 301, ry)
+				blitIcon(m.buf, m.ctx.statIcon("UPGLFT_U"), 283, ry)
+				blitIcon(m.buf, m.ctx.statIcon("UPGRGT_U"), 301, ry)
 				uc := game.UpgradeCost(r.attr, cv.Get(r.attr), 0, bv.Get(r.attr))
 				if uc > 0 && uc < game.UpgradeCostLimit {
 					cs := fmt.Sprintf("%d", uc)
 					blitInBox(m.buf, m.f5, cs, 343-m.f5.Width(cs), ry+3, m.f5.Width(cs), 11, cargoChrome, false)
-					blitIcon(m.buf, m.statIcon("I_GOLD"), 345, ry+4)
+					blitIcon(m.buf, m.ctx.statIcon("I_GOLD"), 345, ry+4)
 				}
 				m.upRows = append(m.upRows, cargoStepRow{attr: r.attr, y: ry})
 			}
@@ -205,8 +210,8 @@ func (m *cargoMenu) fillVBar(x, y, w, h int, bar *gfx.Buffer, fill, max int) {
 	if fh > h {
 		fh = h
 	}
-	sw := minInt(w, bar.W)
-	sh := minInt(fh, bar.H)
+	sw := min(w, bar.W)
+	sh := min(fh, bar.H)
 	m.buf.Sub(x+(w-sw)/2, y+h-sh, sw, sh).TransCopy(bar.Sub(0, bar.H-sh, sw, sh))
 }
 
@@ -233,7 +238,7 @@ func (m *cargoMenu) drawBars() {
 	// Credit / gold. Keep the clear within the gold slot (361..401) so it does
 	// not eat the upgrade cost coin to its left (~345..358).
 	m.buf.Sub(cgGoldX, cgGoldY, cgGoldW, cgGoldH).Copy(m.pic.Buffer().Sub(cgGoldX, cgGoldY, cgGoldW, cgGoldH))
-	m.fillVBar(cgGoldX, cgGoldY+25, cgGoldW, cgGoldH-25, m.statIcon("VERTGOLD"), m.lo.TeamGold, m.lo.StartGold)
+	m.fillVBar(cgGoldX, cgGoldY+25, cgGoldW, cgGoldH-25, m.ctx.statIcon("VERTGOLD"), m.lo.TeamGold, m.lo.StartGold)
 	blitInBox(m.buf, m.f5, fmt.Sprintf("%d", m.lo.TeamGold), cgGoldX, cgGoldY, cgGoldW, 11, cargoChrome, true)
 	// Cargo of the selected Purchased unit (if it carries cargo).
 	m.buf.Sub(cgCrgX-12, cgCrgY, cgCrgW+24, cgCrgH).Copy(m.pic.Buffer().Sub(cgCrgX-12, cgCrgY, cgCrgW+24, cgCrgH))
@@ -252,7 +257,7 @@ func (m *cargoMenu) drawBars() {
 				tag = "VERTGOLD"
 			}
 			amt := m.lo.Cargos[m.cargoSel]
-			m.fillVBar(cgCrgX, cgCrgY+25, cgCrgW, cgCrgH-25, m.statIcon(tag), amt, st)
+			m.fillVBar(cgCrgX, cgCrgY+25, cgCrgW, cgCrgH-25, m.ctx.statIcon(tag), amt, st)
 			blitInBox(m.buf, m.f5, fmt.Sprintf("%d", amt), cgCrgX, cgCrgY, cgCrgW, 11, colorWhite, true)
 		}
 	}

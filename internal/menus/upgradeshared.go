@@ -129,8 +129,8 @@ func drawGaugePair(buf, full, empty *gfx.Buffer, cur, base, baseX, baseY, availW
 		r := i % 5
 		x := baseX + (i/5)*groupAdv + itemStep*r
 		y := topY + r*vstep
-		w := minInt(sprite.W, clipR-x)
-		h := minInt(sprite.H, clipB-y)
+		w := min(sprite.W, clipR-x)
+		h := min(sprite.H, clipB-y)
 		if x >= clipL && w > 0 && h > 0 {
 			buf.Sub(x, y, w, h).TransCopy(sprite.Sub(0, 0, w, h))
 		}

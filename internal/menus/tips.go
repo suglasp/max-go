@@ -203,7 +203,7 @@ func wrapTips(f *fonts.Font, text string, w int) []string {
 			lines = append(lines, "")
 			continue
 		}
-		lines = append(lines, wrapText(f, para, w)...)
+		lines = append(lines, wrapLines(f, para, w, 0)...)
 	}
 	return lines
 }

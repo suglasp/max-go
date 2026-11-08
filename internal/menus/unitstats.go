@@ -105,6 +105,8 @@ func (m *unitStatusMenu) paint() {
 		rowH                       = 19                // C++: each stat row advances screen_width*19
 	)
 
+	/* // note: unused code in Go port
+	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
 	// statIcon caches a keyed gauge icon (I_HITS/I_ARMOR/...), with its fuchsia
 	// top left keyed to transparent.
 	statIcons := map[string]*gfx.Buffer{}
@@ -123,6 +125,8 @@ func (m *unitStatusMenu) paint() {
 		statIcons[tag] = b
 		return b
 	}
+	*/
+	statIcon := ctx.statIcon
 
 	rows := unitStatRows(u)
 	// Pack the rows into the panel: shrink the pitch when there are more than fit,
@@ -161,7 +165,7 @@ func (m *unitStatusMenu) paint() {
 		// Name (centred) + description, top right.
 		blitInBox(buf, f5, name, 336, 60, 287, 11, cargoTan, true)
 		// C++ ported : unitstats.cpp - Text_TextBox(base_unit.GetDescription(), 345, 90, 270, 117)
-		for i, ln := range wrapText(f5, ctx.unitDescriptionText(u.Type), 270) {
+		for i, ln := range wrapLines(f5, ctx.unitDescriptionText(u.Type), 270, 0) {
 			blitInBox(buf, f5, ln, 345, 90+i*(f5.Height+2), 270, f5.Height+2, cargoTan, false)
 		}
 
@@ -256,6 +260,6 @@ func unitStatRows(u *game.UnitInfo) []statRow {
 
 // drawPortraitFit blits a big portrait into the (x,y,w,h) box, clipped to fit.
 func drawPortraitFit(buf *gfx.Buffer, big *sprites.Big, x, y, w, h int) {
-	bw, bh := minInt(big.W, w), minInt(big.H, h)
+	bw, bh := min(big.W, w), min(big.H, h)
 	buf.Sub(x, y, bw, bh).Copy(big.Buffer().Sub(0, 0, bw, bh))
 }

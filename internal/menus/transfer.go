@@ -102,8 +102,8 @@ func RunTransfer(ctx *Context, info screendata.TransferInfo, center gfx.Rect) (i
 	// Transfer math, verbatim from the TransferMenu constructor. giveMax is the
 	// most the source can give the target; takeMax (negative) the most it can
 	// take. The slider value ranges over [takeMax .. giveMax].
-	m.giveMax = minInt(info.TargetCapacity-info.TargetMaterials, info.SourceMaterials)
-	srcFree := minInt(info.SourceCapacity-info.SourceMaterials, info.TargetMaterials)
+	m.giveMax = min(info.TargetCapacity-info.TargetMaterials, info.SourceMaterials)
+	srcFree := min(info.SourceCapacity-info.SourceMaterials, info.TargetMaterials)
 	m.takeMax = -srcFree
 	m.value = m.giveMax
 	m.freeCapacity = info.TargetCapacity - info.TargetMaterials
@@ -182,11 +182,11 @@ func (m *transferMenu) drawDynamic() {
 	if m.capacity > 0 {
 		fill = (value - m.zeroOffset) * sliderW / m.capacity
 	}
-	fill = clampInt(fill, 0, sliderW)
+	fill = max(0, min(fill, sliderW))
 	if m.bar != nil && fill > 0 {
 		bar := m.bar
-		w := minInt(fill, bar.W)
-		h := minInt(sliderH, bar.H)
+		w := min(fill, bar.W)
+		h := min(sliderH, bar.H)
 		buf.Sub(sliderX, sliderY, w, h).TransCopy(bar.Sub(bar.W-w, 0, w, h)) // right anchored source
 	}
 
@@ -194,10 +194,10 @@ func (m *transferMenu) drawDynamic() {
 	if aro := m.rtAro; value < 0 {
 		aro = m.lfAro
 		if aro != nil {
-			buf.Sub(141, 43, minInt(aro.W, 31), minInt(aro.H, 16)).TransCopy(aro.Sub(0, 0, minInt(aro.W, 31), minInt(aro.H, 16)))
+			buf.Sub(141, 43, min(aro.W, 31), min(aro.H, 16)).TransCopy(aro.Sub(0, 0, min(aro.W, 31), min(aro.H, 16)))
 		}
 	} else if aro != nil {
-		buf.Sub(141, 43, minInt(aro.W, 31), minInt(aro.H, 16)).TransCopy(aro.Sub(0, 0, minInt(aro.W, 31), minInt(aro.H, 16)))
+		buf.Sub(141, 43, min(aro.W, 31), min(aro.H, 16)).TransCopy(aro.Sub(0, 0, min(aro.W, 31), min(aro.H, 16)))
 	}
 
 	drawTransferTotal(buf, pic.Buffer(), f5, fmt.Sprintf("%d", absInt(value)), 141, 15, 29, 20)
@@ -272,8 +272,8 @@ func (m *transferMenu) handleKey(key int) (amount int, done bool) {
 		if sliderW > 0 {
 			nv = (sliderW/2+m.capacity*x)/sliderW + m.zeroOffset
 		}
-		nv = clampInt(nv, m.zeroOffset, m.freeCapacity)
-		nv = clampInt(nv, m.takeMax, m.giveMax)
+		nv = max(m.zeroOffset, min(nv, m.freeCapacity))
+		nv = max(m.takeMax, min(nv, m.giveMax))
 		if nv != m.value {
 			m.value = nv
 			m.drawDynamic()
@@ -295,14 +295,16 @@ func blitIcon(dst *gfx.Buffer, icon *gfx.Buffer, x, y int) {
 	if icon == nil {
 		return
 	}
-	w := minInt(icon.W, dst.W-x)
-	h := minInt(icon.H, dst.H-y)
+	w := min(icon.W, dst.W-x)
+	h := min(icon.H, dst.H-y)
 	if w <= 0 || h <= 0 {
 		return
 	}
 	dst.Sub(x, y, w, h).TransCopy(icon.Sub(0, 0, w, h))
 }
 
+/* // note: unused code in Go port
+// the helper repeated the builtin min; callers use it directly.
 // minInt / absInt are the small integer helpers the transfer math needs.
 func minInt(a, b int) int {
 	if a < b {
@@ -310,6 +312,7 @@ func minInt(a, b int) int {
 	}
 	return b
 }
+*/
 
 func absInt(v int) int {
 	if v < 0 {
@@ -318,6 +321,8 @@ func absInt(v int) int {
 	return v
 }
 
+/* // note: unused code in Go port
+// clampInt repeated the builtins; callers write max(lo, min(v, hi)).
 func clampInt(v, lo, hi int) int {
 	if v < lo {
 		return lo
@@ -327,3 +332,4 @@ func clampInt(v, lo, hi int) int {
 	}
 	return v
 }
+*/

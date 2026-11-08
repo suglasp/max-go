@@ -11,8 +11,8 @@ import "testing"
 // the slider bounds can be checked without a window/render context.
 // C++: the TransferMenu constructor (transfermenu.cpp).
 func transferLimits(srcMat, srcCap, tgtMat, tgtCap int) (giveMax, takeMax, start int) {
-	giveMax = minInt(tgtCap-tgtMat, srcMat)
-	srcFree := minInt(srcCap-srcMat, tgtMat)
+	giveMax = min(tgtCap-tgtMat, srcMat)
+	srcFree := min(srcCap-srcMat, tgtMat)
 	takeMax = -srcFree
 	start = giveMax
 	return
@@ -60,7 +60,7 @@ func TestTransferSliderFill(t *testing.T) {
 		zeroOffset := -tgtMat
 		capacity := tgtCap // freeCapacity - zeroOffset
 		f := (value - zeroOffset) * sliderW / capacity
-		return clampInt(f, 0, sliderW)
+		return max(0, min(f, sliderW))
 	}
 	// Target empty (0/40), source takes its whole self -> 0 transfer keeps it 0.
 	if got := fill(0, 0, 40); got != 0 {

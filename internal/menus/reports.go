@@ -368,8 +368,8 @@ func (m *reportMenu) drawCheckboxes() {
 			box = m.downBox
 		}
 		if box != nil {
-			w := minInt(box.W, buf.W-496)
-			h := minInt(box.H, buf.H-fl.y)
+			w := min(box.W, buf.W-496)
+			h := min(box.H, buf.H-fl.y)
 			if w > 0 && h > 0 {
 				buf.Sub(496, fl.y, w, h).TransCopy(box.Sub(0, 0, w, h))
 			}

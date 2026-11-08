@@ -54,7 +54,7 @@ func (s *Screen) reportStats(u *game.UnitInfo) []screendata.ReportStatRow {
 
 	// Shots are capped by the ammo actually loaded: a full clip of rounds is no use
 	// with an empty magazine.
-	shots := minInt(u.Values.Get(game.AttribRounds), u.Values.Get(game.AttribAmmo))
+	shots := min(u.Values.Get(game.AttribRounds), u.Values.Get(game.AttribAmmo))
 	rows[3] = s.reportRow(s.lang.Get("27e1", "SHOTS"), "SHOTS", u.Shots, shots, 1, false)
 
 	// A building draws power or work from its complex, and those rows replace the
@@ -357,6 +357,8 @@ func romanNumeral(n int) string {
 	return out
 }
 
+/* // note: unused code in Go port
+// the helper repeated the builtin min; callers use it directly.
 // minInt is the smaller of two ints.
 func minInt(a, b int) int {
 	if a < b {
@@ -365,3 +367,4 @@ func minInt(a, b int) int {
 
 	return b
 }
+*/

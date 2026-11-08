@@ -6,6 +6,8 @@
 package gnw
 
 import (
+	"strconv"
+
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/platform"
 )
@@ -192,7 +194,7 @@ func (sb *Scrollbar) Refresh() {
 	}
 	if sb.scaleFactor != 0 && sb.amountWidth() > 0 && sb.amountHeight() > 0 {
 		sb.sys.fonts.Font().Blit(buf.Sub(sb.amountBounds.ULX, sb.amountBounds.ULY, sb.amountWidth(), sb.amountHeight()),
-			itoa(sb.scaleFactor*sb.value), sb.amountWidth(), 0xFF)
+			strconv.Itoa(sb.scaleFactor*sb.value), sb.amountWidth(), 0xFF)
 	}
 }
 
@@ -405,6 +407,8 @@ func drawBar(dst *gfx.Buffer, x, y, wExtent, hExtent int, bar *gfx.Buffer) {
 	}
 }
 
+/* // note: unused code in Go port
+// itoa repeated strconv.Itoa.
 func itoa(v int) string {
 	if v == 0 {
 		return "0"
@@ -426,3 +430,4 @@ func itoa(v int) string {
 	}
 	return string(buf[i:])
 }
+*/

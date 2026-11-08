@@ -79,9 +79,12 @@ type upgradeMenu struct {
 
 	portraits map[assets.UnitType]*gfx.Buffer
 	sc        *unitspr.SpriteCache
-	statIcons map[string]*gfx.Buffer
 
 	rowButtons []gnw.ButtonID // dynamic per selection arrow buttons
+	/* // note: unused code in Go port
+	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+	statIcons map[string]*gfx.Buffer
+	*/
 }
 
 // RunUpgrade runs the Upgrade screen over the given unit types, spending from
@@ -136,7 +139,7 @@ func RunUpgrade(ctx *Context, units []*game.UpgradeUnit, gold *int, center gfx.R
 		visRows:   ugListH / ugRowH,
 		portraits: map[assets.UnitType]*gfx.Buffer{},
 		sc:        unitspr.NewSpriteCache(ctx.Lib, &pic.Palette),
-		statIcons: map[string]*gfx.Buffer{},
+		/* statIcons: map[string]*gfx.Buffer{}, note: unused code in Go port, see the struct */
 	}
 
 	buttons := m.buildWidgets()
@@ -342,15 +345,15 @@ func (m *upgradeMenu) loadPortrait(t assets.UnitType) *gfx.Buffer {
 		return b
 	}
 	var b *gfx.Buffer
-	if tag := unitPortrait[t]; tag != "" {
-		if img, e := m.ctx.loadBig(tag); e == nil {
-			b = img.Buffer().Clone()
-		}
+	if img := m.ctx.loadPortrait(t); img != nil {
+		b = img.Buffer().Clone() // the upgrade screen keeps its own copy
 	}
 	m.portraits[t] = b
 	return b
 }
 
+/* // note: unused code in Go port
+// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
 // statIcon caches a keyed gauge icon for the stat panel (same as the cargo
 // screen, both are AbstractUpgradeMenu).
 func (m *upgradeMenu) statIcon(tag string) *gfx.Buffer {
@@ -368,6 +371,7 @@ func (m *upgradeMenu) statIcon(tag string) *gfx.Buffer {
 	m.statIcons[tag] = b
 	return b
 }
+*/
 
 // drawList paints the right hand unit selector: a 32px icon + name row per
 // unit (the original UnitTypeSelector), the selected row marked with the
@@ -425,7 +429,7 @@ func (m *upgradeMenu) drawDetail() {
 				blitInBox(buf, m.f5, s, ugStatsX+24-m.f5.Width(s), ry, m.f5.Width(s), 17, cargoGold, false)
 			}
 			blitInBox(buf, m.f5, r.label, ugStatsX+28, ry, 48, 17, cargoTan, false)
-			drawGauge(buf, m.statIcon(r.icon), r.count, ugStatsX+76, ry, ugStatsW-76, ugStatsX, ugStatsX+ugStatsW, ugStatsY+ugStatsH)
+			drawGauge(buf, m.ctx.statIcon(r.icon), r.count, ugStatsX+76, ry, ugStatsW-76, ugStatsX, ugStatsX+ugStatsW, ugStatsY+ugStatsH)
 			buf.Sub(ugStatsX+2, ry+17, ugStatsW-4, 1).Fill(colorRed)
 			if r.upgradeable {
 				cost := game.UpgradeCost(r.attr, u.Cur.Get(r.attr), u.ResearchFactor[r.attr], u.Base.Get(r.attr))
@@ -500,7 +504,7 @@ func (m *upgradeMenu) drawPortrait(buf *gfx.Buffer, u *game.UpgradeUnit) {
 		// Description checkbox: overlay the unit's description over the portrait.
 		// C++: AbstractUpgradeMenu::DrawUnitInfo (GNW_TEXT_OUTLINE|0xA2).
 		if desc := m.ctx.unitDescription(u.Type); desc != "" {
-			for i, ln := range wrapText(m.f5, desc, 280) {
+			for i, ln := range wrapLines(m.f5, desc, 280, 0) {
 				blitInBox(buf, m.f5, ln, 21, 21+i*(m.f5.Height+2), 280, m.f5.Height+2, cargoTan|fonts.FlagOutline, false)
 			}
 		}

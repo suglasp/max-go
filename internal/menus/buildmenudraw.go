@@ -58,14 +58,14 @@ func (ctx *Context) unitDescriptionText(t assets.UnitType) string {
 // description text over it when desc is not empty.
 func drawBuildPortrait(buf *gfx.Buffer, f5 *fonts.Font, sc *units.SpriteCache, t assets.UnitType, team int, name string, prevX, prevY, prevW, prevH int, desc string, loadPortrait func(assets.UnitType) *sprites.Big) {
 	if big := loadPortrait(t); big != nil {
-		bw, bh := minInt(big.W, prevW), minInt(big.H, prevH)
+		bw, bh := min(big.W, prevW), min(big.H, prevH)
 		buf.Sub(prevX, prevY, bw, bh).Copy(big.Buffer().Sub(0, 0, bw, bh))
 	} else {
 		sc.DrawIcon(buf, t, team, prevX+prevW/2, prevY+prevH/2)
 		blitInBox(buf, f5, name, prevX, prevY+prevH-24, prevW, 20, colorGreen|fonts.FlagOutline, true)
 	}
 	if desc != "" {
-		for i, ln := range wrapText(f5, desc, prevW-20) {
+		for i, ln := range wrapLines(f5, desc, prevW-20, 0) {
 			blitInBox(buf, f5, ln, prevX+10, prevY+8+i*(f5.Height+2), prevW-20, f5.Height+2, cargoTan|fonts.FlagOutline, false)
 		}
 	}

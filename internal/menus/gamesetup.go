@@ -273,7 +273,7 @@ func (m *gameSetupMenu) reflow() {
 	m.descLines = nil
 	m.descRow = 0
 	if m.sel >= 0 && m.sel < len(m.missions) {
-		m.descLines = wrapText(m.f5, m.missions[m.sel].Description, gsDescW-4)
+		m.descLines = wrapLines(m.f5, m.missions[m.sel].Description, gsDescW-4, 0)
 	}
 }
 

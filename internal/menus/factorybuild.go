@@ -139,12 +139,17 @@ type factoryBuildMenu struct {
 	at                   []assets.UnitAttributes
 	availRows, queueRows int
 
-	statIcons     map[string]*gfx.Buffer
-	portraitCache map[assets.UnitType]*sprites.Big
-
 	rateX1, rateX2, rateX4 gnw.ButtonID
 
 	dbl menuDoubleClick
+	/* // note: unused code in Go port
+	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+	statIcons map[string]*gfx.Buffer
+	*/
+	/* // note: unused code in Go port
+	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+	portraitCache map[assets.UnitType]*sprites.Big
+	*/
 }
 
 // RunFactoryBuild shows the FACBUILD menu for a factory of the given team holding
@@ -174,19 +179,19 @@ func RunFactoryBuild(ctx *Context, factory assets.UnitType, team, storage int, q
 		storage: storage,
 		roster:  roster,
 		// Working copies (Cancel discards these).
-		queueEdit:     append([]assets.UnitType(nil), queue...),
-		repeatEdit:    repeat,
-		rate:          1,
-		maxRate:       1,
-		pic:           pic,
-		f5:            ctx.Sys.Fonts().Get(fonts.Font5),
-		buf:           ctx.Sys.Buf(mainWindow),
-		sc:            units.NewSpriteCache(ctx.Lib, &pic.Palette),
-		at:            ctx.Assets.Attribs,
-		availRows:     (fbListLRY - fbListY) / fbRowH,   // 11
-		queueRows:     (fbQueueLRY - fbQueueY) / fbRowH, // 6
-		statIcons:     map[string]*gfx.Buffer{},
-		portraitCache: map[assets.UnitType]*sprites.Big{},
+		queueEdit:  append([]assets.UnitType(nil), queue...),
+		repeatEdit: repeat,
+		rate:       1,
+		maxRate:    1,
+		pic:        pic,
+		f5:         ctx.Sys.Fonts().Get(fonts.Font5),
+		buf:        ctx.Sys.Buf(mainWindow),
+		sc:         units.NewSpriteCache(ctx.Lib, &pic.Palette),
+		at:         ctx.Assets.Attribs,
+		availRows:  (fbListLRY - fbListY) / fbRowH,   // 11
+		queueRows:  (fbQueueLRY - fbQueueY) / fbRowH, // 6
+		/* statIcons: map[string]*gfx.Buffer{}, note: unused code in Go port, see the struct */
+		/* portraitCache: map[assets.UnitType]*sprites.Big{}, note: unused code in Go port, see the struct */
 	}
 	buttons := m.buildWidgets()
 	defer func() {
@@ -390,6 +395,8 @@ func (m *factoryBuildMenu) turnsBase(t assets.UnitType) int {
 	return 0
 }
 
+/* // note: unused code in Go port
+// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
 // statIcon caches a keyed gauge icon (I_HITS/I_ARMOR/...).
 func (m *factoryBuildMenu) statIcon(tag string) *gfx.Buffer {
 	if b, ok := m.statIcons[tag]; ok {
@@ -406,7 +413,10 @@ func (m *factoryBuildMenu) statIcon(tag string) *gfx.Buffer {
 	m.statIcons[tag] = b
 	return b
 }
+*/
 
+/* // note: unused code in Go port
+// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
 // loadPortrait caches a unit's portrait art; nil when the type has none.
 func (m *factoryBuildMenu) loadPortrait(t assets.UnitType) *sprites.Big {
 	if b, ok := m.portraitCache[t]; ok {
@@ -421,6 +431,7 @@ func (m *factoryBuildMenu) loadPortrait(t assets.UnitType) *sprites.Big {
 	m.portraitCache[t] = b
 	return b
 }
+*/
 
 // drawAvail repaints the Available roster list (icon + name + base turns).
 // Factory units are never drawn red (only a mobile builder's unaffordable rows
@@ -433,7 +444,7 @@ func (m *factoryBuildMenu) drawAvail() {
 		e := m.roster[m.scrollAvail+r]
 		y := fbListY + r*fbRowH
 		m.sc.DrawIcon(m.buf, e.t, m.team, fbIconCX, y+16)
-		lines := wrapText(m.f5, e.name, fbNameW)
+		lines := wrapLines(m.f5, e.name, fbNameW, 0)
 		lh := m.f5.Height + 1
 		top := y + (fbRowH-len(lines)*lh)/2
 		for li, ln := range lines {
@@ -458,7 +469,7 @@ func (m *factoryBuildMenu) drawQueue() {
 		y := fbQueueY + r*fbRowH
 		m.sc.DrawIcon(m.buf, t, m.team, fbQIconCX, y+16)
 		name := unitName(m.roster, t)
-		lines := wrapText(m.f5, name, fbQNameW)
+		lines := wrapLines(m.f5, name, fbQNameW, 0)
 		lh := m.f5.Height + 1
 		top := y + (fbRowH-len(lines)*lh)/2
 		for li, ln := range lines {
@@ -482,12 +493,12 @@ func (m *factoryBuildMenu) drawDetail() {
 		return
 	}
 	t := m.roster[m.selAvail].t
-	drawBuildPortrait(m.buf, m.f5, m.sc, t, m.team, m.roster[m.selAvail].name, fbPrevX, fbPrevY, fbPrevW, fbPrevH, m.ctx.unitDescription(t), m.loadPortrait)
+	drawBuildPortrait(m.buf, m.f5, m.sc, t, m.team, m.roster[m.selAvail].name, fbPrevX, fbPrevY, fbPrevW, fbPrevH, m.ctx.unitDescription(t), m.ctx.loadPortrait)
 	if int(t) >= len(m.at) {
 		return
 	}
 	rows := buildStatRows(game.NewUnitValues(m.at[t]), t, m.factory, m.turnsBase(t))
-	drawBuildStatRows(m.buf, m.f5, rows, fbStatX, fbStatY, fbStatW, fbStatH, m.statIcon)
+	drawBuildStatRows(m.buf, m.f5, rows, fbStatX, fbStatY, fbStatW, fbStatH, m.ctx.statIcon)
 }
 
 // drawRates repaints the turns + cost numbers beside each Build X1/X2/X4 button

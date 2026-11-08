@@ -204,7 +204,7 @@ func briefingLines(f *fonts.Font, text string) []string {
 			continue
 		}
 
-		lines = append(lines, wrapText(f, para, briefingTextW)...)
+		lines = append(lines, wrapLines(f, para, briefingTextW, 0)...)
 	}
 
 	for len(lines) > 0 && lines[len(lines)-1] == "" {

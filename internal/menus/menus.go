@@ -51,6 +51,9 @@ type Context struct {
 
 	help      *help.Database   // the context help database, parsed on first use
 	cursorCat *cursors.Catalog // cursor art, loaded on first use (help mode swaps the pointer)
+
+	statIcons map[string]*gfx.Buffer           // keyed gauge icons, loaded on first use
+	portraits map[assets.UnitType]*sprites.Big // unit portraits, loaded on first use
 }
 
 // registerButtonSfx assigns a press sound to a button and installs
@@ -145,6 +148,46 @@ func (ctx *Context) loadBig(tag string) (*sprites.Big, error) {
 		return nil, fmt.Errorf("%s: %w", tag, err)
 	}
 	return img, nil
+}
+
+// statIcon returns a gauge icon (I_HITS, I_ARMOR, ...) with its fuchsia top left keyed to transparent, loaded once
+// per session and shared by every menu; nil when the tag is empty or does not load.
+func (ctx *Context) statIcon(tag string) *gfx.Buffer {
+	if b, ok := ctx.statIcons[tag]; ok {
+		return b
+	}
+	var b *gfx.Buffer
+	if tag != "" {
+		if img, e := ctx.loadSimple(tag); e == nil {
+			c := img.Buffer().Clone()
+			c.KeyToZero(c.At(0, 0))
+			b = c
+		}
+	}
+	if ctx.statIcons == nil {
+		ctx.statIcons = map[string]*gfx.Buffer{}
+	}
+	ctx.statIcons[tag] = b
+	return b
+}
+
+// loadPortrait returns a unit's large portrait, loaded once per session and shared by every menu; nil when the unit has
+// none or it does not load. Callers that draw into it must clone it first.
+func (ctx *Context) loadPortrait(t assets.UnitType) *sprites.Big {
+	if b, ok := ctx.portraits[t]; ok {
+		return b
+	}
+	var b *sprites.Big
+	if tag := unitPortrait[t]; tag != "" {
+		if img, e := ctx.loadBig(tag); e == nil {
+			b = img
+		}
+	}
+	if ctx.portraits == nil {
+		ctx.portraits = map[assets.UnitType]*sprites.Big{}
+	}
+	ctx.portraits[t] = b
+	return b
 }
 
 // loadSimple reads and decodes a SIMPLE sprite resource from the menu library.
@@ -377,7 +420,7 @@ func (ctx *Context) printWrappedIn(win gnw.WinID, text string, r gfx.Rect, color
 }
 
 // wrapLines splits text into at most maxRows word wrapped lines for
-// the given pixel width.
+// the given pixel width; maxRows <= 0 means no limit.
 //
 // C++: Text_SplitText (text.cpp)
 func wrapLines(f *fonts.Font, text string, maxW, maxRows int) []string {
@@ -390,7 +433,7 @@ func wrapLines(f *fonts.Font, text string, maxW, maxRows int) []string {
 		}
 		if f.Width(candidate) > maxW && line != "" {
 			lines = append(lines, line)
-			if len(lines) == maxRows {
+			if maxRows > 0 && len(lines) == maxRows {
 				return lines
 			}
 			line = word
@@ -398,7 +441,7 @@ func wrapLines(f *fonts.Font, text string, maxW, maxRows int) []string {
 			line = candidate
 		}
 	}
-	if line != "" && len(lines) < maxRows {
+	if line != "" && (maxRows <= 0 || len(lines) < maxRows) {
 		lines = append(lines, line)
 	}
 	return lines
@@ -774,7 +817,7 @@ func blitTextLine(buf *gfx.Buffer, f *fonts.Font, s string, x, y, w int, color f
 			x += (w - tw) / 2
 		}
 	}
-	aw := minInt(w, buf.W-x)
+	aw := min(w, buf.W-x)
 	ah := buf.H - y
 	if aw <= 0 || ah <= 0 || x < 0 || y < 0 {
 		return

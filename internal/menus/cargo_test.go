@@ -16,7 +16,6 @@ import (
 	"github.com/suglasp/max-go/internal/gnw"
 	"github.com/suglasp/max-go/internal/platform"
 	"github.com/suglasp/max-go/internal/resfile"
-	"github.com/suglasp/max-go/internal/sprites"
 	"github.com/suglasp/max-go/internal/testutil"
 	"github.com/suglasp/max-go/internal/units"
 )
@@ -188,9 +187,9 @@ func newTestCargoMenu(t *testing.T, lo *CargoLoadout) *cargoMenu {
 		buyRows: cgBuyH / cgRowH, cargoRows: cgCargoH / cgRowH,
 		pic: pic, f5: sys.Fonts().Get(fonts.Font5), buf: sys.Buf(mainWindow),
 		sc: units.NewSpriteCache(lib, &pic.Palette), at: a.Attribs,
-		baseVals:  map[assets.UnitType]*game.UnitValues{},
-		curVals:   map[assets.UnitType]*game.UnitValues{},
-		statIcons: map[string]*gfx.Buffer{}, portraitCache: map[assets.UnitType]*sprites.Big{},
+		baseVals: map[assets.UnitType]*game.UnitValues{},
+		curVals:  map[assets.UnitType]*game.UnitValues{},
+		/* statIcons, portraitCache: note: unused code in Go port, the caches moved to Context */
 		buyBtn: -1, deleteBtn: -1,
 	}
 	m.entry = *lo

@@ -15,7 +15,6 @@ import (
 	"github.com/suglasp/max-go/internal/gnw"
 	"github.com/suglasp/max-go/internal/platform"
 	"github.com/suglasp/max-go/internal/resfile"
-	"github.com/suglasp/max-go/internal/sprites"
 	"github.com/suglasp/max-go/internal/testutil"
 	"github.com/suglasp/max-go/internal/units"
 )
@@ -139,8 +138,8 @@ func newTestConstructMenu(t *testing.T, storage int) *constructMenu {
 		rate: 1, maxRate: 1,
 		pic: pic, f5: sys.Fonts().Get(fonts.Font5), buf: sys.Buf(mainWindow),
 		sc: units.NewSpriteCache(lib, &pic.Palette), at: a.Attribs,
-		listRows:  (cbListLRY - cbListY) / cbRowH,
-		statIcons: map[string]*gfx.Buffer{}, portraitCache: map[assets.UnitType]*sprites.Big{},
+		listRows: (cbListLRY - cbListY) / cbRowH,
+		/* statIcons, portraitCache: note: unused code in Go port, the caches moved to Context */
 		rateX1: -1, rateX2: -1, rateX4: -1,
 	}
 }
