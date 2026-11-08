@@ -136,7 +136,8 @@ func TestReactionRequiresVisibility(t *testing.T) {
 	g := newGame(t, 20, 12)
 	// scan 1: the turret sees only its own neighbourhood, NOT the tank 3 cells away,
 	// although the tank is inside weapon range 4 - so the fog gate suppresses it.
-	turret := addReactor(g, assets.GunTurrt, 1, 0, 5, 5, 4, 1, reactBuilding)
+	addReactor(g, assets.GunTurrt, 1, 0, 5, 5, 4, 1, reactBuilding)
+	/* turret := ...; _ = turret: note: unused code in Go port, the name was never read */
 	tank := addTankTarget(g, 2, 8, 5, 1) // distance 3: in range 4, outside scan 1
 	g.RefreshVisibility()
 
@@ -148,7 +149,6 @@ func TestReactionRequiresVisibility(t *testing.T) {
 	if tank.Hits != 30 {
 		t.Error("a reactor that cannot see the mover (fog) must not react")
 	}
-	_ = turret
 }
 
 // TestEnemyMoveTriggersReaction: the end to end Tick hook - an enemy unit MOVING

@@ -115,10 +115,15 @@ func TestPauseMessageComesFromTheStrings(t *testing.T) {
 }
 
 // TestPauseDialogIsInertWithoutAHook: no message hook (headless, benches) means
-// Alt+P does nothing instead of reaching into a nil modal.
+// Alt+P does nothing instead of reaching into a nil modal: no modal opens and the turn clock is untouched.
 func TestPauseDialogIsInertWithoutAHook(t *testing.T) {
 	s, _ := newClickScreen(t)
+	clock := s.turnFlow.turnStart
 	s.pauseDialog()
+
+	if s.turnFlow.turnStart != clock || s.turnFlow.wdModalDepth.Load() != 0 {
+		t.Errorf("no hook: turn clock %d -> %d, modal depth %d, want untouched", clock, s.turnFlow.turnStart, s.turnFlow.wdModalDepth.Load())
+	}
 }
 
 // TestKeybindSurveyTogglesOverlay: the survey action flips the same field the

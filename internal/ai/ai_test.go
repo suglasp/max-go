@@ -1397,7 +1397,7 @@ func TestAIClosesAndEngages(t *testing.T) {
 		}
 	})
 
-	if enemy.Hits > 0 && chebyshev(aiTank.GridX, aiTank.GridY, 16, 2) >= start {
+	if chebyshev(aiTank.GridX, aiTank.GridY, 16, 2) >= start {
 		t.Errorf("AI tank made no progress: still %d cells away (start %d), enemy hits %d",
 			chebyshev(aiTank.GridX, aiTank.GridY, 16, 2), start, enemy.Hits)
 	}

@@ -337,6 +337,8 @@ func readFirst(lib Reader, tags ...string) ([]byte, string, error) {
 	return nil, "", errors.Join(errs...)
 }
 
+/* // note: unused code in Go port
+// the helper repeated the builtin max; callers use it directly.
 // max returns the larger of two integers.
 func max(a, b int) int {
 	if a > b {
@@ -344,3 +346,4 @@ func max(a, b int) int {
 	}
 	return b
 }
+*/

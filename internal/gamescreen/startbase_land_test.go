@@ -10,17 +10,26 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
+	"github.com/suglasp/max-go/internal/economy"
 	"github.com/suglasp/max-go/internal/game"
 )
 
 // TestDeployStartBaseOneComplex checks that the landed mining station and power generator share one complex,
 // that the station counts as one mine and one building (the 1x1 generator carries no BUILDING flag, so it is not
-// counted), and that every founder lands on the map.
+// counted), and that every founder lands on the map. The station starts mining its deposit (16 raw, no fuel), stands
+// on one large slab, and no two founders share a cell. The landing gold is not checked here: the caller sets it
+// from the start credit, deployStartBase does not.
 //
 // C++ ported : game_manager.cpp - GameManager_ProcessTeamMissionSupplyUnits (stats_mines_built, stats_buildings_built)
 func TestDeployStartBaseOneComplex(t *testing.T) {
 	s, g := newClickScreen(t)
 	roster := founderRoster()
+	g.Resources = economy.NewResourceMap(16, 16)
+	for y := 0; y < 16; y++ {
+		for x := 0; x < 16; x++ {
+			g.Resources.SetDeposit(x, y, economy.CargoRaw, 16)
+		}
+	}
 
 	s.deployStartBase(1, game.Point{X: 8, Y: 8}, roster, nil, false, rand.New(rand.NewSource(7)))
 
@@ -50,6 +59,23 @@ func TestDeployStartBaseOneComplex(t *testing.T) {
 	}
 	if ts := g.TeamStats[1]; ts.MinesBuilt != 1 || ts.BuildingsBuilt != 1 {
 		t.Errorf("stats mines/buildings = %d/%d, want 1/1", ts.MinesBuilt, ts.BuildingsBuilt)
+	}
+	if mine.RawMining != 16 || mine.FuelMining != 0 {
+		t.Errorf("mine raw/fuel mining = %d/%d, want 16/0", mine.RawMining, mine.FuelMining)
+	}
+	slabs := 0
+	for _, u := range g.Units.Cells.At(mine.GridX, mine.GridY) {
+		if u.Type == assets.LrgSlab {
+			slabs++
+		}
+	}
+	if slabs != 1 {
+		t.Errorf("large slabs under the mining station = %d, want 1", slabs)
+	}
+	for cell, types := range mobileCellsOf(g) {
+		if len(types) > 1 {
+			t.Errorf("founders %v share cell %v", types, cell)
+		}
 	}
 }
 

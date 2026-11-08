@@ -179,7 +179,7 @@ func TestBuyUpgradesTakesTheCheapestStep(t *testing.T) {
 	armor := s.upgradePrice(1, assets.Tank, game.AttribArmor)
 
 	if attack == armor {
-		t.Skip("the two steps cost the same: nothing to tell apart")
+		t.Fatalf("setup: the attack and armor steps both cost %d, the test cannot tell them apart", attack)
 	}
 
 	cheapest, dear := game.AttribAttack, game.AttribArmor

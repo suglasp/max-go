@@ -29,7 +29,7 @@ func walledCost(x, y int) int {
 // BenchmarkFindUnreachable measures the open-grid corner-to-corner baseline retained under its original benchmark name.
 func BenchmarkFindUnreachable(b *testing.B) {
 	start := game.Point{X: 0, Y: 0}
-	dest := game.Point{X: benchW - 1, Y: benchH - 1} // across the wall: unreachable
+	dest := game.Point{X: benchW - 1, Y: benchH - 1} // the open grid: reachable (the name is historical)
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -59,7 +59,9 @@ func BenchmarkFindLongOpen(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		Find(openCost, benchW, benchH, start, dest, 0)
+		if _, ok := Find(openCost, benchW, benchH, start, dest, 0); !ok {
+			b.Fatal("the open corner to corner route must be found")
+		}
 	}
 }
 
@@ -70,6 +72,8 @@ func BenchmarkFindShort(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		Find(openCost, benchW, benchH, start, dest, 0)
+		if _, ok := Find(openCost, benchW, benchH, start, dest, 0); !ok {
+			b.Fatal("the short open route must be found")
+		}
 	}
 }

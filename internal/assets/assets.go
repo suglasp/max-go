@@ -142,7 +142,7 @@ func ParseClans(data []byte) ([]Clan, error) {
 				cur = nil
 				continue
 			}
-			clans = append(clans, Clan{ /* Key: text[1 : len(text)-1], note: unused code in Go port, see Clan */ })
+			clans = append(clans, Clan{ /* Key: text[1 : len(text)-1]: note: unused code in Go port, see Clan */ })
 			cur = &clans[len(clans)-1]
 
 		case cur == nil:

@@ -553,14 +553,14 @@ func (s *System) CheckButtons(m platform.MouseState) []int {
 	left := m.Buttons&platform.MousePressLeft != 0
 	/* right := m.Buttons&platform.MousePressRight != 0: note: ported but unused code in Go port, no right button */
 	releasedLeft := m.Buttons&platform.MouseReleaseLeft != 0
-	/* releasedRight := m.Buttons&platform.MouseReleaseRight != 0: note: ported but unused code in Go port */
+	/* releasedRight := m.Buttons&platform.MouseReleaseRight != 0: note: ported but unused code in Go port, no right button */
 
 	// Press.
 	if over != nil && s.clickButton == nil {
 		switch {
 		case left:
 			s.clickButton = over
-			/* s.clickRight = false: note: ported but unused code in Go port */
+			/* s.clickRight = false: note: ported but unused code in Go port, no right button */
 			s.drawButton(over, over.imageOr(over.down))
 			if s.soundFunc != nil {
 				s.soundFunc(over.id, true)
@@ -578,7 +578,7 @@ func (s *System) CheckButtons(m platform.MouseState) []int {
 	}
 
 	// Release.
-	if s.clickButton != nil && releasedLeft /* || (s.clickRight && releasedRight): note: ported but unused code in Go port */ {
+	if s.clickButton != nil && releasedLeft /* || (s.clickRight && releasedRight): note: ported but unused code in Go port, no right button */ {
 		b := s.clickButton
 		s.clickButton = nil
 		if b.under(m.X, m.Y) {
@@ -608,17 +608,17 @@ func (s *System) handleRelease(b *Button) []int {
 					b.group.currChecked--
 				}
 				b.flags &^= buttonChecked
-				push(b.rValue) /* a right click pushed b.rrValue: note: ported but unused code in Go port */
+				push(b.rValue) /* a right click pushed b.rrValue: note: ported but unused code in Go port, no right button */
 			}
 		} else if s.checkGroup(b) {
 			b.flags |= buttonChecked
-			push(b.rValue) /* a right click pushed b.rpValue: note: ported but unused code in Go port */
+			push(b.rValue) /* a right click pushed b.rpValue: note: ported but unused code in Go port, no right button */
 			if b.group != nil && b.group.onChange != nil {
 				b.group.onChange(b.id)
 			}
 		}
 	} else {
-		push(b.rValue) /* a right click pushed b.rrValue: note: ported but unused code in Go port */
+		push(b.rValue) /* a right click pushed b.rrValue: note: ported but unused code in Go port, no right button */
 	}
 
 	if s.soundFunc != nil {

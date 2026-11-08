@@ -350,7 +350,7 @@ func TestHeadlessConstructorBuild(t *testing.T) {
 	// First turn latches the build (constructor is adjacent).
 	g.BeginTeamTurn(0)
 	g.EndTeamTurn(0)
-	g.State.AdvanceTurn()
+	g.AdvanceTurn()
 	if len(g.builds) > 0 && !g.builds[0].Started {
 		t.Fatal("build did not commit after the constructor reached the site")
 	}
@@ -360,7 +360,7 @@ func TestHeadlessConstructorBuild(t *testing.T) {
 	for turn := 0; turn < 8 && len(g.builds) > 0; turn++ {
 		g.BeginTeamTurn(0)
 		g.EndTeamTurn(0)
-		g.State.AdvanceTurn()
+		g.AdvanceTurn()
 	}
 
 	if len(g.builds) != 0 {
@@ -889,7 +889,7 @@ func TestHeadlessEconomyAccumulates(t *testing.T) {
 	for turn := 0; turn < 3; turn++ {
 		g.BeginTeamTurn(0)
 		g.EndTeamTurn(0)
-		g.State.AdvanceTurn()
+		g.AdvanceTurn()
 	}
 	// No fuel deposit here, so raw fills the full 16 cap: 16/turn over 3 turns, and the
 	// base (25 + 50) can hold all of it.
@@ -949,7 +949,7 @@ func TestEconomySustainsWithFuelDeposit(t *testing.T) {
 		before := c.Material
 		g.BeginTeamTurn(0)
 		g.EndTeamTurn(0)
-		g.State.AdvanceTurn()
+		g.AdvanceTurn()
 
 		// The base must keep EARNING: material rises until the stores are full, and once
 		// full it must HOLD there (a death spiral would drain it back toward zero).
@@ -1049,7 +1049,7 @@ func TestHeadlessBuildBaseAndTank(t *testing.T) {
 	for turn := 0; turn < 8 && g.BuildReadyInfo(factory) == nil; turn++ { // mining funds + completes
 		g.BeginTeamTurn(0)
 		g.EndTeamTurn(0)
-		g.State.AdvanceTurn()
+		g.AdvanceTurn()
 	}
 
 	if len(g.builds) != 0 {
@@ -1072,7 +1072,7 @@ func TestHeadlessBuildBaseAndTank(t *testing.T) {
 
 // TestFactoryStarvedByPowerDeficit: one generator powers the mining station but not
 // ALSO the factory (factories are cut FIRST on a power deficit), so the factory's
-// build HOLDS and PowerShort is true; adding a second generator clears the deficit and
+// build HOLDS and the factory reads PowerStarved; adding a second generator clears the deficit and
 // the build resumes. (The world rule the bench's single tiny generator should show.)
 func TestFactoryStarvedByPowerDeficit(t *testing.T) {
 	g := newGame(t, 16, 16)
@@ -1104,7 +1104,7 @@ func TestFactoryStarvedByPowerDeficit(t *testing.T) {
 	for turn := 0; turn < 6; turn++ {
 		g.BeginTeamTurn(0)
 		g.EndTeamTurn(0)
-		g.State.AdvanceTurn()
+		g.AdvanceTurn()
 	}
 	if !factory.PowerStarved {
 		t.Error("factory should be power-starved (one generator cannot power mining + factory)")
@@ -1120,7 +1120,7 @@ func TestFactoryStarvedByPowerDeficit(t *testing.T) {
 	for turn := 0; turn < 8 && g.BuildReadyInfo(factory) == nil; turn++ {
 		g.BeginTeamTurn(0)
 		g.EndTeamTurn(0)
-		g.State.AdvanceTurn()
+		g.AdvanceTurn()
 	}
 	if factory.PowerStarved {
 		t.Error("factory should no longer be starved once a second generator is added")

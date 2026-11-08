@@ -174,14 +174,14 @@ func RunReports(ctx *Context, data screendata.ReportData) (uint16, error) {
 		// Filter checkboxes: the four location filters default on, the four attribute
 		// filters off (reportmenu.cpp ButtonState defaults).
 		filters: []reportFilter{
-			{ctx.text("2ecc", "Air Units"), true /* , true: the location flag, note: unused code in Go port */, 218},
-			{ctx.text("4a3b", "Land Units"), true /* , true: the location flag, note: unused code in Go port */, 236},
-			{ctx.text("1c43", "Sea Units"), true /* , true: the location flag, note: unused code in Go port */, 254},
-			{ctx.text("4393", "Stationary Units"), true /* , true: the location flag, note: unused code in Go port */, 272},
-			{ctx.text("929b", "Production Units"), false /* , false: the location flag, note: unused code in Go port */, 312},
-			{ctx.text("1f97", "Combat Units"), false /* , false: the location flag, note: unused code in Go port */, 330},
-			{ctx.text("045b", "Damaged Units"), false /* , false: the location flag, note: unused code in Go port */, 348},
-			{ctx.text("e5ae", "Stealthy Units"), false /* , false: the location flag, note: unused code in Go port */, 366},
+			{ctx.text("2ecc", "Air Units"), true /* , true: note: unused code in Go port, see reportFilter */, 218},
+			{ctx.text("4a3b", "Land Units"), true /* , true: note: unused code in Go port, see reportFilter */, 236},
+			{ctx.text("1c43", "Sea Units"), true /* , true: note: unused code in Go port, see reportFilter */, 254},
+			{ctx.text("4393", "Stationary Units"), true /* , true: note: unused code in Go port, see reportFilter */, 272},
+			{ctx.text("929b", "Production Units"), false /* , false: note: unused code in Go port, see reportFilter */, 312},
+			{ctx.text("1f97", "Combat Units"), false /* , false: note: unused code in Go port, see reportFilter */, 330},
+			{ctx.text("045b", "Damaged Units"), false /* , false: note: unused code in Go port, see reportFilter */, 348},
+			{ctx.text("e5ae", "Stealthy Units"), false /* , false: note: unused code in Go port, see reportFilter */, 366},
 		},
 		pic:            pic,
 		f5:             ctx.Sys.Fonts().Get(fonts.Font5),
@@ -530,9 +530,7 @@ func (m *reportMenu) drawStatBlock(buf *gfx.Buffer, stats []screendata.ReportSta
 			continue
 		}
 
-		// The block is cut into four, and each line is inset a pixel top and bottom.
-		top := y + (h*i)/rpStatRows + 1
-		bottom := y + (h*(i+1))/rpStatRows - 1
+		top, bottom := statLineSpan(y, h, i)
 		rowH := bottom - top
 
 		if rowH <= 0 {
@@ -566,8 +564,19 @@ func (m *reportMenu) drawStatBlock(buf *gfx.Buffer, stats []screendata.ReportSta
 		// The icons get the row less its bottom scanline, which is the hairline's. That
 		// one pixel decides the whole look: a 7px icon in the 11px rows would otherwise
 		// clear the stagger threshold and walk down the row instead of standing level.
-		drawGaugePair(buf, st.Full, st.Empty, gaugeCur, gaugeBase, iconX, top, w-rpStatIconX, rowH-1, iconX, x+w, top+rowH)
+		drawGaugePair(buf, st.Full, st.Empty, gaugeCur, gaugeBase, iconX, top, w-rpStatIconX, statGaugeBoxH(rowH), iconX, x+w, top+rowH)
 	}
+}
+
+// statLineSpan returns the top and bottom scanline of stat line i in a block h pixels tall starting at y: the block is
+// cut into rpStatRows lines, and each line is inset a pixel top and bottom.
+func statLineSpan(y, h, i int) (top, bottom int) {
+	return y + (h*i)/rpStatRows + 1, y + (h*(i+1))/rpStatRows - 1
+}
+
+// statGaugeBoxH is the icon box height of a stat line rowH tall: the line less its bottom scanline, the hairline's.
+func statGaugeBoxH(rowH int) int {
+	return rowH - 1
 }
 
 // pageInfo returns the scrollable item count and rows per page for the active

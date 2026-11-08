@@ -9,7 +9,7 @@ import (
 	"encoding/binary"
 	"os"
 	"path/filepath"
-	"runtime"
+	"strings"
 	"testing"
 
 	soloudlib "soloud"
@@ -21,6 +21,8 @@ import (
 func testDLL(t *testing.T) string {
 	t.Helper()
 
+	/* // note: unused code in Go port
+	// the per platform name table; the binding's DefaultLibName gives the same names.
 	// Linux is the default below.
 	name := "libsoloud_x64.so"
 
@@ -35,8 +37,9 @@ func testDLL(t *testing.T) string {
 		// macOS
 		name = "libsoloud_x64.dylib"
 	}
+	*/
 
-	path := filepath.Join("..", "..", "..", "dependencies", "soloud-bin", name)
+	path := filepath.Join("..", "..", "..", "dependencies", "soloud-bin", soloudlib.DefaultLibName())
 	if _, err := os.Stat(path); err != nil {
 		t.Skipf("SoLoud DLL not available: %v", err)
 	}
@@ -50,6 +53,12 @@ func TestMissingDLLReturnsError(t *testing.T) {
 	if err == nil {
 		be.Close()
 		t.Skip("SoLoud was already loaded in this process")
+	}
+	if be != nil {
+		t.Error("a failed load returned a backend")
+	}
+	if !strings.Contains(err.Error(), "missing-soloud.dll") {
+		t.Errorf("error %q does not name the missing library", err)
 	}
 }
 

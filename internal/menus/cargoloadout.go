@@ -52,7 +52,7 @@ func NewCargoLoadout(team, startGold int) *CargoLoadout {
 		StartGold: startGold,
 		TeamGold:  startGold,
 		Units:     append([]assets.UnitType(nil), cargoMinimumTypes...),
-		/* Initial:   len(cargoMinimumTypes), note: unused code in Go port, see CargoLoadout */
+		/* Initial: len(cargoMinimumTypes): note: unused code in Go port, see CargoLoadout */
 	}
 
 	lo.Cargos = make([]int, len(lo.Units))

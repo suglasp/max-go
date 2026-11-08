@@ -7,6 +7,8 @@ package menus
 
 import "testing"
 
+/* // note: unused code in Go port
+// a copy of the report's line box; the test now calls the live statLineSpan and statGaugeBoxH.
 // The report cuts its 50px stat block into four, insetting each line a pixel top and
 // bottom, so the rows come out 10, 11, 10, 11 tall. drawStatBlock then hands the gauge
 // one pixel less than that, which is the box the icons are staggered in.
@@ -15,6 +17,14 @@ func reportGaugeBoxH(row int) int {
 	bottom := (rpRowBodyH*(row+1))/rpStatRows - 1
 
 	return bottom - top - 1
+}
+*/
+
+// reportGaugeBox is the icon box of report stat line row, from the same calls drawStatBlock makes for a row.
+func reportGaugeBox(row int) int {
+	top, bottom := statLineSpan(0, rpRowBodyH, row)
+
+	return statGaugeBoxH(bottom - top)
 }
 
 // A report row must draw its icons on one level. The reference calculation uses an icon box one pixel shorter than the panel
@@ -47,7 +57,7 @@ func TestReportGaugeRowsDoNotStagger(t *testing.T) {
 		{"cargo raw", 1, rawH, 15},
 		{"complex pool", 2, workH, 25},
 	} {
-		if got := gaugeStagger(reportGaugeBoxH(tc.row), tc.iconH, tc.count); got != 0 {
+		if got := gaugeStagger(reportGaugeBox(tc.row), tc.iconH, tc.count); got != 0 {
 			t.Errorf("%s: stagger = %d, want 0 (the row should be level)", tc.name, got)
 		}
 	}

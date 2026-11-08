@@ -66,8 +66,8 @@ func TestReachabilityRejectsAcrossWater(t *testing.T) {
 // BenchmarkBuildReachLabels measures the one new cost S2 adds: building the
 // connected component labels for the whole 112x112 grid once per invalidation
 // (then every move order's reachability check is an O(1) lookup). It must be
-// comfortably cheaper than the flood it replaces (a single unreachable A* was
-// ~0.59 ms after S1), since it is reused across all of a turn's move orders.
+// comfortably cheaper than the flood it replaces (a single unreachable A* search),
+// since it is reused across all of a turn's move orders.
 func BenchmarkBuildReachLabels(b *testing.B) {
 	const w, h, waterX = 112, 112, 56
 	mgr := units.NewManager()

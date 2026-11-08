@@ -350,8 +350,8 @@ func isGenerator(t assets.UnitType) bool {
 }
 
 // hasPowerSupply reports whether the complex contains a generator AND a fuel
-// source for it (fuel in stock OR a member mining its own fuel). Shared by
-// CanPower and StartShortage.
+// source for it (fuel in stock OR a member mining its own fuel). Read by
+// StartShortage, the power on gate.
 func (c *Complex) hasPowerSupply() bool {
 	hasGenerator := false
 	hasFuel := c.Fuel > 0

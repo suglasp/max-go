@@ -358,7 +358,8 @@ func TestCapStoresWastesWhatTheBaseCannotHold(t *testing.T) {
 	c.Grow(building(assets.ADump, 0, 6, 5, game.OrderPowerOn, 50))
 	c.Material = 40
 
-	if c.CapStores(); c.Material != 40 {
+	c.CapStores()
+	if c.Material != 40 {
 		t.Errorf("with a Storage Unit: material = %d, want 40 kept", c.Material)
 	}
 }

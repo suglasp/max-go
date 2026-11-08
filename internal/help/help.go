@@ -134,7 +134,7 @@ func parseHeader(line string) (Entry, bool) {
 	}
 
 	return Entry{
-		/* Name: strings.TrimSpace(line[:open]), note: unused code in Go port, see Entry */
+		/* Name: strings.TrimSpace(line[:open]): note: unused code in Go port, see Entry */
 		ULX: values[0], ULY: values[1],
 		LRX: values[2], LRY: values[3],
 	}, true

@@ -77,7 +77,8 @@ func TestZOrderAndMoveOnTop(t *testing.T) {
 	s, screen := newSys(t, 64, 48)
 
 	top := s.AddWindow(0, 0, 10, 10, 5, WindowMoveOnTop) // stays above
-	s.AddWindow(0, 0, 10, 10, 6, 0)                      // inserted below the MoveOnTop stratum (was mid, see the Show block)
+	s.AddWindow(0, 0, 10, 10, 6, 0)                      // inserted below the MoveOnTop stratum
+	/* mid := s.AddWindow(0, 0, 10, 10, 6, 0): note: unused code in Go port, mid was only read by the Show check below */
 
 	s.Composite(-100, -100)
 	if screen.At(5, 5) != 5 {
@@ -107,6 +108,7 @@ func TestHideShowTransparent(t *testing.T) {
 	s.Fill(1, 0, 0, 64, 48, 9)
 
 	s.AddWindow(4, 4, 8, 8, 3, 0)
+	/* w := s.AddWindow(4, 4, 8, 8, 3, 0): note: unused code in Go port, w was only read by the Hide / Show checks below */
 	/* // note: unused code in Go port
 	// the checks of Hide and Show, commented out with them.
 	s.Hide(w)

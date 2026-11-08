@@ -317,7 +317,7 @@ func TestFactoryQueueProducesFromComplex(t *testing.T) {
 		for turn := 0; turn < 16 && g.BuildReadyInfo(factory) == nil; turn++ {
 			g.BeginTeamTurn(0)
 			g.EndTeamTurn(0)
-			g.State.AdvanceTurn()
+			g.AdvanceTurn()
 		}
 		if g.BuildReadyInfo(factory) == nil {
 			t.Fatalf("unit %d never finished", produced+1)

@@ -6,7 +6,6 @@
 package paths
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -241,6 +240,12 @@ func TestFindOnRealMap(t *testing.T) {
 	if !prev.Equal(dest) {
 		t.Errorf("path ends at %v, want %v", prev, dest)
 	}
+	if want := max(dest.X-start.X, start.X-dest.X, dest.Y-start.Y, start.Y-dest.Y); len(r.Steps) < want || want < 7 {
+		t.Errorf("route %v -> %v has %d steps, want at least %d (and the two cells 7 or more apart)", start, dest, len(r.Steps), want)
+	}
 }
 
+/* // note: unused code in Go port
+// a TestMain that only ran the tests, the default behaviour.
 func TestMain(m *testing.M) { os.Exit(m.Run()) }
+*/

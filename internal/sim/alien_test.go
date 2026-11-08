@@ -43,7 +43,7 @@ func TestAlienReactorNeverFires(t *testing.T) {
 // so it can be attacked and salvaged.
 func TestPlayerCanAttackAlien(t *testing.T) {
 	g := newGame(t, 20, 12)
-	mobile := game.FlagMobileLandUnit | game.FlagSelectable
+	/* mobile := game.FlagMobileLandUnit | game.FlagSelectable: note: unused code in Go port, never read (was _ = mobile) */
 
 	turret := addReactor(g, assets.GunTurrt, 1, 0, 5, 5, 4, 8, reactBuilding)
 	alienMover := addTankTarget(g, 2, 7, 5, game.AlienTeam) // alien, 2 tiles east -> in range
@@ -57,7 +57,6 @@ func TestPlayerCanAttackAlien(t *testing.T) {
 	if turret.Shots != 0 {
 		t.Error("the player turret should have spent its shot attacking the alien")
 	}
-	_ = mobile
 }
 
 // TestPlaceAlienBuildingHasNoComplex verifies that an alien building deploys without joining a complex network because the alien faction has no economy.

@@ -21,6 +21,9 @@ func TestVoiceGroups(t *testing.T) {
 		{"status red", StatusRed(), []string{"V_F154", "V_F155"}},
 		{"under attack", UnderAttack(), []string{"V_F229", "V_F230", "V_F231", "V_F232", "V_F255", "V_F256"}},
 		{"unit destroyed", UnitDestroyed(), []string{"V_F234", "V_F236"}},
+		{"captured units", CapturedUnits(), []string{"V_F239", "V_F242"}},
+		{"select damaged", SelectDamaged(), []string{"V_F150", "V_F151", "V_F247", "V_F265"}},
+		{"select critical", SelectCritical(), []string{"V_F154", "V_F155", "V_F247", "V_F265"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

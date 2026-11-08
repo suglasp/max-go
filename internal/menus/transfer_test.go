@@ -5,8 +5,14 @@
 // Licensed under the MIT License. See MIT.md file in the project root for full license information.
 package menus
 
-import "testing"
+import (
+	"testing"
 
+	"github.com/suglasp/max-go/internal/screendata"
+)
+
+/* // note: unused code in Go port
+// a copy of the transfer math; the tests now call the live transferLimits and sliderFill in transfer.go.
 // transferLimits mirrors the give/take/start math at the top of RunTransfer so
 // the slider bounds can be checked without a window/render context.
 // C++: the TransferMenu constructor (transfermenu.cpp).
@@ -17,6 +23,7 @@ func transferLimits(srcMat, srcCap, tgtMat, tgtCap int) (giveMax, takeMax, start
 	start = giveMax
 	return
 }
+*/
 
 func TestTransferLimits(t *testing.T) {
 	tests := []struct {
@@ -37,15 +44,16 @@ func TestTransferLimits(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			give, take, start := transferLimits(tc.srcMat, tc.srcCap, tc.tgtMat, tc.tgtCap)
+			info := screendata.TransferInfo{
+				SourceMaterials: tc.srcMat, SourceCapacity: tc.srcCap,
+				TargetMaterials: tc.tgtMat, TargetCapacity: tc.tgtCap,
+			}
+			give, take := transferLimits(info)
 			if give != tc.give {
 				t.Errorf("giveMax = %d, want %d", give, tc.give)
 			}
 			if take != tc.take {
 				t.Errorf("takeMax = %d, want %d", take, tc.take)
-			}
-			if start != tc.give {
-				t.Errorf("start = %d, want giveMax %d", start, tc.give)
 			}
 		})
 	}
@@ -55,12 +63,18 @@ func TestTransferLimits(t *testing.T) {
 // level to a fraction of the slider width (LoadHorizontalBar's proportional
 // fill), so an empty target reads 0 and a full one reads the whole bar.
 func TestTransferSliderFill(t *testing.T) {
+	/* // note: unused code in Go port
+	// a copy of the fill math; fill now calls the live sliderFill.
 	const sliderW = 223
 	fill := func(value, tgtMat, tgtCap int) int {
 		zeroOffset := -tgtMat
 		capacity := tgtCap // freeCapacity - zeroOffset
 		f := (value - zeroOffset) * sliderW / capacity
 		return max(0, min(f, sliderW))
+	}
+	*/
+	fill := func(value, tgtMat, tgtCap int) int {
+		return sliderFill(value, -tgtMat, tgtCap, sliderW) // as drawDynamic: capacity = the target's full storage
 	}
 	// Target empty (0/40), source takes its whole self -> 0 transfer keeps it 0.
 	if got := fill(0, 0, 40); got != 0 {

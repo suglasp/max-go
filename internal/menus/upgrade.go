@@ -139,7 +139,7 @@ func RunUpgrade(ctx *Context, units []*game.UpgradeUnit, gold *int, center gfx.R
 		visRows:   ugListH / ugRowH,
 		portraits: map[assets.UnitType]*gfx.Buffer{},
 		sc:        unitspr.NewSpriteCache(ctx.Lib, &pic.Palette),
-		/* statIcons: map[string]*gfx.Buffer{}, note: unused code in Go port, see the struct */
+		/* statIcons: map[string]*gfx.Buffer{}: note: unused code in Go port, see the struct */
 	}
 
 	buttons := m.buildWidgets()

@@ -295,7 +295,7 @@ func (c *SpriteCache) DrawFrame(dst *gfx.Buffer, t assets.UnitType, frame, cellX
 
 // DrawFrameAtPixel composites one body frame at an arbitrary PIXEL position (tile*64
 // world space, like UnitInfo.X/Y), neutral coloured. Used for a travelling missile +
-// its trail, which move smoothly between cells rather than snapping like DrawFrame.
+// its trail, which move smoothly between cells rather than snapping to one.
 // C++: Paths_DrawMissile blits the ROCKET/TORPEDO + RKTSMOKE at interpolated positions.
 func (c *SpriteCache) DrawFrameAtPixel(dst *gfx.Buffer, t assets.UnitType, frame, pixelX, pixelY, zoom, scrollX, scrollY int) {
 	set := c.Set(t)

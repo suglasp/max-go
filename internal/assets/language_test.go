@@ -121,10 +121,10 @@ func TestLoadLanguageStringsFallback(t *testing.T) {
 
 }
 
-// TestLanguageStringsOrFallbackMissingFile checks that missing language files
+// TestLoadStringsMissingFile checks that missing language files
 // return an empty table instead of failing startup (loadStrings with no LANG.RES). Callers provide their own
 // English fallback to Get.
-func TestLanguageStringsOrFallbackMissingFile(t *testing.T) {
+func TestLoadStringsMissingFile(t *testing.T) {
 	origExecutableDir := executableDir
 	executableDir = func() (string, error) { return t.TempDir(), nil }
 	origExtraLanguageDirs := extraLanguageDirs

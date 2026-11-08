@@ -122,7 +122,7 @@ func TestAttackDestroys(t *testing.T) {
 	}
 }
 
-// TestOutOfRangeAndAmmo checks the gates: out of range, no shots, friendly.
+// TestGatesBlockAttack checks the gates: out of range, no shots, friendly.
 func TestGatesBlockAttack(t *testing.T) {
 	a := tank(0, 0, 0)
 	far := tank(1, 10, 0) // range 4, distance 10 -> out of range
@@ -143,7 +143,7 @@ func TestGatesBlockAttack(t *testing.T) {
 	}
 }
 
-// TestAntiAirOnlyHitsAir checks target class validation: an anti aircraft unit
+// TestTargetClassValidation checks target class validation: an anti aircraft unit
 // cannot target a ground tank but can target a flyer; a tank cannot hit a
 // not hovering flyer.
 func TestTargetClassValidation(t *testing.T) {

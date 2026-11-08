@@ -133,7 +133,23 @@ func TestMoveToAttackDropsDeadTarget(t *testing.T) {
 	g.ResolveMovement()
 }
 
-// TestMoveToAttackRefusedWhenUnarmedOrOutOfAmmo: an out of ammo (or unarmed) unit
+// TestMoveToAttackRefusedWhenUnarmed: a unit of an unarmed type (no valid target types, here a Surveyor) cannot
+// accept a move to attack.
+func TestMoveToAttackRefusedWhenUnarmed(t *testing.T) {
+	g := newGame(t, 40, 8)
+	atk := addMoveAttacker(g, 1, 0, 2, 2, 12, 4, 1)
+	enemy := addTankTarget(g, 2, 20, 2, 1)
+	atk.Type = assets.Surveyor // unarmed by type
+
+	if g.OrderMoveToAttack(atk, enemy.GridX, enemy.GridY) {
+		t.Error("an unarmed unit should not accept a move-to-attack")
+	}
+	if atk.AttackTarget != nil {
+		t.Error("a refused order must leave no pursuit target")
+	}
+}
+
+// TestMoveToAttackRefusedWhenOutOfAmmo: an out of ammo unit
 // cannot accept a move to attack - it could never fire even after closing.
 func TestMoveToAttackRefusedWhenOutOfAmmo(t *testing.T) {
 	g := newGame(t, 40, 8)

@@ -465,6 +465,8 @@ func appendLimited(lines []string, line string, limit int) []string {
 	return append(lines, line)
 }
 
+/* // note: unused code in Go port
+// the helper repeated the builtin min; callers use it directly.
 // min returns the smaller of two integers.
 func min(a, b int) int {
 	if a < b {
@@ -472,3 +474,4 @@ func min(a, b int) int {
 	}
 	return b
 }
+*/

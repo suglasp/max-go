@@ -99,12 +99,8 @@ func RunTransfer(ctx *Context, info screendata.TransferInfo, center gfx.Rect) (i
 		f5:     ctx.Sys.Fonts().Get(fonts.Font5),
 	}
 
-	// Transfer math, verbatim from the TransferMenu constructor. giveMax is the
-	// most the source can give the target; takeMax (negative) the most it can
-	// take. The slider value ranges over [takeMax .. giveMax].
-	m.giveMax = min(info.TargetCapacity-info.TargetMaterials, info.SourceMaterials)
-	srcFree := min(info.SourceCapacity-info.SourceMaterials, info.TargetMaterials)
-	m.takeMax = -srcFree
+	// The slider value ranges over [takeMax .. giveMax] and starts at giveMax.
+	m.giveMax, m.takeMax = transferLimits(info)
 	m.value = m.giveMax
 	m.freeCapacity = info.TargetCapacity - info.TargetMaterials
 	m.zeroOffset = -info.TargetMaterials
@@ -168,6 +164,30 @@ func (m *transferMenu) drawStaticText() {
 	ctx.Sys.Unlock()
 }
 
+// transferLimits returns the most the source can give the target (giveMax) and the most it can take back from it
+// (takeMax, zero or negative), each bounded by the free room on the receiving side and the stock on the giving side.
+//
+// C++ ported : transfermenu.cpp - TransferMenu::TransferMenu
+func transferLimits(info screendata.TransferInfo) (giveMax, takeMax int) {
+	giveMax = min(info.TargetCapacity-info.TargetMaterials, info.SourceMaterials)
+	takeMax = -min(info.SourceCapacity-info.SourceMaterials, info.TargetMaterials)
+
+	return giveMax, takeMax
+}
+
+// sliderFill returns how many pixels of a width wide slider show the target's level after moving value: zeroOffset is
+// the target's stock negated and capacity its full storage. The fill is clamped to the slider.
+//
+// C++ ported : scrollbar.cpp - LimitedScrollbar::RefreshScreen
+func sliderFill(value, zeroOffset, capacity, width int) int {
+	fill := 0
+	if capacity > 0 {
+		fill = (value - zeroOffset) * width / capacity
+	}
+
+	return max(0, min(fill, width))
+}
+
 // drawDynamic repaints the slider fill, the direction arrow and the three
 // running totals (amount / source after / target after).
 // C++: Scrollbar::RefreshScreen + TransferMenu::UpdateIndicators.
@@ -178,11 +198,7 @@ func (m *transferMenu) drawDynamic() {
 	defer ctx.Sys.Unlock()
 
 	buf.Sub(sliderX, sliderY, sliderW, sliderH).Copy(pic.Buffer().Sub(sliderX, sliderY, sliderW, sliderH))
-	fill := 0
-	if m.capacity > 0 {
-		fill = (value - m.zeroOffset) * sliderW / m.capacity
-	}
-	fill = max(0, min(fill, sliderW))
+	fill := sliderFill(value, m.zeroOffset, m.capacity, sliderW)
 	if m.bar != nil && fill > 0 {
 		bar := m.bar
 		w := min(fill, bar.W)

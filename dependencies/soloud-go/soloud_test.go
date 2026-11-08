@@ -9,20 +9,22 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 )
 
 // testLibPath is the library the smoke test loads: SOLOUD_DLL if set, otherwise the build the
-// repo ships in ../soloud-bin (the Linux file is libsoloud_x64.so, as the game names it).
+// repo ships in ../soloud-bin under its DefaultLibName.
 func testLibPath() string {
 	if path := os.Getenv("SOLOUD_DLL"); path != "" {
 		return path
 	}
 	name := DefaultLibName()
+	/* // note: unused code in Go port
+	// DefaultLibName names libsoloud_x64.so on Linux now, so the override is the same name.
 	if runtime.GOOS == "linux" {
 		name = "libsoloud_x64.so"
 	}
+	*/
 	return filepath.Join("..", "soloud-bin", name)
 }
 

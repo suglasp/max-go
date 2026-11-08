@@ -9,8 +9,10 @@ import (
 	"encoding/binary"
 	"os"
 	"path/filepath"
-	"runtime"
+	"strings"
 	"testing"
+
+	ma "miniaudio"
 
 	"github.com/suglasp/max-go/internal/audio"
 )
@@ -19,6 +21,8 @@ import (
 func testDLL(t *testing.T) string {
 	t.Helper()
 
+	/* // note: unused code in Go port
+	// the per platform name table; the binding's DefaultLibName gives the same names.
 	// Linux is the default below.
 	name := "libminiaudio_x64.so"
 
@@ -27,8 +31,9 @@ func testDLL(t *testing.T) string {
 	} else if runtime.GOOS == "darwin" {
 		name = "libminiaudio_x64.dylib"
 	}
+	*/
 
-	path := filepath.Join("..", "..", "..", "dependencies", "miniaudio-bin", name)
+	path := filepath.Join("..", "..", "..", "dependencies", "miniaudio-bin", ma.DefaultLibName())
 	if _, err := os.Stat(path); err != nil {
 		t.Skipf("miniaudio library not available: %v", err)
 	}
@@ -42,6 +47,12 @@ func TestMissingDLLReturnsError(t *testing.T) {
 	if err == nil {
 		be.Close()
 		t.Skip("miniaudio was already loaded in this process")
+	}
+	if be != nil {
+		t.Error("a failed load returned a backend")
+	}
+	if !strings.Contains(err.Error(), "missing-miniaudio.dll") {
+		t.Errorf("error %q does not name the missing library", err)
 	}
 }
 

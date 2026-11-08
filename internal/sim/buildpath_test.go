@@ -666,7 +666,7 @@ func TestBuildPathBridgeSpansOpenWater(t *testing.T) {
 		g.BeginTeamTurn(0)
 		g.ResolveMovement()
 		g.EndTeamTurn(0)
-		g.State.AdvanceTurn()
+		g.AdvanceTurn()
 	}
 
 	// Every water and coast cell of the run must carry a bridge - the mid water ones above all.

@@ -233,7 +233,7 @@ func TestMinimap2xDragDoesNotDrift(t *testing.T) {
 	mmW, mmH := viewSize(Minimap)
 	liveOX, liveOY := s.minimap2xOrigin(mmW, mmH)
 	if liveOX == s.minimap.minimapDragOX && liveOY == s.minimap.minimapDragOY {
-		t.Skip("view did not move enough on this map to exercise drift; invariant still holds below")
+		t.Fatal("setup: the view did not move, so the drag cannot show a drift")
 	}
 
 	// Second held frame at the same point: the frozen origin keeps the cell stable,

@@ -333,16 +333,15 @@ func TestTransferReachesAcrossComplex(t *testing.T) {
 	}
 }
 
-// TestTransferFuelAndGold proves the transfer rule is cargo kind generic: a Fuel
-// Truck refills FUEL from a fuel complex, a Gold Truck refills GOLD from a gold
-// complex, and a Fuel Truck is rejected by a raw only complex.
-func TestTransferFuelAndGold(t *testing.T) {
+// TestTransferTargetMatchesCargoKind proves the transfer target rule is cargo kind generic: a Fuel Truck may
+// transfer with a fuel complex, a Gold Truck with a gold complex, and neither with a complex of another kind
+// (a Fuel Truck with a raw only complex, a Gold Truck with a fuel store).
+func TestTransferTargetMatchesCargoKind(t *testing.T) {
 	g := allLandGame(24, 24)
-	fuelStore := placeStorer(g, assets.FDump, 5, 5, false)   // fuel, 1x1
-	goldStore := placeStorer(g, assets.GoldSm, 15, 5, false) // gold, 1x1
-	rawMine := placeStorer(g, assets.MiningSt, 5, 15, true)  // raw, 2x2
-	_ = fuelStore
-	_ = rawMine
+	placeStorer(g, assets.FDump, 5, 5, false)    // fuel, 1x1
+	placeStorer(g, assets.GoldSm, 15, 5, false)  // gold, 1x1
+	placeStorer(g, assets.MiningSt, 5, 15, true) // raw, 2x2
+	/* fuelStore, goldStore, rawMine := ...; _ = fuelStore; _ = rawMine; _ = goldStore: note: unused code in Go port, the names were never read */
 
 	s := &Screen{game: g}
 
@@ -359,7 +358,6 @@ func TestTransferFuelAndGold(t *testing.T) {
 	if s.transferTargetValid(5, 15) {
 		t.Error("a fuel truck must NOT transfer with a raw-only complex")
 	}
-	_ = goldStore
 
 	// Gold Truck next to the gold vault: valid.
 	goldTruck := mobileCargo(g, assets.GoldTrck, 16, 5)
@@ -370,6 +368,13 @@ func TestTransferFuelAndGold(t *testing.T) {
 	if !s.transferTargetValid(15, 5) {
 		t.Error("a gold truck next to a gold vault should be a valid target")
 	}
+
+	// A Gold Truck right next to the fuel store must NOT transfer with it.
+	strayGold := mobileCargo(g, assets.GoldTrck, 4, 5)
+	s.orderInput.xferSource = strayGold
+	if s.transferTargetValid(5, 5) {
+		t.Error("a gold truck must NOT transfer with a fuel store")
+	}
 }
 
 // TestTransferTwoMobileUnitsNeedAdjacency checks that two mobile cargo units (no
@@ -377,10 +382,9 @@ func TestTransferFuelAndGold(t *testing.T) {
 func TestTransferTwoMobileUnitsNeedAdjacency(t *testing.T) {
 	g := allLandGame(24, 24)
 	a := mobileCargo(g, assets.SplyTrck, 5, 5)
-	adjacent := mobileCargo(g, assets.SplyTrck, 6, 5) // touching a
-	apart := mobileCargo(g, assets.SplyTrck, 9, 5)    // 4 cells from a
-	_ = adjacent
-	_ = apart
+	mobileCargo(g, assets.SplyTrck, 6, 5) // touching a
+	mobileCargo(g, assets.SplyTrck, 9, 5) // 4 cells from a
+	/* adjacent, apart := ...; _ = adjacent; _ = apart: note: unused code in Go port, the names were never read */
 
 	s := &Screen{game: g}
 	s.orderInput.xferSource = a

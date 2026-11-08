@@ -159,9 +159,9 @@ func TestBulldozerReclaimsRubbleMaterial(t *testing.T) {
 	g := newGame(t, 16, 16)
 	tank := addTank(g, 1, 1, 6, 6)
 	tank.Values.Set(game.AttribTurns, 10) // gives the unit a non zero build cost
-	want := rubbleSalvage(tank)
-	if want <= 0 {
-		t.Fatalf("setup: expected positive salvage, got %d", want)
+	const want = 15                       // half the build cost: 3 raw a turn at a land plant x 10 turns / 2
+	if got := rubbleSalvage(tank); got != want {
+		t.Fatalf("salvage = %d, want %d", got, want)
 	}
 	g.DestroyUnit(tank)
 
@@ -183,7 +183,10 @@ func TestBulldozerReclaimClampsToCapacity(t *testing.T) {
 	g := newGame(t, 16, 16)
 	tank := addTank(g, 1, 1, 5, 5)
 	tank.Values.Set(game.AttribTurns, 10)
-	want := rubbleSalvage(tank)
+	const want = 15 // half the build cost: 3 raw a turn at a land plant x 10 turns / 2
+	if got := rubbleSalvage(tank); got != want {
+		t.Fatalf("salvage = %d, want %d", got, want)
+	}
 	g.DestroyUnit(tank)
 
 	dozer := addBulldozer(g, 2, 5, 5)

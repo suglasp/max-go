@@ -131,7 +131,7 @@ func TestVictoryEditUsesOwnFont(t *testing.T) {
 	h5 := sys.Fonts().Get(fonts.Font5).Height
 	h1 := sys.Fonts().Get(fonts.Font1).Height
 	if h1 <= h5 {
-		t.Skipf("Font1 height %d not larger than Font5 height %d", h1, h5)
+		t.Fatalf("retail fonts: Font1 height %d not larger than Font5 height %d", h1, h5)
 	}
 
 	box := gcEditRects()[0]

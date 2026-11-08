@@ -28,8 +28,8 @@ func TestAttackSpendsSpeed(t *testing.T) {
 	atk.InitState() // Shots=2, Speed=8, Ammo=6
 	g.Units.Deploy(atk, 2, 2)
 
-	tgt := addGunTank(g, 2, 1, 3, 2)
-	_ = tgt
+	addGunTank(g, 2, 1, 3, 2) // the target
+	/* tgt := ...; _ = tgt: note: unused code in Go port, the name was never read */
 
 	if atk.Speed != 8 || atk.Shots != 2 {
 		t.Fatalf("pre-fire Speed=%d Shots=%d, want 8/2", atk.Speed, atk.Shots)

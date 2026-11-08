@@ -198,8 +198,8 @@ func RunConstruction(ctx *Context, builder assets.UnitType, team, storage int) (
 		sc:       units.NewSpriteCache(ctx.Lib, &pic.Palette),
 		at:       ctx.Assets.Attribs,
 		listRows: (cbListLRY - cbListY) / cbRowH, // 11
-		/* statIcons: map[string]*gfx.Buffer{}, note: unused code in Go port, see the struct */
-		/* portraitCache: map[assets.UnitType]*sprites.Big{}, note: unused code in Go port, see the struct */
+		/* statIcons: map[string]*gfx.Buffer{}: note: unused code in Go port, see the struct */
+		/* portraitCache: map[assets.UnitType]*sprites.Big{}: note: unused code in Go port, see the struct */
 	}
 
 	buttons := m.buildWidgets(hasPath)

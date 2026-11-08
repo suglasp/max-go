@@ -35,7 +35,7 @@ type TeamStats struct {
 
 // isFactoryType is the original's UnitsManager_IsFactory: only the four vehicle/ship/air
 // plants count as factories for the score tally - the Barracks and Training Hall
-// do NOT, even though the player build UI (menus.IsFactoryType) treats them as
+// do NOT, even though the player build UI treats them as
 // production buildings. Defined locally so sim does not import menus.
 //
 // C++ ported : units_manager.cpp - UnitsManager_IsFactory.

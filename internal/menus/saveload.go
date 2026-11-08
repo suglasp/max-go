@@ -396,7 +396,7 @@ func (m *saveLoadMenu) buildScreen() {
 		}
 		m.ctx.registerButtonSfx(bid, "KCARG0")
 		m.slotBtns = append(m.slotBtns, bid)
-		m.slots = append(m.slots, slotWidget{ /* bid: bid, note: unused code in Go port */ abs: abs, ulx: ulx, uly: uly /* , w: up.W, h: up.H */, inUse: inUse, saveName: saveName})
+		m.slots = append(m.slots, slotWidget{ /* bid: bid: note: unused code in Go port, see slotWidget */ abs: abs, ulx: ulx, uly: uly /* , w: up.W, h: up.H: note: unused code in Go port, see slotWidget */, inUse: inUse, saveName: saveName})
 	}
 	m.ctx.Sys.GroupRadioButtons(m.slotBtns, nil)
 

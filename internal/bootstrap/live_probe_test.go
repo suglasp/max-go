@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-// TestLiveProbe runs the real host prober and logs what it finds. It is read
+// TestLiveProbe is a probe tool, not a check: it runs the real host prober and logs what it finds. It is read
 // only and opt in: set MAX_BOOTSTRAP_LIVE=1 to run it (a machine without an
 // installed M.A.X. legitimately reports not found, so it never fails).
 func TestLiveProbe(t *testing.T) {

@@ -90,6 +90,25 @@ func TestClans(t *testing.T) {
 		}
 	}
 
+	/* // note: unused code in Go port
+	// Clan.Key is commented out; the loop above checks the names by clan index.
+	wantNames := map[string]string{
+		"Clan A": "The Chosen",
+		"Clan B": "Crimson Path",
+		"Clan C": "Von Griffin",
+	}
+
+	for _, c := range a.Clans {
+		if c.Name == "" {
+			t.Errorf("%s has no name", c.Key)
+		}
+
+		if want, ok := wantNames[c.Key]; ok && c.Name != want {
+			t.Errorf("%s name = %q, want %q", c.Key, c.Name, want)
+		}
+	}
+	*/
+
 	// Clan A boosts air units.
 	clanA := a.Clans[0]
 	found := false

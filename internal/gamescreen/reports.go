@@ -217,7 +217,7 @@ func (s *Screen) reportData() screendata.ReportData {
 			Status: s.unitStatusText(u),
 			Icon:   s.unitIcon(u),
 			Stats:  s.reportStats(u),
-			Hits:   u.Hits, MaxHits: maxHits, /* TeamColor: 0xFF, note: unused code in Go port, see ReportRow */
+			Hits:   u.Hits, MaxHits: maxHits, /* TeamColor: 0xFF: note: unused code in Go port, see ReportRow */
 			Air:        u.Flags.Has(game.FlagMobileAirUnit),
 			Land:       u.Flags.Has(game.FlagMobileLandUnit),
 			Sea:        u.Flags.Has(game.FlagMobileSeaUnit),

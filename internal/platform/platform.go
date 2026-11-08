@@ -474,7 +474,7 @@ func (p *Platform) pollMouse() {
 	x, y := ebiten.CursorPosition()
 	left := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 	right := ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight)
-	_, wy := ebiten.Wheel() // wx, note: unused code in Go port: the horizontal wheel only fed MouseState.WheelX
+	_, wy := ebiten.Wheel() /* wx: note: unused code in Go port, the horizontal wheel only fed MouseState.WheelX */
 
 	var buttons uint32
 	if left {
@@ -494,7 +494,7 @@ func (p *Platform) pollMouse() {
 
 	p.mu.Lock()
 	p.wheelAccum += quantizeWheel(wy, &p.wheelRemainder)
-	p.mouse = MouseState{X: x, Y: y, Buttons: buttons /* , WheelX: int(wx), WheelY: int(wy): note: unused code in Go port */}
+	p.mouse = MouseState{X: x, Y: y, Buttons: buttons /* , WheelX: int(wx), WheelY: int(wy): note: unused code in Go port, see MouseState */}
 	p.mu.Unlock()
 }
 

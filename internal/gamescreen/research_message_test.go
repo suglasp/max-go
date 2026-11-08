@@ -35,7 +35,7 @@ func TestResearchLevelUpPostsMessage(t *testing.T) {
 func TestResearchLevelUpSilentForEnemy(t *testing.T) {
 	s := newResearchScreen() // only team 0 is the player
 	if s.isHumanTeam(1) {
-		t.Skip("team 1 is unexpectedly human in this fixture")
+		t.Fatal("setup: team 1 is human in this fixture")
 	}
 	s.game.State.Teams[1].Research[game.ResearchScan] = game.ResearchTopic{Level: 0, TurnsToComplete: 1, Allocation: 3}
 

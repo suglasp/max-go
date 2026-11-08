@@ -190,8 +190,8 @@ func RunFactoryBuild(ctx *Context, factory assets.UnitType, team, storage int, q
 		at:         ctx.Assets.Attribs,
 		availRows:  (fbListLRY - fbListY) / fbRowH,   // 11
 		queueRows:  (fbQueueLRY - fbQueueY) / fbRowH, // 6
-		/* statIcons: map[string]*gfx.Buffer{}, note: unused code in Go port, see the struct */
-		/* portraitCache: map[assets.UnitType]*sprites.Big{}, note: unused code in Go port, see the struct */
+		/* statIcons: map[string]*gfx.Buffer{}: note: unused code in Go port, see the struct */
+		/* portraitCache: map[assets.UnitType]*sprites.Big{}: note: unused code in Go port, see the struct */
 	}
 	buttons := m.buildWidgets()
 	defer func() {

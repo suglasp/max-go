@@ -157,8 +157,8 @@ func RunCargo(ctx *Context, lo *CargoLoadout) error {
 		at:        ctx.Assets.Attribs,
 		baseVals:  map[assets.UnitType]*game.UnitValues{},
 		curVals:   map[assets.UnitType]*game.UnitValues{},
-		/* statIcons: map[string]*gfx.Buffer{}, note: unused code in Go port, see the struct */
-		/* portraitCache: map[assets.UnitType]*sprites.Big{}, note: unused code in Go port, see the struct */
+		/* statIcons: map[string]*gfx.Buffer{}: note: unused code in Go port, see the struct */
+		/* portraitCache: map[assets.UnitType]*sprites.Big{}: note: unused code in Go port, see the struct */
 		buyBtn:    -1,
 		deleteBtn: -1,
 	}
