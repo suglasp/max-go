@@ -6,6 +6,7 @@
 package platform
 
 import (
+	"image"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -158,8 +159,9 @@ func TestSaveScreenshotCreatesFolder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if img.Bounds().Dx() != ScreenWidth || img.Bounds().Dy() != ScreenHeight {
-		t.Errorf("screenshot is %v, want %dx%d", img.Bounds(), ScreenWidth, ScreenHeight)
+	wantW, wantH := p.screen.W*ScreenshotScale, p.screen.H*ScreenshotScale
+	if img.Bounds().Dx() != wantW || img.Bounds().Dy() != wantH {
+		t.Errorf("screenshot is %v, want %dx%d", img.Bounds(), wantW, wantH)
 	}
 	r, _, _, _ := img.At(10, 10).RGBA()
 	if r>>8 != 252 {
@@ -173,6 +175,59 @@ func TestSaveScreenshotCreatesFolder(t *testing.T) {
 	}
 	if path2 == path {
 		t.Error("second screenshot reused the same file name")
+	}
+}
+
+// TestScreenshotScaleRepeatsEveryPixel checks the x3 upscale: each screen pixel becomes a 3x3 block of the same
+// palette index, and the one shot WriteScreenshot keeps the native size.
+func TestScreenshotScaleRepeatsEveryPixel(t *testing.T) {
+	dir := t.TempDir()
+	p := New(Config{BaseDir: dir})
+	p.Screen().Fill(1)
+	p.Screen().Row(0)[0] = 2
+	p.Screen().Row(1)[1] = 3
+
+	scaled := filepath.Join(dir, "scaled.png")
+	if err := p.writeScreenshot(scaled, ScreenshotScale); err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.Open(scaled)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	img, err := png.Decode(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pal, ok := img.(*image.Paletted)
+	if !ok {
+		t.Fatalf("screenshot is %T, want a paletted image", img)
+	}
+	for y := 0; y < p.screen.H*ScreenshotScale; y++ {
+		for x := 0; x < p.screen.W*ScreenshotScale; x++ {
+			want := p.screen.Row(y / ScreenshotScale)[x/ScreenshotScale]
+			if got := pal.ColorIndexAt(x, y); got != want {
+				t.Fatalf("pixel (%d,%d) index %d, want %d", x, y, got, want)
+			}
+		}
+	}
+
+	native := filepath.Join(dir, "native.png")
+	if err := p.WriteScreenshot(native); err != nil {
+		t.Fatal(err)
+	}
+	g, err := os.Open(native)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer g.Close()
+	cfg, err := png.DecodeConfig(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Width != p.screen.W || cfg.Height != p.screen.H {
+		t.Errorf("WriteScreenshot is %dx%d, want the native %dx%d", cfg.Width, cfg.Height, p.screen.W, p.screen.H)
 	}
 }
 

@@ -1,4 +1,4 @@
-// screenshot.go : the M.A.X. screenshot writer - saves the current 8 bit screen as a PNG to the 'screenshots' folder.
+// screenshot.go : the M.A.X. screenshot writer - saves the current 8 bit screen as a PNG, the F12 shot upscaled x3.
 // Suglasp
 // github.com/suglasp/max-go
 //
@@ -15,7 +15,11 @@ import (
 	"time"
 )
 
-// SaveScreenshot writes the current frame to a uniquely named PNG in the screenshots folder, creating the folder when needed.
+// ScreenshotScale is the whole number factor of an F12 screenshot: every screen pixel becomes a ScreenshotScale square.
+const ScreenshotScale = 3
+
+// SaveScreenshot writes the current frame, upscaled ScreenshotScale times with nearest neighbour, to a uniquely named
+// PNG in the screenshots folder, creating the folder when needed.
 func (p *Platform) SaveScreenshot() (string, error) {
 	dir := filepath.Join(p.cfg.BaseDir, "screenshots")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -30,7 +34,7 @@ func (p *Platform) SaveScreenshot() (string, error) {
 		}
 		path = filepath.Join(dir, fmt.Sprintf("%s_%d.png", base, n))
 	}
-	return path, p.WriteScreenshot(path)
+	return path, p.writeScreenshot(path, ScreenshotScale)
 }
 
 // ScreenshotErr reports why the one-shot -screenshot file could not be written, or nil when it was written or
@@ -39,17 +43,31 @@ func (p *Platform) ScreenshotErr() error {
 	return p.shotErr
 }
 
-// WriteScreenshot encodes the current logical frame (the indexed
-// screen through the current palette) as a PNG file.
+// WriteScreenshot encodes the current logical frame (the indexed screen through the current palette) at its own
+// size as a PNG file. The one shot -screenshot launch option uses it, so probe images keep the native size.
 func (p *Platform) WriteScreenshot(path string) error {
+	return p.writeScreenshot(path, 1)
+}
+
+// writeScreenshot encodes the current logical frame as a paletted PNG, each pixel repeated scale times across and down.
+func (p *Platform) writeScreenshot(path string, scale int) error {
 	p.mu.Lock()
 	pal := make(color.Palette, len(p.lut))
 	for i, c := range p.lut {
 		pal[i] = color.RGBA{c[0], c[1], c[2], c[3]}
 	}
-	img := image.NewPaletted(image.Rect(0, 0, p.screen.W, p.screen.H), pal)
+	img := image.NewPaletted(image.Rect(0, 0, p.screen.W*scale, p.screen.H*scale), pal)
 	for y := 0; y < p.screen.H; y++ {
-		copy(img.Pix[y*img.Stride:], p.screen.Row(y))
+		src := p.screen.Row(y)
+		first := img.Pix[y*scale*img.Stride : y*scale*img.Stride+p.screen.W*scale]
+		for x, v := range src[:p.screen.W] {
+			for k := 0; k < scale; k++ {
+				first[x*scale+k] = v
+			}
+		}
+		for k := 1; k < scale; k++ {
+			copy(img.Pix[(y*scale+k)*img.Stride:], first)
+		}
 	}
 	p.mu.Unlock()
 

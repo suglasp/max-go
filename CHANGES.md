@@ -22,6 +22,9 @@ Check the version file next to the game executables.
 - Changing the turn timer or End Turn Time in the in game Preferences no longer restarts the running turn clock: a new turn timer applies from the next turn, and a new End Turn Time switches a running End Turn countdown at once (otherwise it applies to the next countdown).
 - The launch help no longer offers `none` for `-turnlimit`, `-endturn`, `-score`, `-duration` and `-startcredit`, which never accepted it; `-derelicts` lists its `None` choice.
 
+### QOL
+- F12 screenshots are now saved three times larger (every screen pixel becomes a 3x3 block), so they stay sharp on a big display.
+
 ### Improvements
 - Commented leftover or unused code parts, that came with writing benches or scaffolding code parts of the game, while the project becomes more and more mature.
 
