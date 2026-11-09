@@ -164,9 +164,16 @@ func (p *AiPlayer) BeginTurn(mgr *TaskManager) {
 			mgr.AppendTask(newTaskEscort(p.team, p.ctx))
 			mgr.AppendTask(newTaskCommando(p.team, p.ctx))
 			mgr.AppendTask(newTaskMines(p.team, p.ctx))
-			mgr.AppendTask(newTaskAttackEnemies(p.team, p.ctx))
+			ferry := newTaskTransport(p.team, p.ctx)
+			attack := newTaskAttackEnemies(p.team, p.ctx)
+			attack.ferry = ferry
+			mgr.AppendTask(attack)
 			mgr.AppendTask(newTaskFireTurrets(p.team, p.ctx))
 			mgr.AppendTask(newTaskExplore(p.team, p.ctx))
+
+			// The ferry comes last: the manager runs transport tasks after the others, so
+			// it sees every ride asked for in this turn.
+			mgr.AppendTask(ferry)
 		}
 
 		p.needInit = false

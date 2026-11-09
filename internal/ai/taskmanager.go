@@ -122,10 +122,8 @@ func reminderTask(r Reminder) Task {
 // ordering transport tasks last so they react to the other tasks' moves. C++:
 // TaskManager::BeginTurn.
 //
-// The third pass is INERT until a transport task exists: nothing overrides Type(), so
-// every task reads as TaskTypeGeneric and the first two passes take them all. The pass
-// is kept because it is the original's scheduling and is what the unported TaskTransport
-// (ferrying units by air or sea transporter) will need. TODO sec S.
+// The third pass runs the team's ferry task (taskTransport), so it sees every ride the
+// other tasks asked for this turn.
 func (m *TaskManager) BeginTurn(team int) {
 	for _, t := range m.tasks {
 		if t.Team() == team && t.Type() != TaskTypeTransport {

@@ -34,6 +34,7 @@ type taskAttackEnemies struct {
 	searchSince  map[*game.UnitInfo]int  // per searching unit, the turn it began hunting its CURRENT lost target, so it gives up after searchPatience; cleared on reacquire/retarget
 	searchClaims map[int]bool            // reserves a lost contact cell for ONE searcher per turn (no stack all searching the same stale cell); rebuilt each BeginTurn
 	focus        *game.UnitInfo          // this turn's single shared objective the committed force converges on (teamFocusTarget); nil before commit. C++: the shared AttackTask target
+	ferry        *taskTransport          // the team's ferry task; an attacker with no land route to its target asks it for a ride. nil = no ferry (tests)
 }
 
 // minStrikeForce is how many armed mobile units a team must field before committing to

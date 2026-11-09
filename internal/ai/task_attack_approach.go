@@ -60,6 +60,10 @@ func (t *taskAttackEnemies) advanceToward(u *game.UnitInfo, tx, ty int) bool {
 		}
 	}
 
+	// No route at all: ask the team's ferry for a ride to the target's cell.
+	// C++ ported : taskmove.cpp - TaskMove::FullPathResultCallback (no path -> AttemptTransport)
+	t.ferry.request(u, game.Point{X: tx, Y: ty})
+
 	return false
 }
 

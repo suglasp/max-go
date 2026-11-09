@@ -10,11 +10,9 @@ package ai
 // each turn, obtain units tasks are also tracked in a request list). C++:
 // enums.hpp TaskType_* and task.hpp Task::GetType.
 //
-// UNWIRED, kept on purpose: no task overrides Type() yet, so every task here reads as
-// TaskTypeGeneric and the manager's transport pass never picks one up. The two kinds
-// below are the landing pad for the unported TaskTransport (ferrying a unit that has no
-// land route aboard an air or sea transporter) and TaskObtainUnits; the scheduling that
-// awaits them is in TaskManager.BeginTurn. TODO sec S.
+// The ferry task (taskTransport) returns TaskTypeTransport, so the manager runs it after
+// the other tasks. TaskTypeObtainUnits stays unwired: it is the landing pad for the
+// unported unit dispatcher (AI-IMPROVE item AI2).
 type TaskType uint8
 
 const (
