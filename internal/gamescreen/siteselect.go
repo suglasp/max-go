@@ -590,5 +590,6 @@ func (s *Screen) tickLanding() {
 			u.Unfold = 0 // guarantee full size when control returns
 		}
 		s.turnFlow.turnStart = platform.Ticks() // start the turn clock on hand over
+		s.logTurnClock("landing done, control handed over")
 	}
 }

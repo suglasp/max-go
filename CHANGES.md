@@ -19,7 +19,7 @@ Check the version file next to the game executables.
 - Hidden enemies, such as a submerged Submarine, no longer show through the attack cursor or the Colors, Status, Hits and Ammo displays, and cannot be targeted blind.
 - A unit still waiting in its factory (or a building not yet revealed) no longer scans, so a finished Corvette no longer shows Submarines before it leaves the Shipyard.
 - A unit still waiting in its factory is lost with the factory; it no longer stays behind as an invisible unit that blocks its square (older saves are cleaned up on load).
-- Changing the turn timer or End Turn Time in the in game Options no longer restarts the running turn clock; the new values apply from the next turn (End Turn Time from its next countdown).
+- Changing the turn timer or End Turn Time in the in game Preferences no longer restarts the running turn clock: a new turn timer applies from the next turn, and a new End Turn Time switches a running End Turn countdown at once (otherwise it applies to the next countdown).
 - The launch help no longer offers `none` for `-turnlimit`, `-endturn`, `-score`, `-duration` and `-startcredit`, which never accepted it; `-derelicts` lists its `None` choice.
 
 ### Improvements

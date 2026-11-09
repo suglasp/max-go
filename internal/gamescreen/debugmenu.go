@@ -237,6 +237,7 @@ var dbgFlags = []dbgFlag{
 		act: func(s *Screen, dir int) {
 			s.turnFlow.turnSeconds = rollStep(dbgTimerSteps, s.turnFlow.turnSeconds, dir)
 			s.turnFlow.turnStart = platform.Ticks() // restart the clock against the new budget
+			s.logTurnClock("debug menu timer step")
 		},
 	},
 	{

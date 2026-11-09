@@ -56,16 +56,15 @@ func (s *Screen) armEndTurnGrace() {
 	}
 
 	if s.opponentsActing() {
+		if turn := s.currentTurn(); s.turnFlow.graceWaitLogged != turn {
+			s.turnFlow.graceWaitLogged = turn
+			s.logTurnClock("end turn grace waits for the opponents (planning or units still moving)")
+		}
+
 		return
 	}
 
-	grace := s.turnFlow.endTurnSeconds
-
-	// The reference implementation floors the countdown at 15 seconds while computer teams still finish their
-	// work, so end_turn values below 15 cannot immediately end a turn.
-	if grace < 15 {
-		grace = 15
-	}
+	grace := s.graceSeconds()
 
 	// Never EXTEND the turn: a grace longer than what is left changes nothing.
 	if left := s.turnRemaining(); s.turnFlow.turnSeconds > 0 && left <= grace {
@@ -74,12 +73,46 @@ func (s *Screen) armEndTurnGrace() {
 		return
 	}
 
-	s.turnFlow.turnSeconds = grace
-	s.turnFlow.turnStart = platform.Ticks()
-	s.turnFlow.graceArmed = true
+	s.startGraceCountdown(grace, "end turn grace armed")
 
 	s.showMessage(fmt.Sprintf("Opponents have ended their turn. %d seconds left.", grace))
 	dbg.Printf("end turn grace: opponents done, human has %ds left (turn %d)", grace, s.game.State.TurnCounter)
+}
+
+// graceSeconds is the End Turn countdown length: the End Turn Time, floored at 15 seconds.
+//
+// The reference implementation floors the countdown at 15 seconds while computer teams still finish their
+// work, so end_turn values below 15 cannot immediately end a turn.
+func (s *Screen) graceSeconds() int {
+	return max(s.turnFlow.endTurnSeconds, 15)
+}
+
+// startGraceCountdown puts the End Turn countdown on the clock: the running turn now ends grace seconds from now.
+func (s *Screen) startGraceCountdown(grace int, reason string) {
+	s.turnFlow.turnSeconds = grace
+	s.turnFlow.turnStart = platform.Ticks()
+	s.turnFlow.graceArmed = true
+	s.turnFlow.graceOnClock = true
+	s.logTurnClock(reason)
+}
+
+// switchGraceCountdown applies a new End Turn Time to a countdown that is already running: the clock switches to
+// the new value at once, shorter or longer (user 2026-11-09: "use new time now"). A countdown that has not started
+// yet, or a turn that already ended sooner than the grace, keeps its clock; the next countdown uses the new value.
+// The reference reads the setting only when a team ends its turn; this goes past it on the player's request.
+func (s *Screen) switchGraceCountdown() {
+	if !s.simMode() || !s.turnFlow.graceArmed || !s.turnFlow.graceOnClock || s.turnFlow.endTurnSeconds <= 0 {
+		return
+	}
+
+	grace := s.graceSeconds()
+	s.startGraceCountdown(grace, "End Turn Time changed, the running countdown switches")
+
+	if grace > 20 {
+		s.turnFlow.timeWarnedTurn = turnID{} // the 0:20 warning plays again when the new countdown gets there
+	}
+
+	s.showMessage(fmt.Sprintf("End Turn Time changed. %d seconds left.", grace))
 }
 
 // opponentsActing reports whether any team other than the human still has something in
@@ -108,6 +141,7 @@ func (s *Screen) opponentsActing() bool {
 // and the countdown waits for the opponents to finish again.
 func (s *Screen) resetEndTurnGrace() {
 	s.turnFlow.graceArmed = false
+	s.turnFlow.graceOnClock = false
 
 	if s.turnFlow.fullTurnSeconds > 0 || s.turnFlow.endTurnSeconds > 0 {
 		s.turnFlow.turnSeconds = s.turnFlow.fullTurnSeconds

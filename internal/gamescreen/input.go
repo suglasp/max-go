@@ -369,6 +369,7 @@ func (s *Screen) handleGameKey(key int, buf *gfx.Buffer) {
 	if s.turnFlow.handover != -1 {
 		s.turnFlow.handover = -1
 		s.turnFlow.turnStart = platform.Ticks()
+		s.logTurnClock("hot seat handover acknowledged")
 		s.draw(buf)
 		return
 	}

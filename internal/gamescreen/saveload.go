@@ -261,6 +261,7 @@ func (s *Screen) Load(slot int) error {
 	s.turnFlow.simPlanned = false   // a loaded simultaneous game reopens its plan phase...
 	s.turnFlow.simLoadResume = true // ...as a RESUME: AI replan only, no turn start re-run (beginSimRound)
 	s.turnFlow.graceArmed = false   // the old game's armed grace must not suppress this round's
+	s.turnFlow.graceOnClock = false // nor count as a running countdown for an End Turn Time change
 	s.buildUI.buildIdx = 0
 	s.buildUI.buildMenuOpen = false
 	s.orderInput.popupOpen = false

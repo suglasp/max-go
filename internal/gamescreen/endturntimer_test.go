@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/game"
+	"github.com/suglasp/max-go/internal/platform"
 )
 
 // graceScreen is a simultaneous game mid round: a human team and a computer team, a 180
@@ -155,5 +156,112 @@ func TestOptionsCloseKeepsTheRunningClock(t *testing.T) {
 	}
 	if s.turnFlow.fullTurnSeconds != 120 {
 		t.Errorf("next round budget = %d, want the new 120", s.turnFlow.fullTurnSeconds)
+	}
+}
+
+// TestEndTurnTimeChangeAppliesToRunningCountdown: a new End Turn Time switches a running countdown at once, shorter
+// or longer (floored at 15 seconds). A countdown that has not started, or a turn that already ended sooner than the
+// grace, keeps its clock.
+func TestEndTurnTimeChangeAppliesToRunningCountdown(t *testing.T) {
+	s, st := graceScreen(t)
+	s.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 30}) // game creation
+	st.Teams[1].FinishedTurn = true
+	s.armEndTurnGrace()
+	if !s.turnFlow.graceOnClock || s.turnFlow.turnSeconds != 30 {
+		t.Fatalf("the countdown did not arm: on clock %v, budget %d", s.turnFlow.graceOnClock, s.turnFlow.turnSeconds)
+	}
+	s.turnFlow.turnStart -= 15 * 1000 // 15 seconds into the countdown
+
+	for _, tc := range []struct{ endTurn, want int }{{20, 20}, {60, 60}, {5, 15}} {
+		s.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: tc.endTurn})
+		if s.turnFlow.turnSeconds != tc.want || s.turnRemaining() < tc.want-1 {
+			t.Errorf("End Turn Time %d: budget %d, left %d, want a fresh %d", tc.endTurn, s.turnFlow.turnSeconds, s.turnRemaining(), tc.want)
+		}
+	}
+
+	// Not armed yet: the running turn keeps its clock (the L1 case: 3:00 never jumps to the new End Turn Time).
+	s2, _ := graceScreen(t)
+	s2.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 30})
+	s2.turnFlow.turnStart -= 100 * 1000
+	start, secs := s2.turnFlow.turnStart, s2.turnFlow.turnSeconds
+	s2.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 20})
+	if s2.turnFlow.turnStart != start || s2.turnFlow.turnSeconds != secs {
+		t.Errorf("an unarmed turn clock changed: start %d -> %d, budget %d -> %d", start, s2.turnFlow.turnStart, secs, s2.turnFlow.turnSeconds)
+	}
+
+	// Armed on a turn that already ended sooner (10 seconds left, under the 30 grace): the clock stays.
+	s3, st3 := graceScreen(t)
+	s3.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 30})
+	s3.turnFlow.turnSeconds = 10 // 10 seconds left on the running turn (test ticks start near zero, so no rewind)
+	s3.turnFlow.turnStart = platform.Ticks()
+	st3.Teams[1].FinishedTurn = true
+	s3.armEndTurnGrace()
+	start, secs = s3.turnFlow.turnStart, s3.turnFlow.turnSeconds
+	s3.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 60})
+	if !s3.turnFlow.graceArmed || s3.turnFlow.graceOnClock {
+		t.Fatalf("armed %v, on clock %v; want armed, not on the clock", s3.turnFlow.graceArmed, s3.turnFlow.graceOnClock)
+	}
+	if s3.turnFlow.turnStart != start || s3.turnFlow.turnSeconds != secs {
+		t.Error("a turn that already ended sooner than the grace was lengthened by an End Turn Time change")
+	}
+}
+
+// TestEndTurnTimeChangeNextRoundFlow runs the live simultaneous rounds: a new End Turn Time set before the countdown
+// arms leaves the full turn on the clock, the countdown then arms with the new value, and the next round opens on the
+// full turn time again until the opponents are done.
+func TestEndTurnTimeChangeNextRoundFlow(t *testing.T) {
+	s, g := newLiveAIScreen(t, 16, 1)
+	g.State.PlayMode = game.PlaySimultaneous
+	s.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 30})
+
+	s.beginSimRound()
+	if s.turnFlow.turnSeconds != 180 {
+		t.Fatalf("round start budget %d, want the full 180", s.turnFlow.turnSeconds)
+	}
+	s.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 20})
+	if s.turnFlow.turnSeconds != 180 {
+		t.Fatalf("an End Turn Time change before the countdown changed the clock to %d", s.turnFlow.turnSeconds)
+	}
+	s.armEndTurnGrace()
+	if s.turnFlow.turnSeconds != 20 {
+		t.Fatalf("the countdown armed at %d, want the new End Turn Time 20", s.turnFlow.turnSeconds)
+	}
+
+	s.commitSimTurn()
+	s.beginSimRound()
+	if s.turnFlow.turnSeconds != 180 || s.turnFlow.graceArmed || s.turnFlow.graceOnClock {
+		t.Fatalf("next round: budget %d, armed %v, on clock %v; want the full 180, not armed", s.turnFlow.turnSeconds, s.turnFlow.graceArmed, s.turnFlow.graceOnClock)
+	}
+	s.armEndTurnGrace()
+	if s.turnFlow.turnSeconds != 20 {
+		t.Errorf("next round countdown %d, want 20", s.turnFlow.turnSeconds)
+	}
+}
+
+// TestLoadClearsTheRunningCountdown: a load drops the old game's countdown, so an End Turn Time change right after a
+// load cannot switch a clock the loaded game never armed.
+func TestLoadClearsTheRunningCountdown(t *testing.T) {
+	dir := t.TempDir()
+	saver, _ := graceScreen(t)
+	saver.SetSaveInfo(dir, "GREEN_1.WRL")
+	if err := saver.saveToSlot(1, "grace", false); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	loader, st := graceScreen(t)
+	loader.SetSaveInfo(dir, "GREEN_1.WRL")
+	loader.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 30})
+	st.Teams[1].FinishedTurn = true
+	loader.armEndTurnGrace()
+	if err := loader.Load(1); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if loader.turnFlow.graceArmed || loader.turnFlow.graceOnClock {
+		t.Fatalf("after a load: armed %v, on clock %v; want neither", loader.turnFlow.graceArmed, loader.turnFlow.graceOnClock)
+	}
+	start, secs := loader.turnFlow.turnStart, loader.turnFlow.turnSeconds
+	loader.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 20})
+	if loader.turnFlow.turnStart != start || loader.turnFlow.turnSeconds != secs {
+		t.Error("an End Turn Time change after a load switched a countdown the loaded game had not armed")
 	}
 }

@@ -38,12 +38,14 @@ func (s *Screen) SetTurnTimer(seconds int) {
 	s.turnFlow.turnSeconds = seconds
 	s.turnFlow.fullTurnSeconds = seconds // the budget each round restores (the End Turn grace shortens the running one)
 	s.turnFlow.turnStart = platform.Ticks()
+	s.logTurnClock("turn timer set")
 }
 
 // applyTimerPrefs applies the turn timer and End Turn Time settings. The first call (game creation) sets both, as
 // the setup does; a custom game or a mission may then set its own. Later calls (the Options menu closing) never
 // restart the running turn clock and only follow a setting the player changed: a new turn timer takes effect at the
-// next round, a new End Turn Time at the next countdown. An unchanged setting leaves the game's own timers alone.
+// next round. A new End Turn Time switches a countdown that is already running at once and otherwise applies to
+// the next countdown. An unchanged setting leaves the game's own timers alone.
 func (s *Screen) applyTimerPrefs(turnTimer, endTurn int) {
 	if !s.turnFlow.prefsApplied {
 		s.turnFlow.prefsApplied = true
@@ -55,13 +57,16 @@ func (s *Screen) applyTimerPrefs(turnTimer, endTurn int) {
 	}
 
 	if turnTimer != s.turnFlow.prefTurnTimer {
+		dbg.Printf("turn clock: Turn Time changed %ds -> %ds, applies from the next round", s.turnFlow.prefTurnTimer, turnTimer)
 		s.turnFlow.prefTurnTimer = turnTimer
 		s.turnFlow.fullTurnSeconds = max(turnTimer, 0) // the next round restores this budget
 	}
 
 	if endTurn != s.turnFlow.prefEndTurn {
+		dbg.Printf("turn clock: End Turn Time changed %ds -> %ds", s.turnFlow.prefEndTurn, endTurn)
 		s.turnFlow.prefEndTurn = endTurn
 		s.SetEndTurnTimer(endTurn)
+		s.switchGraceCountdown() // a running countdown follows the new value at once
 	}
 }
 

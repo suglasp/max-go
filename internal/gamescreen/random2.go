@@ -149,6 +149,7 @@ func (s *Screen) RandomStart2(seed int64, npc int) {
 	s.game.RefreshVisibility()
 	s.centerOnTeam(0)
 	s.turnFlow.turnStart = platform.Ticks() // control in hand at once: the turn clock runs
+	s.logTurnClock("random2 bench start")
 }
 
 // buildBigBase lays one team's full base near center and returns its first

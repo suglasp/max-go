@@ -8,6 +8,7 @@ package gamescreen
 import (
 	"fmt"
 
+	"github.com/suglasp/max-go/internal/dbg"
 	"github.com/suglasp/max-go/internal/platform"
 )
 
@@ -59,7 +60,17 @@ func (s *Screen) withTurnClockPaused(fn func()) {
 func (s *Screen) resumeTurnClock(before, after uint64) {
 	if after > before {
 		s.turnFlow.turnStart += after - before
+		s.logTurnClock(fmt.Sprintf("modal closed, %dms paused time credited", after-before))
 	}
+}
+
+// logTurnClock writes one debug line each time the turn clock changes: why, which turn, the running budget, the
+// time left, the full budget and the End Turn grace. The trail shows which change put a value on the clock.
+func (s *Screen) logTurnClock(reason string) {
+	turn := s.currentTurn()
+	dbg.Printf("turn clock: %s (turn %d, team %d): budget %ds, left %ds, full %ds, end turn %ds, grace armed %v",
+		reason, turn.round, turn.team, s.turnFlow.turnSeconds, s.turnRemaining(), s.turnFlow.fullTurnSeconds,
+		s.turnFlow.endTurnSeconds, s.turnFlow.graceArmed)
 }
 
 // turnID names one interactive turn: the round and the team playing it. Round numbers start at 1, so the zero

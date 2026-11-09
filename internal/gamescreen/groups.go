@@ -191,4 +191,5 @@ func (s *Screen) applyTurnClock(secondsLeft int) {
 	s.turnFlow.turnSeconds = secondsLeft
 	s.turnFlow.turnStart = platform.Ticks()
 	s.turnFlow.timeWarnedTurn = turnID{} // a loaded turn warns again on its remainder (armed again at the load turn start)
+	s.logTurnClock("resumed from the save")
 }
