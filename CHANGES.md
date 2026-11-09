@@ -27,7 +27,7 @@ Check the version file next to the game executables.
 
 ### Improvements
 - Commented leftover or unused code parts, that came with writing benches or scaffolding code parts of the game, while the project becomes more and more mature.
-- First groundwork for the computer opponent to ferry units across water: when an attacking unit has no land route to its target, the computer now works out where a transport would pick it up and land it. No transport moves yet, so play is unchanged.
+- First groundwork for the AI computer opponent to ferry units across water: when an attacking unit has no land route to its target, the computer now works out where a transport would pick it up and land it. No transport moves yet, so play is unchanged.
 
 
 ## 1.0.1.1 (2026-11-03)
