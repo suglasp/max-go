@@ -31,7 +31,9 @@ max-go [-datadir <path>] [-playername <name>] [-audio <backend>] [-scale <1-8>] 
 `-nosplash`,
 `-widescreen`,
 `-language`,
-and `-set-a-star` are modifiers that combine with the launch modes above. `-mission` and `-save` are direct launch modes that skip the menus. `-npc` and `-difficulty` apply to the `-random` / `-random2` quick starts.
+and `-set-a-star` are modifiers that combine with the launch modes above. `-mission` and `-save` are direct launch modes that skip the menus. `-npc` and `-difficulty` apply to a menu custom game as well as to the `-random` / `-random2` quick starts.
+The start modes (`-mve`, `-flic`, `-mission`, `-save`, `-random`, `-emulate`, `-demo`) are given one at a time:
+two of them stop max-go with an error (see Notes).
 The settings override flags (`-datadir`,
 `-playername`,
 `-audio`,
@@ -292,7 +294,7 @@ overriding `player.name` in `max-go.json`.
 
 Audio backend for this run,
 overriding `audio.backend`.
-ative` is the built in Ebitengine backend (alias `ebiten`);
+`native` and `default` are the built in Ebitengine backend (alias `ebiten`);
 `soloud` and `miniaudio` select the external mixer backends.
 
 ```text
@@ -374,8 +376,26 @@ Movies/screens:   credits, intro, splash
 
 ## Notes
 
-Mode precedence follows the launcher code:
+A run takes one start mode: `-mve`, `-flic`, `-mission`, `-save`, `-random` (alias `-rng`), `-emulate` or `-demo`.
+Two of them stop max-go with `max-go: flags -x and -y cannot be combined`.
+`-mve` exits after movie playback, `-flic` after animation playback.
+The boot switches `-skipintro`, `-nomovie` and `-nosplash` combine freely.
 
-- `-mve` exits after movie playback and wins over `-flic`, `-demo`, and `-emulate`.
-- `-flic` exits after animation playback and wins over `-demo` and `-emulate`.
-- `-demo` starts the demo and ignores `-emulate`.
+max-go checks the whole command line before the window opens:
+
+- every number is checked against its range (`-npc 1..3`, `-difficulty 0..5`, `-scale 1..8`, the custom game ranges);
+- every name is checked against its list (`-emulate`, `-audio`, `-score`, `-raw` / `-fuel` / `-gold`, `-derelicts`, `-startcredit`), case insensitive except `-emulate`;
+- a flag that takes a value refuses an empty one (`-save=`), except the custom game flags, where empty means unset;
+- an argument without a dash is refused (`max-go random` says `did you mean -random?`);
+- the targets must exist: the `-datadir` folder, the `-mve` / `-flic` / `-mission` file and the `-save` slot;
+- `-language` needs a bundled language or a `lang-<code>.ini` next to the data or the binary.
+
+A refused command line prints one `max-go: ...` line on stderr.
+
+Exit codes (the same in max-go, max-convert, max-restool and max-settings):
+
+| Code | Meaning |
+| --- | --- |
+| `0` | the run ended normally, or `-help` |
+| `1` | a runtime failure: a missing file, data directory or save slot, a load or save error, a `-screenshot` that could not be written |
+| `2` | a bad command line: an unknown flag, a bad or empty value, two start modes or a stray argument |

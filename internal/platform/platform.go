@@ -137,6 +137,7 @@ type Platform struct {
 
 	frame     int
 	shotTaken bool
+	shotErr   error // Why the one-shot -screenshot could not be written; nil when it was.
 	quit      bool
 	fpsShow   bool // Whether the FPS overlay is visible.
 
@@ -529,15 +530,24 @@ func (p *Platform) Draw(screen *ebiten.Image) {
 	}
 
 	p.frame++
-	if p.cfg.ScreenshotPath != "" && !p.shotTaken && p.frame >= shotFrame {
-		p.shotTaken = true
-		if err := p.WriteScreenshot(p.cfg.ScreenshotPath); err != nil {
-			dbg.Printf("-screenshot failed: %v", err)
-		} else {
-			dbg.Printf("-screenshot saved: %s", p.cfg.ScreenshotPath)
-		}
-		p.quit = true
+	p.takeLaunchScreenshot()
+}
+
+// takeLaunchScreenshot writes the one-shot -screenshot file once the frame count reaches shotFrame and asks the
+// run to quit. A write failure is kept for ScreenshotErr.
+func (p *Platform) takeLaunchScreenshot() {
+	if p.cfg.ScreenshotPath == "" || p.shotTaken || p.frame < shotFrame {
+		return
 	}
+
+	p.shotTaken = true
+	if err := p.WriteScreenshot(p.cfg.ScreenshotPath); err != nil {
+		p.shotErr = err
+		dbg.Printf("-screenshot failed: %v", err)
+	} else {
+		dbg.Printf("-screenshot saved: %s", p.cfg.ScreenshotPath)
+	}
+	p.quit = true
 }
 
 // Layout implements ebiten.Game: the current logical resolution, Ebitengine

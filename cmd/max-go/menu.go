@@ -791,12 +791,14 @@ func benchDerelictsLevel(v string) int {
 }
 */
 
-// npcCount resolves how many computer opponents a game fields, clamped to 1..3
-// (there are 4 team slots: one player plus up to three NPCs). It answers for a
-// custom game as well as the -random / -random2 benches, since the setup screen
-// carries no opponent COUNT panel: the only way to ask for more than one is -npc.
+// npcCount resolves how many computer opponents a game fields, 1..3 (there are 4
+// team slots: one player plus up to three NPCs). It answers for a custom game as
+// well as the -random / -random2 benches, since the setup screen carries no
+// opponent COUNT panel: the only way to ask for more than one is -npc.
 func npcCount() int {
 	n := npcOverride
+	/* // note: unused code in Go port
+	// validateNPC (launch_args.go) refuses an -npc outside 1..3 before the run starts, so the clamp never fires.
 	if n < 1 {
 		n = 1
 	}
@@ -804,6 +806,7 @@ func npcCount() int {
 	if n > game.TeamCount-1 {
 		n = game.TeamCount - 1
 	}
+	*/
 
 	return n
 }

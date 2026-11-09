@@ -54,8 +54,10 @@ func TestPrintUsageMatchesLaunchFlags(t *testing.T) {
 		"-fullscreen",
 		"-debug",
 		"-reset",
-		"-mve exits after movie playback",
-		"-flic exits after animation playback",
+		"Start modes:",
+		"-mve exits after movie playback, -flic after animation playback",
+		"Exit codes:",
+		"2  a bad command line",
 	}
 
 	// -emulate is registered and documented only in a DEBUG_GAME build, so its two usage

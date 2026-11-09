@@ -33,6 +33,12 @@ func (p *Platform) SaveScreenshot() (string, error) {
 	return path, p.WriteScreenshot(path)
 }
 
+// ScreenshotErr reports why the one-shot -screenshot file could not be written, or nil when it was written or
+// was never asked for. The run ends after that frame either way; the caller turns the error into exit code 1.
+func (p *Platform) ScreenshotErr() error {
+	return p.shotErr
+}
+
 // WriteScreenshot encodes the current logical frame (the indexed
 // screen through the current palette) as a PNG file.
 func (p *Platform) WriteScreenshot(path string) error {

@@ -71,10 +71,10 @@ func ValidateCustomFlags(flags *CustomGameFlags) error {
 		return err
 	}
 	if strings.TrimSpace(stringValue(flags.Score)) != "" && strings.TrimSpace(stringValue(flags.Duration)) != "" {
-		return fmt.Errorf("custom flags: -score and -duration are mutually exclusive (one victory condition)")
+		return fmt.Errorf("flags -score and -duration cannot be combined (one victory condition)")
 	}
 	if boolValue(flags.TurnBased) && boolValue(flags.Simultane) {
-		return fmt.Errorf("custom flags: -turnbased and -simultane are mutually exclusive")
+		return fmt.Errorf("flags -turnbased and -simultane cannot be combined")
 	}
 	if err := validateChoice(flags.Raw, "raw", "Poor", "Medium", "Rich"); err != nil {
 		return err
@@ -251,7 +251,7 @@ func validateOptionalInt(value *string, name string, min, max int) error {
 	text := strings.TrimSpace(*value)
 	n, err := strconv.Atoi(text)
 	if err != nil || n < min || n > max {
-		return fmt.Errorf("custom flags: -%s must be empty or an integer from %d to %d", name, min, max)
+		return fmt.Errorf("flag -%s must be empty or an integer from %d to %d", name, min, max)
 	}
 	*value = strconv.Itoa(n)
 	return nil

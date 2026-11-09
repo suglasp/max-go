@@ -7,7 +7,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -59,8 +58,8 @@ func closeCrashLog() {
 }
 
 // fatalf ends the run on an error: the reason goes to the debug log (flushed, so
-// the lines before it survive too) and to the crash report, then to stderr, and
-// the process exits with status 1.
+// the lines before it survive too) and to the crash report, then to stderr as one
+// line without a log prefix, and the process exits with status 1 (exitRuntime).
 func fatalf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 
@@ -72,5 +71,6 @@ func fatalf(format string, args ...any) {
 		crashFile.Close()
 	}
 
-	log.Fatal(msg)
+	fmt.Fprintln(os.Stderr, msg)
+	os.Exit(exitRuntime)
 }

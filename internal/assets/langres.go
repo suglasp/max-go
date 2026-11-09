@@ -63,6 +63,31 @@ func openLangRes(dataDir string) *resfile.Library {
 	return nil
 }
 
+// HasLanguage reports whether the strings of a language code can be found without the English fallback: a loose
+// lang-<code>.ini in a language search directory, or the code's LANG_<XX> entry in LANG.RES.
+func HasLanguage(dataDir, language string) bool {
+	for _, dir := range languageSearchDirs(dataDir) {
+		if _, err := os.Stat(filepath.Join(dir, LanguageFile(language))); err == nil {
+			return true
+		}
+	}
+
+	langRes := openLangRes(dataDir)
+	if langRes == nil {
+		return false
+	}
+	defer langRes.Close()
+
+	tag := LanguageTag(language)
+	for _, f := range langRes.Files() {
+		if f.Has(tag) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // langResStrings reads the language strings from LANG.RES: the requested language, then English.
 func langResStrings(lib *resfile.Library, language string) (Strings, string, bool) {
 	tags := []string{LanguageTag(language)}

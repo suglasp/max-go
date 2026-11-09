@@ -304,3 +304,39 @@ func TestQuantizeWheel(t *testing.T) {
 		t.Errorf("-0.5 after -0.5 = %d (remainder %v), want -1 (0)", n, remainder)
 	}
 }
+
+// TestLaunchScreenshotKeepsTheWriteError drives the one-shot -screenshot step: nothing before shotFrame, the
+// file and a quit on that frame, and a write failure kept for ScreenshotErr (main turns it into exit code 1).
+func TestLaunchScreenshotKeepsTheWriteError(t *testing.T) {
+	dir := t.TempDir()
+	good := filepath.Join(dir, "shot.png")
+	p := New(Config{BaseDir: dir, ScreenshotPath: good})
+
+	p.frame = shotFrame - 1
+	p.takeLaunchScreenshot()
+	if p.shotTaken || p.quit {
+		t.Fatal("the screenshot was taken before shotFrame")
+	}
+
+	p.frame = shotFrame
+	p.takeLaunchScreenshot()
+	if err := p.ScreenshotErr(); err != nil {
+		t.Fatalf("ScreenshotErr = %v, want nil after a good write", err)
+	}
+	if !p.quit {
+		t.Error("the run does not quit after the screenshot")
+	}
+	if _, err := os.Stat(good); err != nil {
+		t.Errorf("screenshot file not written: %v", err)
+	}
+
+	bad := New(Config{BaseDir: dir, ScreenshotPath: filepath.Join(dir, "no such folder", "shot.png")})
+	bad.frame = shotFrame
+	bad.takeLaunchScreenshot()
+	if bad.ScreenshotErr() == nil {
+		t.Error("ScreenshotErr = nil after a write into a missing folder")
+	}
+	if !bad.quit {
+		t.Error("the run does not quit after a failed screenshot")
+	}
+}

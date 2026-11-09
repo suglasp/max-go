@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -160,7 +161,7 @@ type Debug struct {
 // Audio selects the sound backend and mixing volumes.
 type Audio struct {
 	Backend       string `json:"backend"`        // "default" (==ebiten), "ebiten", "soloud", or "miniaudio"
-	SoLoudBackend string `json:"soloud_backend"` // SoLoud device backend; invalid values use auto.
+	SoLoudBackend string `json:"soloud_backend"` // SoLoud device backend, one of SoLoudBackends; Validate turns any other value into auto.
 	MusicVolume   int    `json:"music_volume"`   // 0..100
 	SfxVolume     int    `json:"sfx_volume"`     // 0..100
 	VoiceVolume   int    `json:"voice_volume"`   // 0..100
@@ -301,8 +302,9 @@ func (s *Settings) Validate() {
 	if s.Audio.Backend != BackendDefault && s.Audio.Backend != BackendEbiten && s.Audio.Backend != BackendSoLoud && s.Audio.Backend != BackendMiniAudio {
 		s.Audio.Backend = BackendDefault
 	}
-	if s.Audio.SoLoudBackend == "" {
-		s.Audio.SoLoudBackend = "auto"
+	s.Audio.SoLoudBackend = strings.ToLower(strings.TrimSpace(s.Audio.SoLoudBackend))
+	if !slices.Contains(SoLoudBackends, s.Audio.SoLoudBackend) {
+		s.Audio.SoLoudBackend = "auto" // empty or unknown: SoLoud picks the device itself
 	}
 	s.Audio.MusicVolume = max(0, min(s.Audio.MusicVolume, 100))
 	s.Audio.SfxVolume = max(0, min(s.Audio.SfxVolume, 100))

@@ -32,7 +32,7 @@ func registerOverrideFlags(fs *flag.FlagSet) *OverrideFlags {
 	flags.DataDir = fs.String("datadir", "", "game data directory for this run; wins over MAX_DATA_DIR and the data_dir setting")
 	fs.StringVar(flags.DataDir, "data", "", "alias of -datadir")
 	flags.PlayerName = fs.String("playername", "", "player name for this run (overrides player.name)")
-	flags.Audio = fs.String("audio", "", "audio backend for this run: native, ebiten, soloud, miniaudio (overrides audio.backend)")
+	flags.Audio = fs.String("audio", "", "audio backend for this run: native (or default), ebiten, soloud, miniaudio (overrides audio.backend)")
 	flags.Scale = fs.Int("scale", 0, "desktop window scale for this run: 1..8 (overrides video.window_scale)")
 	flags.Windowed = fs.Bool("windowed", false, "start in a desktop window for this run (overrides video.fullscreen)")
 	flags.Fullscreen = fs.Bool("fullscreen", false, "start fullscreen for this run (overrides video.fullscreen)")
@@ -47,14 +47,17 @@ func ValidateOverrideFlags(flags *OverrideFlags) error {
 	if flags == nil {
 		return nil
 	}
-	if err := validateChoice(flags.Audio, "audio", "", "native", "default", "ebiten", "soloud", "miniaudio"); err != nil {
-		return err
+	// An unset -audio stays empty (the saved backend); parseLaunchArgs refuses an explicit -audio=.
+	if strings.TrimSpace(stringValue(flags.Audio)) != "" {
+		if err := validateChoice(flags.Audio, "audio", "native", "default", "ebiten", "soloud", "miniaudio"); err != nil {
+			return err
+		}
 	}
 	if n := intValue(flags.Scale); n != 0 && (n < 1 || n > 8) {
-		return fmt.Errorf("flag -scale must be an integer from 1 to 8")
+		return fmt.Errorf("flag -scale must be an integer from 1 to 8, got %d", n)
 	}
 	if boolValue(flags.Windowed) && boolValue(flags.Fullscreen) {
-		return fmt.Errorf("flags -windowed and -fullscreen are mutually exclusive")
+		return fmt.Errorf("flags -windowed and -fullscreen cannot be combined")
 	}
 	return nil
 }

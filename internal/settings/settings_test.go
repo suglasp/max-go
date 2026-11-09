@@ -264,6 +264,27 @@ func TestValidateNormalizesBadValues(t *testing.T) {
 	}
 }
 
+// TestValidateSoLoudBackend keeps a listed device backend (any case or spacing, stored lower case) and turns an
+// empty or unknown one into auto, as the field comment says.
+func TestValidateSoLoudBackend(t *testing.T) {
+	for in, want := range map[string]string{
+		"":          "auto",
+		"auto":      "auto",
+		"wasapi":    "wasapi",
+		" WASAPI ":  "wasapi",
+		"MiniAudio": "miniaudio",
+		"winamp":    "auto",
+		"sdl3":      "auto",
+	} {
+		s := Default()
+		s.Audio.SoLoudBackend = in
+		s.Validate()
+		if s.Audio.SoLoudBackend != want {
+			t.Errorf("soloud_backend %q -> %q, want %q", in, s.Audio.SoLoudBackend, want)
+		}
+	}
+}
+
 // TestValidateKeybinds fills missing actions and resolves the legacy Survey/Find collision without changing an intentional Survey binding.
 func TestValidateKeybinds(t *testing.T) {
 	// A five action settings file carries the legacy Survey binding to F.

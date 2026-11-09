@@ -6,12 +6,14 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 
@@ -26,12 +28,18 @@ import (
 // DEBUG_GAME enables developer command-line shortcuts, including -emulate.
 const DEBUG_GAME = true // Flip to false for a release build
 
-// menuScreensHelp lists the developer screens accepted by -emulate.
-const menuScreensHelp = "planetselect, newgame, multiplayer, gameconfig, chooseplayer, clanselect, " +
-	"mapview, drawmap, sprite:<tag>, shadow, game, random, random2, build, blewup, colony, popup, bevelart, assets, soldier, apcunit, headrotate, transport, commando, mines, bulldozer, air, missile, navalfire, parkedbuild, reactionfire, spotted, aliens, factoryrun, death, win, lose, ending, " +
-	"options, prefs-game, loadgame, research, alloc, upgrade, transfer, selfdestruct, repairshop, reports, help, cargo, construct, construct-eng, factorybuild, scrollbar, " +
-	/* "listbox, ": note: unused code in Go port, the ListBox bench is commented out */ "saveload, save, load, credits, intro, splash, " +
-	"setup, gamesetup, training, campaign, mission, customscenario, tips, gameconfig-mission, custom, levelup, submarine, status"
+// menuScreens lists the developer screens accepted by -emulate; sprite:<tag> takes a unit sprite tag.
+// validateEmulate checks a name against this list and the help prints it.
+var menuScreens = []string{
+	"planetselect", "newgame", "multiplayer", "gameconfig", "chooseplayer", "clanselect",
+	"mapview", "drawmap", "sprite:<tag>", "shadow", "game", "random", "random2", "build", "blewup", "colony", "popup", "bevelart", "assets", "soldier", "apcunit", "headrotate", "transport", "commando", "mines", "bulldozer", "air", "missile", "navalfire", "parkedbuild", "reactionfire", "spotted", "aliens", "factoryrun", "death", "win", "lose", "ending",
+	"options", "prefs-game", "loadgame", "research", "alloc", "upgrade", "transfer", "selfdestruct", "repairshop", "reports", "help", "cargo", "construct", "construct-eng", "factorybuild", "scrollbar",
+	/* "listbox", note: unused code in Go port, the ListBox bench is commented out */ "saveload", "save", "load", "credits", "intro", "splash",
+	"setup", "gamesetup", "training", "campaign", "mission", "customscenario", "tips", "gameconfig-mission", "custom", "levelup", "submarine", "status",
+}
+
+// menuScreensHelp is the -emulate screen list as the help prints it.
+var menuScreensHelp = strings.Join(menuScreens, ", ")
 
 type launchFlags struct {
 	demo       *bool
@@ -54,30 +62,20 @@ type launchFlags struct {
 	npc        *int
 	custom     *CustomGameFlags
 	override   *OverrideFlags
+	provided   map[string]bool // the flags given on the command line, an alias under its own name
 }
 
 // main parses launch flags, loads settings, builds the platform, then starts a debug player, the GNW demo, or
 // the main menu.
 func main() {
-	// parse CLI flags
-	flags := defineLaunchFlags(flag.CommandLine)
-
-	flag.Usage = func() {
-		printUsage(flag.CommandLine.Output(), filepath.Base(os.Args[0]), flag.CommandLine)
+	// parse and check the CLI flags: a bad command line stops here with exit code 2
+	flags, err := parseLaunchArgs(flag.CommandLine, os.Args[1:])
+	if errors.Is(err, flag.ErrHelp) {
+		printUsage(os.Stderr, filepath.Base(os.Args[0]), flag.CommandLine)
+		os.Exit(0)
 	}
-
-	flag.Parse()
-
-	if err := ValidateCustomFlags(flags.custom); err != nil {
-		fatalf("max-go: %v", err)
-	}
-
-	if err := ValidateOverrideFlags(flags.override); err != nil {
-		fatalf("max-go: %v", err)
-	}
-
-	if err := validateDifficulty(*flags.difficulty); err != nil {
-		fatalf("max-go: %v", err)
+	if err != nil {
+		exitLaunchError(err)
 	}
 
 	noSound = *flags.nosound
@@ -87,6 +85,11 @@ func main() {
 	derelictsLevel = resourceDensity(*flags.custom.Derelicts) // -derelicts for the quick start benches (empty = Rare)
 
 	cfg, baseDir, cfgPath := loadLaunchSettings(flags)
+
+	// A missing file, data directory or save slot stops the run before the window opens.
+	if err := checkLaunchTargets(cfg, baseDir, flags); err != nil {
+		exitLaunchError(err)
+	}
 
 	initDebugLog(cfg, baseDir)
 	defer dbg.Close()
@@ -100,6 +103,7 @@ func main() {
 	p := newPlatform(&cfg, baseDir, cfgPath, *flags.screenshot)
 
 	if runMediaPlayers(p, cfg, flags) {
+		checkScreenshot(p)
 		return
 	}
 
@@ -132,6 +136,14 @@ func main() {
 
 	if err := runApp(p, &cfg, cfgPath, fontSet, flags); err != nil {
 		fatalf("max-go: %v", err)
+	}
+	checkScreenshot(p)
+}
+
+// checkScreenshot ends the run with exit code 1 when the one-shot -screenshot file could not be written.
+func checkScreenshot(p *platform.Platform) {
+	if err := p.ScreenshotErr(); err != nil {
+		fatalf("max-go: flag -screenshot: %v", err)
 	}
 }
 
@@ -166,10 +178,7 @@ func loadLaunchSettings(flags launchFlags) (settings.Settings, string, string) {
 	// Apply explicit Custom Game flags before setup or quick start reads the settings.
 	// Default flag values do not replace saved resource levels.
 	// C++: command line overrides of MAX.INI.
-	customProvided := map[string]bool{}
-	flag.CommandLine.Visit(func(f *flag.Flag) {
-		customProvided[f.Name] = true
-	})
+	customProvided := flags.provided
 	applyCustomGameFlags(&cfg.Game, flags.custom, customProvided)
 
 	// Quick-start benches use explicitly supplied Custom Game flags. Read the flag values rather than cfg.Game
@@ -345,7 +354,7 @@ func defineLaunchFlags(fs *flag.FlagSet) launchFlags {
 		screenshot: fs.String("screenshot", "", "save the first frame to this PNG file and quit"),
 		movie:      fs.String("mve", "", "debug: play an Interplay MVE movie from the data dir or an explicit path"),
 		flic:       fs.String("flic", "", "debug: play a FLI/FLC animation from the data dir or an explicit path"),
-		skipintro:  fs.Bool("skipintro", false, "skip the boot intro movie and splash logos"),
+		skipintro:  fs.Bool("skipintro", false, "skip the boot intro movie and splash logos (-nomovie and -nosplash together)"),
 		nomovie:    fs.Bool("nomovie", false, "skip the intro movie but still show the splash logos"),
 		nosplash:   fs.Bool("nosplash", false, "skip the splash logos (e.g. with -random for a fast start)"),
 		random:     fs.Bool("random", false, "quick-start a 2-team game on a random map (alias -rng)"),
@@ -465,7 +474,7 @@ Menu screens:
       debug.console + debug.log_file from the settings file without
       ever writing it. The settings file is max-go.json next to the
       binary; a settings.json from older versions is still honored
-      (max-go.json wins when both exist). For -audio, native is the
+      (max-go.json wins when both exist). For -audio, native (or default) is the
       built in Ebitengine backend (alias ebiten).
 
   -reset
@@ -487,17 +496,34 @@ Menu screens:
 
 `)
 	}
+	/* // note: unused code in Go port
+		// The precedence rules are gone: two start modes are refused (startModeConflict), see "Start modes" below.
+		if DEBUG_GAME {
+			fmt.Fprint(w, `Precedence:
+	  -mve exits after movie playback and wins over -flic and -emulate.
+	  -flic exits after animation playback and wins over -emulate.
+	`)
+		} else {
+			fmt.Fprint(w, `Precedence:
+	  -mve exits after movie playback and wins over -flic.
+	  -flic exits after animation playback.
+	`)
+		}
+	*/
+	modes := "-mve, -flic, -mission, -save, -random"
 	if DEBUG_GAME {
-		fmt.Fprint(w, `Precedence:
-  -mve exits after movie playback and wins over -flic and -emulate.
-  -flic exits after animation playback and wins over -emulate.
-`)
-	} else {
-		fmt.Fprint(w, `Precedence:
-  -mve exits after movie playback and wins over -flic.
-  -flic exits after animation playback.
-`)
+		modes += ", -emulate"
 	}
+	fmt.Fprintf(w, `Start modes:
+  %s each pick what the run starts: give one of them.
+  -mve exits after movie playback, -flic after animation playback.
+
+Exit codes:
+  0  the run ended normally, or -help
+  1  a runtime failure: a missing file, data directory or save slot, a load or save error
+  2  a bad command line: an unknown flag, a bad or empty value, two start modes or a stray argument;
+     max-go stops before the window opens with one "max-go: ..." line
+`, modes)
 }
 
 func printFlagDefaults(w io.Writer, fs *flag.FlagSet) {

@@ -48,6 +48,34 @@ func langResDirs(t *testing.T, dir string) {
 	t.Cleanup(func() { languageSearchDirs = orig })
 }
 
+// TestHasLanguage finds a language through a loose lang-<code>.ini or a LANG_<XX> entry in LANG.RES, and
+// never through the English fallback the loader uses.
+func TestHasLanguage(t *testing.T) {
+	dir := t.TempDir()
+	langResDirs(t, dir)
+
+	if HasLanguage(dir, "en-us") {
+		t.Error("en-us found in an empty folder")
+	}
+
+	if err := os.WriteFile(filepath.Join(dir, LanguageFile("xx-test")), []byte("[language]\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if !HasLanguage(dir, "xx-test") {
+		t.Error("a loose lang-xx-test.ini is not found")
+	}
+
+	if err := restool.Pack(filepath.Join("..", "..", "langres"), filepath.Join(dir, LangResFile)); err != nil {
+		t.Fatalf("packing langres: %v", err)
+	}
+	if !HasLanguage(dir, "en-us") {
+		t.Error("en-us not found through LANG_EN in LANG.RES")
+	}
+	if HasLanguage(dir, "zz") {
+		t.Error("zz found: LANG.RES has no LANG_ZZ and the English fallback must not count")
+	}
+}
+
 // TestLangResSources packs the repo's langres sources into a LANG.RES and loads it the way the game does:
 // the strings come from LANG_EN, every unit description key resolves to a text, and a loose ini wins.
 func TestLangResSources(t *testing.T) {

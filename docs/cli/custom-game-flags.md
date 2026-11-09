@@ -18,18 +18,19 @@ The value parser is case insensitive for named options and normalizes accepted v
 | `-endturn` | string | `""` | `""`, integer `15`..`90` | `-endturn 45` | End of turn grace seconds, `settings["endturn"]`. |
 | `-score` | string | `""` | `""`, `Low`, `Medium`, `High` | `-score High` | Score victory preset (200/400/800 points); maps to `victory_type` 1 / `victory_limit`. Mutually exclusive with `-duration`. |
 | `-duration` | string | `""` | `""`, integer `1`..`9999` | `-duration 200` | Duration victory turn count (the setup screen Turns box; presets there are 100/200/400); maps to `victory_type` 0 / `victory_limit`. Mutually exclusive with `-score`. |
-| `-turnbased` | bool | effective default | `true` / `false` | `-turnbased` | Play mode, `settings["play_mode"] == 0`. |
+| `-turnbased` | bool | `false` | `true` / `false` | `-turnbased` | Play mode, `settings["play_mode"] == 0`. |
 | `-simultane` | bool | `false` | `true` / `false` | `-simultane` | Play mode, `settings["play_mode"] == 1`. Mutually exclusive with `-turnbased`. |
 | `-raw` | string | `Medium` | `Poor`, `Medium`, `Rich` | `-raw Rich` | Raw resource density, `settings["raw_resource"]`. |
 | `-fuel` | string | `Medium` | `Poor`, `Medium`, `Rich` | `-fuel Poor` | Fuel resource density, `settings["fuel_resource"]`. |
 | `-gold` | string | `Medium` | `Poor`, `Medium`, `Rich` | `-gold Medium` | Gold resource density, `settings["gold_resource"]`. |
-| `-derelicts` | string | `""` | `""`, `Rare`, `Common` | `-derelicts Common` | Alien derelict density, `settings["alien_derelicts"]`. |
+| `-derelicts` | string | `""` | `""`, `None`, `Rare`, `Common` | `-derelicts Common` | Alien derelict density, `settings["alien_derelicts"]`. `None` turns them off; empty keeps the saved setting (Rare for the quick starts). |
 | `-startcredit` | string | `""` | `""`, `Low`, `Limited`, `Normal`, `High`, `TooMuch` | `-startcredit Normal` | Starting cargo credits, `settings["start_gold"]`. |
 | `-credit` | string | `""` | `""`, `Low`, `Limited`, `Normal`, `High`, `TooMuch` | `-credit Normal` | Alias of `-startcredit`; normalized into the same field. |
 
 When neither `-turnbased` nor `-simultane` is supplied,
-the intended effective mode is turn based.
-Supplying both is invalid.
+the saved play mode stays (`game.play_mode` in `max-go.json`, turn based by default).
+Supplying both stops max-go with exit code 2, as does any value outside the valid values above
+(names are case insensitive; an empty value means unset).
 
 ## Examples
 
