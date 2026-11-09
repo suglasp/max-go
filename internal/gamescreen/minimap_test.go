@@ -60,7 +60,7 @@ func TestMinimapHidesEasterEggProps(t *testing.T) {
 	mmW, mmH := viewSize(Minimap)
 
 	yellowDots := func(deploy func(*Screen)) int {
-		s, _ := newClickScreen(t)
+		s, _ := newTestScreen(t, 16)
 		s.fogTeam = 0
 		s.fogShow = false // reveal every blip so visibility never hides the unit
 		deploy(s)
@@ -144,8 +144,8 @@ func TestMinimapControlClicks(t *testing.T) {
 // on the minimap orders the selected unit to that map cell (C++: WINDOW_MINIMAP
 // right release = ORDER_MOVE), while a LEFT click recenters the view (elsewhere).
 func TestMinimapOrderRightClickMoves(t *testing.T) {
-	s, g := newClickScreen(t)
-	tank := mkUnit(g, assets.Tank, 1, 1, 1, game.FlagMobileLandUnit|game.FlagSelectable)
+	s, g := newTestScreen(t, 16)
+	tank := mkUnit(g, assets.Tank, 0, 1, 1, 1, game.FlagMobileLandUnit|game.FlagSelectable)
 	tank.Speed = 0 // out of moves -> the order queues (deterministic), like a 0-move map click
 	s.selected = tank
 
@@ -183,7 +183,7 @@ func TestMinimapOrderRightClickMoves(t *testing.T) {
 // and a left edge click in 2X maps to a cell nearer the centre than the plain 1X
 // mapping would (proving the zoom is inverted, not ignored).
 func TestMinimapCellAt2xInvertsZoom(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	vw, vh := viewSize(MainMap)
 	// Centre the main view on map cell (8,8) of the 16x16 test map.
 	s.camera.scrollX, s.camera.scrollY = centerScroll(8, 8, s.r.Zoom(), vw, vh)
@@ -212,7 +212,7 @@ func TestMinimapCellAt2xInvertsZoom(t *testing.T) {
 // second held frame at the SAME cursor point lands on the SAME view (no drift).
 // The contrast check confirms that an unfrozen origin would move between frames.
 func TestMinimap2xDragDoesNotDrift(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	vw, vh := viewSize(MainMap)
 	s.camera.scrollX, s.camera.scrollY = centerScroll(8, 8, s.r.Zoom(), vw, vh)
 	s.minimap.minimap2x = true
@@ -251,7 +251,7 @@ func TestMinimap2xDragDoesNotDrift(t *testing.T) {
 // consumed (nothing happens) even with nothing selected, so it never falls through
 // to the map's right click = Status / deselect handler.
 func TestMinimapOrderConsumesWithoutSelection(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	s.selected = nil
 	mx := (Minimap.ULX + Minimap.LRX) / 2
 	my := (Minimap.ULY + Minimap.LRY) / 2
@@ -263,7 +263,7 @@ func TestMinimapOrderConsumesWithoutSelection(t *testing.T) {
 // TestMinimapBlipSize checks DrawMap_RenderMiniMapUnitList (and the DOS minimap): every unit is
 // a 2x2 cell blip, a unit that is not a building is 1 cell in the 2X view, and an edge blip shifts inward.
 func TestMinimapBlipSize(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	w, h := s.wmap.W, s.wmap.H // one minimap pixel per cell
 
 	stamp := func(flags game.Flags, gridX, gridY int, zoom2x bool) (int, int, int) {

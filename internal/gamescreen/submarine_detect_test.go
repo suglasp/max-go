@@ -17,14 +17,14 @@ import (
 // generic "Enemy detected!" (V_F070/F071), announces once per detection, and
 // rearms when the sub slips back out of sonar coverage.
 func TestSubmarineDetectedPlaysCue(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	var voices []string
 	s.announcer.voiceFn = func(tag string) { voices = append(voices, tag) }
 	s.sound.sfxFn = func(primary, _ string, _ float64) {} // swallow the PING blip
 	s.announcer.clock = func() uint64 { return 0 }
 
 	// A player Corvette (sonar) covers the cell a hostile submarine sits on.
-	corvette := mkUnit(g, assets.Corvette, 1, 5, 5, game.FlagMobileSeaUnit|game.FlagSelectable)
+	corvette := mkUnit(g, assets.Corvette, 0, 1, 5, 5, game.FlagMobileSeaUnit|game.FlagSelectable)
 	corvette.Values.Set(game.AttribScan, 4)
 	sub := game.NewUnitInfo(assets.Submarne, 1, 2, 0) // team 1 = enemy
 	sub.Flags = game.FlagMobileSeaUnit | game.FlagSelectable

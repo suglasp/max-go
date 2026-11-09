@@ -68,7 +68,7 @@ func spokePlacementPrompt(played []string) bool {
 // TestMissionCategoryRidesTheSim checks the category is stored on the game (which is
 // what the save captures), so a reloaded training mission is still a training mission.
 func TestMissionCategoryRidesTheSim(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
 	if got := s.game.Mission; got != game.MissionNone {
 		t.Errorf("a fresh game reports %v, want none", got)

@@ -155,7 +155,7 @@ func TestDebugPlaceArmCancel(t *testing.T) {
 func TestDebugSelfDestructSelected(t *testing.T) {
 	const w, h = 8, 8
 	mgr := units.NewManager()
-	grid := &access.Grid{W: w, H: h, Surf: buildExitSurf{}, Units: mgr.Cells}
+	grid := &access.Grid{W: w, H: h, Surf: allLandSurf{}, Units: mgr.Cells}
 	p := &game.StartParams{}
 	p.Teams[0].Type = game.TeamPlayer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)

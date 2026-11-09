@@ -10,8 +10,6 @@ import (
 
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/game"
-	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // TestPassiveStoreSilentOnSelect verifies that a
@@ -23,15 +21,7 @@ import (
 // plant hum) ONLY while actually producing, so a powered but HALTED / empty queue
 // factory is silent.
 func TestPassiveStoreSilentOnSelect(t *testing.T) {
-	m := &world.Map{Surface: make([]uint8, 8*8)}
-	m.W, m.H = 8, 8
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
-	s := &Screen{game: g, wmap: m}
+	s, g := newTestScreen(t, 8)
 
 	mk := func(ty assets.UnitType, gx, gy int, big bool) *game.UnitInfo {
 		fl := game.FlagStationary | game.FlagSelectable | game.FlagRequiresSlab

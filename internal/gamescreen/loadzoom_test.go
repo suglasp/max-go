@@ -16,9 +16,9 @@ import (
 // partly IN to the base (landingStep>0, landingZoom=loadFocusZoom) WITHOUT unfolding again
 // the already built base; a load already zoomed in just stays centred (no animation).
 func TestFocusOnLoadedBaseZoomsIn(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.r.SetZoom(16)
-	mkUnit(g, assets.MiningSt, 1, 8, 8, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
+	mkUnit(g, assets.MiningSt, 0, 1, 8, 8, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
 
 	s.focusOnLoadedBase()
 	if s.camera.landingStep <= 0 {
@@ -40,9 +40,9 @@ func TestFocusOnLoadedBaseZoomsIn(t *testing.T) {
 		}
 	}
 
-	s2, g2 := newClickScreen(t)
+	s2, g2 := newTestScreen(t, 16)
 	s2.r.SetZoom(64) // already fully zoomed in
-	mkUnit(g2, assets.MiningSt, 1, 8, 8, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
+	mkUnit(g2, assets.MiningSt, 0, 1, 8, 8, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
 	s2.focusOnLoadedBase()
 	if s2.camera.landingStep != 0 {
 		t.Errorf("an already zoomed-in load should not animate, landingStep=%d", s2.camera.landingStep)
@@ -54,10 +54,10 @@ func TestFocusOnLoadedBaseZoomsIn(t *testing.T) {
 // spread out mobile units (the fallback path with no buildings), the old "first unit in
 // random map order" pick jumped the view every frame; the lowest ID fallback is stable.
 func TestCenterOnPlayerBaseIsStable(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.r.SetZoom(16)
 	for i, c := range [][2]int{{2, 2}, {14, 14}, {2, 14}, {14, 2}} {
-		mkUnit(g, assets.Tank, i+1, c[0], c[1], game.FlagMobileLandUnit|game.FlagSelectable)
+		mkUnit(g, assets.Tank, 0, i+1, c[0], c[1], game.FlagMobileLandUnit|game.FlagSelectable)
 	}
 	s.centerOnPlayerBase()
 	x1, y1 := s.camera.scrollX, s.camera.scrollY

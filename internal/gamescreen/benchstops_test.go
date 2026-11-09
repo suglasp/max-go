@@ -42,15 +42,15 @@ func TestBenchAnchors(t *testing.T) {
 // TestBenchStopsTab checks Tab and Shift+Tab step through the stops and wrap both ways, each stop selecting its
 // unit, centring the camera on its cell and showing its numbered compass banner; with no stops Tab does nothing.
 func TestBenchStopsTab(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
 	s.handleHotkey(platform.KeyTab, nil) // no stops: a normal game, nothing happens
 	if s.selected != nil || s.banner.msg != "" {
 		t.Fatal("Tab acted outside a bench")
 	}
 
-	a := mkUnit(g, assets.Tank, 1, 2, 2, game.FlagMobileLandUnit|game.FlagSelectable)
-	b := mkUnit(g, assets.Scout, 2, 12, 12, game.FlagMobileLandUnit|game.FlagSelectable)
+	a := mkUnit(g, assets.Tank, 0, 1, 2, 2, game.FlagMobileLandUnit|game.FlagSelectable)
+	b := mkUnit(g, assets.Scout, 0, 2, 12, 12, game.FlagMobileLandUnit|game.FlagSelectable)
 	a.Hits, b.Hits = 10, 10
 	s.addBenchStop(benchStop{Compass: "north west", Title: "first", Text: "do one", Cell: game.Point{X: 2, Y: 2}, Select: a})
 	s.addBenchStop(benchStop{Compass: "south east", Title: "second", Cell: game.Point{X: 12, Y: 12}, Select: b})
@@ -86,7 +86,7 @@ func TestBenchStopsTab(t *testing.T) {
 
 // TestStartSingleBench checks a one stop bench banner has no count and no compass.
 func TestStartSingleBench(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	s.startSingleBench("Soldier bench: watch them walk.", game.Point{X: 4, Y: 4}, nil)
 	if s.banner.msg != "Soldier bench: watch them walk." {
 		t.Errorf("banner %q", s.banner.msg)
@@ -96,7 +96,7 @@ func TestStartSingleBench(t *testing.T) {
 // TestBenchBannerReturnsAfterAlert checks a bench banner displaced by another banner (the turn start alert)
 // comes back once that banner has run out, and only once.
 func TestBenchBannerReturnsAfterAlert(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	s.startSingleBench("Bench: what to do.", game.Point{X: 4, Y: 4}, nil)
 
 	s.showAlertBanner("Enemy detected!")
@@ -122,13 +122,13 @@ func TestBenchBannerReturnsAfterAlert(t *testing.T) {
 // TestBenchStartPopup checks the start popup comes first: with a message dialog wired, the bench queues the
 // general guide (its name, Tab, the frozen enemy) and shows no stop banner yet; after OK it goes to stop 1.
 func TestBenchStartPopup(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.hooks.messageFn = func(string) {}
-	enemy := mkUnit(g, assets.Tank, 3, 9, 9, game.FlagMobileLandUnit|game.FlagSelectable)
+	enemy := mkUnit(g, assets.Tank, 0, 3, 9, 9, game.FlagMobileLandUnit|game.FlagSelectable)
 	enemy.Team = 1
 	s.freezeBenchTeam(1)
 
-	a := mkUnit(g, assets.Tank, 1, 2, 2, game.FlagMobileLandUnit|game.FlagSelectable)
+	a := mkUnit(g, assets.Tank, 0, 1, 2, 2, game.FlagMobileLandUnit|game.FlagSelectable)
 	a.Hits = 10
 	s.addBenchStop(benchStop{Compass: "north", Title: "H9 BLOCKED", Text: "no shot", Cell: game.Point{X: 2, Y: 2}, Select: a})
 	s.addBenchStop(benchStop{Compass: "south", Title: "H9 COAST", Cell: game.Point{X: 12, Y: 12}})
@@ -153,11 +153,11 @@ func TestBenchStartPopup(t *testing.T) {
 // TestFrozenBenchTeamPasses checks End Turn on a bench with a frozen enemy comes straight back to the player in
 // the next turn: no hot seat banner, no turn for the frozen team.
 func TestFrozenBenchTeamPasses(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.State.Teams[1].Type = game.TeamComputer // a second team, then frozen like a bench does
-	enemy := mkUnit(g, assets.Tank, 2, 9, 9, game.FlagMobileLandUnit|game.FlagSelectable)
+	enemy := mkUnit(g, assets.Tank, 0, 2, 9, 9, game.FlagMobileLandUnit|game.FlagSelectable)
 	enemy.Team = 1
-	own := mkUnit(g, assets.Tank, 1, 2, 2, game.FlagMobileLandUnit|game.FlagSelectable)
+	own := mkUnit(g, assets.Tank, 0, 1, 2, 2, game.FlagMobileLandUnit|game.FlagSelectable)
 	own.Hits, enemy.Hits = 10, 10
 	own.Values.Set(game.AttribHits, 10)
 	enemy.Values.Set(game.AttribHits, 10)

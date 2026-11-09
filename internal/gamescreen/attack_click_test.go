@@ -13,13 +13,13 @@ import (
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
 	"github.com/suglasp/max-go/internal/units"
-	"github.com/suglasp/max-go/internal/world"
 )
 
-type allLandSurf struct{}
+// clickTank is the armed tank of the click tests (hits 80 survive a single 8 damage shot).
+var clickTank = tankStats{attack: 8, rng: 4, rounds: 1, ammo: 6, speed: 12, hits: 80}
 
-func (allLandSurf) SurfaceAt(x, y int) uint8 { return world.SurfaceLand }
-
+/* // note: unused code in Go port
+// replaced by the shared mkTank(mgr, team, id, gx, gy, clickTank) in fixture_test.go
 func clickTestUnit(team, id, gx, gy int, mgr *units.Manager) *game.UnitInfo {
 	u := game.NewUnitInfo(assets.Tank, team, id, 0)
 	u.Flags = game.FlagMobileLandUnit | game.FlagSelectable
@@ -35,6 +35,7 @@ func clickTestUnit(team, id, gx, gy int, mgr *units.Manager) *game.UnitInfo {
 	mgr.Deploy(u, gx, gy)
 	return u
 }
+*/
 
 // TestLeftClickAttacksInRangeEnemy: a left click (clickCell) on an attackable
 // enemy within range fires on it (and keeps the attacker selected); out of range
@@ -49,8 +50,8 @@ func TestLeftClickAttacksInRangeEnemy(t *testing.T) {
 	p.Teams[1].Type = game.TeamComputer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
 
-	tank := clickTestUnit(0, 1, 5, 5, mgr)  // player attacker, active team
-	enemy := clickTestUnit(1, 2, 7, 5, mgr) // enemy 2 cells away (in range 4)
+	tank := mkTank(mgr, 0, 1, 5, 5, clickTank)  // player attacker, active team
+	enemy := mkTank(mgr, 1, 2, 7, 5, clickTank) // enemy 2 cells away (in range 4)
 
 	s := &Screen{game: g}
 	s.selected = tank
@@ -67,7 +68,7 @@ func TestLeftClickAttacksInRangeEnemy(t *testing.T) {
 	// An out of range enemy: left click issues a move to attack pursuit - it must not
 	// fire now, must keep the attacker selected, and must mark the far enemy as the
 	// pursued target.
-	far := clickTestUnit(1, 3, 20, 20, mgr)
+	far := mkTank(mgr, 1, 3, 20, 20, clickTank)
 	farHits := far.Hits
 	s.clickCell(20, 20)
 	if far.Hits != farHits {
@@ -92,8 +93,8 @@ func TestForceAttackClickHitsFriendly(t *testing.T) {
 	p.Teams[0].Type = game.TeamPlayer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
 
-	attacker := clickTestUnit(0, 1, 5, 5, mgr) // player attacker, active team
-	friend := clickTestUnit(0, 2, 7, 5, mgr)   // SAME team, 2 cells away (in range 4)
+	attacker := mkTank(mgr, 0, 1, 5, 5, clickTank) // player attacker, active team
+	friend := mkTank(mgr, 0, 2, 7, 5, clickTank)   // SAME team, 2 cells away (in range 4)
 
 	s := &Screen{game: g}
 	s.selected = attacker
@@ -159,7 +160,7 @@ func TestAirUnitClickFiresInPlace(t *testing.T) {
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
 
 	bomber := airClickAttacker(0, 1, 4, 5, mgr) // player flyer at (4,5), facing east
-	clickTestUnit(1, 2, 7, 5, mgr)              // enemy 3 cells east, within range 4
+	mkTank(mgr, 1, 2, 7, 5, clickTank)          // enemy 3 cells east, within range 4
 
 	s := &Screen{game: g}
 	s.selected = bomber
@@ -196,8 +197,8 @@ func TestGroundUnitClickFiresInPlace(t *testing.T) {
 	p.Teams[1].Type = game.TeamComputer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
 
-	tank := clickTestUnit(0, 1, 5, 5, mgr)  // player ground attacker
-	enemy := clickTestUnit(1, 2, 7, 5, mgr) // enemy in range
+	tank := mkTank(mgr, 0, 1, 5, 5, clickTank)  // player ground attacker
+	enemy := mkTank(mgr, 1, 2, 7, 5, clickTank) // enemy in range
 	startHits := enemy.Hits
 
 	s := &Screen{game: g}

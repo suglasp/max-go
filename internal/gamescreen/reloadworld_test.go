@@ -13,16 +13,6 @@ import (
 	"github.com/suglasp/max-go/internal/world"
 )
 
-// flatWorld builds a small all land map for the reload tests.
-func flatWorld(w, h int) *world.Map {
-	m := &world.Map{Surface: make([]uint8, w*h)}
-	m.W, m.H = w, h
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	return m
-}
-
 // TestReloadWorldSwapsToSaveMap: reloadWorld keeps the current world when the maps match
 // or no reloader is wired, and swaps to the save's own map (updating the renderer and the
 // tracked name) when they differ. This is the fix for a base saved on one map being

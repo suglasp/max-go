@@ -23,6 +23,8 @@ func newResearchScreen() *Screen {
 	return &Screen{game: &sim.Game{Units: units.NewManager(), State: game.NewGameState(p)}}
 }
 
+/* // note: unused code in Go port
+// replaced by the shared mkBuilding(assets.Research, team, id, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, order, 0)
 // researchBld returns a research centre building with the given id and order.
 func researchBld(team int, id uint16, order game.Order) *game.UnitInfo {
 	return &game.UnitInfo{
@@ -33,6 +35,7 @@ func researchBld(team int, id uint16, order game.Order) *game.UnitInfo {
 		Order: order,
 	}
 }
+*/
 
 // countOrder reports how many of the units carry the given order.
 func countOrder(us []*game.UnitInfo, o game.Order) int {
@@ -50,9 +53,9 @@ func countOrder(us []*game.UnitInfo, o game.Order) int {
 // rest idle so the economy skips their power draw.
 func TestSyncResearchOrdersRunsAllocatedRestIdle(t *testing.T) {
 	s := newResearchScreen()
-	a := researchBld(0, 1, game.OrderPowerOn)
-	b := researchBld(0, 2, game.OrderPowerOn)
-	c := researchBld(0, 3, game.OrderPowerOn)
+	a := mkBuilding(assets.Research, 0, 1, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, game.OrderPowerOn, 0)
+	b := mkBuilding(assets.Research, 0, 2, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, game.OrderPowerOn, 0)
+	c := mkBuilding(assets.Research, 0, 3, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, game.OrderPowerOn, 0)
 	s.game.Units.Deploy(a, 1, 1)
 	s.game.Units.Deploy(b, 2, 1)
 	s.game.Units.Deploy(c, 3, 1)
@@ -83,8 +86,8 @@ func TestSyncResearchOrdersRunsAllocatedRestIdle(t *testing.T) {
 // allocated sits idle (by design: idle until allocated).
 func TestSyncResearchOrdersZeroAllocationIdlesAll(t *testing.T) {
 	s := newResearchScreen()
-	a := researchBld(0, 1, game.OrderPowerOn)
-	b := researchBld(0, 2, game.OrderPowerOn)
+	a := mkBuilding(assets.Research, 0, 1, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, game.OrderPowerOn, 0)
+	b := mkBuilding(assets.Research, 0, 2, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, game.OrderPowerOn, 0)
 	s.game.Units.Deploy(a, 1, 1)
 	s.game.Units.Deploy(b, 2, 1)
 
@@ -103,8 +106,8 @@ func TestSyncResearchOrdersZeroAllocationIdlesAll(t *testing.T) {
 // runs to cover the allocation.
 func TestSyncResearchOrdersForceOffExcluded(t *testing.T) {
 	s := newResearchScreen()
-	off := researchBld(0, 1, game.OrderPowerOff) // force off (also the freshly built default)
-	on := researchBld(0, 2, game.OrderPowerOn)
+	off := mkBuilding(assets.Research, 0, 1, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, game.OrderPowerOff, 0) // force off (also the freshly built default)
+	on := mkBuilding(assets.Research, 0, 2, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, game.OrderPowerOn, 0)
 	s.game.Units.Deploy(off, 1, 1)
 	s.game.Units.Deploy(on, 2, 1)
 	s.game.State.Teams[0].Research[game.ResearchHits].Allocation = 1
@@ -127,8 +130,8 @@ func TestSyncResearchOrdersForceOffExcluded(t *testing.T) {
 // available centres runs them all (no out of range), none left idle.
 func TestSyncResearchOrdersAllocationClampedToCenters(t *testing.T) {
 	s := newResearchScreen()
-	a := researchBld(0, 1, game.OrderPowerOn)
-	b := researchBld(0, 2, game.OrderPowerOn)
+	a := mkBuilding(assets.Research, 0, 1, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, game.OrderPowerOn, 0)
+	b := mkBuilding(assets.Research, 0, 2, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, game.OrderPowerOn, 0)
 	s.game.Units.Deploy(a, 1, 1)
 	s.game.Units.Deploy(b, 2, 1)
 	s.game.State.Teams[0].Research[game.ResearchAttack].Allocation = 3
@@ -146,8 +149,8 @@ func TestSyncResearchOrdersAllocationClampedToCenters(t *testing.T) {
 // team cannot keep researching on ghost centres it no longer has.
 func TestSyncResearchOrdersWritesTheClampBack(t *testing.T) {
 	s := newResearchScreen()
-	a := researchBld(0, 1, game.OrderPowerOn)
-	b := researchBld(0, 2, game.OrderPowerOn)
+	a := mkBuilding(assets.Research, 0, 1, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, game.OrderPowerOn, 0)
+	b := mkBuilding(assets.Research, 0, 2, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, game.OrderPowerOn, 0)
 	s.game.Units.Deploy(a, 1, 1)
 	s.game.Units.Deploy(b, 2, 1)
 	research := &s.game.State.Teams[0].Research

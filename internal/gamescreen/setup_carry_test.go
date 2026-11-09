@@ -42,7 +42,7 @@ func TestSetTeamClansKeepsExplicit(t *testing.T) {
 // lands on the team: teamValues reports it, so every unit deployed or built afterwards
 // carries it. Before this the bought upgrade was dropped and only the gold was gone.
 func TestSetTeamUpgradesReachTheUnits(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
 	before := s.teamValues(0, assets.Tank).Get(game.AttribArmor)
 
@@ -78,7 +78,7 @@ func TestSetVictory(t *testing.T) {
 // TestCustomStartOpponentCount checks that the custom game lands one player plus the
 // chosen number of computer opponents.
 func TestCustomStartOpponentCount(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.SetCustomOpponents(2) // two computer opponents -> three teams
 	s.CustomStart(nil, nil, 100, 42)
 
@@ -116,7 +116,7 @@ func TestSetResourceLevels(t *testing.T) {
 // TestMissionStartAppliesClan checks that a mission's scripted clan is honoured (a 0
 // stays random for resolveTeamClans to fill).
 func TestMissionStartAppliesClan(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	var rules MissionRules
 	rules.TeamClan[1] = 5 // the mission scripts clan 5 for team 1
 

@@ -47,7 +47,7 @@ func TestPlanningBulbDefersMoveUntilDwellElapses(t *testing.T) {
 	p.Teams[0].Type = game.TeamPlayer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
 
-	tank := clickTestUnit(0, 1, 5, 5, mgr)
+	tank := mkTank(mgr, 0, 1, 5, 5, clickTank)
 	s := &Screen{game: g}
 	s.selected = tank
 
@@ -81,7 +81,7 @@ func TestPlanningBulbDeadUnitDropsMove(t *testing.T) {
 	p.Teams[0].Type = game.TeamPlayer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
 
-	tank := clickTestUnit(0, 1, 5, 5, mgr)
+	tank := mkTank(mgr, 0, 1, 5, 5, clickTank)
 	s := &Screen{game: g}
 	s.selected = tank
 	s.orderMoveTo(tank, 9, 5)

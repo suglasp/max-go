@@ -20,16 +20,6 @@ import (
 	"github.com/suglasp/max-go/internal/world"
 )
 
-// spoke reports whether tag is among the played voice tags.
-func spoke(played []string, tag string) bool {
-	for _, t := range played {
-		if t == tag {
-			return true
-		}
-	}
-	return false
-}
-
 // TestBuildPlacementPromptSilentInNormalGame verifies the strict original behaviour: the
 // V_F050 "Position tape..." prompt is a cue only for TRAINING (buildmenu.cpp:931), so a
 // normal game stays SILENT on the build box - no prompt for a constructor's
@@ -175,9 +165,9 @@ func TestConstructorDoneArmsSelectSite(t *testing.T) {
 // and still be classified LAND, so a Bridge refuses it). When the SURFACE is the blocker
 // the port now says so and names both surfaces.
 func TestBuildRefusalNamesTheSurface(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
-	engineer := mkUnit(g, assets.Engineer, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable|game.FlagConstructorUnit)
+	engineer := mkUnit(g, assets.Engineer, 0, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable|game.FlagConstructorUnit)
 
 	// A Bridge on a LAND cell: the surface is the reason, so it must be spelled out.
 	bridgeFlags := game.FlagStationary | game.FlagSelectable

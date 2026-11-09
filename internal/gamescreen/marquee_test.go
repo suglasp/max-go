@@ -29,6 +29,8 @@ func setMarqueeBox(s *Screen, ax, ay, bx, by int) {
 	s.commitMarquee()
 }
 
+/* // note: unused code in Go port
+// replaced by the shared mkTank(g.Units, team, id, gx, gy, tankStats{}) in fixture_test.go
 func mkMobile(g *sim.Game, team, id, gx, gy int) *game.UnitInfo {
 	u := game.NewUnitInfo(assets.Tank, team, id, 0)
 	u.Flags = game.FlagMobileLandUnit | game.FlagSelectable
@@ -37,18 +39,19 @@ func mkMobile(g *sim.Game, team, id, gx, gy int) *game.UnitInfo {
 
 	return u
 }
+*/
 
 // TestMarqueeSelectsOwnMobileUnitsInBox: a drag box takes the player's mobile units
 // inside it and leaves out an enemy, a building and units outside the box.
 func TestMarqueeSelectsOwnMobileUnitsInBox(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
-	a := mkMobile(g, 0, 1, 3, 3) // three own mobile units inside the box
-	b := mkMobile(g, 0, 2, 4, 4)
-	c := mkMobile(g, 0, 3, 5, 5)
-	mkMobile(g, 0, 4, 12, 12)                                                                      // own, but outside the box
-	mkMobile(g, 1, 5, 4, 5)                                                                        // enemy inside: excluded
-	mkUnit(g, assets.PowerStn, 6, 5, 4, game.FlagStationary|game.FlagBuilding|game.FlagSelectable) // building: excluded
+	a := mkTank(g.Units, 0, 1, 3, 3, tankStats{}) // three own mobile units inside the box
+	b := mkTank(g.Units, 0, 2, 4, 4, tankStats{})
+	c := mkTank(g.Units, 0, 3, 5, 5, tankStats{})
+	mkTank(g.Units, 0, 4, 12, 12, tankStats{})                                                        // own, but outside the box
+	mkTank(g.Units, 1, 5, 4, 5, tankStats{})                                                          // enemy inside: excluded
+	mkUnit(g, assets.PowerStn, 0, 6, 5, 4, game.FlagStationary|game.FlagBuilding|game.FlagSelectable) // building: excluded
 
 	setMarqueeBox(s, 2, 2, 6, 6)
 
@@ -68,10 +71,10 @@ func TestMarqueeSelectsOwnMobileUnitsInBox(t *testing.T) {
 
 // TestMarqueeCapsAtTen: a box over 12 units yields at most maxGroupSize (10).
 func TestMarqueeCapsAtTen(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
 	for i := 0; i < 12; i++ {
-		mkMobile(g, 0, i+1, 2+i%4, 2+i/4)
+		mkTank(g.Units, 0, i+1, 2+i%4, 2+i/4, tankStats{})
 	}
 
 	setMarqueeBox(s, 1, 1, 7, 7)
@@ -84,9 +87,9 @@ func TestMarqueeCapsAtTen(t *testing.T) {
 // TestMarqueeEmptyBoxClears: dragging an empty box deselects (Access_MultiSelect
 // clears when nothing is caught).
 func TestMarqueeEmptyBoxClears(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
-	sel := mkMobile(g, 0, 1, 3, 3)
+	sel := mkTank(g.Units, 0, 1, 3, 3, tankStats{})
 	s.selected = sel
 
 	setMarqueeBox(s, 9, 9, 12, 12) // empty region
@@ -99,9 +102,9 @@ func TestMarqueeEmptyBoxClears(t *testing.T) {
 // TestTrackMarqueeThreshold: a press that moves past the threshold becomes a drag
 // and commits on release; a press that never moves stays a click (no marquee).
 func TestTrackMarqueeThreshold(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.turnFlow.handover = -1 // a live human turn: marquee eligible
-	a := mkMobile(g, 0, 1, 3, 3)
+	a := mkTank(g.Units, 0, 1, 3, 3, tankStats{})
 
 	ax, ay := boxScreenX(s, 2), boxScreenY(s, 2)
 	bx, by := boxScreenX(s, 6), boxScreenY(s, 6)
@@ -138,9 +141,9 @@ func TestTrackMarqueeThreshold(t *testing.T) {
 // TestShiftClickTogglesSelection: shift click adds a friendly to the group and a
 // second shift click removes it again.
 func TestShiftClickTogglesSelection(t *testing.T) {
-	s, g := newClickScreen(t)
-	a := mkMobile(g, 0, 1, 3, 3)
-	b := mkMobile(g, 0, 2, 6, 6)
+	s, g := newTestScreen(t, 16)
+	a := mkTank(g.Units, 0, 1, 3, 3, tankStats{})
+	b := mkTank(g.Units, 0, 2, 6, 6, tankStats{})
 
 	s.selected = a
 	s.orderInput.shiftMod = true
@@ -162,9 +165,9 @@ func TestShiftClickTogglesSelection(t *testing.T) {
 // TestGroupMoveFormation: a group move translates every member by the leader's
 // move vector (member_dest = member_origin + (leader_dest - leader_origin)).
 func TestGroupMoveFormation(t *testing.T) {
-	s, g := newClickScreen(t)
-	a := mkMobile(g, 0, 1, 5, 5) // leader
-	b := mkMobile(g, 0, 2, 7, 8) // member, offset (+2,+3) from the leader
+	s, g := newTestScreen(t, 16)
+	a := mkTank(g.Units, 0, 1, 5, 5, tankStats{}) // leader
+	b := mkTank(g.Units, 0, 2, 7, 8, tankStats{}) // member, offset (+2,+3) from the leader
 	a.Speed, b.Speed = 10, 10
 
 	s.setSelectionSet([]*game.UnitInfo{a, b}, a)
@@ -182,9 +185,9 @@ func TestGroupMoveFormation(t *testing.T) {
 // TestShiftDragAppendsToSelection: SHIFT + drag box adds the boxed units to the
 // current selection instead of replacing it.
 func TestShiftDragAppendsToSelection(t *testing.T) {
-	s, g := newClickScreen(t)
-	a := mkMobile(g, 0, 1, 2, 2)
-	b := mkMobile(g, 0, 2, 5, 5) // both within the visible viewport at scroll 0
+	s, g := newTestScreen(t, 16)
+	a := mkTank(g.Units, 0, 1, 2, 2, tankStats{})
+	b := mkTank(g.Units, 0, 2, 5, 5, tankStats{}) // both within the visible viewport at scroll 0
 
 	s.selected = a               // a single unit selected
 	s.orderInput.shiftMod = true // shift held during the drag
@@ -217,9 +220,9 @@ func TestInRangeGroupFire(t *testing.T) {
 	p.Teams[1].Type = game.TeamComputer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
 
-	a := clickTestUnit(0, 1, 5, 5, mgr) // two player attackers, both in range 4
-	b := clickTestUnit(0, 2, 6, 5, mgr)
-	enemy := clickTestUnit(1, 3, 8, 5, mgr)
+	a := mkTank(mgr, 0, 1, 5, 5, clickTank) // two player attackers, both in range 4
+	b := mkTank(mgr, 0, 2, 6, 5, clickTank)
+	enemy := mkTank(mgr, 1, 3, 8, 5, clickTank)
 
 	s := &Screen{game: g}
 	s.setSelectionSet([]*game.UnitInfo{a, b}, a)
@@ -249,12 +252,12 @@ func moveDestGS(g *sim.Game, u *game.UnitInfo) (game.Point, bool) {
 // column visibly leaves in order. The formation itself is unchanged: each unit still keeps
 // its offset to the leader.
 func TestGroupMoveStaggersTheDeparture(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
 	// Three units in a line, all bound east. The rear one is furthest from the destination.
-	front := mkUnit(g, assets.Tank, 1, 6, 5, game.FlagMobileLandUnit|game.FlagSelectable)
-	middle := mkUnit(g, assets.Tank, 2, 4, 5, game.FlagMobileLandUnit|game.FlagSelectable)
-	rear := mkUnit(g, assets.Tank, 3, 2, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	front := mkUnit(g, assets.Tank, 0, 1, 6, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	middle := mkUnit(g, assets.Tank, 0, 2, 4, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	rear := mkUnit(g, assets.Tank, 0, 3, 2, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 
 	for _, u := range []*game.UnitInfo{front, middle, rear} {
 		u.Values.Set(game.AttribSpeed, 12)

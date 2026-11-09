@@ -10,12 +10,11 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
-	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
-	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
+/* // note: unused code in Go port
+// replaced by the shared newTestScreen(t, 16) in fixture_test.go
 // landGameForPower builds a 16x16 all land game with team 0 as the player.
 func landGameForPower(t *testing.T) (*sim.Game, *world.Map) {
 	t.Helper()
@@ -30,6 +29,7 @@ func landGameForPower(t *testing.T) (*sim.Game, *world.Map) {
 	g.State.ActiveTeam, g.State.PlayerTeam = 0, 0
 	return g, m
 }
+*/
 
 // TestGeneratorPowerOffStaysOnlineWhenNeeded verifies a found gap:
 // powering a generator off seemed to do nothing (factories kept running, no
@@ -37,12 +37,11 @@ func landGameForPower(t *testing.T) (*sim.Game, *world.Map) {
 // the base still needs - the toggle now reconciles immediately and the message
 // explains it, instead of the generator silently coming back next turn.
 func TestGeneratorPowerOffStaysOnlineWhenNeeded(t *testing.T) {
-	g, m := landGameForPower(t)
-	s := &Screen{game: g, wmap: m, r: drawmap.New(m)}
+	s, g := newTestScreen(t, 16)
 
 	// One mine powered by one generator (one complex): the generator is needed.
-	gen := building(assets.PowGen, 0, 6, 8, game.OrderPowerOn, 0)
-	mine := building(assets.MiningSt, 0, 8, 8, game.OrderPowerOn, 0)
+	gen := mkBuilding(assets.PowGen, 0, 1, 6, 8, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, 0)
+	mine := mkBuilding(assets.MiningSt, 0, 1, 8, 8, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, 0)
 	g.PlaceBuilding(gen, 6, 8)
 	g.PlaceBuilding(mine, 8, 8)
 	for _, cx := range g.Complexes {
@@ -64,13 +63,12 @@ func TestGeneratorPowerOffStaysOnlineWhenNeeded(t *testing.T) {
 // TestGeneratorPowerOffSpareStaysOff: with a redundant generator already running, the
 // player CAN power one off - it stays off and the other keeps the base supplied.
 func TestGeneratorPowerOffSpareStaysOff(t *testing.T) {
-	g, m := landGameForPower(t)
-	s := &Screen{game: g, wmap: m, r: drawmap.New(m)}
+	s, g := newTestScreen(t, 16)
 
 	// One mine (demand 1) with TWO generators both running (a transient surplus).
-	genA := building(assets.PowGen, 0, 4, 8, game.OrderPowerOn, 0)
-	genB := building(assets.PowGen, 0, 6, 8, game.OrderPowerOn, 0)
-	mine := building(assets.MiningSt, 0, 8, 8, game.OrderPowerOn, 0)
+	genA := mkBuilding(assets.PowGen, 0, 1, 4, 8, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, 0)
+	genB := mkBuilding(assets.PowGen, 0, 1, 6, 8, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, 0)
+	mine := mkBuilding(assets.MiningSt, 0, 1, 8, 8, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, 0)
 	g.PlaceBuilding(genA, 4, 8)
 	g.PlaceBuilding(genB, 6, 8)
 	g.PlaceBuilding(mine, 8, 8)

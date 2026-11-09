@@ -27,13 +27,13 @@ func TestSentryUnitOrderVoiceIsBlendedPool(t *testing.T) {
 // checkEnemyDetected plays the PING.WAV alert blip on the SFX channel (alongside the
 // voice + banner). A player scanner reveals an enemy tank in its scan range.
 func TestEnemyDetectedPlaysPing(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	var sfx []string
 	s.sound.sfxFn = func(primary, _ string, _ float64) { sfx = append(sfx, primary) }
 	s.announcer.voiceFn = func(string) {} // swallow the voice line
 	s.announcer.clock = func() uint64 { return 0 }
 
-	scout := mkUnit(g, assets.Scout, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	scout := mkUnit(g, assets.Scout, 0, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 	scout.Values.Set(game.AttribScan, 6) // reveals the nearby enemy
 	enemy := game.NewUnitInfo(assets.Tank, 1, 2, 0)
 	enemy.Flags = game.FlagMobileLandUnit | game.FlagSelectable
@@ -95,13 +95,13 @@ func TestVoiceTagsInSet(t *testing.T) {
 // the Remove Mine popup action speaks the "removing mines" line (V_F186/187), which
 // the dispatcher defined but never triggered (laying is acknowledged on select).
 func TestRemoveMinePlaysVoice(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	var played []string
 	s.announcer.voiceFn = func(tag string) { played = append(played, tag) }
 	s.announcer.clock = func() uint64 { return 0 }
 
 	// A mine layer loaded with room in store, sitting on its own freshly laid mine.
-	layer := mkUnit(g, assets.MineLayr, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	layer := mkUnit(g, assets.MineLayr, 0, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 	layer.Values.Set(game.AttribStorage, 3)
 	layer.Storage = 3
 	if !g.LayMine(layer) {
@@ -152,16 +152,16 @@ func playedHasState(played []string, state voiceState) bool {
 // TestInWorldReloadPlaysVoice checks an in world Supply Truck reload speaks the
 // "reloaded" line (V_F085/089) - a state the dispatcher defined but never fired.
 func TestInWorldReloadPlaysVoice(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	var played []string
 	s.announcer.voiceFn = func(tag string) { played = append(played, tag) }
 	s.announcer.clock = func() uint64 { return 0 }
 	s.sound.sfxFn = func(_, _ string, _ float64) {} // swallow the reload SFX
 
-	truck := mkUnit(g, assets.SplyTrck, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	truck := mkUnit(g, assets.SplyTrck, 0, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
 	truck.Storage = 5
 	truck.Hits = 1
-	tank := mkUnit(g, assets.Tank, 2, 5, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	tank := mkUnit(g, assets.Tank, 0, 2, 5, 4, game.FlagMobileLandUnit|game.FlagSelectable)
 	tank.Values.Set(game.AttribAmmo, 4)
 	tank.Ammo = 0
 	tank.Hits = 1
@@ -235,7 +235,7 @@ func TestTimeWarnVoice(t *testing.T) {
 // when the human team's credits rise across a turn, only once, and never for a
 // non human team.
 func TestGoldFirstRefinedVoice(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	var played []string
 	s.announcer.voiceFn = func(tag string) { played = append(played, tag) }
 	s.announcer.clock = func() uint64 { return 0 }
@@ -254,7 +254,7 @@ func TestGoldFirstRefinedVoice(t *testing.T) {
 		t.Error("the first-gold voice must not repeat (latch failed)")
 	}
 	// No rise = no voice (fresh team).
-	s2, g2 := newClickScreen(t)
+	s2, g2 := newTestScreen(t, 16)
 	s2.announcer.voiceFn = func(tag string) { played = append(played, tag) }
 	s2.announcer.clock = func() uint64 { return 0 }
 	played = nil
@@ -384,7 +384,7 @@ func TestVoiceNilHook(t *testing.T) {
 // TestStorageFullWaitsForOpeningTurn verifies that full storage stays quiet during the opening turn and announces
 // at the next turn start when it remains full.
 func TestStorageFullWaitsForOpeningTurn(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	var played []string
 	var clk uint64 = 100000
 	s.announcer.clock = func() uint64 { return clk }

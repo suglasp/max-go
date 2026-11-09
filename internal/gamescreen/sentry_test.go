@@ -9,20 +9,17 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
-	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
-	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // TestDefenseBuildingPopupHasSentry verifies that a defense building's popup
 // includes a Sentry item (gated on isDefenseBuilding, not mobile).
 func TestDefenseBuildingPopupHasSentry(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.State.ActiveTeam = 0
 	g.State.PlayerTeam = 0
 	// A Gun Turret: stationary + attack > 0 = defense building.
-	turret := mkUnit(g, assets.GunTurrt, 50, 4, 4, game.FlagBuilding|game.FlagStationary|game.FlagSelectable)
+	turret := mkUnit(g, assets.GunTurrt, 0, 50, 4, 4, game.FlagBuilding|game.FlagStationary|game.FlagSelectable)
 	turret.Values.Set(game.AttribAttack, 8)
 	turret.Values.Set(game.AttribRange, 4)
 	turret.Order = game.OrderSentry // mirrors the finishBuild default
@@ -65,9 +62,9 @@ func TestDefenseBuildingPopupHasSentry(t *testing.T) {
 // TestNonDefenseBuildingNoSentry confirms that a stationary building without an
 // attack value (e.g. a Power Station) does NOT get a Sentry popup item.
 func TestNonDefenseBuildingNoSentry(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.State.ActiveTeam = 0
-	pwr := mkUnit(g, assets.PowerStn, 60, 4, 4, game.FlagBuilding|game.FlagStationary|game.FlagSelectable)
+	pwr := mkUnit(g, assets.PowerStn, 0, 60, 4, 4, game.FlagBuilding|game.FlagStationary|game.FlagSelectable)
 	pwr.Order = game.OrderPowerOff
 	for _, it := range s.popupItemsFor(pwr) {
 		if it.label == "Sentry" {
@@ -80,17 +77,7 @@ func TestNonDefenseBuildingNoSentry(t *testing.T) {
 // Selection advances to the next waiting mobile unit and skips guarded units.
 // A manual move replaces ORDER_SENTRY and drops the guard state.
 func TestToggleSentry(t *testing.T) {
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
-	g.State.ActiveTeam = 0
-	g.State.PlayerTeam = 0
-	s := &Screen{game: g, wmap: m, r: drawmap.New(m)}
+	s, g := newTestScreen(t, 16)
 
 	mk := func(id, gx, gy int) *game.UnitInfo {
 		u := game.NewUnitInfo(assets.Tank, 0, id, 0)

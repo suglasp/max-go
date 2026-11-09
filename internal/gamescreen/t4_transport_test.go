@@ -16,7 +16,7 @@ import (
 
 // t4Carrier deploys an awake transport or storage building with the given bay capacity.
 func t4Carrier(g *sim.Game, typ assets.UnitType, id, gridX, gridY int, flags game.Flags, capacity int) *game.UnitInfo {
-	u := mkUnit(g, typ, id, gridX, gridY, flags)
+	u := mkUnit(g, typ, 0, id, gridX, gridY, flags)
 	u.Values.Set(game.AttribStorage, capacity)
 	u.Hits = 10
 	u.Order = game.OrderAwait
@@ -26,7 +26,7 @@ func t4Carrier(g *sim.Game, typ assets.UnitType, id, gridX, gridY int, flags gam
 
 // t4Passenger deploys a healthy mobile land unit with movement points left.
 func t4Passenger(g *sim.Game, typ assets.UnitType, id, gridX, gridY int) *game.UnitInfo {
-	u := mkUnit(g, typ, id, gridX, gridY, game.FlagMobileLandUnit|game.FlagSelectable)
+	u := mkUnit(g, typ, 0, id, gridX, gridY, game.FlagMobileLandUnit|game.FlagSelectable)
 	u.Values.Set(game.AttribHits, 10)
 	u.Values.Set(game.AttribSpeed, 8)
 	u.InitState()
@@ -50,7 +50,7 @@ func TestT4ArmLoad(t *testing.T) {
 	}{
 		{"mobile land unit arms", func(g *sim.Game) *game.UnitInfo { return t4Passenger(g, assets.Infantry, 1, 5, 5) }, true},
 		{"building cannot be stored", func(g *sim.Game) *game.UnitInfo {
-			return mkUnit(g, assets.Depot, 1, 5, 5, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
+			return mkUnit(g, assets.Depot, 0, 1, 5, 5, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
 		}, false},
 		{"disabled unit is refused", func(g *sim.Game) *game.UnitInfo {
 			u := t4Passenger(g, assets.Infantry, 1, 5, 5)
@@ -62,7 +62,7 @@ func TestT4ArmLoad(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			s, g := newClickScreen(t)
+			s, g := newTestScreen(t, 16)
 			u := c.setup(g)
 			s.armLoad(u)
 
@@ -83,7 +83,7 @@ func TestT4ArmLoad(t *testing.T) {
 
 // TestT4ArmLoadReplacesOtherPicks pins that arming one transport pick disarms the others.
 func TestT4ArmLoadReplacesOtherPicks(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	depot := t4Carrier(g, assets.Depot, 1, 8, 8, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, 4)
 	tank := t4Passenger(g, assets.Tank, 2, 5, 5)
 
@@ -109,7 +109,7 @@ func TestT4ArmLoadInto(t *testing.T) {
 	flags := game.FlagStationary | game.FlagBuilding | game.FlagSelectable
 
 	t.Run("room left arms", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		depot := t4Carrier(g, assets.Depot, 1, 8, 8, flags, 2)
 		depot.Carried = append(depot.Carried, t4Passenger(g, assets.Tank, 2, 1, 1))
 		s.armLoadInto(depot)
@@ -120,7 +120,7 @@ func TestT4ArmLoadInto(t *testing.T) {
 	})
 
 	t.Run("full bay refuses", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		depot := t4Carrier(g, assets.Depot, 1, 8, 8, flags, 1)
 		depot.Carried = append(depot.Carried, t4Passenger(g, assets.Tank, 2, 1, 1))
 		s.armLoadInto(depot)
@@ -138,7 +138,7 @@ func TestT4ArmLoadInto(t *testing.T) {
 // TestT4BeginLoad pins that a far unit is sent to a cell beside the carrier and a near one is not.
 func TestT4BeginLoad(t *testing.T) {
 	t.Run("far unit drives over", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		apc := t4Carrier(g, assets.ClnTrans, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable, 2)
 		squad := t4Passenger(g, assets.Infantry, 2, 10, 10)
 		s.beginLoad(squad, apc)
@@ -153,7 +153,7 @@ func TestT4BeginLoad(t *testing.T) {
 	})
 
 	t.Run("adjacent unit stays put", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		apc := t4Carrier(g, assets.ClnTrans, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable, 2)
 		squad := t4Passenger(g, assets.Infantry, 2, 6, 5)
 		s.beginLoad(squad, apc)
@@ -170,7 +170,7 @@ func TestT4BeginLoad(t *testing.T) {
 
 // TestT4TickLoadsBoardsAfterShrink pins the shrink then store sequence for an adjacent unit.
 func TestT4TickLoadsBoardsAfterShrink(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	apc := t4Carrier(g, assets.ClnTrans, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable, 2)
 	squad := t4Passenger(g, assets.Infantry, 2, 6, 5)
 	s.beginLoad(squad, apc)
@@ -220,7 +220,7 @@ func TestT4TickLoadsBoardsAfterShrink(t *testing.T) {
 
 // TestT4TickLoadsWaitsForClock pins that the shrink only advances on the expand clock.
 func TestT4TickLoadsWaitsForClock(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	apc := t4Carrier(g, assets.ClnTrans, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable, 2)
 	squad := t4Passenger(g, assets.Infantry, 2, 6, 5)
 	s.beginLoad(squad, apc)
@@ -237,7 +237,7 @@ func TestT4TickLoadsWaitsForClock(t *testing.T) {
 // TestT4TickLoadsDropsDeadAndStranded pins when a load job is abandoned.
 func TestT4TickLoadsDropsDeadAndStranded(t *testing.T) {
 	t.Run("passenger destroyed", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		apc := t4Carrier(g, assets.ClnTrans, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable, 2)
 		squad := t4Passenger(g, assets.Infantry, 2, 6, 5)
 		s.beginLoad(squad, apc)
@@ -250,7 +250,7 @@ func TestT4TickLoadsDropsDeadAndStranded(t *testing.T) {
 	})
 
 	t.Run("carrier destroyed", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		apc := t4Carrier(g, assets.ClnTrans, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable, 2)
 		apc.Hits = 0
 		squad := t4Passenger(g, assets.Infantry, 2, 6, 5)
@@ -263,7 +263,7 @@ func TestT4TickLoadsDropsDeadAndStranded(t *testing.T) {
 	})
 
 	t.Run("far unit with no route is dropped", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		apc := t4Carrier(g, assets.ClnTrans, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable, 2)
 		squad := t4Passenger(g, assets.Infantry, 2, 12, 12)
 		s.effects.loading = map[*game.UnitInfo]*loadJob{squad: {building: apc}} // never ordered to move
@@ -275,7 +275,7 @@ func TestT4TickLoadsDropsDeadAndStranded(t *testing.T) {
 	})
 
 	t.Run("far unit still driving keeps its job", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		apc := t4Carrier(g, assets.ClnTrans, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable, 2)
 		squad := t4Passenger(g, assets.Infantry, 2, 12, 12)
 		s.beginLoad(squad, apc)
@@ -289,7 +289,7 @@ func TestT4TickLoadsDropsDeadAndStranded(t *testing.T) {
 
 // TestT4TickLoadsEmptyIsNoop pins that an empty loading set does nothing.
 func TestT4TickLoadsEmptyIsNoop(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	s.tickLoads()
 
 	if len(s.effects.loading) != 0 {
@@ -323,7 +323,7 @@ func TestT4LoadPickAcceptance(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			s, g := newClickScreen(t)
+			s, g := newTestScreen(t, 16)
 			carrier := t4Carrier(g, c.carrier, 1, 5, 5, c.flags, c.capacity)
 
 			if c.full {
@@ -360,7 +360,7 @@ func TestT4LoadPickAcceptance(t *testing.T) {
 
 // TestT4LoadPickNoContainer pins that clicking an empty cell refuses and disarms.
 func TestT4LoadPickNoContainer(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	squad := t4Passenger(g, assets.Infantry, 2, 6, 5)
 	s.armLoad(squad)
 
@@ -375,7 +375,7 @@ func TestT4LoadPickNoContainer(t *testing.T) {
 
 // TestT4TryTransportTargetUnarmed pins that an unarmed screen does not consume clicks.
 func TestT4TryTransportTargetUnarmed(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 
 	if s.tryTransportTarget(5, 5) {
 		t.Error("nothing armed: the click must pass through")
@@ -385,7 +385,7 @@ func TestT4TryTransportTargetUnarmed(t *testing.T) {
 // t4Engineer deploys an engineer with some hit points for the builder at work checks.
 func t4Engineer(g *sim.Game, id, gridX, gridY int) *game.UnitInfo {
 	flags := game.FlagMobileLandUnit | game.FlagSelectable | game.FlagConstructorUnit
-	u := mkUnit(g, assets.Engineer, id, gridX, gridY, flags)
+	u := mkUnit(g, assets.Engineer, 0, id, gridX, gridY, flags)
 	u.Values.Set(game.AttribHits, 10)
 	u.Hits = 10
 
@@ -405,7 +405,7 @@ func TestT4BuilderAtWorkIsNeverLoaded(t *testing.T) {
 
 	for _, c := range setups {
 		t.Run(c.name+" refused by unit pick", func(t *testing.T) {
-			s, g := newClickScreen(t)
+			s, g := newTestScreen(t, 16)
 			boat := t4Carrier(g, assets.SeaTrans, 1, 5, 5, game.FlagMobileSeaUnit|game.FlagSelectable, 4)
 			eng := t4Engineer(g, 2, 6, 5)
 			c.work(eng)
@@ -422,7 +422,7 @@ func TestT4BuilderAtWorkIsNeverLoaded(t *testing.T) {
 		})
 
 		t.Run(c.name+" selected by building load", func(t *testing.T) {
-			s, g := newClickScreen(t)
+			s, g := newTestScreen(t, 16)
 			depot := t4Carrier(g, assets.Depot, 1, 8, 8, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, 4)
 			eng := t4Engineer(g, 2, 6, 5)
 			c.work(eng)
@@ -444,7 +444,7 @@ func TestT4BuilderAtWorkIsNeverLoaded(t *testing.T) {
 	}
 
 	t.Run("control: idle engineer is loaded", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		boat := t4Carrier(g, assets.SeaTrans, 1, 5, 5, game.FlagMobileSeaUnit|game.FlagSelectable, 4)
 		eng := t4Engineer(g, 2, 6, 5)
 		eng.Order = game.OrderAwait
@@ -462,7 +462,7 @@ func TestT4LoadIntoPick(t *testing.T) {
 	depotFlags := game.FlagStationary | game.FlagBuilding | game.FlagSelectable
 
 	t.Run("empty cell refuses", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		depot := t4Carrier(g, assets.Depot, 1, 8, 8, depotFlags, 4)
 		s.armLoadInto(depot)
 
@@ -476,7 +476,7 @@ func TestT4LoadIntoPick(t *testing.T) {
 	})
 
 	t.Run("disabled unit refused", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		depot := t4Carrier(g, assets.Depot, 1, 8, 8, depotFlags, 4)
 		tank := t4Passenger(g, assets.Tank, 2, 2, 2)
 		tank.Order = game.OrderDisable
@@ -489,7 +489,7 @@ func TestT4LoadIntoPick(t *testing.T) {
 	})
 
 	t.Run("wrong class is selected not loaded", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		depot := t4Carrier(g, assets.Depot, 1, 8, 8, depotFlags, 4)
 		squad := t4Passenger(g, assets.Infantry, 2, 2, 2) // a depot takes vehicles only
 		s.armLoadInto(depot)
@@ -505,7 +505,7 @@ func TestT4LoadIntoPick(t *testing.T) {
 	})
 
 	t.Run("vehicle drives over and loads", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		depot := t4Carrier(g, assets.Depot, 1, 8, 8, depotFlags, 4)
 		tank := t4Passenger(g, assets.Tank, 2, 2, 2)
 		s.armLoadInto(depot)

@@ -13,7 +13,7 @@ import (
 
 // TestLoadResumesAComputerTurn verifies that a save made during a computer turn resumes that computer turn after loading.
 func TestLoadResumesAComputerTurn(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.State.Teams[0].Type = game.TeamPlayer
 	g.State.Teams[1].Type = game.TeamComputer
 

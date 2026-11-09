@@ -26,13 +26,13 @@ func playedHas(played []string, tag string) bool {
 // actively producing speaks "Building!" (V_F284); an idle factory does not (a building
 // is otherwise silent on the voice channel).
 func TestProducingFactorySaysBuilding(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	var played []string
 	s.announcer.voiceFn = func(tag string) { played = append(played, tag) }
 	s.sound.sfxFn = func(string, string, float64) {}
 	s.announcer.clock = func() uint64 { return 0 }
 
-	f := mkUnit(g, assets.LandPlt, 1, 4, 4, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
+	f := mkUnit(g, assets.LandPlt, 0, 1, 4, 4, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
 	f.Order = game.OrderPowerOn
 	f.State = game.OrderStateExecutingOrder
 	f.BuildQueue = []assets.UnitType{assets.Tank}
@@ -56,7 +56,7 @@ func TestProducingFactorySaysBuilding(t *testing.T) {
 // factory's BLDMRK marker drops the produced unit onto the marker and selects it
 // (the factory was selected; the output becomes the new selection).
 func TestFactoryExitAutoSelectsDroppedUnit(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	if g.Resources == nil {
 		g.Resources = economy.NewResourceMap(16, 16)
 	}

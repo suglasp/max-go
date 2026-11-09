@@ -36,7 +36,7 @@ func waitForTicks(minimum uint64) {
 func newClockFixture(t *testing.T) *clockFixture {
 	t.Helper()
 
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.State.TurnCounter = 1 // round 0 is the "no turn" value, which never warns
 	s.turnFlow.handover = -1
 	s.SetTurnTimer(180)
@@ -45,7 +45,7 @@ func newClockFixture(t *testing.T) *clockFixture {
 	s.announcer.voiceFn = func(tag string) { f.voices = append(f.voices, tag) }
 	s.announcer.clock = func() uint64 { return f.clock }
 
-	tank := mkUnit(g, assets.Tank, 1, 2, 2, game.FlagMobileLandUnit|game.FlagSelectable)
+	tank := mkUnit(g, assets.Tank, 0, 1, 2, 2, game.FlagMobileLandUnit|game.FlagSelectable)
 	tank.Values.Set(game.AttribSpeed, 4)
 	tank.Speed = 4
 

@@ -43,7 +43,7 @@ func mobileCellsOf(g *sim.Game) map[game.Point][]assets.UnitType {
 // (the per team taken map guards it). A full founder roster on a flat map, each unit
 // on its own cell.
 func TestDeployStartBaseNoMobileOverlap(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	rng := rand.New(rand.NewSource(7))
 
 	s.deployStartBase(1, game.Point{X: 8, Y: 8}, founderRoster(), nil, false, rng)
@@ -58,7 +58,7 @@ func TestDeployStartBaseNoMobileOverlap(t *testing.T) {
 // TestDeployStartBaseNoCrossTeamOverlap verifies that nearby starting bases cannot stack units from different teams.
 // Each deployStartBase call owns a separate taken map, so cross-team protection comes from the shared grid occupancy check.
 func TestDeployStartBaseNoCrossTeamOverlap(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	rng := rand.New(rand.NewSource(7))
 
 	// Two NPC bases centred two cells apart, so their outward search rings overlap.

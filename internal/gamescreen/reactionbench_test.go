@@ -9,24 +9,14 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
-	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // reactionBenchScreen deploys the reaction fire bench headless on a 112x112 all land map.
 func reactionBenchScreen(t *testing.T) (*Screen, *sim.Game) {
 	t.Helper()
-	m := &world.Map{Surface: make([]uint8, 112*112)}
-	m.W, m.H = 112, 112
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
-	s := &Screen{game: g, wmap: m, r: drawmap.New(m)}
+	s, g := newTestScreen(t, 112)
 	s.DeployReactionFireBench()
 	if len(s.bench.stops) != 2 {
 		t.Fatalf("%d stops, want 2 (near and far pair)", len(s.bench.stops))

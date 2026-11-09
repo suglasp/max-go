@@ -45,10 +45,10 @@ func findStat(t *testing.T, rows []screendata.ReportStatRow, label string) scree
 
 // TestReportStatsArmedUnitShowsAmmoAndShots verifies that an armed unit reports ammo and shots, using the row that carries cargo for an unarmed unit.
 func TestReportStatsArmedUnitShowsAmmoAndShots(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.State.PlayerTeam = 0
 
-	u := mkUnit(g, assets.Tank, 51, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	u := mkUnit(g, assets.Tank, 0, 51, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
 	u.Values.Set(game.AttribHits, 24)
 	u.Values.Set(game.AttribAttack, 10)
 	u.Values.Set(game.AttribAmmo, 14)
@@ -81,10 +81,10 @@ func TestReportStatsArmedUnitShowsAmmoAndShots(t *testing.T) {
 
 // TestReportStatsUnarmedUnitShowsCargo verifies that an unarmed unit shows cargo in the ammo row.
 func TestReportStatsUnarmedUnitShowsCargo(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.State.PlayerTeam = 0
 
-	u := mkUnit(g, assets.Constrct, 51, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	u := mkUnit(g, assets.Constrct, 0, 51, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
 	u.Values.Set(game.AttribHits, 24)
 	u.Values.Set(game.AttribAttack, 0)
 	u.Values.Set(game.AttribStorage, 60)
@@ -114,10 +114,10 @@ func TestReportStatsUnarmedUnitShowsCargo(t *testing.T) {
 // TestReportStatsFactorCapsTheGauge: a huge stat still fits, because the factor is
 // rescaled until the icon count is under the cap.
 func TestReportStatsFactorCapsTheGauge(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.State.PlayerTeam = 0
 
-	u := mkUnit(g, assets.Tank, 51, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	u := mkUnit(g, assets.Tank, 0, 51, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
 	u.Values.Set(game.AttribHits, 500) // far more than the cap of icons
 	u.Hits = 500
 
@@ -154,9 +154,9 @@ func TestHitsGaugeTierFollowsDamage(t *testing.T) {
 // TestReportDisplayName: the report names a unit the way the original does, with the
 // mark it was built at in roman numerals and its number among its own kind.
 func TestReportDisplayName(t *testing.T) {
-	_, g := newClickScreen(t)
+	_, g := newTestScreen(t, 16)
 
-	u := mkUnit(g, assets.Tank, 51, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	u := mkUnit(g, assets.Tank, 0, 51, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
 	u.Values.SetVersion(1)
 
 	if got, want := reportDisplayName(u, 3), "Mk I "+displayName(assets.Tank)+" 3"; got != want {

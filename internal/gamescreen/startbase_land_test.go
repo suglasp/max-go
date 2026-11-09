@@ -22,7 +22,7 @@ import (
 //
 // C++ ported : game_manager.cpp - GameManager_ProcessTeamMissionSupplyUnits (stats_mines_built, stats_buildings_built)
 func TestDeployStartBaseOneComplex(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	roster := founderRoster()
 	g.Resources = economy.NewResourceMap(16, 16)
 	for y := 0; y < 16; y++ {
@@ -85,7 +85,7 @@ func TestDeployStartBaseOneComplex(t *testing.T) {
 func TestDeployStartBaseCountsRoster(t *testing.T) {
 	t.Skip("port bug, TODO.md DC-F8 / PLAN-NOV2026 N17: the live landing does not add the roster to UnitsBuilt")
 
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	roster := founderRoster()
 
 	s.deployStartBase(1, game.Point{X: 8, Y: 8}, roster, nil, false, rand.New(rand.NewSource(7)))

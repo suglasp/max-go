@@ -14,7 +14,7 @@ import (
 
 // TestCasualtyRowsListOnlyLostTypes verifies that the Casualties tab has one row for each lost unit type, with team counts in separate columns and no rows before a loss.
 func TestCasualtyRowsListOnlyLostTypes(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.State.Teams[1].Type = game.TeamComputer
 
 	teamOrder := []int{0, 1}

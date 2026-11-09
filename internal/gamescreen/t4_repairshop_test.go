@@ -32,7 +32,7 @@ type t4Shop struct {
 func t4NewShop(t *testing.T, raw int) *t4Shop {
 	t.Helper()
 
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	t4ArtlessScreen(s)
 
 	attribs := make([]assets.UnitAttributes, assets.UnitCount)
@@ -75,8 +75,8 @@ func (sh *t4Shop) store(id, hits, ammo int) *game.UnitInfo {
 // TestT4ComplexRaw pins that the shop reads the pooled raw, not the member gauges.
 func TestT4ComplexRaw(t *testing.T) {
 	t.Run("no complex", func(t *testing.T) {
-		s, g := newClickScreen(t)
-		lone := mkUnit(g, assets.Tank, 1, 5, 5, game.FlagMobileLandUnit)
+		s, g := newTestScreen(t, 16)
+		lone := mkUnit(g, assets.Tank, 0, 1, 5, 5, game.FlagMobileLandUnit)
 
 		if raw, ok := s.complexRaw(lone); raw != 0 || ok {
 			t.Errorf("complexRaw = (%d,%v), want (0,false)", raw, ok)
@@ -132,8 +132,8 @@ func TestT4Snapshot(t *testing.T) {
 
 // TestT4SnapshotAirTransportHasNoActivateAll pins the header of a non shop carrier.
 func TestT4SnapshotAirTransportHasNoActivateAll(t *testing.T) {
-	s, g := newClickScreen(t)
-	air := mkUnit(g, assets.AirTrans, 1, 5, 5, game.FlagMobileAirUnit|game.FlagSelectable)
+	s, g := newTestScreen(t, 16)
+	air := mkUnit(g, assets.AirTrans, 0, 1, 5, 5, game.FlagMobileAirUnit|game.FlagSelectable)
 	ops := &screenRepairOps{s: s, building: air, team: 0}
 	info := ops.Snapshot()
 

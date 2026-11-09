@@ -9,10 +9,7 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
-	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
-	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // TestBenchBuildingsStandOnSlabs checks that every bench building stands on its slab. Connectors, bridges, and
@@ -30,15 +27,7 @@ func TestBenchBuildingsStandOnSlabs(t *testing.T) {
 		{"apcunit", (*Screen).DeployAPCs},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			m := &world.Map{Surface: make([]uint8, 112*112)}
-			m.W, m.H = 112, 112
-			for i := range m.Surface {
-				m.Surface[i] = world.SurfaceLand
-			}
-			p := &game.StartParams{}
-			p.Teams[0].Type = game.TeamPlayer
-			g := sim.New(p, m)
-			s := &Screen{game: g, wmap: m, r: drawmap.New(m)}
+			s, g := newTestScreen(t, 112)
 			tc.deploy(s)
 
 			buildings := 0

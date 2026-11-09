@@ -10,10 +10,8 @@ import (
 
 	"github.com/suglasp/max-go/internal/ai"
 	"github.com/suglasp/max-go/internal/assets"
-	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // newUpgradeScreen builds a headless screen with one human and one computer team, a
@@ -22,22 +20,7 @@ import (
 func newUpgradeScreen(t *testing.T) (*Screen, *sim.Game) {
 	t.Helper()
 
-	m := &world.Map{Surface: make([]uint8, 24*24)}
-	m.W, m.H = 24, 24
-
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	p.Teams[1].Type = game.TeamComputer
-
-	g := sim.New(p, m)
-	g.State.ActiveTeam = 0
-	g.State.PlayerTeam = 0
-
-	s := &Screen{game: g, wmap: m, r: drawmap.New(m)}
+	s, g := newTestScreen(t, 24, 1)
 	s.ai = ai.New(func(team int, ut assets.UnitType, flags game.Flags) *game.UnitInfo {
 		u := game.NewUnitInfo(ut, team, 0, 0)
 		u.Flags = flags

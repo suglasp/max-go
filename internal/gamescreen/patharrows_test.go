@@ -96,8 +96,8 @@ func TestPathSeedAnchorsBoundary(t *testing.T) {
 // seed compensation must keep the blue per turn boundaries on the SAME map cells as
 // the at rest frame.
 func TestActiveRouteBoundaryPinnedMidCell(t *testing.T) {
-	s, g := newClickScreen(t)
-	u := mkUnit(g, assets.Tank, 1, 0, 0, game.FlagMobileLandUnit|game.FlagSelectable)
+	s, g := newTestScreen(t, 16)
+	u := mkUnit(g, assets.Tank, 0, 1, 0, 0, game.FlagMobileLandUnit|game.FlagSelectable)
 	u.Team = g.State.PlayerTeam
 	u.Values.Set(game.AttribSpeed, 6)
 
@@ -152,8 +152,8 @@ func equalInts(a, b []int) bool {
 // TestDrawAllGroundPathsDrawsArrows verifies the combined route draw: a unit
 // actively executing a move draws ground path arrows along its remaining route.
 func TestDrawAllGroundPathsDrawsArrows(t *testing.T) {
-	s, g := newClickScreen(t)
-	tank := mkUnit(g, assets.Tank, 1, 1, 1, game.FlagMobileLandUnit|game.FlagSelectable)
+	s, g := newTestScreen(t, 16)
+	tank := mkUnit(g, assets.Tank, 0, 1, 1, 1, game.FlagMobileLandUnit|game.FlagSelectable)
 	tank.Speed = 6
 	tank.Values.Set(game.AttribSpeed, 6)
 	if !g.OrderMove(tank, 7, 1) { // route east across open land
@@ -183,12 +183,12 @@ func TestDrawAllGroundPathsDrawsArrows(t *testing.T) {
 // the fix, PendingRoutes iterated a Go map in random order, so the color
 // flickered between frames when two routes overlapped.
 func TestFlickerFreeSharedCell(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	// Two tanks on different rows routed through the same destination cell (4,1).
-	a := mkUnit(g, assets.Tank, 1, 1, 1, game.FlagMobileLandUnit|game.FlagSelectable)
+	a := mkUnit(g, assets.Tank, 0, 1, 1, 1, game.FlagMobileLandUnit|game.FlagSelectable)
 	a.Speed = 6
 	a.Values.Set(game.AttribSpeed, 6)
-	b := mkUnit(g, assets.Tank, 1, 3, 2, game.FlagMobileLandUnit|game.FlagSelectable)
+	b := mkUnit(g, assets.Tank, 0, 1, 3, 2, game.FlagMobileLandUnit|game.FlagSelectable)
 	b.Speed = 6
 	b.Values.Set(game.AttribSpeed, 6)
 	// Tank a routes through (4,1); tank b routes through (4,3): their routes
@@ -220,7 +220,7 @@ func TestFlickerFreeSharedCell(t *testing.T) {
 // every NPC route before the showAIPaths check, so the debug flag looked dead in the
 // default play mode. Off = the NPC route stays hidden; on = it is revealed.
 func TestShowAIPathsRevealsNPCRouteInSimMode(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.SetPlayMode(int(game.PlaySimultaneous))
 	if !s.simMode() {
 		t.Fatal("setup: expected simultaneous mode")

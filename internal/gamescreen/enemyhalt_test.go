@@ -10,34 +10,23 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
-	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // newHaltScreen builds a screen with a human team 0 and a computer team 1 on open land.
 func newHaltScreen(t *testing.T) (*Screen, *sim.Game) {
 	t.Helper()
 
-	m := &world.Map{Surface: make([]uint8, 32*32)}
-	m.W, m.H = 32, 32
-
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	p.Teams[1].Type = game.TeamComputer
-
-	g := sim.New(p, m)
+	s, g := newTestScreen(t, 32, 1)
 	g.State.ActiveTeam = 1
-	g.State.PlayerTeam = 0
+	s.enemyHalt = true
 
-	return &Screen{game: g, wmap: m, r: drawmap.New(m), enemyHalt: true}, g
+	return s, g
 }
 
+/* // note: unused code in Go port
+// replaced by the shared mkTank(g.Units, team, id, gx, gy, tankStats{angle: 2, speed: speed, scan: scan, hits: 30})
 // haltMover deploys a scanning, driving unit.
 func haltMover(g *sim.Game, team, id, gx, gy, speed, scan int) *game.UnitInfo {
 	u := game.NewUnitInfo(assets.Tank, team, id, 2)
@@ -51,13 +40,14 @@ func haltMover(g *sim.Game, team, id, gx, gy, speed, scan int) *game.UnitInfo {
 
 	return u
 }
+*/
 
 // TestComputerMoversHaltOnContact verifies that halt on contact applies to computer teams as well as the player's team (access.cpp:827).
 func TestComputerMoversHaltOnContact(t *testing.T) {
 	s, g := newHaltScreen(t)
 
-	ai := haltMover(g, 1, 1, 2, 2, 20, 4) // the computer's tank, scan 4
-	haltMover(g, 0, 2, 14, 2, 8, 4)       // the player's tank waiting up the road
+	ai := mkTank(g.Units, 1, 1, 2, 2, tankStats{angle: 2, speed: 20, scan: 4, hits: 30}) // the computer's tank, scan 4
+	mkTank(g.Units, 0, 2, 14, 2, tankStats{angle: 2, speed: 8, scan: 4, hits: 30})       // the player's tank waiting up the road
 	g.BeginTeamTurn(1)
 
 	if !g.OrderMove(ai, 24, 2) { // a drive right past the ambush
@@ -100,8 +90,8 @@ func TestHaltTellsThePlayer(t *testing.T) {
 	s, g := newHaltScreen(t)
 	g.State.ActiveTeam = 0
 
-	mover := haltMover(g, 0, 1, 2, 2, 12, 4) // the player's
-	_ = haltMover(g, 1, 2, 12, 2, 0, 0)      // a computer unit waiting down the road
+	mover := mkTank(g.Units, 0, 1, 2, 2, tankStats{angle: 2, speed: 12, scan: 4, hits: 30}) // the player's
+	_ = mkTank(g.Units, 1, 2, 12, 2, tankStats{angle: 2, speed: 0, scan: 0, hits: 30})      // a computer unit waiting down the road
 
 	g.BeginTeamTurn(0)
 	if !g.OrderMove(mover, 20, 2) {
@@ -134,7 +124,7 @@ func TestPopupOffersContinueOnAHeldRoute(t *testing.T) {
 	s, g := newHaltScreen(t)
 	g.State.ActiveTeam = 0
 
-	mover := haltMover(g, 0, 1, 2, 2, 12, 4)
+	mover := mkTank(g.Units, 0, 1, 2, 2, tankStats{angle: 2, speed: 12, scan: 4, hits: 30})
 
 	g.BeginTeamTurn(0)
 	g.OrderMove(mover, 12, 2)
@@ -170,9 +160,9 @@ func TestNoHaltForAnEnemyTheTeamAlreadySees(t *testing.T) {
 	s, g := newHaltScreen(t)
 	g.State.ActiveTeam = 0
 
-	mover := haltMover(g, 0, 1, 2, 2, 20, 4)
-	_ = haltMover(g, 0, 2, 12, 6, 0, 8) // a parked friendly spotter that sees the enemy
-	_ = haltMover(g, 1, 3, 12, 2, 0, 0) // the enemy Tank, in plain sight of the spotter
+	mover := mkTank(g.Units, 0, 1, 2, 2, tankStats{angle: 2, speed: 20, scan: 4, hits: 30})
+	_ = mkTank(g.Units, 0, 2, 12, 6, tankStats{angle: 2, speed: 0, scan: 8, hits: 30}) // a parked friendly spotter that sees the enemy
+	_ = mkTank(g.Units, 1, 3, 12, 2, tankStats{angle: 2, speed: 0, scan: 0, hits: 30}) // the enemy Tank, in plain sight of the spotter
 
 	g.BeginTeamTurn(0)
 	if !g.OrderMove(mover, 20, 2) {
@@ -191,8 +181,8 @@ func TestNoHaltForAnEnemyThatCannotShootTheMover(t *testing.T) {
 	s, g := newHaltScreen(t)
 	g.State.ActiveTeam = 0
 
-	mover := haltMover(g, 0, 1, 2, 2, 20, 4)
-	surveyor := haltMover(g, 1, 2, 12, 2, 0, 0)
+	mover := mkTank(g.Units, 0, 1, 2, 2, tankStats{angle: 2, speed: 20, scan: 4, hits: 30})
+	surveyor := mkTank(g.Units, 1, 2, 12, 2, tankStats{angle: 2, speed: 0, scan: 0, hits: 30})
 	surveyor.Type = assets.Surveyor
 
 	g.BeginTeamTurn(0)
@@ -212,10 +202,10 @@ func TestResumedUnitDrivesOnPastAKnownEnemy(t *testing.T) {
 	s, g := newHaltScreen(t)
 	g.State.ActiveTeam = 0
 
-	mover := haltMover(g, 0, 1, 2, 2, 12, 4)
-	_ = haltMover(g, 1, 2, 9, 5, 0, 0)  // first enemy, unseen until the mover nears it
-	_ = haltMover(g, 0, 3, 18, 9, 0, 6) // a friendly spotter that sees only the second enemy
-	_ = haltMover(g, 1, 4, 16, 4, 0, 0) // second enemy beside the road, in plain sight of the spotter
+	mover := mkTank(g.Units, 0, 1, 2, 2, tankStats{angle: 2, speed: 12, scan: 4, hits: 30})
+	_ = mkTank(g.Units, 1, 2, 9, 5, tankStats{angle: 2, speed: 0, scan: 0, hits: 30})  // first enemy, unseen until the mover nears it
+	_ = mkTank(g.Units, 0, 3, 18, 9, tankStats{angle: 2, speed: 0, scan: 6, hits: 30}) // a friendly spotter that sees only the second enemy
+	_ = mkTank(g.Units, 1, 4, 16, 4, tankStats{angle: 2, speed: 0, scan: 0, hits: 30}) // second enemy beside the road, in plain sight of the spotter
 
 	g.BeginTeamTurn(0)
 	if !g.OrderMove(mover, 24, 2) {

@@ -523,7 +523,7 @@ func TestCommandoRankLabel(t *testing.T) {
 func TestMineBlastSpawnsEffect(t *testing.T) {
 	const w, h = 8, 8
 	mgr := units.NewManager()
-	grid := &access.Grid{W: w, H: h, Surf: buildExitSurf{}, Units: mgr.Cells}
+	grid := &access.Grid{W: w, H: h, Surf: allLandSurf{}, Units: mgr.Cells}
 	p := &game.StartParams{}
 	p.Teams[0].Type = game.TeamPlayer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
@@ -560,7 +560,7 @@ func TestMineBlastSpawnsEffect(t *testing.T) {
 func TestProjectileImpactSpawnsEffect(t *testing.T) {
 	const w, h = 16, 8
 	mgr := units.NewManager()
-	grid := &access.Grid{W: w, H: h, Surf: buildExitSurf{}, Units: mgr.Cells}
+	grid := &access.Grid{W: w, H: h, Surf: allLandSurf{}, Units: mgr.Cells}
 	p := &game.StartParams{}
 	p.Teams[0].Type = game.TeamPlayer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
@@ -602,7 +602,7 @@ func TestProjectileImpactSpawnsEffect(t *testing.T) {
 func TestMissileHitMessageOnImpact(t *testing.T) {
 	const w, h = 16, 8
 	mgr := units.NewManager()
-	grid := &access.Grid{W: w, H: h, Surf: buildExitSurf{}, Units: mgr.Cells}
+	grid := &access.Grid{W: w, H: h, Surf: allLandSurf{}, Units: mgr.Cells}
 	p := &game.StartParams{}
 	p.Teams[0].Type = game.TeamPlayer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
@@ -660,7 +660,7 @@ func TestMissileHitMessageOnImpact(t *testing.T) {
 func TestCasualtySpawnsExplosion(t *testing.T) {
 	const w, h = 16, 8
 	mgr := units.NewManager()
-	grid := &access.Grid{W: w, H: h, Surf: buildExitSurf{}, Units: mgr.Cells}
+	grid := &access.Grid{W: w, H: h, Surf: allLandSurf{}, Units: mgr.Cells}
 	p := &game.StartParams{}
 	p.Teams[0].Type = game.TeamPlayer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
@@ -700,7 +700,7 @@ func TestCasualtySpawnsExplosion(t *testing.T) {
 func TestPopupMineLayer(t *testing.T) {
 	const w, h = 8, 8
 	mgr := units.NewManager()
-	grid := &access.Grid{W: w, H: h, Surf: buildExitSurf{}, Units: mgr.Cells}
+	grid := &access.Grid{W: w, H: h, Surf: allLandSurf{}, Units: mgr.Cells}
 	p := &game.StartParams{}
 	p.Teams[0].Type = game.TeamPlayer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
@@ -753,7 +753,7 @@ func TestPopupMineLayer(t *testing.T) {
 func TestPopupBulldozerClear(t *testing.T) {
 	const w, h = 8, 8
 	mgr := units.NewManager()
-	grid := &access.Grid{W: w, H: h, Surf: buildExitSurf{}, Units: mgr.Cells}
+	grid := &access.Grid{W: w, H: h, Surf: allLandSurf{}, Units: mgr.Cells}
 	p := &game.StartParams{}
 	p.Teams[0].Type = game.TeamPlayer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
@@ -815,7 +815,7 @@ func TestPopupBulldozerClear(t *testing.T) {
 func TestPopupAirNoLandTakeOff(t *testing.T) {
 	const w, h = 8, 8
 	mgr := units.NewManager()
-	grid := &access.Grid{W: w, H: h, Surf: buildExitSurf{}, Units: mgr.Cells}
+	grid := &access.Grid{W: w, H: h, Surf: allLandSurf{}, Units: mgr.Cells}
 	p := &game.StartParams{}
 	p.Teams[0].Type = game.TeamPlayer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)

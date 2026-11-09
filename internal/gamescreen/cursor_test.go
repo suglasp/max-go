@@ -82,9 +82,9 @@ func TestScrollArrow(t *testing.T) {
 // unit the player can see, the no go pointer over an empty cell. An own team unit
 // is always visible (no fog lookup needed), so it exercises the Friend branch.
 func TestSpectatorCursor(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.fogTeam = 0 // the human's view; mkUnit deploys on team 0 (the player)
-	mkUnit(g, assets.Tank, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	mkUnit(g, assets.Tank, 0, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 
 	// Over the player's own unit -> the friend (inspect) pointer.
 	if got := s.spectatorCursor(5, 5); got != cursors.Friend {

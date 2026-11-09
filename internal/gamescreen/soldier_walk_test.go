@@ -10,8 +10,6 @@ import (
 
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/game"
-	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // TestSoldierWalkAnimStopsWhenOutOfMoves verifies that
@@ -21,17 +19,7 @@ import (
 // route paused out of moves keeps OrderMove but is queued in g.pending, so the
 // soldier must stop marching and rest on its standing frame.
 func TestSoldierWalkAnimStopsWhenOutOfMoves(t *testing.T) {
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
-	g.State.ActiveTeam = 0
-	g.State.PlayerTeam = 0
-	s := &Screen{game: g, wmap: m}
+	s, g := newTestScreen(t, 16)
 
 	// An infantry with a small per turn budget, so a long route runs it dry mid path.
 	inf := game.NewUnitInfo(assets.Infantry, 0, 1, 0)

@@ -19,18 +19,11 @@ import (
 
 // newAlienScreen builds a headless Screen on a large all land map for the
 // alien derelict spawn tests (big enough for the separation grid to step).
-func newAlienScreen(t *testing.T, w, h int) *Screen {
+func newAlienScreen(t *testing.T, size int) *Screen {
 	t.Helper()
-	m := &world.Map{Surface: make([]uint8, w*h)}
-	m.W, m.H = w, h
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
+	s, g := newTestScreen(t, size)
 	g.State.Teams[game.AlienTeam].Type = game.TeamAlien
-	return &Screen{game: g, wmap: m, r: drawmap.New(m)}
+	return s
 }
 
 // TestAlienDensityMapping verifies the original's resource_derelicts switch (menu.cpp).
@@ -47,7 +40,7 @@ func TestAlienDensityMapping(t *testing.T) {
 // TestPopulateAlienDerelictsNoneIsInert: density None (level 0 -> separation 0,
 // value 0) deploys nothing, so a custom game with no derelicts is untouched.
 func TestPopulateAlienDerelictsNoneIsInert(t *testing.T) {
-	s := newAlienScreen(t, 64, 64)
+	s := newAlienScreen(t, 64)
 	before := len(s.game.Units.Units())
 	sep, val := alienDensity(0)
 	s.populateAlienDerelicts(sep, val, nil, game.NewRandomizer(1))
@@ -60,7 +53,7 @@ func TestPopulateAlienDerelictsNoneIsInert(t *testing.T) {
 // derelicts, every one owned by the fixed alien slot (never a playable team), and
 // keeps every site clear of the team starting positions.
 func TestPopulateAlienDerelictsSpawnsAlienOwned(t *testing.T) {
-	s := newAlienScreen(t, 64, 64)
+	s := newAlienScreen(t, 64)
 	avoid := []game.Point{{X: 5, Y: 5}, {X: 58, Y: 58}}
 
 	sep, val := alienDensity(2)
@@ -123,7 +116,7 @@ func TestSpawnAlienBridgeRing(t *testing.T) {
 	}
 
 	// A site that is purely land has no water/coast tiles to bridge, so no bridges deploy.
-	land := newAlienScreen(t, w, h)
+	land := newAlienScreen(t, w)
 	land.spawnAlienDerelicts(game.Point{X: 20, Y: 20}, 0, nil, game.NewRandomizer(3))
 	for _, u := range land.game.Units.Units() {
 		if u.Type == assets.Bridge {
@@ -135,7 +128,7 @@ func TestSpawnAlienBridgeRing(t *testing.T) {
 // TestFindAlienSpotAvoidsStart: findAlienSpot moves a point that lands on a team
 // start out to a valid site at least 16 tiles clear of it, in bounds.
 func TestFindAlienSpotAvoidsStart(t *testing.T) {
-	s := newAlienScreen(t, 64, 64)
+	s := newAlienScreen(t, 64)
 	avoid := []game.Point{{X: 30, Y: 30}}
 	p := game.Point{X: 30, Y: 30} // starts right on the avoided spot
 	s.findAlienSpot(&p, avoid)

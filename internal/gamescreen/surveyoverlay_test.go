@@ -18,7 +18,7 @@ import (
 // makes the resource overlay draw map wide independent of selection, while the
 // surveyor selected and maxSurvey debug paths still work on their own.
 func TestSurveyOverlayTogglesResourceVisibility(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 
 	// Nothing on: no selection, no toggle -> overlay hidden.
 	if s.resourceOverlayVisible() {
@@ -40,7 +40,7 @@ func TestSurveyOverlayTogglesResourceVisibility(t *testing.T) {
 	s.maxSurvey = false
 
 	// A selected surveyor still shows it without the toggle.
-	sur := mkUnit(s.game, assets.Surveyor, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	sur := mkUnit(s.game, assets.Surveyor, 0, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
 	s.selected = sur
 	if !s.resourceOverlayVisible() {
 		t.Error("overlay should be visible when a surveyor is selected")
@@ -50,7 +50,7 @@ func TestSurveyOverlayTogglesResourceVisibility(t *testing.T) {
 // TestSurveyButtonActiveProbeReflectsToggle checks the SURVEY bar button shows
 // its pressed (_ON) face exactly when the overlay toggle is on.
 func TestSurveyButtonActiveProbeReflectsToggle(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 
 	// Find the SURVEY button in the bar list.
 	var survey *panelButton

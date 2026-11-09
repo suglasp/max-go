@@ -20,14 +20,14 @@ import (
 // is true so the popup offers Land. A building that is not a pad still selects (a plane
 // inspects it, it cannot land there).
 func TestAirUnitClicksLandingPadMovesOntoIt(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
 	// A player Bomber flying at (5,5) with move budget, and a player landing pad at (8,5).
-	bomber := mkUnit(g, assets.Bomber, 1, 5, 5, game.FlagMobileAirUnit|game.FlagHovering|game.FlagSelectable)
+	bomber := mkUnit(g, assets.Bomber, 0, 1, 5, 5, game.FlagMobileAirUnit|game.FlagHovering|game.FlagSelectable)
 	bomber.Hits = 10
 	bomber.Speed = 16
 	bomber.Values.Set(game.AttribSpeed, 16)
-	pad := mkUnit(g, assets.LandPad, 2, 8, 5, game.FlagStationary|game.FlagSelectable)
+	pad := mkUnit(g, assets.LandPad, 0, 2, 8, 5, game.FlagStationary|game.FlagSelectable)
 	pad.Hits = 10
 
 	s.selected = bomber
@@ -57,14 +57,14 @@ func TestAirUnitClicksLandingPadMovesOntoIt(t *testing.T) {
 // TestAirUnitClicksOtherBuildingSelectsIt: a plane clicking a friendly building that is
 // NOT a pad still SELECTS it (the plane flies above and inspects it; it cannot set down there).
 func TestAirUnitClicksOtherBuildingSelectsIt(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
-	bomber := mkUnit(g, assets.Bomber, 1, 5, 5, game.FlagMobileAirUnit|game.FlagHovering|game.FlagSelectable)
+	bomber := mkUnit(g, assets.Bomber, 0, 1, 5, 5, game.FlagMobileAirUnit|game.FlagHovering|game.FlagSelectable)
 	bomber.Hits = 10
 	bomber.Speed = 16
 	bomber.Values.Set(game.AttribSpeed, 16)
 	// A building that is not a pad (a mining station) at (8,5).
-	bld := mkUnit(g, assets.MiningSt, 2, 8, 5, game.FlagBuilding|game.FlagStationary|game.FlagSelectable)
+	bld := mkUnit(g, assets.MiningSt, 0, 2, 8, 5, game.FlagBuilding|game.FlagStationary|game.FlagSelectable)
 	bld.Hits = 10
 
 	s.selected = bomber
@@ -81,13 +81,13 @@ func TestAirUnitClicksOtherBuildingSelectsIt(t *testing.T) {
 // landing pad sets down by itself (vanilla lands a plane by moving it onto the pad -
 // there is no Land popup). The arrival tick (tickMovementSfx) clears Hovering.
 func TestAirUnitAutoLandsOnPadArrival(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.fogTeam = 0
 	s.sound.sfxFn = func(string, string, float64) {}
 
-	pad := mkUnit(g, assets.LandPad, 2, 8, 5, game.FlagStationary|game.FlagSelectable)
+	pad := mkUnit(g, assets.LandPad, 0, 2, 8, 5, game.FlagStationary|game.FlagSelectable)
 	pad.Hits = 10
-	bomber := mkUnit(g, assets.Bomber, 1, 8, 5, game.FlagMobileAirUnit|game.FlagHovering|game.FlagSelectable)
+	bomber := mkUnit(g, assets.Bomber, 0, 1, 8, 5, game.FlagMobileAirUnit|game.FlagHovering|game.FlagSelectable)
 	bomber.Hits = 10
 
 	// Simulate the bomber having just driven onto the pad: it is in the drive sound set

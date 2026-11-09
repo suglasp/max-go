@@ -9,10 +9,7 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
-	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
-	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // TestSumComplexPowerSplitsProductionAndConsumption checks the info panel power
@@ -20,19 +17,10 @@ import (
 // in one complex report curProd/capProd 6 and curUse/capUse 1, so a selected
 // generator's Total = available power and Usage = consumed power.
 func TestSumComplexPowerSplitsProductionAndConsumption(t *testing.T) {
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
-	g.State.ActiveTeam, g.State.PlayerTeam = 0, 0
-	s := &Screen{game: g, wmap: m, r: drawmap.New(m)}
+	s, g := newTestScreen(t, 16)
 
-	gen := building(assets.PowerStn, 0, 8, 8, game.OrderPowerOn, 0)
-	tower := building(assets.CommTwr, 0, 10, 8, game.OrderPowerOn, 0)
+	gen := mkBuilding(assets.PowerStn, 0, 1, 8, 8, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, 0)
+	tower := mkBuilding(assets.CommTwr, 0, 1, 10, 8, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, 0)
 	g.PlaceBuilding(gen, 8, 8)
 	g.PlaceBuilding(tower, 10, 8) // merges into the generator's complex
 
@@ -49,19 +37,10 @@ func TestSumComplexPowerSplitsProductionAndConsumption(t *testing.T) {
 // raw storing mining stations in one complex report the pooled stock and the
 // pooled capacity, so HITS / RAW (own) / TOTAL reads the whole base's raw.
 func TestComplexCargoSumsPooledRaw(t *testing.T) {
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
-	g.State.ActiveTeam, g.State.PlayerTeam = 0, 0
-	s := &Screen{game: g, wmap: m, r: drawmap.New(m)}
+	s, g := newTestScreen(t, 16)
 
-	mineA := building(assets.MiningSt, 0, 8, 8, game.OrderPowerOn, 20)
-	mineB := building(assets.MiningSt, 0, 10, 8, game.OrderPowerOn, 20)
+	mineA := mkBuilding(assets.MiningSt, 0, 1, 8, 8, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, 20)
+	mineB := mkBuilding(assets.MiningSt, 0, 1, 10, 8, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, 20)
 	mineA.Storage, mineB.Storage = 5, 7
 	g.PlaceBuilding(mineA, 8, 8)
 	g.PlaceBuilding(mineB, 10, 8) // merges into one complex
@@ -78,18 +57,9 @@ func TestComplexCargoSumsPooledRaw(t *testing.T) {
 // TestSumComplexResourceNoComplex confirms a building with no complex (e.g. a
 // bench unit) yields zero sums, so only its own contribution row draws.
 func TestSumComplexResourceNoComplex(t *testing.T) {
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
-	g.State.ActiveTeam, g.State.PlayerTeam = 0, 0
-	s := &Screen{game: g, wmap: m, r: drawmap.New(m)}
+	s, _ := newTestScreen(t, 16)
 
-	loose := building(assets.PowerStn, 0, 5, 5, game.OrderPowerOn, 0) // not placed
+	loose := mkBuilding(assets.PowerStn, 0, 1, 5, 5, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, 0) // not placed
 	cs := s.sumComplexResource(loose, false)
 	if cs != (complexResourceSums{}) {
 		t.Errorf("a building with no complex must sum to zero, got %+v", cs)

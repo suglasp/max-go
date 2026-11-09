@@ -16,11 +16,11 @@ import (
 // (the founder), preferring a builder over any other unit regardless of deploy order, and
 // selects nothing when the team has no builder.
 func TestSelectFirstBuilderOnLoad(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
-	mkUnit(g, assets.Tank, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable) // not a builder
-	eng := mkUnit(g, assets.Engineer, 3, 6, 5, game.FlagMobileLandUnit|game.FlagSelectable)
-	mkUnit(g, assets.Constrct, 9, 7, 5, game.FlagMobileLandUnit|game.FlagSelectable) // higher id
+	mkUnit(g, assets.Tank, 0, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable) // not a builder
+	eng := mkUnit(g, assets.Engineer, 0, 3, 6, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	mkUnit(g, assets.Constrct, 0, 9, 7, 5, game.FlagMobileLandUnit|game.FlagSelectable) // higher id
 
 	s.selected = nil
 	s.selectFirstBuilder()
@@ -33,8 +33,8 @@ func TestSelectFirstBuilderOnLoad(t *testing.T) {
 	}
 
 	// A team with no builder ends with no selection.
-	s2, g2 := newClickScreen(t)
-	mkUnit(g2, assets.Tank, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	s2, g2 := newTestScreen(t, 16)
+	mkUnit(g2, assets.Tank, 0, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 	s2.selected = nil
 	s2.selectFirstBuilder()
 	if s2.selected != nil {

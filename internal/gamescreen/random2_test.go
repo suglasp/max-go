@@ -11,8 +11,6 @@ import (
 
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/game"
-	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // TestBuildBigBaseFormsConnectedComplex checks that the -emulate random2 base lays
@@ -22,17 +20,8 @@ import (
 // supply truck parked next to any base building can use X-Fer to reload. This covers
 // the old fixed grid placement that fragmented the base into stranded complexes.
 func TestBuildBigBaseFormsConnectedComplex(t *testing.T) {
-	const w, h = 48, 48
-	m := &world.Map{Preview: world.Preview{W: w, H: h}, Surface: make([]uint8, w*h)}
-	// All land, so site validity never bumps a building off its connected slot.
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	p.Teams[1].Type = game.TeamComputer
-	g := sim.New(p, m)
-	s := &Screen{game: g, wmap: m}
+	const w = 48
+	s, g := newTestScreen(t, w, 1)
 
 	s.buildBigBase(0, game.Point{X: 24, Y: 24}, rand.New(rand.NewSource(7)))
 
@@ -74,16 +63,8 @@ func TestBuildBigBaseFormsConnectedComplex(t *testing.T) {
 // FlagRequiresSlab, dropping a SmlSlab under each). Real 1x1 buildings (dumps /
 // radar / generator) still lay their slab; only the connectors must not.
 func TestBuildBigBaseConnectorLaysNoSlab(t *testing.T) {
-	const w, h = 48, 48
-	m := &world.Map{Preview: world.Preview{W: w, H: h}, Surface: make([]uint8, w*h)}
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	p.Teams[1].Type = game.TeamComputer
-	g := sim.New(p, m)
-	s := &Screen{game: g, wmap: m}
+	const w = 48
+	s, g := newTestScreen(t, w, 1)
 
 	s.buildBigBase(0, game.Point{X: 24, Y: 24}, rand.New(rand.NewSource(7)))
 

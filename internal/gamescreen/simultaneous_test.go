@@ -11,18 +11,13 @@ import (
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // simTestScreen builds a minimal headless screen running a 1-human + 1-computer
 // simultaneous game. endless skips the win check so the round machinery can be
 // exercised without deploying a full base.
 func simTestScreen() (*Screen, *sim.Game) {
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
+	m := flatWorld(16, 16)
 	p := &game.StartParams{}
 	p.Teams[0].Type = game.TeamPlayer
 	p.Teams[1].Type = game.TeamComputer

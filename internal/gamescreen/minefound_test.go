@@ -71,7 +71,7 @@ func TestMoveOntoAKnownMineWarns(t *testing.T) {
 	s, g := newHaltScreen(t)
 	g.State.ActiveTeam = 0
 
-	tank := haltMover(g, 0, 1, 5, 5, 10, 3)
+	tank := mkTank(g.Units, 0, 1, 5, 5, tankStats{angle: 2, speed: 10, scan: 3, hits: 30})
 	mine := mineAt(g, 1, 2, 9, 5)
 	mine.SpotBy(0) // the player has found this one
 
@@ -92,7 +92,7 @@ func TestMoveOntoAnUNKNOWNMineIsSilent(t *testing.T) {
 	s, g := newHaltScreen(t)
 	g.State.ActiveTeam = 0
 
-	tank := haltMover(g, 0, 1, 5, 5, 10, 3)
+	tank := mkTank(g.Units, 0, 1, 5, 5, tankStats{angle: 2, speed: 10, scan: 3, hits: 30})
 	mine := mineAt(g, 1, 2, 9, 5) // never detected
 
 	g.BeginTeamTurn(0)

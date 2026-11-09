@@ -57,16 +57,16 @@ func TestMovementSfxOnWaterPlatform(t *testing.T) {
 // are always audible, a VISIBLE enemy mover is audible, and an enemy hidden in the
 // fog is silent (so you no longer hear enemy units drive across the dark map).
 func TestAudibleMoverFogGate(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.fogTeam = 0
 
-	own := mkUnit(g, assets.Tank, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	own := mkUnit(g, assets.Tank, 0, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 	if !s.audibleMover(own) {
 		t.Error("own unit must always be audible")
 	}
 
 	// A player scanner reveals an enemy beside it; a distant enemy stays fogged.
-	scout := mkUnit(g, assets.Scout, 2, 8, 8, game.FlagMobileLandUnit|game.FlagSelectable)
+	scout := mkUnit(g, assets.Scout, 0, 2, 8, 8, game.FlagMobileLandUnit|game.FlagSelectable)
 	scout.Values.Set(game.AttribScan, 4)
 	seen := game.NewUnitInfo(assets.Tank, 1, 3, 0)
 	seen.Flags = game.FlagMobileLandUnit | game.FlagSelectable
@@ -94,13 +94,13 @@ func TestAudibleMoverFogGate(t *testing.T) {
 // unselected building unit is silent; selecting an actively building one starts the loop;
 // deselecting stops it. A global per-unit loop would play unselected builders and fail to stop on a selection change.
 func TestSelectedBuilderWorkingSoundIsSelectionTied(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.fogTeam = 0
 	var started, stopped int
 	s.sound.sfxHeldStartFn = func(primary, fallback string, pan, vol float64, loop bool) int { started++; return 55 }
 	s.sound.sfxHeldStopFn = func(id int) { stopped++ }
 
-	con := mkUnit(g, assets.Constrct, 1, 6, 6, game.FlagMobileLandUnit|game.FlagConstructorUnit|game.FlagSelectable)
+	con := mkUnit(g, assets.Constrct, 0, 1, 6, 6, game.FlagMobileLandUnit|game.FlagConstructorUnit|game.FlagSelectable)
 	con.Building = true
 	con.State = game.OrderStateBuildInProgress
 
@@ -131,14 +131,14 @@ func TestSelectedBuilderWorkingSoundIsSelectionTied(t *testing.T) {
 // held loop path). As a mobile unit it may hum its plain IDLE sound (the intro loop path),
 // which is faithful: the original picks SFX_TYPE_IDLE for a UNIT_READY builder, not SFX_TYPE_BUILDING.
 func TestSelectedParkedBuilderPlaysNoWorkingSound(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.fogTeam = 0
 	var heldStarted int // the build/clear WORKING loop uses the held loop start
 	s.sound.sfxHeldStartFn = func(primary, fallback string, pan, vol float64, loop bool) int { heldStarted++; return 55 }
 	s.sound.sfxIntroLoopStartFn = func(primary, fallback string, pan, vol float64) int { return 56 } // the idle hum
 	s.sound.sfxHeldStopFn = func(id int) {}
 
-	con := mkUnit(g, assets.Constrct, 1, 6, 6, game.FlagMobileLandUnit|game.FlagConstructorUnit|game.FlagSelectable)
+	con := mkUnit(g, assets.Constrct, 0, 1, 6, 6, game.FlagMobileLandUnit|game.FlagConstructorUnit|game.FlagSelectable)
 	con.Building = true
 	con.State = game.OrderStateBuildingReady
 	s.selected = con
@@ -268,11 +268,7 @@ func TestDriveSfxReswapsOnWaterCrossing(t *testing.T) {
 }
 
 func TestAmbientMobileIdleUsesIntroLoop(t *testing.T) {
-	m := &world.Map{Surface: make([]uint8, 16)}
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	m.W, m.H = 4, 4
+	m := flatWorld(4, 4)
 	s := &Screen{wmap: m, r: drawmap.New(m)}
 	eng := game.NewUnitInfo(assets.Engineer, 0, 1, 0)
 	eng.Flags = game.FlagMobileLandUnit
@@ -304,11 +300,7 @@ func TestAmbientMobileIdleUsesIntroLoop(t *testing.T) {
 }
 
 func TestAmbientWorkSoundUsesHeldLoop(t *testing.T) {
-	m := &world.Map{Surface: make([]uint8, 16)}
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	m.W, m.H = 4, 4
+	m := flatWorld(4, 4)
 	s := &Screen{wmap: m, r: drawmap.New(m)}
 	eng := game.NewUnitInfo(assets.Engineer, 0, 1, 0)
 	eng.Flags = game.FlagMobileLandUnit
@@ -345,8 +337,8 @@ func TestAmbientWorkSoundUsesHeldLoop(t *testing.T) {
 // out with the pan and fade of its cell against the view centre, and after the view moves every live held sound
 // (a drive sound, the ambient hum at its half volume) is panned and faded again.
 func TestPositionalUnitSfx(t *testing.T) {
-	s, g := newClickScreen(t)
-	tank := mkUnit(g, assets.Tank, 1, 2, 3, game.FlagMobileLandUnit|game.FlagSelectable)
+	s, g := newTestScreen(t, 16)
+	tank := mkUnit(g, assets.Tank, 0, 1, 2, 3, game.FlagMobileLandUnit|game.FlagSelectable)
 
 	var gotPan, gotVol float64
 	plays := 0

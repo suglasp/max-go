@@ -18,13 +18,13 @@ import (
 // TestAutoSurveyPopupItemAppearsForPlayerSurveyor verifies that the popup for a
 // player Surveyor includes the "Auto" item and that toggling it flips AutoSurvey.
 func TestAutoSurveyPopupItemAppearsForPlayerSurveyor(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	// A fresh resource map (every cell unsurveyed) so toggling Auto ON finds a
 	// nearby cell to drive to and the mode stays on (it clears automatically only when
 	// nothing remains to survey).
 	g.Resources = economy.NewResourceMap(g.W, g.H)
 	// Deploy a player Surveyor with a move budget.
-	sur := mkUnit(g, assets.Surveyor, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	sur := mkUnit(g, assets.Surveyor, 0, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
 	sur.Speed = 6
 	sur.Values.Set(game.AttribSpeed, 6)
 	g.State.ActiveTeam = 0
@@ -73,12 +73,12 @@ func TestAutoSurveyPopupItemAppearsForPlayerSurveyor(t *testing.T) {
 // TestAutoSurveyNotShownForNonSurveyorOrEnemy checks that the Auto item is
 // absent for a tank (mobile but not a Surveyor) and for an enemy Surveyor.
 func TestAutoSurveyNotShownForNonSurveyorOrEnemy(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.State.ActiveTeam = 0
 	g.State.PlayerTeam = 0
 
 	// Own tank: no Auto item.
-	tank := mkUnit(g, assets.Tank, 1, 2, 2, game.FlagMobileLandUnit|game.FlagSelectable)
+	tank := mkUnit(g, assets.Tank, 0, 1, 2, 2, game.FlagMobileLandUnit|game.FlagSelectable)
 	tank.Speed = 6
 	tank.Values.Set(game.AttribSpeed, 6)
 	for _, it := range s.popupItemsFor(tank) {
@@ -88,7 +88,7 @@ func TestAutoSurveyNotShownForNonSurveyorOrEnemy(t *testing.T) {
 	}
 
 	// Enemy Surveyor: no Auto item.
-	enem := mkUnit(g, assets.Surveyor, 2, 6, 6, game.FlagMobileLandUnit|game.FlagSelectable)
+	enem := mkUnit(g, assets.Surveyor, 0, 2, 6, 6, game.FlagMobileLandUnit|game.FlagSelectable)
 	enem.Team = 1
 	enem.Speed = 6
 	enem.Values.Set(game.AttribSpeed, 6)
@@ -102,13 +102,13 @@ func TestAutoSurveyNotShownForNonSurveyorOrEnemy(t *testing.T) {
 // TestTickAutoSurveyIssuesMoveOrder verifies that tickAutoSurvey drives a Surveyor
 // with AutoSurvey on toward the nearest unsurveyed cell at turn start.
 func TestTickAutoSurveyIssuesMoveOrder(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.Resources = economy.NewResourceMap(g.W, g.H)
 	g.State.ActiveTeam = 0
 	g.State.PlayerTeam = 0
 
 	// Deploy a Surveyor with AutoSurvey on and a move budget.
-	sur := mkUnit(g, assets.Surveyor, 1, 0, 0, game.FlagMobileLandUnit|game.FlagSelectable)
+	sur := mkUnit(g, assets.Surveyor, 0, 1, 0, 0, game.FlagMobileLandUnit|game.FlagSelectable)
 	sur.Speed = 6
 	sur.Values.Set(game.AttribSpeed, 6)
 	sur.AutoSurvey = true
@@ -132,12 +132,12 @@ func TestTickAutoSurveyIssuesMoveOrder(t *testing.T) {
 // TestTickAutoSurveyClearsFlagWhenDone confirms that AutoSurvey is turned off
 // when the map is fully surveyed (nothing left to reveal).
 func TestTickAutoSurveyClearsFlagWhenDone(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.Resources = economy.NewResourceMap(g.W, g.H)
 	g.State.ActiveTeam = 0
 	g.State.PlayerTeam = 0
 
-	sur := mkUnit(g, assets.Surveyor, 1, 0, 0, game.FlagMobileLandUnit|game.FlagSelectable)
+	sur := mkUnit(g, assets.Surveyor, 0, 1, 0, 0, game.FlagMobileLandUnit|game.FlagSelectable)
 	sur.Speed = 6
 	sur.Values.Set(game.AttribSpeed, 6)
 	sur.AutoSurvey = true
@@ -161,12 +161,12 @@ func TestTickAutoSurveyClearsFlagWhenDone(t *testing.T) {
 // action: it marks the whole map surveyed for the player team and drives the
 // automatic survey tick so a Surveyor in Auto mode immediately switches off.
 func TestRevealResourceMapSwitchesOffAuto(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.Resources = economy.NewResourceMap(g.W, g.H)
 	g.State.ActiveTeam = 0
 	g.State.PlayerTeam = 0
 
-	sur := mkUnit(g, assets.Surveyor, 1, 0, 0, game.FlagMobileLandUnit|game.FlagSelectable)
+	sur := mkUnit(g, assets.Surveyor, 0, 1, 0, 0, game.FlagMobileLandUnit|game.FlagSelectable)
 	sur.Speed = 6
 	sur.Values.Set(game.AttribSpeed, 6)
 	sur.AutoSurvey = true

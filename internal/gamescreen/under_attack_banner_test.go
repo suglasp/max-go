@@ -11,17 +11,12 @@ import (
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // newDamageScreen builds a headless Screen on a flat map with the player as team 0.
 func newDamageScreen(t *testing.T) *Screen {
 	t.Helper()
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
+	m := flatWorld(16, 16)
 	p := &game.StartParams{}
 	p.Teams[0].Type = game.TeamPlayer
 	p.Teams[1].Type = game.TeamPlayer

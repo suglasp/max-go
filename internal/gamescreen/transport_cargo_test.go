@@ -11,7 +11,6 @@ import (
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // TestDeployUnitTransportCapacityFromAttribs verifies that
@@ -20,15 +19,7 @@ import (
 // must read the real Storage so a personnel/sea carrier reads 6 and an air
 // transport 3 - the value the left bar "Units" gauge shows.
 func TestDeployUnitTransportCapacityFromAttribs(t *testing.T) {
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
-	s := &Screen{game: g, wmap: m}
+	s, _ := newTestScreen(t, 16)
 
 	// Minimal ATTRIBS table with the real carrier capacities.
 	attribs := make([]assets.UnitAttributes, assets.UnitCount)
@@ -47,7 +38,7 @@ func TestDeployUnitTransportCapacityFromAttribs(t *testing.T) {
 
 	// Headless fallback: with no ATTRIBS loaded the demo default (40) still applies,
 	// so a transport is at least placeable (not 0-capacity).
-	s2 := &Screen{game: sim.New(p, m), wmap: m}
+	s2, _ := newTestScreen(t, 16)
 	u := s2.deployUnit(assets.ClnTrans, game.FlagMobileLandUnit|game.FlagSelectable, 0, 2, 5, 5)
 	if got := sim.TransportCapacity(u); got != 40 {
 		t.Errorf("ClnTrans capacity with no ATTRIBS = %d, want the 40 headless fallback", got)

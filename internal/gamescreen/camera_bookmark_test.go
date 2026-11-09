@@ -15,7 +15,7 @@ import (
 // centerScroll, so a cell pinned into a bookmark reads back as the same cell at
 // whatever zoom is current.
 func TestViewCenterCellInvertsCenterScroll(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	zoom := s.r.Zoom()
 	vw, vh := viewSize(MainMap)
 
@@ -31,7 +31,7 @@ func TestViewCenterCellInvertsCenterScroll(t *testing.T) {
 // TestCameraBookmarkSetAndRecall: Alt+F5 pins the current view centre and F5 jumps
 // straight back to it; an unset slot and an out of range slot are quiet no ops.
 func TestCameraBookmarkSetAndRecall(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	zoom := s.r.Zoom()
 	vw, vh := viewSize(MainMap)
 
@@ -72,7 +72,7 @@ func TestCameraBookmarkSetAndRecall(t *testing.T) {
 // slots and applyCameraBookmarks replaces the current pins with the save's set,
 // clearing everything a pre v15 save (an empty list) or the saved game never pinned.
 func TestCameraBookmarkSaveRoundTrip(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	s.camera.cameraBookmarks[1] = cameraBookmark{cellX: 6, cellY: 9, set: true}
 	s.camera.cameraBookmarks[2] = cameraBookmark{cellX: 40, cellY: 12, set: true}
 
@@ -86,7 +86,7 @@ func TestCameraBookmarkSaveRoundTrip(t *testing.T) {
 	}
 
 	// Loading onto a screen with different pins replaces them wholesale.
-	s2, _ := newClickScreen(t)
+	s2, _ := newTestScreen(t, 16)
 	s2.camera.cameraBookmarks[0] = cameraBookmark{cellX: 1, cellY: 1, set: true}
 	s2.applyCameraBookmarks(marks)
 	if s2.camera.cameraBookmarks[0].set {

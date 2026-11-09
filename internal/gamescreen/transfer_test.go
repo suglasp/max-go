@@ -13,7 +13,6 @@ import (
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
 	"github.com/suglasp/max-go/internal/units"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // TestTransferTargetValid checks the cursor's target test: a matching cargo
@@ -60,13 +59,7 @@ func TestTransferTargetValid(t *testing.T) {
 // from the building it stands next to. This covers the random2 base
 // fragmenting into stranded complexes that showed the NO cursor.)
 func TestTransferReloadAcrossConnectorChain(t *testing.T) {
-	m := &world.Map{Preview: world.Preview{W: 24, H: 24}, Surface: make([]uint8, 24*24)}
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
+	_, g := newTestScreen(t, 24)
 
 	mk := func(ty assets.UnitType, gx, gy int, big bool) *game.UnitInfo {
 		fl := game.FlagStationary | game.FlagSelectable | game.FlagRequiresSlab
@@ -118,13 +111,7 @@ func TestTransferReloadAcrossConnectorChain(t *testing.T) {
 // merely sits beside. A mobile supply truck, by contrast, may still draw raw from
 // the same complex through any connected building.
 func TestTransferBuildingSourceRejectsWrongCargo(t *testing.T) {
-	m := &world.Map{Preview: world.Preview{W: 24, H: 24}, Surface: make([]uint8, 24*24)}
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
+	_, g := newTestScreen(t, 24)
 
 	mk := func(ty assets.UnitType, gx, gy int) *game.UnitInfo {
 		u := &game.UnitInfo{
@@ -197,13 +184,7 @@ func TestAdjustStoredMobile(t *testing.T) {
 // distribute resources, so any connected building represents the complex's
 // cargo even when the building's own type does not store raw.
 func TestTransferRefillFromComplexBuilding(t *testing.T) {
-	m := &world.Map{Preview: world.Preview{W: 16, H: 16}, Surface: make([]uint8, 16*16)}
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
+	_, g := newTestScreen(t, 16)
 
 	// A mining station forms a complex holding 40 of 50 raw.
 	mine := &game.UnitInfo{
@@ -253,6 +234,8 @@ func TestTransferRefillFromComplexBuilding(t *testing.T) {
 	}
 }
 
+/* // note: unused code in Go port
+// replaced by the shared newTestScreen(t, size) in fixture_test.go
 // allLandGame returns a sim game over an all land w x h map for transfer tests.
 func allLandGame(w, h int) *sim.Game {
 	m := &world.Map{Preview: world.Preview{W: w, H: h}, Surface: make([]uint8, w*h)}
@@ -263,6 +246,7 @@ func allLandGame(w, h int) *sim.Game {
 	p.Teams[0].Type = game.TeamPlayer
 	return sim.New(p, m)
 }
+*/
 
 // placeStorer places and registers a storage building (1x1 or 2x2) holding cargo.
 func placeStorer(g *sim.Game, ty assets.UnitType, gx, gy int, big bool) *game.UnitInfo {
@@ -270,13 +254,14 @@ func placeStorer(g *sim.Game, ty assets.UnitType, gx, gy int, big bool) *game.Un
 	if big {
 		fl |= game.FlagBuilding
 	}
-	u := &game.UnitInfo{Type: ty, Team: 0, Flags: fl, Values: &game.UnitValues{}}
-	u.Values.Set(game.AttribStorage, 50)
+	u := mkBuilding(ty, 0, 0, gx, gy, fl, game.OrderAwait, 50)
 	u.Storage = 40
 	g.PlaceBuilding(u, gx, gy)
 	return u
 }
 
+/* // note: unused code in Go port
+// replaced by the shared t4Truck(g, ty, 0, gx, gy, 40, 0) in fixture_test.go
 // mobileCargo returns a mobile cargo unit (truck/constructor) at a cell.
 func mobileCargo(g *sim.Game, ty assets.UnitType, gx, gy int) *game.UnitInfo {
 	u := &game.UnitInfo{
@@ -290,6 +275,7 @@ func mobileCargo(g *sim.Game, ty assets.UnitType, gx, gy int) *game.UnitInfo {
 	g.Units.Deploy(u, gx, gy)
 	return u
 }
+*/
 
 // TestTransferReachesAcrossComplex verifies the manual's rule (p.64): a connected
 // complex is ONE transfer endpoint, so a unit adjacent to ANY connected structure
@@ -297,7 +283,7 @@ func mobileCargo(g *sim.Game, ty assets.UnitType, gx, gy int) *game.UnitInfo {
 // selects first. A truck touching only the FAR end of a connector chain may target
 // the mining station at the near end, and the mine (selected) may target that truck.
 func TestTransferReachesAcrossComplex(t *testing.T) {
-	g := allLandGame(24, 24)
+	_, g := newTestScreen(t, 24)
 
 	// A connector chain: mine - conn - storage - conn - far, all one complex.
 	mine := placeStorer(g, assets.MiningSt, 5, 5, true) // raw, cells 5,5..6,6
@@ -310,7 +296,7 @@ func TestTransferReachesAcrossComplex(t *testing.T) {
 	}
 
 	// A supply truck touching only the FAR building (7 cells from the mine).
-	truck := mobileCargo(g, assets.SplyTrck, 12, 5)
+	truck := t4Truck(g, assets.SplyTrck, 0, 12, 5, 40, 0)
 
 	s := &Screen{game: g}
 	// Truck selected, hovering the distant mining station: valid (truck is next to a
@@ -326,7 +312,7 @@ func TestTransferReachesAcrossComplex(t *testing.T) {
 	}
 
 	// A truck nowhere near the complex is NOT reachable.
-	stray := mobileCargo(g, assets.SplyTrck, 20, 20)
+	stray := t4Truck(g, assets.SplyTrck, 0, 20, 20, 40, 0)
 	s.orderInput.xferSource = stray
 	if s.transferTargetValid(5, 5) {
 		t.Error("a truck not adjacent to any connected structure must NOT reach the complex")
@@ -337,7 +323,7 @@ func TestTransferReachesAcrossComplex(t *testing.T) {
 // transfer with a fuel complex, a Gold Truck with a gold complex, and neither with a complex of another kind
 // (a Fuel Truck with a raw only complex, a Gold Truck with a fuel store).
 func TestTransferTargetMatchesCargoKind(t *testing.T) {
-	g := allLandGame(24, 24)
+	_, g := newTestScreen(t, 24)
 	placeStorer(g, assets.FDump, 5, 5, false)    // fuel, 1x1
 	placeStorer(g, assets.GoldSm, 15, 5, false)  // gold, 1x1
 	placeStorer(g, assets.MiningSt, 5, 15, true) // raw, 2x2
@@ -346,7 +332,7 @@ func TestTransferTargetMatchesCargoKind(t *testing.T) {
 	s := &Screen{game: g}
 
 	// Fuel Truck next to the fuel store: valid (same cargo kind).
-	fuelTruck := mobileCargo(g, assets.FuelTrck, 6, 5)
+	fuelTruck := t4Truck(g, assets.FuelTrck, 0, 6, 5, 40, 0)
 	s.orderInput.xferSource = fuelTruck
 	if economy.CargoTypeOf(fuelTruck.Type) != economy.CargoFuel {
 		t.Fatalf("fuel truck cargo = %v, want fuel", economy.CargoTypeOf(fuelTruck.Type))
@@ -360,7 +346,7 @@ func TestTransferTargetMatchesCargoKind(t *testing.T) {
 	}
 
 	// Gold Truck next to the gold vault: valid.
-	goldTruck := mobileCargo(g, assets.GoldTrck, 16, 5)
+	goldTruck := t4Truck(g, assets.GoldTrck, 0, 16, 5, 40, 0)
 	s.orderInput.xferSource = goldTruck
 	if economy.CargoTypeOf(goldTruck.Type) != economy.CargoGold {
 		t.Fatalf("gold truck cargo = %v, want gold", economy.CargoTypeOf(goldTruck.Type))
@@ -370,7 +356,7 @@ func TestTransferTargetMatchesCargoKind(t *testing.T) {
 	}
 
 	// A Gold Truck right next to the fuel store must NOT transfer with it.
-	strayGold := mobileCargo(g, assets.GoldTrck, 4, 5)
+	strayGold := t4Truck(g, assets.GoldTrck, 0, 4, 5, 40, 0)
 	s.orderInput.xferSource = strayGold
 	if s.transferTargetValid(5, 5) {
 		t.Error("a gold truck must NOT transfer with a fuel store")
@@ -380,10 +366,10 @@ func TestTransferTargetMatchesCargoKind(t *testing.T) {
 // TestTransferTwoMobileUnitsNeedAdjacency checks that two mobile cargo units (no
 // complex) get NO complex range shortcut: they transfer only when directly adjacent.
 func TestTransferTwoMobileUnitsNeedAdjacency(t *testing.T) {
-	g := allLandGame(24, 24)
-	a := mobileCargo(g, assets.SplyTrck, 5, 5)
-	mobileCargo(g, assets.SplyTrck, 6, 5) // touching a
-	mobileCargo(g, assets.SplyTrck, 9, 5) // 4 cells from a
+	_, g := newTestScreen(t, 24)
+	a := t4Truck(g, assets.SplyTrck, 0, 5, 5, 40, 0)
+	t4Truck(g, assets.SplyTrck, 0, 6, 5, 40, 0) // touching a
+	t4Truck(g, assets.SplyTrck, 0, 9, 5, 40, 0) // 4 cells from a
 	/* adjacent, apart := ...; _ = adjacent; _ = apart: note: unused code in Go port, the names were never read */
 
 	s := &Screen{game: g}
@@ -401,15 +387,15 @@ func TestTransferTwoMobileUnitsNeedAdjacency(t *testing.T) {
 // adjacent supply truck (Path A, same cargo kind) or a raw storage complex (Path B).
 func TestMineLayerReloadsRaw(t *testing.T) {
 	for _, layer := range []assets.UnitType{assets.MineLayr, assets.SeaMnLyr} {
-		g := allLandGame(24, 24)
+		_, g := newTestScreen(t, 24)
 		rawMine := placeStorer(g, assets.MiningSt, 5, 15, true) // raw, 2x2 complex
 		_ = rawMine
-		truck := mobileCargo(g, assets.SplyTrck, 6, 5) // raw supply truck
+		truck := t4Truck(g, assets.SplyTrck, 0, 6, 5, 40, 0) // raw supply truck
 		_ = truck
 
 		s := &Screen{game: g}
-		ml := mobileCargo(g, layer, 5, 5) // next to the supply truck
-		ml.Storage = 3                    // partly spent: room to reload
+		ml := t4Truck(g, layer, 0, 5, 5, 40, 0) // next to the supply truck
+		ml.Storage = 3                          // partly spent: room to reload
 		s.orderInput.xferSource = ml
 
 		if economy.CargoTypeOf(layer) != economy.CargoRaw {
@@ -420,7 +406,7 @@ func TestMineLayerReloadsRaw(t *testing.T) {
 			t.Errorf("%s next to a supply truck should be a valid raw transfer", layer.Tag())
 		}
 		// Path B: refill from a raw storage complex it stands beside.
-		ml2 := mobileCargo(g, layer, 5, 14) // adjacent to the 2x2 mine at 5,15
+		ml2 := t4Truck(g, layer, 0, 5, 14, 40, 0) // adjacent to the 2x2 mine at 5,15
 		s.orderInput.xferSource = ml2
 		if !s.transferTargetValid(5, 15) {
 			t.Errorf("%s beside a raw mining complex should be able to reload raw", layer.Tag())

@@ -87,8 +87,8 @@ func TestArmedPickRightClickCancels(t *testing.T) {
 // empty ground is not its business and falls through to select or move.
 func TestClickCombatConsumesAnAttackClick(t *testing.T) {
 	s, mgr := seamScreen(t)
-	tank := clickTestUnit(0, 1, 5, 5, mgr)
-	enemy := clickTestUnit(1, 2, 7, 5, mgr) // two cells away, inside range 4
+	tank := mkTank(mgr, 0, 1, 5, 5, clickTank)
+	enemy := mkTank(mgr, 1, 2, 7, 5, clickTank) // two cells away, inside range 4
 	s.selected = tank
 	before := enemy.Hits
 
@@ -114,8 +114,8 @@ func TestClickCombatConsumesAnAttackClick(t *testing.T) {
 // selection already sits on advances to the next stacked occupant.
 func TestResolveOccupantSelectPicksThenCycles(t *testing.T) {
 	s, mgr := seamScreen(t)
-	clickTestUnit(0, 1, 6, 6, mgr)
-	clickTestUnit(0, 2, 6, 6, mgr) // stacked on the same cell
+	mkTank(mgr, 0, 1, 6, 6, clickTank)
+	mkTank(mgr, 0, 2, 6, 6, clickTank) // stacked on the same cell
 
 	if s.resolveOccupantSelect(9, 9) {
 		t.Error("consumed a click on an empty cell")

@@ -21,12 +21,7 @@ import (
 // finished platforms keeps the land slab+cones); plain land is land.
 func TestConstructionWaterVariant(t *testing.T) {
 	const w, h = 16, 16
-	m := &world.Map{Surface: make([]uint8, w*h)}
-	m.W, m.H = w, h
-
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
+	m := flatWorld(w, h)
 
 	m.Surface[5*w+5] = world.SurfaceWater
 	m.Surface[6*w+6] = world.SurfaceCoast

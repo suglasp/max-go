@@ -20,10 +20,10 @@ import (
 // turns each transition into the owner's local message. A factory owned by another team
 // is NOT announced to the human.
 func TestFactoryStopStartNotifies(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
 	// A player factory with a one unit queue, powered and running.
-	f := mkUnit(g, assets.LandPlt, 1, 4, 4, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
+	f := mkUnit(g, assets.LandPlt, 0, 1, 4, 4, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
 	f.Order = game.OrderPowerOn
 	f.State = game.OrderStateExecutingOrder
 	f.BuildQueue = []assets.UnitType{assets.Tank}
@@ -78,7 +78,7 @@ func TestFactoryStopStartNotifies(t *testing.T) {
 // selection moves off the factory and when the screen is left, so the long hum clip never
 // rings on past a reselect or a quit to menu.
 func TestFactoryStartStopSfx(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	var started []string
 	var stopped []int
 	next := 0
@@ -89,7 +89,7 @@ func TestFactoryStartStopSfx(t *testing.T) {
 	}
 	s.sound.sfxHeldStopFn = func(id int) { stopped = append(stopped, id) }
 
-	f := mkUnit(g, assets.LandPlt, 1, 4, 4, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
+	f := mkUnit(g, assets.LandPlt, 0, 1, 4, 4, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
 	f.Order = game.OrderPowerOn
 	f.State = game.OrderStateExecutingOrder
 	f.BuildQueue = []assets.UnitType{assets.Tank}
@@ -141,7 +141,7 @@ func TestFactoryStartStopSfx(t *testing.T) {
 // for any team (including via the drain) and resets the colony latch so a restart
 // announces the start again.
 func TestColonyStoppedAnnounceGlobal(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	s.announcer.colonyAnnounced[1] = true // pretend team 1's colony start was announced
 
 	s.checkColonyStopped(1)

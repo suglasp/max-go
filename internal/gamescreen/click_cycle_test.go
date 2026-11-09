@@ -9,12 +9,11 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
-	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
-	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
+/* // note: unused code in Go port
+// replaced by the shared newTestScreen(t, 16) in fixture_test.go
 // newClickScreen builds a headless Screen on an all land map for click tests.
 func newClickScreen(t *testing.T) (*Screen, *sim.Game) {
 	t.Helper()
@@ -30,24 +29,17 @@ func newClickScreen(t *testing.T) (*Screen, *sim.Game) {
 	g.State.PlayerTeam = 0
 	return &Screen{game: g, wmap: m, r: drawmap.New(m)}, g
 }
-
-func mkUnit(g *sim.Game, t assets.UnitType, id, gx, gy int, flags game.Flags) *game.UnitInfo {
-	u := game.NewUnitInfo(t, 0, id, 0)
-	u.Flags = flags
-	u.Values = &game.UnitValues{}
-	g.Units.Deploy(u, gx, gy)
-	return u
-}
+*/
 
 // TestClickCycleStackedUnits verifies that a unit
 // parked on a connector ("collector") could not be told apart from the building
 // under it. Clicking a cell the selected unit already sits on now cycles to the
 // NEXT stacked occupant (the original's Access_GetSelectableUnit) and wraps back.
 func TestClickCycleStackedUnits(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	// An engineer (mobile) parked on a connector (stationary, selectable), same cell.
-	eng := mkUnit(g, assets.Engineer, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
-	conn := mkUnit(g, assets.Cnct4W, 2, 5, 5, game.FlagStationary|game.FlagSelectable)
+	eng := mkUnit(g, assets.Engineer, 0, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	conn := mkUnit(g, assets.Cnct4W, 0, 2, 5, 5, game.FlagStationary|game.FlagSelectable)
 
 	s.selected = eng
 	s.clickCell(5, 5)
@@ -65,10 +57,10 @@ func TestClickCycleStackedUnits(t *testing.T) {
 // of moving the engineer. A drivable structure now takes a MOVE (queued at 0
 // moves), not a select - matching the GO cursor.
 func TestClickMoveOntoConnectorAtZeroMoves(t *testing.T) {
-	s, g := newClickScreen(t)
-	eng := mkUnit(g, assets.Engineer, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	s, g := newTestScreen(t, 16)
+	eng := mkUnit(g, assets.Engineer, 0, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
 	eng.Speed = 0 // out of moves (just built the connector)
-	mkUnit(g, assets.Cnct4W, 2, 5, 4, game.FlagStationary|game.FlagSelectable)
+	mkUnit(g, assets.Cnct4W, 0, 2, 5, 4, game.FlagStationary|game.FlagSelectable)
 
 	s.selected = eng
 	s.clickCell(5, 4)
@@ -94,9 +86,9 @@ func TestClickMoveOntoConnectorAtZeroMoves(t *testing.T) {
 // flag, u.Building==false because that bool is the build POSE state of a mobile
 // builder) must never pathfind - the click does nothing.
 func TestBuildingSelectedClickTerrainNoMove(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	// A power station: a real structure (stationary, no movement flag).
-	bldg := mkUnit(g, assets.PowerStn, 1, 5, 5, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
+	bldg := mkUnit(g, assets.PowerStn, 0, 1, 5, 5, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
 	if bldg.Building {
 		t.Fatal("a freshly deployed structure should not be in a build pose")
 	}
@@ -112,7 +104,7 @@ func TestBuildingSelectedClickTerrainNoMove(t *testing.T) {
 
 	// A real mobile unit out of moves still queues its route (the path with no move is
 	// not broken by the building guard).
-	tank := mkUnit(g, assets.Tank, 2, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	tank := mkUnit(g, assets.Tank, 0, 2, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
 	tank.Speed = 0
 	s.selected = tank
 	s.clickCell(9, 4)
@@ -129,9 +121,9 @@ func TestBuildingSelectedClickTerrainNoMove(t *testing.T) {
 // every cell (it flies over everything), so it hit the drive onto structure guard; the
 // guard now excludes air units, so a click on a building cell selects the building.
 func TestAirUnitClicksBuildingSelectsIt(t *testing.T) {
-	s, g := newClickScreen(t)
-	plane := mkUnit(g, assets.Fighter, 1, 3, 3, game.FlagMobileAirUnit|game.FlagHovering|game.FlagSelectable)
-	bldg := mkUnit(g, assets.PowerStn, 2, 7, 7, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
+	s, g := newTestScreen(t, 16)
+	plane := mkUnit(g, assets.Fighter, 0, 1, 3, 3, game.FlagMobileAirUnit|game.FlagHovering|game.FlagSelectable)
+	bldg := mkUnit(g, assets.PowerStn, 0, 2, 7, 7, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
 
 	s.selected = plane
 	s.clickCell(7, 7) // the building's cell
@@ -170,17 +162,17 @@ func TestPopupTargetsBuildReadyConstructorNotHiddenBuilding(t *testing.T) {
 // a hidden/unexpanded structure is never the target, and the already selected unit
 // wins over another mobile unit sharing the cell (deterministic, matching a click).
 func TestPopupTargetSkipsHiddenPrefersSelected(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	// A hidden (unexpanded) building + a mobile unit on the same cell: the popup
 	// targets the mobile unit, never the hidden structure.
-	hidden := mkUnit(g, assets.PowerStn, 1, 5, 5, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
+	hidden := mkUnit(g, assets.PowerStn, 0, 1, 5, 5, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
 	hidden.HiddenUntilExpand = true
-	tank := mkUnit(g, assets.Tank, 2, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	tank := mkUnit(g, assets.Tank, 0, 2, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 	if got := s.popupTargetAt(5, 5); got != tank {
 		t.Fatalf("popupTargetAt = %v, want the mobile tank (hidden building skipped)", got)
 	}
 	// Two mobile units on a cell: the already selected one is the popup target.
-	other := mkUnit(g, assets.Tank, 3, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	other := mkUnit(g, assets.Tank, 0, 3, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 	s.selected = other
 	if got := s.popupTargetAt(5, 5); got != other {
 		t.Errorf("popupTargetAt = %v, want the already-selected unit", got)
@@ -191,8 +183,8 @@ func TestPopupTargetSkipsHiddenPrefersSelected(t *testing.T) {
 // empty terrain/sea clears the selection, while a right click over a unit keeps it
 // (it opens the Status screen instead).
 func TestRightClickMapDeselect(t *testing.T) {
-	s, g := newClickScreen(t)
-	u := mkUnit(g, assets.Tank, 1, 3, 3, game.FlagMobileLandUnit|game.FlagSelectable)
+	s, g := newTestScreen(t, 16)
+	u := mkUnit(g, assets.Tank, 0, 1, 3, 3, game.FlagMobileLandUnit|game.FlagSelectable)
 
 	s.selected = u
 	s.rightClickMap(8, 8) // empty cell

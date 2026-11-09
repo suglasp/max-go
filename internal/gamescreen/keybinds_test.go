@@ -15,7 +15,7 @@ import (
 // TestKeybindDefaults: a fresh screen resolves the vanilla keys without any
 // SetKeybinds call, letters match both shift cases, and unmapped keys miss.
 func TestKeybindDefaults(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 
 	cases := []struct {
 		key  int
@@ -60,7 +60,7 @@ func TestKeybindDefaults(t *testing.T) {
 // TestSetKeybindsRemap: a remapped end turn key takes over and the old default
 // stops matching; a bad value keeps the default; an empty value unbinds.
 func TestSetKeybindsRemap(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	s.SetKeybinds(map[string]string{
 		"end_turn": "T",
 		"grid":     "no such key",
@@ -88,7 +88,7 @@ func TestSetKeybindsRemap(t *testing.T) {
 // eXit, Save, Load) carry AltMod, so no configurable binding can claim them even
 // when the player remaps the plain letter to another action.
 func TestAltShortcutsStayOutOfTheKeybinds(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	s.SetKeybinds(map[string]string{"find": "F", "options": "P", "status": "X"})
 
 	for _, key := range []int{platform.AltMod | 'f', platform.AltMod | 'p', platform.AltMod | 'x'} {
@@ -101,7 +101,7 @@ func TestAltShortcutsStayOutOfTheKeybinds(t *testing.T) {
 // TestPauseMessageComesFromTheStrings: the pause box reads the retail text and
 // falls back to the vanilla wording when the strings are missing.
 func TestPauseMessageComesFromTheStrings(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 
 	if got := s.pauseMessage(); got != "Game Paused.\nClick OK to continue." {
 		t.Errorf("pause fallback = %q, want the vanilla wording", got)
@@ -117,7 +117,7 @@ func TestPauseMessageComesFromTheStrings(t *testing.T) {
 // TestPauseDialogIsInertWithoutAHook: no message hook (headless, benches) means
 // Alt+P does nothing instead of reaching into a nil modal: no modal opens and the turn clock is untouched.
 func TestPauseDialogIsInertWithoutAHook(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	clock := s.turnFlow.turnStart
 	s.pauseDialog()
 
@@ -129,7 +129,7 @@ func TestPauseDialogIsInertWithoutAHook(t *testing.T) {
 // TestKeybindSurveyTogglesOverlay: the survey action flips the same field the
 // panel SurveyButton click flips.
 func TestKeybindSurveyTogglesOverlay(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 
 	if s.surveyOverlay {
 		t.Fatal("survey overlay unexpectedly on at start")
@@ -160,7 +160,7 @@ func anyKeybind(s *Screen, key int) (bindAction, bool) {
 
 // TestPortPickGroup: the vanilla group never returns a port action and the port group never a vanilla one.
 func TestPortPickGroup(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 
 	if _, ok := s.keybindAction(platform.CtrlMod|'s', false); ok {
 		t.Error("Ctrl+S (status) matched in the vanilla group")

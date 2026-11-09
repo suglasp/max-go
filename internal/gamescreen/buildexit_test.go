@@ -14,12 +14,14 @@ import (
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
 	"github.com/suglasp/max-go/internal/units"
-	"github.com/suglasp/max-go/internal/world"
 )
 
+/* // note: unused code in Go port
+// the same surface as the shared allLandSurf in fixture_test.go
 type buildExitSurf struct{}
 
 func (buildExitSurf) SurfaceAt(x, y int) uint8 { return world.SurfaceLand }
+*/
 
 // finishedConstructor builds a headless game with a player constructor that has
 // just finished a 2x2 building, leaving it parked build ready on the site.
@@ -27,7 +29,7 @@ func finishedConstructor(t *testing.T) (*sim.Game, *game.UnitInfo, int, int) {
 	t.Helper()
 	const w, h = 24, 24
 	mgr := units.NewManager()
-	grid := &access.Grid{W: w, H: h, Surf: buildExitSurf{}, Units: mgr.Cells}
+	grid := &access.Grid{W: w, H: h, Surf: allLandSurf{}, Units: mgr.Cells}
 	p := &game.StartParams{}
 	p.Teams[0].Type = game.TeamPlayer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)

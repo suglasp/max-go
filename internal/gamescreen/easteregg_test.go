@@ -28,7 +28,7 @@ func TestSpawnEasterEggInvariants(t *testing.T) {
 	spawned, skipped := 0, 0
 
 	for seed := uint32(0); seed < 60; seed++ {
-		s := newAlienScreen(t, 64, 64)
+		s := newAlienScreen(t, 64)
 		before := len(s.game.Units.Units())
 		s.spawnEasterEgg(avoid, game.NewRandomizer(seed))
 		added := s.game.Units.Units()[before:]
@@ -77,7 +77,7 @@ func TestSpawnEasterEggInvariants(t *testing.T) {
 // TestEasterEggNotSelectable checks the gag props are inert: selectableOccupant
 // rejects a Waldo and a Harvster (you can only walk around them, not click them).
 func TestEasterEggNotSelectable(t *testing.T) {
-	s := newAlienScreen(t, 16, 16)
+	s := newAlienScreen(t, 16)
 
 	for _, et := range easterEggUnits {
 		u := &game.UnitInfo{Type: et, Team: game.AlienTeam, Flags: game.FlagStationary}

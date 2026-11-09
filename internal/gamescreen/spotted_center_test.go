@@ -16,13 +16,13 @@ import (
 // lastSpottedTarget returns it (falling back to a visible enemy before any latch), and
 // centerOnLastSpotted scrolls the view onto that cell.
 func TestF1CentersOnLastSpottedEnemy(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.announcer.voiceFn = func(string) {}
 	s.sound.sfxFn = func(string, string, float64) {}
 	s.announcer.clock = func() uint64 { return 0 }
 
 	// A player scout with scan coverage over a hostile cell several tiles away.
-	scout := mkUnit(g, assets.Tank, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	scout := mkUnit(g, assets.Tank, 0, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 	scout.Values.Set(game.AttribScan, 6)
 
 	enemy := game.NewUnitInfo(assets.Tank, 1, 2, 0) // team 1 = enemy
@@ -59,12 +59,12 @@ func TestF1CentersOnLastSpottedEnemy(t *testing.T) {
 // TestF1FollowsEveryEvent: a hit on a player unit moves the F1 target onto that unit, and a newly spotted enemy
 // moves it on again, so F1 always goes to the latest event.
 func TestF1FollowsEveryEvent(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.announcer.voiceFn = func(string) {}
 	s.sound.sfxFn = func(string, string, float64) {}
 	s.announcer.clock = func() uint64 { return 0 }
 
-	scout := mkUnit(g, assets.Tank, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	scout := mkUnit(g, assets.Tank, 0, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 	scout.Values.Set(game.AttribScan, 8)
 	scout.Values.Set(game.AttribHits, 20)
 	scout.Hits = 12
@@ -92,7 +92,7 @@ func TestF1FollowsEveryEvent(t *testing.T) {
 func TestF1FollowsACommandoEvent(t *testing.T) {
 	s, g, _ := newRaidScreen(t)
 	raider := raidCommando(g, 1, 1, 1)
-	victim := raidTarget(g, 0, 8, 2, 1)
+	victim := mkTank(g.Units, 0, 8, 2, 1, raidTank)
 
 	forceRoll(t, g.StealthChance(raider, victim, false), true)
 

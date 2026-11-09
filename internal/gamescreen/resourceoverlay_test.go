@@ -28,9 +28,9 @@ func TestSurveyTickResourceSurveyUnits(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, g := newClickScreen(t)
+			s, g := newTestScreen(t, 16)
 			g.Resources = economy.NewResourceMap(g.W, g.H)
-			mkUnit(g, tc.unitType, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+			mkUnit(g, tc.unitType, 0, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 
 			s.surveyTick()
 

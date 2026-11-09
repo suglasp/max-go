@@ -32,15 +32,6 @@ func t4ArtlessScreen(s *Screen) {
 	s.sprites = units.NewSpriteCache(t4NoArt{}, &gfx.Palette{})
 }
 
-// t4Truck deploys a mobile cargo unit with a storage capacity and a current load.
-func t4Truck(g *sim.Game, typ assets.UnitType, id, gridX, gridY, capacity, stored int) *game.UnitInfo {
-	u := mkUnit(g, typ, id, gridX, gridY, game.FlagMobileLandUnit|game.FlagSelectable)
-	u.Values.Set(game.AttribStorage, capacity)
-	u.Storage = stored
-
-	return u
-}
-
 // t4MiningStation places a mining station that forms a raw complex holding material.
 func t4MiningStation(t *testing.T, g *sim.Game, gridX, gridY, material int) (*game.UnitInfo, *economy.Complex) {
 	t.Helper()
@@ -81,7 +72,7 @@ func TestT4ArmTransfer(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			s, g := newClickScreen(t)
+			s, g := newTestScreen(t, 16)
 			u := t4Truck(g, c.typ, 1, 5, 5, 40, 10)
 			s.armTransfer(u)
 
@@ -102,7 +93,7 @@ func TestT4ArmTransfer(t *testing.T) {
 
 // TestT4TryTransferTargetUnarmed pins that an unarmed screen does not consume clicks.
 func TestT4TryTransferTargetUnarmed(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 
 	if s.tryTransferTarget(5, 5) {
 		t.Error("nothing armed: the click must pass through")
@@ -138,7 +129,7 @@ func TestT4TryTransferTargetRefusals(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			s, g := newClickScreen(t)
+			s, g := newTestScreen(t, 16)
 			called := false
 			s.SetTransferFunc(func(screendata.TransferInfo) (int, error) {
 				called = true
@@ -171,7 +162,7 @@ func TestT4TryTransferTargetRefusals(t *testing.T) {
 // TestT4CanExchangeCargo pins which source and target pairs may trade cargo.
 func TestT4CanExchangeCargo(t *testing.T) {
 	t.Run("same cargo trucks trade", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		a := t4Truck(g, assets.SplyTrck, 1, 5, 5, 40, 10)
 		b := t4Truck(g, assets.Constrct, 2, 6, 5, 60, 0)
 
@@ -181,7 +172,7 @@ func TestT4CanExchangeCargo(t *testing.T) {
 	})
 
 	t.Run("different cargo kinds refuse", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		a := t4Truck(g, assets.SplyTrck, 1, 5, 5, 40, 10)
 		b := t4Truck(g, assets.GoldTrck, 2, 6, 5, 40, 10)
 
@@ -191,7 +182,7 @@ func TestT4CanExchangeCargo(t *testing.T) {
 	})
 
 	t.Run("target mid build refuses", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		a := t4Truck(g, assets.SplyTrck, 1, 5, 5, 40, 10)
 		b := t4Truck(g, assets.Constrct, 2, 6, 5, 60, 0)
 		b.Order = game.OrderBuild
@@ -208,7 +199,7 @@ func TestT4CanExchangeCargo(t *testing.T) {
 	})
 
 	t.Run("no cargo source refuses", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		tank := t4Truck(g, assets.Tank, 1, 5, 5, 0, 0)
 		b := t4Truck(g, assets.SplyTrck, 2, 6, 5, 40, 10)
 
@@ -218,7 +209,7 @@ func TestT4CanExchangeCargo(t *testing.T) {
 	})
 
 	t.Run("mobile source refills from a stationary complex", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		mine, _ := t4MiningStation(t, g, 5, 5, 30)
 		truck := t4Truck(g, assets.Constrct, 2, 7, 5, 60, 0)
 
@@ -228,7 +219,7 @@ func TestT4CanExchangeCargo(t *testing.T) {
 	})
 
 	t.Run("mobile source cannot use a complex without that cargo", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		mine, _ := t4MiningStation(t, g, 5, 5, 30)
 		fuel := t4Truck(g, assets.FuelTrck, 2, 7, 5, 40, 0)
 
@@ -238,7 +229,7 @@ func TestT4CanExchangeCargo(t *testing.T) {
 	})
 
 	t.Run("stationary source cannot push into another building", func(t *testing.T) {
-		s, g := newClickScreen(t)
+		s, g := newTestScreen(t, 16)
 		mine, _ := t4MiningStation(t, g, 5, 5, 30)
 		plant := &game.UnitInfo{
 			Type: assets.PowerStn, Team: 0, ID: 51,
@@ -255,7 +246,7 @@ func TestT4CanExchangeCargo(t *testing.T) {
 
 // TestT4TransferTargetValidNeedsSource pins that the cursor test is false with no armed source.
 func TestT4TransferTargetValidNeedsSource(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	t4Truck(g, assets.SplyTrck, 1, 5, 5, 40, 10)
 	t4Truck(g, assets.SplyTrck, 2, 6, 5, 40, 10)
 
@@ -280,7 +271,7 @@ func TestT4OpenTransferApplies(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			s, g := newClickScreen(t)
+			s, g := newTestScreen(t, 16)
 			t4ArtlessScreen(s)
 			src := t4Truck(g, assets.SplyTrck, 1, 5, 5, 40, 30)
 			dst := t4Truck(g, assets.Constrct, 2, 6, 5, 60, 10)
@@ -312,7 +303,7 @@ func TestT4OpenTransferApplies(t *testing.T) {
 
 // TestT4OpenTransferWithoutHook pins that a screen with no transfer hook leaves cargo alone.
 func TestT4OpenTransferWithoutHook(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	src := t4Truck(g, assets.SplyTrck, 1, 5, 5, 40, 30)
 	dst := t4Truck(g, assets.Constrct, 2, 6, 5, 60, 10)
 	s.openTransfer(src, dst)
@@ -324,7 +315,7 @@ func TestT4OpenTransferWithoutHook(t *testing.T) {
 
 // TestT4OpenTransferFromComplex pins that a truck draws from the pooled store of an adjacent base.
 func TestT4OpenTransferFromComplex(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	t4ArtlessScreen(s)
 	mine, c := t4MiningStation(t, g, 5, 5, 40)
 	truck := t4Truck(g, assets.Constrct, 2, 7, 5, 60, 0)
@@ -353,7 +344,7 @@ func TestT4OpenTransferFromComplex(t *testing.T) {
 
 // TestT4OpenTransferClampsToCapacity pins that the receiver never exceeds its capacity.
 func TestT4OpenTransferClampsToCapacity(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	t4ArtlessScreen(s)
 	src := t4Truck(g, assets.SplyTrck, 1, 5, 5, 40, 30)
 	dst := t4Truck(g, assets.Constrct, 2, 6, 5, 60, 55)

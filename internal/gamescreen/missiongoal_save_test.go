@@ -16,7 +16,7 @@ import (
 func TestSavedMissionKeepsItsBriefing(t *testing.T) {
 	dir := t.TempDir()
 
-	saver, g := newClickScreen(t)
+	saver, g := newTestScreen(t, 16)
 	saver.SetSaveInfo(dir, "GREEN_1.WRL")
 	g.Mission = game.MissionCampaign
 	saver.SetMissionGoal("Mission 3", "Objective: hold the eastern ridge for 30 turns.")
@@ -25,7 +25,7 @@ func TestSavedMissionKeepsItsBriefing(t *testing.T) {
 		t.Fatalf("save: %v", err)
 	}
 
-	loader, _ := newClickScreen(t)
+	loader, _ := newTestScreen(t, 16)
 	loader.SetSaveInfo(dir, "GREEN_1.WRL")
 
 	if err := loader.Load(1); err != nil {
@@ -47,7 +47,7 @@ func TestSavedMissionKeepsItsBriefing(t *testing.T) {
 func TestSavedSkirmishKeepsTheInfoBlock(t *testing.T) {
 	dir := t.TempDir()
 
-	saver, _ := newClickScreen(t)
+	saver, _ := newTestScreen(t, 16)
 	saver.SetSaveInfo(dir, "GREEN_1.WRL")
 	saver.SetRandomGameGoal()
 
@@ -55,7 +55,7 @@ func TestSavedSkirmishKeepsTheInfoBlock(t *testing.T) {
 		t.Fatalf("save: %v", err)
 	}
 
-	loader, _ := newClickScreen(t)
+	loader, _ := newTestScreen(t, 16)
 	loader.SetSaveInfo(dir, "GREEN_1.WRL")
 
 	if err := loader.Load(1); err != nil {

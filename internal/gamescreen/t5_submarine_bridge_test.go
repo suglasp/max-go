@@ -25,7 +25,7 @@ type subFixture struct {
 func newSubFixture(t *testing.T) *subFixture {
 	t.Helper()
 
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.State.Teams[1].Type = game.TeamComputer
 
 	f := &subFixture{s: s, g: g, clock: 10000}
@@ -190,8 +190,8 @@ func TestUpdateSubmarinesIgnoresOtherUnits(t *testing.T) {
 func bridgeFixture(t *testing.T) (*Screen, *game.UnitInfo) {
 	t.Helper()
 
-	s, g := newClickScreen(t)
-	bridge := mkUnit(g, assets.Bridge, 1, 3, 3, game.FlagStationary|game.FlagSelectable)
+	s, g := newTestScreen(t, 16)
+	bridge := mkUnit(g, assets.Bridge, 0, 1, 3, 3, game.FlagStationary|game.FlagSelectable)
 
 	return s, bridge
 }
@@ -204,7 +204,7 @@ func dueBridgeStep(s *Screen) {
 // TestUpdateBridgesThrottle pins that updateBridges holds inside bridgeStepMS and steps one frame once it is due.
 func TestUpdateBridgesThrottle(t *testing.T) {
 	s, bridge := bridgeFixture(t)
-	mkUnit(s.game, assets.FastBoat, 2, 3, 3, game.FlagMobileSeaUnit|game.FlagSelectable)
+	mkUnit(s.game, assets.FastBoat, 0, 2, 3, 3, game.FlagMobileSeaUnit|game.FlagSelectable)
 
 	// A step is due: exactly one frame moves and the stamp advances.
 	dueBridgeStep(s)
@@ -225,7 +225,7 @@ func TestUpdateBridgesThrottle(t *testing.T) {
 // TestUpdateBridgesRaisesToMaxAndLowersBack pins that due steps move a bridge toward the raised or flat target one frame at a time.
 func TestUpdateBridgesRaisesToMaxAndLowersBack(t *testing.T) {
 	s, bridge := bridgeFixture(t)
-	boat := mkUnit(s.game, assets.FastBoat, 2, 3, 3, game.FlagMobileSeaUnit|game.FlagSelectable)
+	boat := mkUnit(s.game, assets.FastBoat, 0, 2, 3, 3, game.FlagMobileSeaUnit|game.FlagSelectable)
 
 	for i := 0; i < game.BridgeRaiseMax+3; i++ {
 		dueBridgeStep(s)
@@ -258,7 +258,7 @@ func TestUpdateBridgesRaisesToMaxAndLowersBack(t *testing.T) {
 // TestUpdateBridgesLandUnitDoesNotRaise pins that a land unit crossing a bridge leaves it flat.
 func TestUpdateBridgesLandUnitDoesNotRaise(t *testing.T) {
 	s, bridge := bridgeFixture(t)
-	mkUnit(s.game, assets.Tank, 2, 3, 3, game.FlagMobileLandUnit|game.FlagSelectable)
+	mkUnit(s.game, assets.Tank, 0, 2, 3, 3, game.FlagMobileLandUnit|game.FlagSelectable)
 
 	for i := 0; i < game.BridgeRaiseMax+2; i++ {
 		dueBridgeStep(s)

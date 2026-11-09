@@ -42,7 +42,7 @@ func TestClickUnitOnStructureWins(t *testing.T) {
 	s := &Screen{game: g}
 
 	// (1) A unit standing on a road: clicking the cell selects the unit, not the road.
-	tank := clickTestUnit(0, 1, 5, 5, mgr)
+	tank := mkTank(mgr, 0, 1, 5, 5, clickTank)
 	road := clickTestRoad(0, 2, 5, 5, mgr)
 	s.selected = nil
 	s.clickCell(5, 5)

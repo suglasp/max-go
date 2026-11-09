@@ -50,9 +50,9 @@ func TestCycleNext(t *testing.T) {
 // separate unlocked path. The locked branch returns before any renderer use,
 // so this runs headless.
 func TestPanelCycleLockedDuringAiTurn(t *testing.T) {
-	s, g := newClickScreen(t)
-	a := mkUnit(g, assets.Tank, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
-	mkUnit(g, assets.Tank, 2, 6, 6, game.FlagMobileLandUnit|game.FlagSelectable)
+	s, g := newTestScreen(t, 16)
+	a := mkUnit(g, assets.Tank, 0, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	mkUnit(g, assets.Tank, 0, 2, 6, 6, game.FlagMobileLandUnit|game.FlagSelectable)
 	s.selected = a
 	s.turnFlow.aiTurn = true
 

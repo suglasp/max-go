@@ -17,10 +17,10 @@ import (
 func TestScreenSaveLoadRoundTrip(t *testing.T) {
 	dir := t.TempDir()
 
-	saver, g := newClickScreen(t)
+	saver, g := newTestScreen(t, 16)
 	saver.SetSaveInfo(dir, "GREEN_1.WRL")
 	saver.SetTurnTimer(180)
-	mkUnit(g, assets.Tank, 0, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	mkUnit(g, assets.Tank, 0, 0, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 	saver.logMessage("a message from the game that was saved")
 
 	// Two thirds of the turn is gone when the player saves.
@@ -32,7 +32,7 @@ func TestScreenSaveLoadRoundTrip(t *testing.T) {
 	}
 
 	// A fresh screen loads it, exactly like coming in from the main menu.
-	loader, _ := newClickScreen(t)
+	loader, _ := newTestScreen(t, 16)
 	loader.SetSaveInfo(dir, "GREEN_1.WRL")
 	loader.SetTurnTimer(180)
 	loader.logMessage("a message from the game being replaced")

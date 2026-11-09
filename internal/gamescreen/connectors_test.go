@@ -14,6 +14,8 @@ import (
 	"github.com/suglasp/max-go/internal/units"
 )
 
+/* // note: unused code in Go port
+// replaced by the shared mkBuilding(t, team, id, -1, -1, flags, game.OrderPowerOn, 0)
 func connBld(t assets.UnitType, team int, id uint16, large bool) *game.UnitInfo {
 	flags := game.FlagStationary | game.FlagSelectable
 
@@ -23,6 +25,7 @@ func connBld(t assets.UnitType, team int, id uint16, large bool) *game.UnitInfo 
 
 	return &game.UnitInfo{ID: id, Type: t, Team: team, Flags: flags, Order: game.OrderPowerOn}
 }
+*/
 
 // TestConnectorBitsAutoRig checks that two abutting 2x2 buildings each set their
 // connection bits toward the other (the auto rig), and that a 1x1 connector next
@@ -31,8 +34,8 @@ func TestConnectorBitsAutoRig(t *testing.T) {
 	s := &Screen{game: &sim.Game{Units: units.NewManager()}}
 
 	// Two 2x2 buildings sharing the A east / B west edge: A(4,4), B(6,4).
-	a := connBld(assets.PowerStn, 0, 1, true)
-	b := connBld(assets.LandPlt, 0, 2, true)
+	a := mkBuilding(assets.PowerStn, 0, 1, -1, -1, game.FlagStationary|game.FlagSelectable|game.FlagBuilding, game.OrderPowerOn, 0)
+	b := mkBuilding(assets.LandPlt, 0, 2, -1, -1, game.FlagStationary|game.FlagSelectable|game.FlagBuilding, game.OrderPowerOn, 0)
 	s.game.Units.Deploy(a, 4, 4)
 	s.game.Units.Deploy(b, 6, 4)
 	s.refreshConnectors()
@@ -51,7 +54,7 @@ func TestConnectorBitsAutoRig(t *testing.T) {
 	}
 
 	// A 1x1 connector immediately east of B (B covers x=6..7; connector at x=8).
-	conn := connBld(assets.Cnct4W, 0, 3, false)
+	conn := mkBuilding(assets.Cnct4W, 0, 3, -1, -1, game.FlagStationary|game.FlagSelectable, game.OrderPowerOn, 0)
 	s.game.Units.Deploy(conn, 8, 4)
 	s.refreshConnectors()
 

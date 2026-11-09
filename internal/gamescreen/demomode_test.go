@@ -12,17 +12,12 @@ import (
 	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // demoTestScreen builds a headless attract demo board: two computer teams, no
 // human, turn based, with a live map renderer (the demo camera jump needs it).
 func demoTestScreen() (*Screen, *sim.Game) {
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
+	m := flatWorld(16, 16)
 
 	p := &game.StartParams{}
 	p.Teams[0].Type = game.TeamComputer

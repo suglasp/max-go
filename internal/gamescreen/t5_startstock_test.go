@@ -38,7 +38,7 @@ func TestLandStartingStock(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, g := newClickScreen(t)
+			s, g := newTestScreen(t, 16)
 			s.resourceLevels = tc.levels
 			s.resourceLevelsSet = tc.set
 
@@ -74,7 +74,7 @@ func TestLandStartingStock(t *testing.T) {
 
 // TestLandStartingStockNoComplexes pins that landing with no complex is a quiet no op.
 func TestLandStartingStockNoComplexes(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.Complexes = nil
 
 	s.landStartingStock()
@@ -176,7 +176,7 @@ func TestSeedCustomWorld(t *testing.T) {
 		}
 
 		t.Run(name, func(t *testing.T) {
-			s, g := newClickScreen(t)
+			s, g := newTestScreen(t, 16)
 			s.resourceLevelsSet = levelsSet
 			s.resourceLevels = [3]int{2, 0, 1}
 			g.State.Teams[0].Clan = game.ClanRandom

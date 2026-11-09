@@ -9,10 +9,7 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
-	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
-	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // TestSetStarterBuilderCargo checks the founder builders deploy at the partial
@@ -107,18 +104,9 @@ func TestStartSupplyRawFollowsRichness(t *testing.T) {
 // pool shows 13/25 on the lone mining station, and an over cap pool clamps the
 // store to its 25 capacity (the remainder stays in the pool).
 func TestSeedRawStoreDisplayMirrorsPool(t *testing.T) {
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
-	g.State.ActiveTeam, g.State.PlayerTeam = 0, 0
-	_ = &Screen{game: g, wmap: m, r: drawmap.New(m)}
+	_, g := newTestScreen(t, 16)
 
-	mine := building(assets.MiningSt, 0, 8, 8, game.OrderPowerOn, 25)
+	mine := mkBuilding(assets.MiningSt, 0, 1, 8, 8, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, 25)
 	g.PlaceBuilding(mine, 8, 8)
 	c := g.ComplexOf(mine)
 	if c == nil {

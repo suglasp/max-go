@@ -16,10 +16,10 @@ import (
 // hotkeyScreen builds a headless screen with one awaiting player Tank selected, outside any hand over banner.
 func hotkeyScreen(t *testing.T) (*Screen, *game.UnitInfo) {
 	t.Helper()
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.turnFlow.handover = -1
 
-	tank := mkUnit(g, assets.Tank, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	tank := mkUnit(g, assets.Tank, 0, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
 	tank.Order = game.OrderAwait
 	tank.State = game.OrderStateExecutingOrder
 	s.selected = tank
@@ -42,10 +42,10 @@ func TestPopupHotkeySTogglesSentry(t *testing.T) {
 
 // TestPopupHotkeyBFindsBuild: B on an idle Constructor finds its Build button (running it opens the menu).
 func TestPopupHotkeyBFindsBuild(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.turnFlow.handover = -1
 
-	c := mkUnit(g, assets.Constrct, 1, 4, 4, game.FlagMobileLandUnit|game.FlagConstructorUnit|game.FlagSelectable)
+	c := mkUnit(g, assets.Constrct, 0, 1, 4, 4, game.FlagMobileLandUnit|game.FlagConstructorUnit|game.FlagSelectable)
 	c.Order = game.OrderAwait
 	c.State = game.OrderStateExecutingOrder
 	s.selected = c

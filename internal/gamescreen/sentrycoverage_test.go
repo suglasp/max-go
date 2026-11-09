@@ -54,11 +54,11 @@ func TestSentryCoverageRingsOwnArmedSentries(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, g := newClickScreen(t)
+			s, g := newTestScreen(t, 16)
 			g.State.ActiveTeam = 0
 			g.State.PlayerTeam = 0
 
-			u := mkUnit(g, assets.GunTurrt, 51, 4, 4, game.FlagBuilding|game.FlagStationary|game.FlagSelectable)
+			u := mkUnit(g, assets.GunTurrt, 0, 51, 4, 4, game.FlagBuilding|game.FlagStationary|game.FlagSelectable)
 			u.Team = tc.team
 			u.Order = tc.order
 			u.Values.Set(game.AttribRange, tc.rng)
@@ -77,11 +77,11 @@ func TestSentryCoverageRingsOwnArmedSentries(t *testing.T) {
 // TestSentryCoverageOffDrawsNothing checks the F2 row actually gates it: switched
 // off, even the player's own armed sentry paints nothing.
 func TestSentryCoverageOffDrawsNothing(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.State.ActiveTeam = 0
 	g.State.PlayerTeam = 0
 
-	u := mkUnit(g, assets.GunTurrt, 51, 4, 4, game.FlagBuilding|game.FlagStationary|game.FlagSelectable)
+	u := mkUnit(g, assets.GunTurrt, 0, 51, 4, 4, game.FlagBuilding|game.FlagStationary|game.FlagSelectable)
 	u.Order = game.OrderSentry
 	u.Values.Set(game.AttribRange, 6)
 

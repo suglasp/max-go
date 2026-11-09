@@ -26,9 +26,9 @@ func TestClickDoesNotBlindFireIntoFog(t *testing.T) {
 	p.Teams[1].Type = game.TeamComputer
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
 
-	tank := clickTestUnit(0, 1, 5, 5, mgr)  // player attacker (clickTestUnit sets no scan)
-	enemy := clickTestUnit(1, 2, 7, 5, mgr) // enemy 2 cells east, in range 4
-	enemy.Order = game.OrderAwait           // not idle, so visibility keys on coverage
+	tank := mkTank(mgr, 0, 1, 5, 5, clickTank)  // player attacker (clickTank sets no scan)
+	enemy := mkTank(mgr, 1, 2, 7, 5, clickTank) // enemy 2 cells east, in range 4
+	enemy.Order = game.OrderAwait               // not idle, so visibility keys on coverage
 	g.RefreshVisibility()
 
 	s := &Screen{game: g}

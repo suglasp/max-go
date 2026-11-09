@@ -15,10 +15,10 @@ import (
 // TestUnitGroupStoresFullSelection: assigning a group records every selected unit's
 // id, not just the leader.
 func TestUnitGroupStoresFullSelection(t *testing.T) {
-	s, g := newClickScreen(t)
-	a := mkMobile(g, 0, 1, 3, 3)
-	b := mkMobile(g, 0, 2, 4, 4)
-	c := mkMobile(g, 0, 3, 5, 5)
+	s, g := newTestScreen(t, 16)
+	a := mkTank(g.Units, 0, 1, 3, 3, tankStats{})
+	b := mkTank(g.Units, 0, 2, 4, 4, tankStats{})
+	c := mkTank(g.Units, 0, 3, 5, 5, tankStats{})
 
 	s.setSelectionSet([]*game.UnitInfo{a, b, c}, a)
 	s.setUnitGroup(0)
@@ -31,9 +31,9 @@ func TestUnitGroupStoresFullSelection(t *testing.T) {
 // TestUnitGroupExclusiveMembership: assigning a unit to a group removes it from any
 // other group it was in (a unit belongs to only one numbered group).
 func TestUnitGroupExclusiveMembership(t *testing.T) {
-	s, g := newClickScreen(t)
-	a := mkMobile(g, 0, 1, 3, 3)
-	b := mkMobile(g, 0, 2, 4, 4)
+	s, g := newTestScreen(t, 16)
+	a := mkTank(g.Units, 0, 1, 3, 3, tankStats{})
+	b := mkTank(g.Units, 0, 2, 4, 4, tankStats{})
 
 	// Group 9 holds both A and B.
 	s.setSelectionSet([]*game.UnitInfo{a, b}, a)
@@ -61,9 +61,9 @@ func TestUnitGroupExclusiveMembership(t *testing.T) {
 // TestRecallSelectsWholeGroupSkipsDead: recalling reselects every surviving member
 // and skips an id no longer in the registry (a destroyed unit).
 func TestRecallSelectsWholeGroupSkipsDead(t *testing.T) {
-	s, g := newClickScreen(t)
-	a := mkMobile(g, 0, 1, 3, 3)
-	b := mkMobile(g, 0, 2, 4, 4)
+	s, g := newTestScreen(t, 16)
+	a := mkTank(g.Units, 0, 1, 3, 3, tankStats{})
+	b := mkTank(g.Units, 0, 2, 4, 4, tankStats{})
 
 	s.unitGroups[2] = []uint16{a.ID, b.ID, 999} // 999 is a destroyed / never deployed member
 	s.recallUnitGroup(2)
@@ -81,7 +81,7 @@ func TestRecallSelectsWholeGroupSkipsDead(t *testing.T) {
 // TestCaptureApplyUnitGroupsRoundTrip: capture stores only assigned slots and apply
 // restores them, clearing anything the save did not carry (a pre v16 save clears all).
 func TestCaptureApplyUnitGroupsRoundTrip(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	s.unitGroups[2] = []uint16{1, 2, 3}
 	s.unitGroups[5] = []uint16{9}
 
@@ -90,7 +90,7 @@ func TestCaptureApplyUnitGroupsRoundTrip(t *testing.T) {
 		t.Fatalf("capture should store only the 2 assigned slots, got %d", len(snap))
 	}
 
-	s2, _ := newClickScreen(t)
+	s2, _ := newTestScreen(t, 16)
 	s2.unitGroups[0] = []uint16{7} // a stale slot that a load must clear
 	s2.applyUnitGroups(snap)
 

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/game"
 )
 
@@ -52,7 +53,7 @@ func TestResearchLevelUpSilentForEnemy(t *testing.T) {
 func TestResearchCenterStatusShowsTurns(t *testing.T) {
 	s := newResearchScreen()
 	s.game.State.PlayerTeam = 0
-	center := researchBld(0, 1, game.OrderPowerOn)
+	center := mkBuilding(assets.Research, 0, 1, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, game.OrderPowerOn, 0)
 
 	// Two topics allocated; Scan completes soonest (8/2 = 4 turns vs Attack 30/1 = 30).
 	s.game.State.Teams[0].Research[game.ResearchAttack] = game.ResearchTopic{TurnsToComplete: 30, Allocation: 1}
@@ -70,7 +71,7 @@ func TestResearchCenterStatusShowsTurns(t *testing.T) {
 func TestResearchCenterStatusSilentWhenIdle(t *testing.T) {
 	s := newResearchScreen()
 	s.game.State.PlayerTeam = 0
-	idle := researchBld(0, 1, game.OrderIdle)
+	idle := mkBuilding(assets.Research, 0, 1, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, game.OrderIdle, 0)
 	s.game.State.Teams[0].Research[game.ResearchScan] = game.ResearchTopic{TurnsToComplete: 8, Allocation: 2}
 
 	s.buildStatusMessage(idle)

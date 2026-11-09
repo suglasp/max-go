@@ -10,8 +10,6 @@ import (
 
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/game"
-	"github.com/suglasp/max-go/internal/sim"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // TestEndTurnWaitsForActiveMove: pressing End Turn while a unit is still sliding must
@@ -20,17 +18,8 @@ import (
 // state and leaves the move running so the idle loop can animate it out. This covers
 // the "units jump to position on End Turn" report.
 func TestEndTurnWaitsForActiveMove(t *testing.T) {
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
-	g.State.ActiveTeam = 0
-	g.State.PlayerTeam = 0
-	s := &Screen{game: g, wmap: m, turnFlow: turnFlowState{handover: -1}}
+	s, g := newTestScreen(t, 16)
+	s.turnFlow = turnFlowState{handover: -1}
 
 	tank := game.NewUnitInfo(assets.Tank, 0, 1, 0)
 	tank.Flags = game.FlagMobileLandUnit | game.FlagSelectable

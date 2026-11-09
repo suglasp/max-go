@@ -20,23 +20,9 @@ import (
 func newRaidScreen(t *testing.T) (*Screen, *sim.Game, *[]string) {
 	t.Helper()
 
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	p.Teams[1].Type = game.TeamComputer
-	p.Teams[2].Type = game.TeamComputer
-
-	g := sim.New(p, m)
-	g.State.PlayerTeam = 0
-	g.State.ActiveTeam = 0
-
-	s := &Screen{game: g, wmap: m, turnFlow: turnFlowState{handover: -1}}
+	s, g := newTestScreen(t, 16, 1, 2)
+	s.r = nil // no map view: every reactor is off screen, so its announcer cue plays
+	s.turnFlow = turnFlowState{handover: -1}
 
 	var played []string
 	s.announcer.voiceFn = func(tag string) { played = append(played, tag) }
@@ -57,6 +43,11 @@ func raidCommando(g *sim.Game, team, cellX, cellY int) *game.UnitInfo {
 	return c
 }
 
+// raidTank is an electronic (raidable) tank.
+var raidTank = tankStats{angle: 2, turns: 8, hits: 30, flags: game.FlagElectronicUnit}
+
+/* // note: unused code in Go port
+// replaced by the shared mkTank(g.Units, team, id, cellX, cellY, raidTank) in fixture_test.go
 // raidTarget deploys an electronic (raidable) tank.
 func raidTarget(g *sim.Game, team, id, cellX, cellY int) *game.UnitInfo {
 	u := game.NewUnitInfo(assets.Tank, team, id, 2)
@@ -69,6 +60,7 @@ func raidTarget(g *sim.Game, team, id, cellX, cellY int) *game.UnitInfo {
 
 	return u
 }
+*/
 
 // forceRoll installs a randomizer seed whose next roll succeeds (want true) or misses
 // (want false) against chance, so a raid's outcome is decided rather than rolled.
@@ -93,7 +85,7 @@ func TestVictimHearsCommandoRaid(t *testing.T) {
 	// A capture: the player loses the tank and is told so.
 	s, g, played := newRaidScreen(t)
 	raider := raidCommando(g, 1, 1, 1)
-	victim := raidTarget(g, 0, 7, 2, 1)
+	victim := mkTank(g.Units, 0, 7, 2, 1, raidTank)
 
 	forceRoll(t, g.StealthChance(raider, victim, true), true)
 
@@ -114,7 +106,7 @@ func TestVictimHearsCommandoRaid(t *testing.T) {
 	// A disable: same story, different line.
 	s, g, played = newRaidScreen(t)
 	raider = raidCommando(g, 1, 1, 1)
-	victim = raidTarget(g, 0, 8, 2, 1)
+	victim = mkTank(g.Units, 0, 8, 2, 1, raidTank)
 
 	forceRoll(t, g.StealthChance(raider, victim, false), true)
 
@@ -136,7 +128,7 @@ func TestVictimHearsCommandoRaid(t *testing.T) {
 	// the player's warning that an enemy commando is standing next to that unit.
 	s, g, played = newRaidScreen(t)
 	raider = raidCommando(g, 1, 1, 1)
-	victim = raidTarget(g, 0, 9, 2, 1)
+	victim = mkTank(g.Units, 0, 9, 2, 1, raidTank)
 
 	forceRoll(t, g.StealthChance(raider, victim, true), false)
 
@@ -159,7 +151,7 @@ func TestVictimHearsCommandoRaid(t *testing.T) {
 func TestRaidBetweenComputerTeamsStaysQuiet(t *testing.T) {
 	s, g, played := newRaidScreen(t)
 	raider := raidCommando(g, 1, 1, 1)
-	victim := raidTarget(g, 2, 7, 2, 1)
+	victim := mkTank(g.Units, 2, 7, 2, 1, raidTank)
 
 	forceRoll(t, g.StealthChance(raider, victim, true), true)
 
@@ -253,6 +245,11 @@ func reactionTurret(g *sim.Game, team, id, cellX, cellY int) *game.UnitInfo {
 	return u
 }
 
+// reactionTank is a tank that drives into the turret's range.
+var reactionTank = tankStats{angle: 2, speed: 6, scan: 6, armor: 4, hits: 40}
+
+/* // note: unused code in Go port
+// replaced by the shared mkTank(g.Units, team, id, cellX, cellY, reactionTank) in fixture_test.go
 // reactionMover deploys a tank that drives into the turret's range.
 func reactionMover(g *sim.Game, team, id, cellX, cellY int) *game.UnitInfo {
 	u := game.NewUnitInfo(assets.Tank, team, id, 2)
@@ -268,6 +265,7 @@ func reactionMover(g *sim.Game, team, id, cellX, cellY int) *game.UnitInfo {
 
 	return u
 }
+*/
 
 // driveIntoReaction runs a mover into the turret's range, and checks the turret really
 // did take its opportunity shot - so a test asserting on the REPORT cannot pass by the
@@ -296,7 +294,7 @@ func TestReactionBetweenComputerTeamsIsNotNarrated(t *testing.T) {
 	// Computer team 1's turret reacts to computer team 2's tank: no banner.
 	s, g, _ := newRaidScreen(t)
 	reactionTurret(g, 1, 20, 5, 5)
-	mover := reactionMover(g, 2, 21, 11, 5)
+	mover := mkTank(g.Units, 2, 21, 11, 5, reactionTank)
 	driveIntoReaction(t, g, mover, 8, 5)
 
 	s.tickReactions()
@@ -308,7 +306,7 @@ func TestReactionBetweenComputerTeamsIsNotNarrated(t *testing.T) {
 	// The player's own turret reacting is reported, as it always was.
 	s, g, played := newRaidScreen(t)
 	reactionTurret(g, 0, 22, 5, 5)
-	mover = reactionMover(g, 1, 23, 11, 5)
+	mover = mkTank(g.Units, 1, 23, 11, 5, reactionTank)
 	driveIntoReaction(t, g, mover, 8, 5)
 
 	s.tickReactions()
@@ -339,7 +337,7 @@ func TestReactionVoiceOnlyForUnseenUnselectedShooter(t *testing.T) {
 		s, g, played := newRaidScreen(t)
 		s.r = drawmap.New(s.wmap)
 		turret := reactionTurret(g, 0, 22, 5, 5)
-		mover := reactionMover(g, 1, 23, 11, 5)
+		mover := mkTank(g.Units, 1, 23, 11, 5, reactionTank)
 		if tc.offScreen {
 			s.camera.scrollX = 20 * s.r.Zoom() // well past the 16 cell map
 		}

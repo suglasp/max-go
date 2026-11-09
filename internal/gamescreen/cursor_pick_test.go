@@ -14,11 +14,11 @@ import (
 
 // TestStackedMobilesResolveTheSameForCursorAndClick verifies that hovering and clicking choose the same mobile unit from a shared cell, regardless of arrival order.
 func TestStackedMobilesResolveTheSameForCursorAndClick(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
 	// Deployed high id first, so arrival order and id order disagree.
-	late := mkUnit(g, assets.Tank, 7, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
-	first := mkUnit(g, assets.Scout, 3, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	late := mkUnit(g, assets.Tank, 0, 7, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	first := mkUnit(g, assets.Scout, 0, 3, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 
 	if got := s.topUnitAt(5, 5); got != first {
 		t.Fatalf("the cursor should name the lowest id unit (%d), got %v", first.ID, got)
@@ -50,13 +50,13 @@ func TestStackedMobilesResolveTheSameForCursorAndClick(t *testing.T) {
 // can actually act on. An enemy sharing the cell (a surfaced submarine under your own boat)
 // must never steal the click.
 func TestOwnUnitWinsOverAnEnemyOnTheSameCell(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 
-	enemy := mkUnit(g, assets.Tank, 1, 6, 6, game.FlagMobileLandUnit|game.FlagSelectable)
+	enemy := mkUnit(g, assets.Tank, 0, 1, 6, 6, game.FlagMobileLandUnit|game.FlagSelectable)
 	enemy.Team = 1
 	g.Units.Move(enemy, 6, 6) // rebucket under its new team
 
-	mine := mkUnit(g, assets.Scout, 9, 6, 6, game.FlagMobileLandUnit|game.FlagSelectable)
+	mine := mkUnit(g, assets.Scout, 0, 9, 6, 6, game.FlagMobileLandUnit|game.FlagSelectable)
 
 	if got := s.topUnitAt(6, 6); got != mine {
 		t.Errorf("your own unit must win the cell over an enemy's, even with the higher id; got %v", got)

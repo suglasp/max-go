@@ -10,9 +10,10 @@ import (
 
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/game"
-	"github.com/suglasp/max-go/internal/sim"
 )
 
+/* // note: unused code in Go port
+// replaced by the shared mkTank(g.Units, 1, id, gx, gy, tankStats{}) and the order set to OrderAwait
 // enemyTank deploys a team 1 tank in an awaiting (not idle) order so the fog model
 // evaluates its visibility by scan coverage rather than the idle early out.
 func enemyTank(g *sim.Game, id, gx, gy int) *game.UnitInfo {
@@ -23,24 +24,29 @@ func enemyTank(g *sim.Game, id, gx, gy int) *game.UnitInfo {
 	g.Units.Deploy(u, gx, gy)
 	return u
 }
+*/
 
 // TestSelectionVisibilityGate verifies the rule: a cell occupant is selectable only if
 // the player can SEE it. A visible enemy is selectable (for inspection), a fogged
 // enemy is not, the F2 omniscient reveal (fogShow off) lifts the gate, and the
 // player's own units are always selectable.
 func TestSelectionVisibilityGate(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.fogTeam = 0
 	s.fogShow = true
 
 	// A player scout reveals a small area around (5,5).
-	seer := mkUnit(g, assets.Scout, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
+	seer := mkUnit(g, assets.Scout, 0, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable)
 	seer.Values.Set(game.AttribScan, 3)
 	seer.Order = game.OrderAwait
 
 	// A visible enemy (one tile from the scout) and a fogged enemy far away.
-	nearEnemy := enemyTank(g, 2, 6, 5)
-	farEnemy := enemyTank(g, 3, 13, 13)
+	// enemy tanks in an awaiting (not idle) order, so the fog model evaluates their visibility by scan
+	// coverage rather than the idle early out
+	nearEnemy := mkTank(g.Units, 1, 2, 6, 5, tankStats{})
+	nearEnemy.Order = game.OrderAwait
+	farEnemy := mkTank(g.Units, 1, 3, 13, 13, tankStats{})
+	farEnemy.Order = game.OrderAwait
 	g.RefreshVisibility()
 
 	if !s.selectableOccupant(nearEnemy) {

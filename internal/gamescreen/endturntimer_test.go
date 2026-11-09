@@ -16,7 +16,7 @@ import (
 func graceScreen(t *testing.T) (*Screen, *game.GameState) {
 	t.Helper()
 
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	g.State.Teams[1].Type = game.TeamComputer
 	s.game.State.PlayMode = game.PlaySimultaneous
 
@@ -98,7 +98,7 @@ func TestEndTurnGraceWaitsForOpponentUnits(t *testing.T) {
 	s, st := graceScreen(t)
 	st.Teams[1].FinishedTurn = true
 
-	enemy := mkUnit(s.game, 0, 5, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	enemy := mkUnit(s.game, 0, 0, 5, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
 	enemy.Team = 1
 	enemy.Values.Set(game.AttribSpeed, 8)
 	enemy.Speed = 8

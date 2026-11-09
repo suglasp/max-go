@@ -17,7 +17,7 @@ import (
 // deployed mobile units (the unit map entry pre selects), even when a non builder leads the
 // roster; a roster with no builder falls back to the first deployed unit.
 func TestMapEntryPreSelectsFirstBuilder(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	rng := rand.New(rand.NewSource(1))
 
 	// A non builder (Scout) leads the roster; the Engineer is the first builder.

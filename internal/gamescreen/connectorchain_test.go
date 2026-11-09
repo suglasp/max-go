@@ -23,12 +23,7 @@ import (
 func TestLayConnectorChainClosesLinkAroundWater(t *testing.T) {
 	const w, h = 24, 24
 
-	m := &world.Map{Surface: make([]uint8, w*h)}
-	m.W, m.H = w, h
-
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
+	m := flatWorld(w, h)
 
 	// A vertical water inlet down column 10, leaving a land crossing only on the bottom
 	// two rows - the straight dock->base path (along row 10) is blocked; a detour exists.

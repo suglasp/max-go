@@ -23,7 +23,7 @@ import (
 func TestMineKillClearsSelection(t *testing.T) {
 	const w, h = 16, 8
 	mgr := units.NewManager()
-	grid := &access.Grid{W: w, H: h, Surf: buildExitSurf{}, Units: mgr.Cells}
+	grid := &access.Grid{W: w, H: h, Surf: allLandSurf{}, Units: mgr.Cells}
 	p := &game.StartParams{}
 	p.Teams[0].Type = game.TeamPlayer
 	p.Teams[1].Type = game.TeamPlayer

@@ -39,7 +39,7 @@ func TestInfiltrateOutcomes(t *testing.T) {
 	t.Run("disable success", func(t *testing.T) {
 		s, g, played := newRaidScreen(t)
 		raider := raidCommando(g, 0, 1, 1)
-		victim := raidTarget(g, 1, 7, 2, 1)
+		victim := mkTank(g.Units, 1, 7, 2, 1, raidTank)
 		s.selected = raider
 		forceRoll(t, g.StealthChance(raider, victim, false), true)
 
@@ -65,7 +65,7 @@ func TestInfiltrateOutcomes(t *testing.T) {
 	t.Run("steal success", func(t *testing.T) {
 		s, g, played := newRaidScreen(t)
 		raider := raidCommando(g, 0, 1, 1)
-		victim := raidTarget(g, 1, 7, 2, 1)
+		victim := mkTank(g.Units, 1, 7, 2, 1, raidTank)
 		s.selected = raider
 		s.orderInput.infiltrateSteal = true
 		forceRoll(t, g.StealthChance(raider, victim, true), true)
@@ -88,7 +88,7 @@ func TestInfiltrateOutcomes(t *testing.T) {
 	t.Run("missed roll", func(t *testing.T) {
 		s, g, played := newRaidScreen(t)
 		raider := raidCommando(g, 0, 1, 1)
-		victim := raidTarget(g, 1, 7, 2, 1)
+		victim := mkTank(g.Units, 1, 7, 2, 1, raidTank)
 		s.selected = raider
 		forceRoll(t, g.StealthChance(raider, victim, false), false)
 
@@ -116,7 +116,7 @@ func TestInfiltrateOutcomes(t *testing.T) {
 func TestInfiltrateGuards(t *testing.T) {
 	t.Run("no selection does nothing", func(t *testing.T) {
 		s, g, played := newRaidScreen(t)
-		raidTarget(g, 1, 7, 2, 1)
+		mkTank(g.Units, 1, 7, 2, 1, raidTank)
 
 		s.infiltrate(2, 1)
 
@@ -132,7 +132,7 @@ func TestInfiltrateGuards(t *testing.T) {
 	t.Run("a unit of another team is ignored", func(t *testing.T) {
 		s, g, played := newRaidScreen(t)
 		raider := raidCommando(g, 1, 1, 1) // active team is 0
-		raidTarget(g, 0, 7, 2, 1)
+		mkTank(g.Units, 0, 7, 2, 1, raidTank)
 		s.selected = raider
 
 		s.infiltrate(2, 1)
@@ -161,7 +161,7 @@ func TestInfiltrateGuards(t *testing.T) {
 	t.Run("organic target fails without a shot", func(t *testing.T) {
 		s, g, _ := newRaidScreen(t)
 		raider := raidCommando(g, 0, 1, 1)
-		victim := raidTarget(g, 1, 7, 2, 1)
+		victim := mkTank(g.Units, 1, 7, 2, 1, raidTank)
 		victim.Flags &^= game.FlagElectronicUnit
 		s.selected = raider
 
@@ -175,7 +175,7 @@ func TestInfiltrateGuards(t *testing.T) {
 	t.Run("a building cannot be stolen", func(t *testing.T) {
 		s, g, _ := newRaidScreen(t)
 		raider := raidCommando(g, 0, 1, 1)
-		victim := raidTarget(g, 1, 7, 2, 1)
+		victim := mkTank(g.Units, 1, 7, 2, 1, raidTank)
 		victim.Flags |= game.FlagStationary
 		s.selected = raider
 		s.orderInput.infiltrateSteal = true
@@ -191,7 +191,7 @@ func TestInfiltrateGuards(t *testing.T) {
 		s, g, _ := newRaidScreen(t)
 		raider := raidCommando(g, 0, 1, 1)
 		raider.Shots = 0
-		victim := raidTarget(g, 1, 7, 2, 1)
+		victim := mkTank(g.Units, 1, 7, 2, 1, raidTank)
 		s.selected = raider
 
 		s.infiltrate(2, 1)
@@ -204,7 +204,7 @@ func TestInfiltrateGuards(t *testing.T) {
 	t.Run("a distant target is refused", func(t *testing.T) {
 		s, g, _ := newRaidScreen(t)
 		raider := raidCommando(g, 0, 1, 1)
-		victim := raidTarget(g, 1, 7, 6, 6)
+		victim := mkTank(g.Units, 1, 7, 6, 6, raidTank)
 		s.selected = raider
 
 		s.infiltrate(6, 6)
@@ -382,8 +382,8 @@ func newDamageFixture(t *testing.T) *damageFixture {
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
 
 	f := &damageFixture{g: g}
-	f.player = clickTestUnit(0, 1, 5, 5, mgr)
-	f.enemy = clickTestUnit(1, 2, 7, 5, mgr)
+	f.player = mkTank(mgr, 0, 1, 5, 5, clickTank)
+	f.enemy = mkTank(mgr, 1, 2, 7, 5, clickTank)
 
 	f.s = &Screen{game: g, turnFlow: turnFlowState{handover: -1}}
 	f.s.announcer.voiceFn = func(tag string) { f.voices = append(f.voices, tag) }

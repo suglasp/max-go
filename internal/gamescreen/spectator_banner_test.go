@@ -17,7 +17,7 @@ import (
 // "<Colour> Computer Turn." banner. Before, the banner only appeared during a hot
 // seat handover, so the player saw no "whose turn is it" line while an NPC played.
 func TestBannerShowsComputerTurn(t *testing.T) {
-	s, _ := newClickScreen(t)
+	s, _ := newTestScreen(t, 16)
 	s.turnFlow.handover = -1 // not a hot seat pass
 	s.banner.msg = ""
 	s.turnFlow.aiTurn = true
@@ -45,11 +45,11 @@ func TestBannerShowsComputerTurn(t *testing.T) {
 // opponent's turn selects it for inspection but issues no order, and that clicking
 // empty terrain keeps the current selection (it is never dropped mid opponent turn).
 func TestSpectatorLeftClickSelectsNoOrder(t *testing.T) {
-	s, g := newClickScreen(t)
+	s, g := newTestScreen(t, 16)
 	s.turnFlow.aiTurn = true
 
-	tank := mkUnit(g, assets.Tank, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
-	bld := mkUnit(g, assets.PowerStn, 2, 6, 6, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
+	tank := mkUnit(g, assets.Tank, 0, 1, 4, 4, game.FlagMobileLandUnit|game.FlagSelectable)
+	bld := mkUnit(g, assets.PowerStn, 0, 2, 6, 6, game.FlagStationary|game.FlagBuilding|game.FlagSelectable)
 	s.selected = tank
 
 	s.selectForInspect(6, 6) // inspect the building

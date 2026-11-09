@@ -45,8 +45,8 @@ func TestTransferFuelAndGoldClamp(t *testing.T) {
 	// The complex needs real storage buildings, since a base can hold no more than its
 	// buildings hold and a delivery beyond that spills (economy.Complex.CapStores).
 	c := economy.NewComplex(1)
-	c.Grow(storeBuilding(assets.FDump, 50))
-	c.Grow(storeBuilding(assets.GoldSm, 50))
+	c.Grow(mkBuilding(assets.FDump, 0, 1, -1, -1, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, 50))
+	c.Grow(mkBuilding(assets.GoldSm, 0, 1, -1, -1, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, 50))
 	s.adjustStored(&game.UnitInfo{}, c, economy.CargoFuel, 7)
 	if c.Fuel != 7 || c.Material != 0 || c.Gold != 0 {
 		t.Errorf("fuel routed wrong: fuel=%d material=%d gold=%d", c.Fuel, c.Material, c.Gold)
@@ -57,6 +57,8 @@ func TestTransferFuelAndGoldClamp(t *testing.T) {
 	}
 }
 
+/* // note: unused code in Go port
+// replaced by the shared mkBuilding(typ, 0, 1, -1, -1, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, capacity)
 // storeBuilding makes a powered storage building of a type with the given capacity: the
 // thing a base needs before it can keep anything (economy.Complex.CapStores).
 func storeBuilding(typ assets.UnitType, capacity int) *game.UnitInfo {
@@ -69,3 +71,4 @@ func storeBuilding(typ assets.UnitType, capacity int) *game.UnitInfo {
 
 	return u
 }
+*/

@@ -10,11 +10,8 @@ import (
 
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/cursors"
-	"github.com/suglasp/max-go/internal/drawmap"
 	"github.com/suglasp/max-go/internal/game"
-	"github.com/suglasp/max-go/internal/sim"
 	"github.com/suglasp/max-go/internal/winloss"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // benchUnit returns the bench's first unit of a type, or nil.
@@ -42,15 +39,7 @@ func parkedOn(s *Screen, t assets.UnitType) (*game.UnitInfo, *game.UnitInfo) {
 // Transport's Load only selects the parked Constructor (H13), and killing the Gun Turret's Engineer loses the
 // turret (H14).
 func TestParkedBuildBench(t *testing.T) {
-	m := &world.Map{Surface: make([]uint8, 112*112)}
-	m.W, m.H = 112, 112
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
-	s := &Screen{game: g, wmap: m, r: drawmap.New(m)}
+	s, g := newTestScreen(t, 112)
 	s.DeployParkedBuildBench()
 
 	if n := len(s.bench.stops); n != 6 {
