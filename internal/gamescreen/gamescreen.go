@@ -198,19 +198,9 @@ func New(sys *gnw.System, plat *platform.Platform, m *world.Map, basePal gfx.Pal
 	})
 
 	// Attach the task-based computer opponent for every game. It remains inert for non-computer teams.
-	// The closure is the AI unit factory. C++: Ai_Init.
-	makeUnit := func(team int, t assets.UnitType, flags game.Flags) *game.UnitInfo {
-		s.spawnSeq++
-		u := game.NewUnitInfo(t, team, s.spawnSeq, 0)
-		u.Flags = flags
-		u.Values = s.teamValues(team, t)
-		u.InitState()
-
-		return u
-	}
-
-	s.ai = ai.New(makeUnit)
-	s.makeUnit = makeUnit
+	// newUnit is the AI and production unit factory. C++: Ai_Init.
+	s.ai = ai.New(s.newUnit)
+	s.makeUnit = s.newUnit
 
 	// attachGameServices re applies AI + makeUnit after a load too (Load replaces s.game).
 	s.attachGameServices()

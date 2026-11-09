@@ -84,6 +84,18 @@ func (s *Screen) teamValues(team int, t assets.UnitType) *game.UnitValues {
 	return v
 }
 
+// newUnit is the unit factory of the AI and of production: a unit of a type for a team, with the
+// team's current values (base stats, clan, research and upgrades) and its state set from them.
+func (s *Screen) newUnit(team int, t assets.UnitType, flags game.Flags) *game.UnitInfo {
+	s.spawnSeq++
+	u := game.NewUnitInfo(t, team, s.spawnSeq, 0)
+	u.Flags = flags
+	u.Values = s.teamValues(team, t)
+	u.InitState()
+
+	return u
+}
+
 // advanceResearch runs one team research turn and refreshes unit values when a topic gains a level.
 func (s *Screen) advanceResearch(team int) {
 	leveled := false

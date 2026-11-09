@@ -77,35 +77,39 @@ func TestAIGrowsBase(t *testing.T) {
 // TestAIDefersUnfundedDetachedBuild verifies that an empty constructor without access to a base pool waits
 // for raw material before starting a detached build.
 func TestAIDefersUnfundedDetachedBuild(t *testing.T) {
-	const w, h = 12, 12
-	mgr := units.NewManager()
-	grid := &access.Grid{W: w, H: h, Surf: allLand{}, Units: mgr.Cells}
+	for _, path := range buildTurnPaths {
+		t.Run(path.name, func(t *testing.T) {
+			const w, h = 12, 12
+			mgr := units.NewManager()
+			grid := &access.Grid{W: w, H: h, Surf: allLand{}, Units: mgr.Cells}
 
-	p := &game.StartParams{}
-	p.Teams[1].Type = game.TeamComputer
-	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
+			p := &game.StartParams{}
+			p.Teams[1].Type = game.TeamComputer
+			g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
 
-	// An empty constructor (capacity 40, but 0 raw loaded) with no base to supply it.
-	con := game.NewUnitInfo(assets.Constrct, 1, 1, 0)
-	con.Flags = game.FlagConstructorUnit | game.FlagMobileLandUnit | game.FlagSelectable
-	con.Values = &game.UnitValues{}
-	con.InitState()
-	con.Values.Set(game.AttribStorage, 40)
-	con.Storage = 0 // empty: cannot fund a detached build, and no pool to load from
-	g.Units.Deploy(con, 6, 6)
+			// An empty constructor (capacity 40, but 0 raw loaded) with no base to supply it.
+			con := game.NewUnitInfo(assets.Constrct, 1, 1, 0)
+			con.Flags = game.FlagConstructorUnit | game.FlagMobileLandUnit | game.FlagSelectable
+			con.Values = &game.UnitValues{}
+			con.InitState()
+			con.Values.Set(game.AttribStorage, 40)
+			con.Storage = 0 // empty: cannot fund a detached build, and no pool to load from
+			g.Units.Deploy(con, 6, 6)
 
-	bm := newBuildManager(g, 1)
+			turn := path.start(g, 1)
 
-	bm.BeginTurn()
-	if got := len(g.BuildOrders()); got != 0 {
-		t.Fatalf("an empty constructor with no supply started %d build(s); it should defer (would stall at empty)", got)
-	}
+			turn()
+			if got := len(g.BuildOrders()); got != 0 {
+				t.Fatalf("an empty constructor with no supply started %d build(s); it should defer (would stall at empty)", got)
+			}
 
-	// Load it, like a player loading a constructor: now it can self supply and build.
-	con.Storage = 40
-	bm.BeginTurn()
-	if got := len(g.BuildOrders()); got == 0 {
-		t.Fatal("a loaded constructor placed no build order; it should now build")
+			// Load it, like a player loading a constructor: now it can self supply and build.
+			con.Storage = 40
+			turn()
+			if got := len(g.BuildOrders()); got == 0 {
+				t.Fatal("a loaded constructor placed no build order; it should now build")
+			}
+		})
 	}
 }
 
@@ -114,6 +118,29 @@ func TestAIDefersUnfundedDetachedBuild(t *testing.T) {
 // BeginTeamTurn economy/visibility passes that could mutate the staged setup.
 func newBuildManager(g *sim.Game, team int) *taskManageBuildings {
 	return newTaskManageBuildings(team, StrategyCombinedArms, goalKill, false, &aiContext{Game: g, MakeUnit: testUnitFactory})
+}
+
+// buildTurnPaths drives a build manager test two ways: the task alone (newBuildManager) and a
+// full team turn (the AI wired on the game, the economy and visibility passes included). start
+// readies a path for a team and returns one turn of it; a later full turn first ends the
+// previous one and rolls the turn over.
+var buildTurnPaths = []struct {
+	name  string
+	start func(g *sim.Game, team int) func()
+}{
+	{"build manager", func(g *sim.Game, team int) func() { return newBuildManager(g, team).BeginTurn }},
+	{"full turn", func(g *sim.Game, team int) func() {
+		g.AI = New(testUnitFactory)
+		started := false
+		return func() {
+			if started {
+				g.EndTeamTurn(team)
+				g.AdvanceTurn()
+			}
+			started = true
+			g.BeginTeamTurn(team)
+		}
+	}},
 }
 
 // stationary deploys a finished 1x1 stationary building for the economy demand
@@ -167,44 +194,48 @@ func findOrder(g *sim.Game, ut assets.UnitType) *build.BuildOrder {
 // nearest deposit. The builder stands on the rich cluster so it builds in place
 // (the distant site drive is covered by TestAIDrivesToDistantMiningSite).
 func TestAIBuildsMiningOnRichestSite(t *testing.T) {
-	const w, h = 20, 20
-	mgr := units.NewManager()
-	grid := &access.Grid{W: w, H: h, Surf: allLand{}, Units: mgr.Cells}
-	p := &game.StartParams{}
-	p.Teams[1].Type = game.TeamComputer
-	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
+	for _, path := range buildTurnPaths {
+		t.Run(path.name, func(t *testing.T) {
+			const w, h = 20, 20
+			mgr := units.NewManager()
+			grid := &access.Grid{W: w, H: h, Surf: allLand{}, Units: mgr.Cells}
+			p := &game.StartParams{}
+			p.Teams[1].Type = game.TeamComputer
+			g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
 
-	// A poor single cell deposit and a rich 2x2 cluster. The footprint anchored at
-	// (8,8) taps all four rich cells (64); the poor cell yields only 8, so the
-	// manager must choose the cluster.
-	res := economy.NewResourceMap(w, h)
-	res.SetDeposit(12, 10, economy.CargoRaw, 8)
-	for _, c := range [][2]int{{8, 8}, {9, 8}, {8, 9}, {9, 9}} {
-		res.SetDeposit(c[0], c[1], economy.CargoRaw, 16)
-	}
-	// The team has surveyed the region (its surveyor revealed it); the AI obeys
-	// resource fog, so it only ranks deposits it has seen. TestAIDoesNotMineUnsurveyed
-	// covers the unsurveyed case.
-	res.Survey(10, 9, 10, 1)
-	g.Resources = res
+			// A poor single cell deposit and a rich 2x2 cluster. The footprint anchored at
+			// (8,8) taps all four rich cells (64); the poor cell yields only 8, so the
+			// manager must choose the cluster.
+			res := economy.NewResourceMap(w, h)
+			res.SetDeposit(12, 10, economy.CargoRaw, 8)
+			for _, c := range [][2]int{{8, 8}, {9, 8}, {8, 9}, {9, 9}} {
+				res.SetDeposit(c[0], c[1], economy.CargoRaw, 16)
+			}
+			// The team has surveyed the region (its surveyor revealed it); the AI obeys
+			// resource fog, so it only ranks deposits it has seen. TestAIDoesNotMineUnsurveyed
+			// covers the unsurveyed case.
+			res.Survey(10, 9, 10, 1)
+			g.Resources = res
 
-	con := constructorUnit(1, 1, 9, 9, mgr) // standing on the cluster: builds in place
+			con := constructorUnit(1, 1, 9, 9, mgr) // standing on the cluster: builds in place
 
-	newBuildManager(g, 1).BeginTurn()
+			path.start(g, 1)()
 
-	o := findOrder(g, assets.MiningSt)
-	if o == nil {
-		t.Fatal("no mining station queued for a base with no mine and reachable resources")
-	}
-	raw, gold, fuel := res.TotalResourcesInArea(o.GridX, o.GridY, 1, 1, true)
-	if got := raw + gold + fuel; got < 40 {
-		t.Errorf("mine sited at (%d,%d) taps only %d resource; expected the rich cluster (~64)", o.GridX, o.GridY, got)
-	}
-	// The builder must raise the structure from INSIDE its footprint (so the build
-	// pose is a short tape slide, not a long glide in from a neighbouring cell).
-	if !builderOnFootprint(con.GridX, con.GridY, o.GridX, o.GridY, 2) {
-		t.Errorf("builder at (%d,%d) is not inside the mine footprint at (%d,%d): would slide in from outside",
-			con.GridX, con.GridY, o.GridX, o.GridY)
+			o := findOrder(g, assets.MiningSt)
+			if o == nil {
+				t.Fatal("no mining station queued for a base with no mine and reachable resources")
+			}
+			raw, gold, fuel := res.TotalResourcesInArea(o.GridX, o.GridY, 1, 1, true)
+			if got := raw + gold + fuel; got < 40 {
+				t.Errorf("mine sited at (%d,%d) taps only %d resource; expected the rich cluster (~64)", o.GridX, o.GridY, got)
+			}
+			// The builder must raise the structure from INSIDE its footprint (so the build
+			// pose is a short tape slide, not a long glide in from a neighbouring cell).
+			if !builderOnFootprint(con.GridX, con.GridY, o.GridX, o.GridY, 2) {
+				t.Errorf("builder at (%d,%d) is not inside the mine footprint at (%d,%d): would slide in from outside",
+					con.GridX, con.GridY, o.GridX, o.GridY)
+			}
+		})
 	}
 }
 
