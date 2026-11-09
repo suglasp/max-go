@@ -23,10 +23,11 @@ Check the version file next to the game executables.
 - The launch help no longer offers `none` for `-turnlimit`, `-endturn`, `-score`, `-duration` and `-startcredit`, which never accepted it; `-derelicts` lists its `None` choice.
 
 ### QOL
-- F12 screenshots are now saved three times larger (every screen pixel becomes a 3x3 block), so they stay sharp on a big display.
+- F12 screenshots are now saved scaled up 3x, so they stay sharp on a big display.
 
 ### Improvements
 - Commented leftover or unused code parts, that came with writing benches or scaffolding code parts of the game, while the project becomes more and more mature.
+- First groundwork for the computer opponent to ferry units across water: when an attacking unit has no land route to its target, the computer now works out where a transport would pick it up and land it. No transport moves yet, so play is unchanged.
 
 
 ## 1.0.1.1 (2026-11-03)
