@@ -54,7 +54,8 @@ func (t *taskSurvey) BeginTurn() {
 
 	t.tm = nil // built lazily on the first ready surveyor (buildThreatMap is O(enemies x range^2))
 	for _, u := range g.Units.Units() {
-		if !t.isReadySurveyor(u) {
+		// A ready surveyor is this task's for the pass.
+		if !t.isReadySurveyor(u) || !t.claim(u) {
 			continue
 		}
 

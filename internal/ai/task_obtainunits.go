@@ -144,6 +144,38 @@ func (t *taskObtainUnits) requesterID() uint32 {
 	return t.parent.ID()
 }
 
+// wantsUnit reports whether the request still wants a unit of u's type that its
+// need accepts.
+func (t *taskObtainUnits) wantsUnit(u *game.UnitInfo) bool {
+	for _, want := range t.wants {
+		if want.unit == u.Type && (want.accept == nil || want.accept(u)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// takeUnit takes u, handed over by the dispatcher, for the first want of its type: a
+// notice (the parent's own pass drives it). The request leaves once nothing is wanted.
+// C++: TaskObtainUnits::AddUnit.
+func (t *taskObtainUnits) takeUnit(u *game.UnitInfo) {
+	for i, want := range t.wants {
+		if want.unit != u.Type {
+			continue
+		}
+
+		dbg.Logf(dbg.AI, "team %d dispatched %s %d to task %d", t.team, u.Type.Tag(), u.ID, t.requesterID())
+		t.wants = append(t.wants[:i], t.wants[i+1:]...)
+		break
+	}
+
+	// Nothing left to get: the request is done.
+	if len(t.wants) == 0 {
+		t.RemoveSelf()
+	}
+}
+
 // findUnit returns the team's free unit of the wanted type nearest the base centre, or
 // nil: alive, not under construction, without an order, accepted by the need's own test,
 // and not held by a more urgent task. C++: TaskObtainUnits::FindUnit + IsValidCandidate
@@ -166,6 +198,11 @@ func (t *taskObtainUnits) findUnit(g *sim.Game, need unitNeed) *game.UnitInfo {
 		}
 
 		if !t.mayClaim(u) {
+			continue
+		}
+
+		// The dispatcher already gave this unit to another request this turn.
+		if t.mgr != nil && t.mgr.handed[u] {
 			continue
 		}
 

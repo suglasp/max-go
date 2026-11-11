@@ -6,8 +6,10 @@
 package ai
 
 import (
+	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/dbg"
 	"github.com/suglasp/max-go/internal/game"
+	"github.com/suglasp/max-go/internal/sim"
 )
 
 // reminderDrainCap prevents a task that repeatedly rearms itself from blocking the turn loop.
@@ -25,9 +27,24 @@ type TaskManager struct {
 	reminderCounter   int
 
 	// owner is the unit ledger: which task holds which unit (C++ UnitInfo::GetTask).
-	// It lives in memory only (never saved) and a team's entries are cleared at its
-	// turn start, so the tasks claim again in run order each turn.
-	owner map[*game.UnitInfo]Task
+	// A task keeps a unit across turns for as long as it claims it again in each of
+	// its passes (claimedIn holds the owner's pass number at the claim); the units it
+	// did not claim again are let go at the end of its pass. Memory only, never saved.
+	owner     map[*game.UnitInfo]Task
+	claimedIn map[*game.UnitInfo]int
+	passOf    map[Task]int // each task's pass number, raised at the start of its pass
+
+	// readyForOrders tells whether a held unit may be taken by a more urgent task
+	// (C++ Task_IsRecruitable's order check). Set from the live game by AI.BeginTurn;
+	// nil (tests) counts every unit as ready.
+	readyForOrders func(u *game.UnitInfo) bool
+
+	// firstSeen is the turn the dispatcher first saw a unit: a unit seen first this
+	// turn has had no task pass yet, so the production check does not count it idle.
+	firstSeen map[*game.UnitInfo]int
+	// handed holds the units the dispatcher gave to a request this turn, so a second
+	// request's own find does not take the same unit again.
+	handed map[*game.UnitInfo]bool
 }
 
 // NewTaskManager builds an empty manager. C++: TaskManager::TaskManager.
@@ -89,10 +106,41 @@ func (m *TaskManager) ExecuteReminders() bool {
 			m.reminderCounter++
 		}
 
+		// A turn start is one pass of its task: the units it does not claim again in
+		// the pass are let go at its end.
+		if start, ok := r.(*remindTurnStart); ok {
+			m.beginPass(start.task)
+			r.Execute()
+			m.endPass(start.task)
+
+			continue
+		}
+
 		r.Execute()
 	}
 
 	return true
+}
+
+// beginPass opens a new pass of task: the claims it makes from now on carry the new
+// pass number.
+func (m *TaskManager) beginPass(task Task) {
+	if m.passOf == nil {
+		m.passOf = make(map[Task]int)
+	}
+	m.passOf[task]++
+}
+
+// endPass lets go of the units task held from an earlier pass and did not claim
+// again in this one: a repaired unit, a guard no longer wanted, a dead unit. C++:
+// Task::RemoveUnit, done here for every unit the task stopped using.
+func (m *TaskManager) endPass(task Task) {
+	for u, owner := range m.owner {
+		if owner == task && m.claimedIn[u] != m.passOf[task] {
+			delete(m.owner, u)
+			delete(m.claimedIn, u)
+		}
+	}
 }
 
 // reportRunawayDrain logs a sample of reminders left when ExecuteReminders reaches its drain cap.
@@ -134,7 +182,9 @@ func reminderTask(r Reminder) Task {
 // other tasks asked for this turn.
 func (m *TaskManager) BeginTurn(team int) {
 	m.pruneUnneeded(team)
+	/* // note: unused code in Go port - the ledger keeps units across turns now (step 6005): a task lets go at the end of its pass (endPass)
 	m.releaseTeamUnits(team)
+	*/
 
 	for _, t := range m.tasks {
 		if t.Team() == team && t.Type() != TaskTypeTransport {
@@ -156,9 +206,9 @@ func (m *TaskManager) BeginTurn(team int) {
 }
 
 // mayClaimUnit reports whether task may take u: a free unit, one the task holds
-// already, or one whose owner is gone; else only when the owner is less urgent than
-// task and lets the unit go. C++ ported : task.cpp - Task_IsRecruitable (the order
-// check waits for the unit dispatcher).
+// already, or one whose owner is gone; else only when the unit is ready for orders,
+// and the owner is less urgent than task and lets the unit go. C++ ported : task.cpp
+// - Task_IsRecruitable.
 func (m *TaskManager) mayClaimUnit(task Task, u *game.UnitInfo) bool {
 	owner := m.owner[u]
 
@@ -167,7 +217,138 @@ func (m *TaskManager) mayClaimUnit(task Task, u *game.UnitInfo) bool {
 		return true
 	}
 
+	// A unit at work (building, clearing rubble) is not taken from its task.
+	if !m.isReadyForOrders(u) {
+		return false
+	}
+
 	return owner.comparePriority(task.Priority()) > 0 && owner.isUnitTransferable(u)
+}
+
+// isReadyForOrders applies the readyForOrders check; with none set every unit is ready.
+func (m *TaskManager) isReadyForOrders(u *game.UnitInfo) bool {
+	if m.readyForOrders == nil {
+		return true
+	}
+
+	return m.readyForOrders(u)
+}
+
+// unitReadyForOrders is the live readyForOrders check: alive, not building, not
+// clearing rubble. The port reading of the reference's await / sentry / move orders.
+func unitReadyForOrders(g *sim.Game, u *game.UnitInfo) bool {
+	return u.Hits > 0 && !u.Building && !g.IsClearingRubble(u)
+}
+
+// isFreeUnit reports whether no live task holds u.
+func (m *TaskManager) isFreeUnit(u *game.UnitInfo) bool {
+	owner := m.owner[u]
+
+	return owner == nil || !owner.IsNeeded()
+}
+
+// dispatchUnits gives each free, ready unit of the team to the most urgent open unit
+// request that wants its type (ties: the first registered), and notes the units seen
+// for the first time this turn. A request's own build is left to that request. C++
+// ported : task_manager.cpp - TaskManager::FindTaskForUnit (the unit request half; the
+// fallback to the nearest usable task stays folded into the root tasks' own passes).
+func (m *TaskManager) dispatchUnits(g *sim.Game, team int) {
+	if m.firstSeen == nil {
+		m.firstSeen = make(map[*game.UnitInfo]int)
+	}
+	m.handed = nil
+	turn := g.State.TurnCounter
+
+	onMap := make(map[*game.UnitInfo]bool)
+	for _, u := range g.Units.Units() {
+		if u.Team != team {
+			continue
+		}
+		onMap[u] = true
+
+		// A unit seen for the first time this turn.
+		if _, seen := m.firstSeen[u]; !seen {
+			m.firstSeen[u] = turn
+		}
+
+		// Only a free unit that can take orders is handed out.
+		if !m.isFreeUnit(u) || !unitReadyForOrders(g, u) || m.isRequestBuild(u) {
+			continue
+		}
+
+		if request := m.mostUrgentRequest(team, u); request != nil {
+			if m.handed == nil {
+				m.handed = make(map[*game.UnitInfo]bool)
+			}
+			m.handed[u] = true
+			request.takeUnit(u)
+		}
+	}
+
+	// Forget the team's units that left the map.
+	for u := range m.firstSeen {
+		if u.Team == team && !onMap[u] {
+			delete(m.firstSeen, u)
+		}
+	}
+}
+
+// mostUrgentRequest returns the team's open unit request with the lowest priority
+// value that wants u, or nil.
+func (m *TaskManager) mostUrgentRequest(team int, u *game.UnitInfo) *taskObtainUnits {
+	var best *taskObtainUnits
+	for _, task := range m.tasks {
+		request, ok := task.(*taskObtainUnits)
+		if !ok || request.Team() != team || !request.IsNeeded() || !request.wantsUnit(u) {
+			continue
+		}
+
+		// Strictly more urgent wins, so a tie keeps the first registered request.
+		if best == nil || request.Priority() < best.Priority() {
+			best = request
+		}
+	}
+
+	return best
+}
+
+// isRequestBuild reports whether u is a unit an open request had built for itself.
+func (m *TaskManager) isRequestBuild(u *game.UnitInfo) bool {
+	for _, task := range m.tasks {
+		if request, ok := task.(*taskObtainUnits); ok && request.ordered[u.Type] == u {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isUnitNeeded reports whether the team should build another unitType: not while a
+// unit of the type stands idle, that is free of every task and not new this turn
+// (a new unit has had no task pass yet). C++ ported : task_manager.cpp -
+// TaskManager::IsUnitNeeded (the "a unit of the type has no task" rule).
+func (m *TaskManager) isUnitNeeded(g *sim.Game, team int, unitType assets.UnitType) bool {
+	turn := g.State.TurnCounter
+	for _, u := range g.Units.Units() {
+		if u.Team != team || u.Type != unitType || u.Hits <= 0 {
+			continue
+		}
+
+		// A unit never seen by the dispatcher, or seen first this turn, is not idle yet.
+		seenTurn, seen := m.firstSeen[u]
+		if !seen || seenTurn >= turn {
+			continue
+		}
+
+		// A free unit of the type: no need for another.
+		if m.isFreeUnit(u) {
+			dbg.Logf(dbg.AI, "team %d does not build a %s: %d stands idle", team, unitType.Tag(), u.ID)
+
+			return false
+		}
+	}
+
+	return true
 }
 
 // claimUnit gives u to task when mayClaimUnit allows it and reports whether it did.
@@ -178,12 +359,15 @@ func (m *TaskManager) claimUnit(task Task, u *game.UnitInfo) bool {
 
 	if m.owner == nil {
 		m.owner = make(map[*game.UnitInfo]Task)
+		m.claimedIn = make(map[*game.UnitInfo]int)
 	}
 	m.owner[u] = task
+	m.claimedIn[u] = m.passOf[task]
 
 	return true
 }
 
+/* // note: unused code in Go port - the ledger keeps units across turns now (step 6005): a task lets go at the end of its pass (endPass)
 // releaseTeamUnits empties the ledger entries of the team's tasks, so they claim
 // again in run order this turn.
 func (m *TaskManager) releaseTeamUnits(team int) {
@@ -193,6 +377,7 @@ func (m *TaskManager) releaseTeamUnits(team int) {
 		}
 	}
 }
+*/
 
 // pruneUnneeded removes the team's tasks that are no longer needed: a removed
 // parent takes its children with it, since a child's IsNeeded follows its
@@ -239,8 +424,10 @@ func (m *TaskManager) RemoveTask(task Task) {
 	for u, owner := range m.owner {
 		if owner == task {
 			delete(m.owner, u)
+			delete(m.claimedIn, u)
 		}
 	}
+	delete(m.passOf, task)
 
 	for i, t := range m.tasks {
 		if t == task {
@@ -262,6 +449,10 @@ func (m *TaskManager) Clear() {
 	m.priorityReminders = nil
 	m.reminderCounter = 0
 	m.owner = nil
+	m.claimedIn = nil
+	m.passOf = nil
+	m.firstSeen = nil
+	m.handed = nil
 }
 
 // TaskCount reports the number of live tasks (test/diagnostic helper). C++:

@@ -46,7 +46,8 @@ func (t *taskCommando) BeginTurn() {
 	}
 
 	for _, u := range g.Units.Units() {
-		if !t.isReadyCommando(u) {
+		// A ready commando is this task's for the pass.
+		if !t.isReadyCommando(u) || !t.claim(u) {
 			continue
 		}
 

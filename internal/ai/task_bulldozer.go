@@ -52,6 +52,7 @@ func (t *taskBulldozer) BeginTurn() {
 	if g == nil {
 		return
 	}
+	t.claimBulldozers()
 	piles := t.baseAreaRubble()
 	if len(piles) == 0 {
 		return // nothing near the base to reclaim
@@ -90,13 +91,23 @@ func (t *taskBulldozer) baseAreaRubble() []sim.RubbleCell {
 	return near
 }
 
+// claimBulldozers holds every bulldozer of the team for this task, busy or idle: they
+// are its tools, so none counts as idle.
+func (t *taskBulldozer) claimBulldozers() {
+	for _, u := range t.ctx.Game.Units.Units() {
+		if u.Team == t.team && sim.IsBulldozer(u) {
+			t.claim(u)
+		}
+	}
+}
+
 // idleBulldozers returns the team's bulldozers free to take a new order (not already
 // clearing, not mid move, with a move budget), in ID order so the assignment is stable.
 func (t *taskBulldozer) idleBulldozers() []*game.UnitInfo {
 	g := t.ctx.Game
 	var out []*game.UnitInfo
 	for _, u := range g.Units.Units() {
-		if u.Team != t.team || !sim.IsBulldozer(u) {
+		if u.Team != t.team || !sim.IsBulldozer(u) || !t.mayClaim(u) {
 			continue
 		}
 		if g.IsClearingRubble(u) || g.HasOrder(u) || u.Speed <= 0 {

@@ -78,6 +78,16 @@ func newTaskManageBuildings(team int, strategy Strategy, goal winGoal, coastal b
 	}
 }
 
+// claimBuilders holds every builder of the team for the building manager, at work or
+// idle: they are its tools, so none counts as idle.
+func (t *taskManageBuildings) claimBuilders() {
+	for _, u := range t.ctx.Game.Units.Units() {
+		if u.Team == t.team && u.Flags.Has(game.FlagConstructorUnit) {
+			t.claim(u)
+		}
+	}
+}
+
 // BeginTurn snapshots the economy once, then assigns each idle builder the highest
 // priority building the base needs. At most one order per builder per turn (issuing
 // one poses it, so it is no longer idle - a natural rate limit). The task does not
@@ -91,6 +101,7 @@ func (t *taskManageBuildings) BeginTurn() {
 	}
 
 	t.prunePending()
+	t.claimBuilders()
 	econ := surveyTeamEconomy(g, t.team)
 	t.traceEconomy(econ)
 	t.rescueTrappedBuilders() // free (or replace) any builder its own base has boxed in

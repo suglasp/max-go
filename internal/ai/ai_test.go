@@ -621,7 +621,7 @@ func TestChooseProductSkewsByStrategy(t *testing.T) {
 		counts := map[assets.UnitType]int{}
 		mix := func(u assets.UnitType) int { return counts[u] }
 		for i := 0; i < rounds; i++ {
-			prod, ok := chooseProduct(factory, s, mix)
+			prod, ok := chooseProduct(factory, s, mix, nil)
 			if !ok {
 				t.Fatalf("chooseProduct returned nothing for %v", factory)
 			}

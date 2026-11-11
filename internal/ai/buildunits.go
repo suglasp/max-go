@@ -130,10 +130,20 @@ func productWeight(s Strategy, t assets.UnitType) int {
 // a strategy's favoured (heavier weighted) units are allowed to accumulate
 // proportionally more before another type is chosen - the army composition then tracks
 // the strategy weights instead of an even split, while every type still gets built (none
-// is starved). Ties keep list (priority) order. C++: the AiPlayer build order weighting
-// that drives TaskCreateUnit.
-func chooseProduct(factory assets.UnitType, strategy Strategy, mix func(assets.UnitType) int) (producible, bool) {
-	list := factoryProducts[factory]
+// is starved). Ties keep list (priority) order. needed, when set, rules a type out
+// (the "is this unit needed" check); no product left = nothing to build. C++: the
+// AiPlayer build order weighting that drives TaskCreateUnit, gated by
+// TaskManager::IsUnitNeeded.
+func chooseProduct(factory assets.UnitType, strategy Strategy, mix func(assets.UnitType) int, needed func(assets.UnitType) bool) (producible, bool) {
+	var list []producible
+	for _, p := range factoryProducts[factory] {
+		// A type with an idle unit is not built again.
+		if needed != nil && !needed(p.t) {
+			continue
+		}
+		list = append(list, p)
+	}
+
 	if len(list) == 0 {
 		return producible{}, false
 	}

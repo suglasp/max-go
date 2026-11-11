@@ -58,7 +58,8 @@ func (t *taskMines) BeginTurn() {
 
 	ex, ey, hasThreat := t.nearestSpottedEnemy(bx, by)
 	for _, u := range g.Units.Units() {
-		if !t.isReadyLayer(u) {
+		// A ready layer (mines aboard) is this task's for the pass; an empty one is not.
+		if !t.isReadyLayer(u) || !t.claim(u) {
 			continue
 		}
 

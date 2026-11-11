@@ -154,6 +154,7 @@ func (t *taskAttackEnemies) BeginTurn() {
 		}
 	}
 
+	/* // note: unused code in Go port - planAssault claims the whole ready force now (step 6005)
 	// The units this pass ordered are the attack's for the turn; the ones it left idle
 	// stay free for the explore task.
 	for _, u := range ready {
@@ -161,6 +162,7 @@ func (t *taskAttackEnemies) BeginTurn() {
 			t.claim(u)
 		}
 	}
+	*/
 }
 
 // planAssault settles this turn's plan before any unit acts: who is held back, whether
@@ -199,6 +201,13 @@ func (t *taskAttackEnemies) planAssault(g *sim.Game) (ready []*game.UnitInfo, so
 	// launcher leads the harassment probe (it pings from range and falls back); once
 	// committed the whole force sorties, so order is moot.
 	ready = t.readyAttackers(g)
+
+	// The whole ready force is the attack's, mustering or not, so a working army never
+	// counts as idle; a more urgent task (explore) may still take an idle one.
+	for _, u := range ready {
+		t.claim(u)
+	}
+
 	if !committed {
 		t.launchersFirst(ready)
 	}

@@ -179,9 +179,15 @@ func (a *AI) BeginTurn(g *sim.Game, team int) {
 
 	a.ctx.Game = g // keep the tasks pointed at the live game each turn
 
+	// The ledger takes a held unit only when it can take orders in the live game.
+	a.mgr.readyForOrders = func(u *game.UnitInfo) bool { return unitReadyForOrders(g, u) }
+
 	p := &a.players[team]
 	p.BeginTurn(a.mgr)
 	a.mgr.BeginTurn(team)
+
+	// Hand the free units to the most urgent unit requests before the tasks plan.
+	a.mgr.dispatchUnits(g, team)
 	a.mgr.ExecuteReminders()
 
 	// Drain the team's work: rerun reminders until the player is content to end

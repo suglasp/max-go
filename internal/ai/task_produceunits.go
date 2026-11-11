@@ -49,7 +49,7 @@ func (t *taskProduceUnits) BeginTurn() {
 			continue
 		}
 
-		prod, ok := chooseProduct(f.Type, t.strategy, t.teamUnitCount)
+		prod, ok := chooseProduct(f.Type, t.strategy, t.teamUnitCount, t.isUnitNeeded)
 		if !ok {
 			continue
 		}
@@ -77,6 +77,16 @@ func (t *taskProduceUnits) ensureRecon() {
 
 		t.requestUnit(t.ctx, unitNeed{unit: d.unit, factory: d.factory, flags: d.flags})
 	}
+}
+
+// isUnitNeeded reports whether the team should build another unitType (none of the
+// type stands idle); a task with no manager (a lone task in a test) needs every unit.
+func (t *taskProduceUnits) isUnitNeeded(unitType assets.UnitType) bool {
+	if t.mgr == nil {
+		return true
+	}
+
+	return t.mgr.isUnitNeeded(t.ctx.Game, t.team, unitType)
 }
 
 // teamUnitCount counts how many of a type the task's team currently fields
