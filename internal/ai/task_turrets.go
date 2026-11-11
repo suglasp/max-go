@@ -24,7 +24,7 @@ type taskFireTurrets struct {
 
 func newTaskFireTurrets(team int, ctx *aiContext) *taskFireTurrets {
 	return &taskFireTurrets{
-		TaskBase: newTaskBase(team, nil, 800), // same priority bracket as taskAttackEnemies
+		TaskBase: newTaskBase(team, nil, taskPriorityAttackDefault), // same tier as taskAttackEnemies
 		ctx:      ctx,
 	}
 }

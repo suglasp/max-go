@@ -24,8 +24,9 @@ import (
 // (which also spawns a REPAIR operator, a rendezvous, and getting materials); this
 // port only POSITIONS the unit at the shop - the depot SERVICING is the gameplay
 // layer's repairshop. The flee is a reduced Task_RetreatFromDanger (nearest safe
-// cell, no full caution level enum). The choice is decoupled from task scheduling:
-// a damaged unit is claimed here and skipped by the attack/explore tasks.
+// cell, no full caution level enum). A damaged unit is claimed here through the
+// unit ledger (the most urgent tier), so the later tasks leave it alone; it is
+// claimed even on the tier that never retreats, so it is not sent back in.
 //
 // C++ ported : taskattackreserve.cpp - TaskAttackReserve::EndTurn (the
 // hits < ATTRIB_HITS/2 -> TaskRepair branch) + taskrepair.cpp -
@@ -53,7 +54,7 @@ const (
 
 func newTaskRetreat(team int, ctx *aiContext) *taskRetreat {
 	return &taskRetreat{
-		TaskBase: newTaskBase(team, nil, 700), // below the economy roots, above attack (800)
+		TaskBase: newTaskBase(team, nil, taskPriorityEmergency), // a damaged unit is the most urgent claim
 		ctx:      ctx,
 	}
 }
@@ -61,10 +62,6 @@ func newTaskRetreat(team int, ctx *aiContext) *taskRetreat {
 // BeginTurn disengages each damaged unit toward a repair shop or to safety.
 // C++: TaskAttackReserve::EndTurn's repair branch for each unit over the team's military.
 func (t *taskRetreat) BeginTurn() {
-	if !retreatEnabled {
-		return
-	}
-
 	g := t.ctx.Game
 	if g == nil {
 		return
@@ -73,6 +70,16 @@ func (t *taskRetreat) BeginTurn() {
 	var tm *threatMap // built lazily for the first unit that has to flee
 	for _, u := range g.Units.Units() {
 		if u.Team != t.team || !unitDamaged(u) {
+			continue
+		}
+
+		// The damaged unit is this task's, whether or not it can move now.
+		if !t.claim(u) {
+			continue
+		}
+
+		// The tier that never retreats only holds the unit back.
+		if !retreatEnabled {
 			continue
 		}
 

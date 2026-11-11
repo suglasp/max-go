@@ -152,13 +152,14 @@ func (p *AiPlayer) BeginTurn(mgr *TaskManager) {
 			// can rebuild on the footprint; it obtains a bulldozer if the team has none.
 			mgr.AppendTask(newTaskBulldozer(p.team, p.ctx))
 
-			// Retreat runs before attack (priority 700 < 800) so a damaged unit is
-			// pulled back to repair before the attack task would send it in to die.
-			// The defence reserve (720) then claims its home guards, the escort (730)
-			// claims a spare guard for each fragile mover, and the special unit tasks
-			// (commando 750, mines 760) run between them and attack - all before the
-			// gun line pass, so each claims its units first (tasks fire in registration
-			// order, so the placement here is what orders them).
+			// Tasks run in registration order; their priority tier (priority.go) only
+			// decides who keeps a unit in the unit ledger. Retreat runs before attack, so
+			// a damaged unit is claimed and pulled back before the attack task would send
+			// it in to die. The defence reserve then claims its home guards and the escort
+			// a spare guard for each fragile mover; the special unit tasks (commando,
+			// mines) run between them and attack. All of them come before the gun line
+			// pass, so each claims its units first, and the explore task after the attack
+			// only gets what is left.
 			mgr.AppendTask(newTaskRetreat(p.team, p.ctx))
 			mgr.AppendTask(newTaskDefenseReserve(p.team, p.ctx))
 			mgr.AppendTask(newTaskEscort(p.team, p.ctx))

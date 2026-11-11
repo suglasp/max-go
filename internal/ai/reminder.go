@@ -46,8 +46,16 @@ func newRemindTurnStart(task Task) *remindTurnStart {
 	return &remindTurnStart{task: task}
 }
 
+// Execute runs the task's start of turn planning, unless the task (or a parent
+// above it) was removed while the reminder waited in the queue.
 func (r *remindTurnStart) Execute() {
 	r.task.setScheduledForTurnStart(false)
+
+	// A task that is no longer needed plans nothing.
+	if !r.task.IsNeeded() {
+		return
+	}
+
 	r.task.BeginTurn()
 }
 
@@ -65,8 +73,16 @@ func newRemindTurnEnd(task Task) *remindTurnEnd {
 	return &remindTurnEnd{task: task}
 }
 
+// Execute runs the task's end of turn evaluation, unless the task (or a parent
+// above it) was removed while the reminder waited in the queue.
 func (r *remindTurnEnd) Execute() {
 	r.task.setScheduledForTurnEnd(false)
+
+	// A task that is no longer needed evaluates nothing.
+	if !r.task.IsNeeded() {
+		return
+	}
+
 	r.task.EndTurn()
 }
 

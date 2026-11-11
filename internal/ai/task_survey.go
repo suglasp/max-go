@@ -38,7 +38,7 @@ type taskSurvey struct {
 
 func newTaskSurvey(team int, ctx *aiContext) *taskSurvey {
 	return &taskSurvey{
-		TaskBase: newTaskBase(team, nil, 900), // economy support bracket (produce/explore)
+		TaskBase: newTaskBase(team, nil, taskPriorityAutoSurvey),
 		ctx:      ctx,
 	}
 }

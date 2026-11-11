@@ -5,7 +5,10 @@
 // Licensed under the MIT License. See MIT.md file in the project root for full license information.
 package ai
 
-import "github.com/suglasp/max-go/internal/dbg"
+import (
+	"github.com/suglasp/max-go/internal/dbg"
+	"github.com/suglasp/max-go/internal/game"
+)
 
 // reminderDrainCap prevents a task that repeatedly rearms itself from blocking the turn loop.
 const reminderDrainCap = 200000
@@ -20,6 +23,11 @@ type TaskManager struct {
 	normalReminders   []Reminder
 	priorityReminders []Reminder
 	reminderCounter   int
+
+	// owner is the unit ledger: which task holds which unit (C++ UnitInfo::GetTask).
+	// It lives in memory only (never saved) and a team's entries are cleared at its
+	// turn start, so the tasks claim again in run order each turn.
+	owner map[*game.UnitInfo]Task
 }
 
 // NewTaskManager builds an empty manager. C++: TaskManager::TaskManager.
@@ -125,6 +133,9 @@ func reminderTask(r Reminder) Task {
 // The third pass runs the team's ferry task (taskTransport), so it sees every ride the
 // other tasks asked for this turn.
 func (m *TaskManager) BeginTurn(team int) {
+	m.pruneUnneeded(team)
+	m.releaseTeamUnits(team)
+
 	for _, t := range m.tasks {
 		if t.Team() == team && t.Type() != TaskTypeTransport {
 			t.setProcessingNeeded(true)
@@ -141,6 +152,63 @@ func (m *TaskManager) BeginTurn(team int) {
 		if t.Team() == team && t.Type() == TaskTypeTransport {
 			t.RemindTurnStart(false)
 		}
+	}
+}
+
+// mayClaimUnit reports whether task may take u: a free unit, one the task holds
+// already, or one whose owner is gone; else only when the owner is less urgent than
+// task and lets the unit go. C++ ported : task.cpp - Task_IsRecruitable (the order
+// check waits for the unit dispatcher).
+func (m *TaskManager) mayClaimUnit(task Task, u *game.UnitInfo) bool {
+	owner := m.owner[u]
+
+	// Nobody, the task itself, or a task that is gone: free to take.
+	if owner == nil || owner == task || !owner.IsNeeded() {
+		return true
+	}
+
+	return owner.comparePriority(task.Priority()) > 0 && owner.isUnitTransferable(u)
+}
+
+// claimUnit gives u to task when mayClaimUnit allows it and reports whether it did.
+func (m *TaskManager) claimUnit(task Task, u *game.UnitInfo) bool {
+	if !m.mayClaimUnit(task, u) {
+		return false
+	}
+
+	if m.owner == nil {
+		m.owner = make(map[*game.UnitInfo]Task)
+	}
+	m.owner[u] = task
+
+	return true
+}
+
+// releaseTeamUnits empties the ledger entries of the team's tasks, so they claim
+// again in run order this turn.
+func (m *TaskManager) releaseTeamUnits(team int) {
+	for u, owner := range m.owner {
+		if owner.Team() == team {
+			delete(m.owner, u)
+		}
+	}
+}
+
+// pruneUnneeded removes the team's tasks that are no longer needed: a removed
+// parent takes its children with it, since a child's IsNeeded follows its
+// parent. The list is collected first because RemoveSelf edits m.tasks.
+// C++ ported : task.cpp - the children's own IsNeeded checks, done here in one pass.
+func (m *TaskManager) pruneUnneeded(team int) {
+	var unneeded []Task
+	for _, t := range m.tasks {
+		if t.Team() == team && !t.IsNeeded() {
+			unneeded = append(unneeded, t)
+		}
+	}
+
+	for _, t := range unneeded {
+		dbg.Logf(dbg.AI, "team %d: task %d is no longer needed, removed", team, t.ID())
+		t.RemoveSelf()
 	}
 }
 
@@ -167,6 +235,13 @@ func (m *TaskManager) MarkTasksForProcessing(team int) {
 // RemoveTask drops a task from the list (called by Task.RemoveSelf). C++:
 // TaskManager::RemoveTask.
 func (m *TaskManager) RemoveTask(task Task) {
+	// A removed task holds no units.
+	for u, owner := range m.owner {
+		if owner == task {
+			delete(m.owner, u)
+		}
+	}
+
 	for i, t := range m.tasks {
 		if t == task {
 			m.tasks = append(m.tasks[:i], m.tasks[i+1:]...)
@@ -186,6 +261,7 @@ func (m *TaskManager) Clear() {
 	m.normalReminders = nil
 	m.priorityReminders = nil
 	m.reminderCounter = 0
+	m.owner = nil
 }
 
 // TaskCount reports the number of live tasks (test/diagnostic helper). C++:

@@ -30,7 +30,7 @@ type taskCommando struct {
 
 func newTaskCommando(team int, ctx *aiContext) *taskCommando {
 	return &taskCommando{
-		TaskBase: newTaskBase(team, nil, 750), // above the gun line attack task (800)
+		TaskBase: newTaskBase(team, nil, taskPriorityAttackDefault), // an attack of its own kind
 		ctx:      ctx,
 	}
 }

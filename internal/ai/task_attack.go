@@ -24,17 +24,19 @@ import (
 // turn (fire OR move, not both). C++: TaskAttack + TaskMove + AiAttack.
 type taskAttackEnemies struct {
 	TaskBase
-	ctx          *aiContext
-	committed    bool                    // latches once the team spots an enemy and musters minStrikeForce attackers; until then it holds/scouts. C++: AiPlayer commits after recon+buildup
-	searchMode   map[*game.UnitInfo]int  // per searching unit, HOW it hunts a lost target: searchZone sweep or searchExplore wander; rolled once per lost contact, cleared on reacquire
-	tm           *threatMap              // team threat map for THIS turn (rebuilt in BeginTurn once committed); sortApproachSafest prefers the SAFEST in range cell. nil = rank by distance
+	ctx        *aiContext
+	committed  bool                   // latches once the team spots an enemy and musters minStrikeForce attackers; until then it holds/scouts. C++: AiPlayer commits after recon+buildup
+	searchMode map[*game.UnitInfo]int // per searching unit, HOW it hunts a lost target: searchZone sweep or searchExplore wander; rolled once per lost contact, cleared on reacquire
+	tm         *threatMap             // team threat map for THIS turn (rebuilt in BeginTurn once committed); sortApproachSafest prefers the SAFEST in range cell. nil = rank by distance
+	/* // note: unused code in Go port - the reserve and escort tasks claim their guards through the unit ledger (step 6003)
 	reserve      map[*game.UnitInfo]bool // this turn's home defence reserve (reservedGuards), excluded from the assault so the two tasks do not fight over them; nil on no reserve tiers
 	escort       map[*game.UnitInfo]bool // this turn's escort guards (escortGuards) shadowing a fragile mover; excluded from the assault; nil on no escort tiers
-	abandoned    map[*game.UnitInfo]int  // lost target -> turn shelved; nearestEnemy skips it while fogged until abandonCooldown passes or it is seen again. C++: AiPlayer aging out a stale SpottedUnit
-	searchSince  map[*game.UnitInfo]int  // per searching unit, the turn it began hunting its CURRENT lost target, so it gives up after searchPatience; cleared on reacquire/retarget
-	searchClaims map[int]bool            // reserves a lost contact cell for ONE searcher per turn (no stack all searching the same stale cell); rebuilt each BeginTurn
-	focus        *game.UnitInfo          // this turn's single shared objective the committed force converges on (teamFocusTarget); nil before commit. C++: the shared AttackTask target
-	ferry        *taskTransport          // the team's ferry task; an attacker with no land route to its target asks it for a ride. nil = no ferry (tests)
+	*/
+	abandoned    map[*game.UnitInfo]int // lost target -> turn shelved; nearestEnemy skips it while fogged until abandonCooldown passes or it is seen again. C++: AiPlayer aging out a stale SpottedUnit
+	searchSince  map[*game.UnitInfo]int // per searching unit, the turn it began hunting its CURRENT lost target, so it gives up after searchPatience; cleared on reacquire/retarget
+	searchClaims map[int]bool           // reserves a lost contact cell for ONE searcher per turn (no stack all searching the same stale cell); rebuilt each BeginTurn
+	focus        *game.UnitInfo         // this turn's single shared objective the committed force converges on (teamFocusTarget); nil before commit. C++: the shared AttackTask target
+	ferry        *taskTransport         // the team's ferry task; an attacker with no land route to its target asks it for a ride. nil = no ferry (tests)
 }
 
 // minStrikeForce is how many armed mobile units a team must field before committing to
@@ -61,7 +63,7 @@ var (
 
 func newTaskAttackEnemies(team int, ctx *aiContext) *taskAttackEnemies {
 	return &taskAttackEnemies{
-		TaskBase: newTaskBase(team, nil, 800), // below the economy/production roots
+		TaskBase: newTaskBase(team, nil, taskPriorityAttackDefault),
 		ctx:      ctx,
 	}
 }
@@ -151,17 +153,24 @@ func (t *taskAttackEnemies) BeginTurn() {
 			t.endSearch(u)
 		}
 	}
+
+	// The units this pass ordered are the attack's for the turn; the ones it left idle
+	// stay free for the explore task.
+	for _, u := range ready {
+		if g.HasOrder(u) {
+			t.claim(u)
+		}
+	}
 }
 
 // planAssault settles this turn's plan before any unit acts: who is held back, whether
 // the team is committed, the threat map and shared objective that follow from that, how
 // many units may advance, and the ready attackers in the order they get their turn.
 func (t *taskAttackEnemies) planAssault(g *sim.Game) (ready []*game.UnitInfo, sortie int) {
-	// The home defence reserve and the escort guards for this turn (empty unless a
-	// reserve keeping or escort tier): these units are positioned by taskDefenseReserve
-	// and taskEscort and skipped below so the assault does not steal them.
+	/* // note: unused code in Go port - replaced by the unit ledger: the reserve and escort tasks claim their guards (step 6003)
 	t.reserve = reservedGuards(g, t.team)
 	t.escort = escortGuards(g, t.team)
+	*/
 	t.searchClaims = nil // one searcher per stale cell, reset each turn
 	committed := t.isCommitted()
 
@@ -328,10 +337,11 @@ func isHarassLauncher(ut assets.UnitType) bool {
 }
 
 // isReadyAttacker reports whether u is an armed mobile unit free to act this turn: not
-// already ordered, not damaged, not a reserve guard, not an escort. Those are claimed by
-// taskRetreat / taskDefenseReserve / taskEscort, so the attack task leaves them alone.
+// already ordered, and not held by a more urgent task. A damaged unit, a reserve guard
+// and an escort are claimed by taskRetreat / taskDefenseReserve / taskEscort through
+// the unit ledger, so the attack task leaves them alone.
 func (t *taskAttackEnemies) isReadyAttacker(u *game.UnitInfo) bool {
-	return t.isArmedMobile(u) && !unitDamaged(u) && !t.reserve[u] && !t.escort[u] && !t.ctx.Game.HasOrder(u)
+	return t.isArmedMobile(u) && t.mayClaim(u) && !t.ctx.Game.HasOrder(u)
 }
 
 // isArmedMobile reports whether u is one of this team's armed mobile units (the

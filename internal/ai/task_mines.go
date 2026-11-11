@@ -38,7 +38,7 @@ const (
 
 func newTaskMines(team int, ctx *aiContext) *taskMines {
 	return &taskMines{
-		TaskBase: newTaskBase(team, nil, 760), // above the gun line attack task (800)
+		TaskBase: newTaskBase(team, nil, taskPriorityFrontier), // mine laying shares the frontier tier
 		ctx:      ctx,
 	}
 }

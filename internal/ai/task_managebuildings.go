@@ -69,7 +69,7 @@ type pendingBuildSite struct {
 
 func newTaskManageBuildings(team int, strategy Strategy, goal winGoal, coastal bool, ctx *aiContext) *taskManageBuildings {
 	return &taskManageBuildings{
-		TaskBase: newTaskBase(team, nil, 1000), // high base priority (root economy task)
+		TaskBase: newTaskBase(team, nil, taskPriorityManageBuildings),
 		ctx:      ctx,
 		strategy: strategy,
 		goal:     goal,

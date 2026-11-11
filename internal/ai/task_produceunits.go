@@ -27,7 +27,7 @@ type taskProduceUnits struct {
 
 func newTaskProduceUnits(team int, strategy Strategy, ctx *aiContext) *taskProduceUnits {
 	return &taskProduceUnits{
-		TaskBase: newTaskBase(team, nil, 900), // just below the building manager
+		TaskBase: newTaskBase(team, nil, taskPriorityManageBuildings), // the production half of the economy
 		ctx:      ctx,
 		strategy: strategy,
 	}

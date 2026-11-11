@@ -22,9 +22,11 @@ import (
 // C++ ported : taskexplore.cpp - TaskExplore
 type taskExplore struct {
 	TaskBase
-	ctx     *aiContext
+	ctx *aiContext
+	/* // note: unused code in Go port - the reserve and escort tasks claim their guards through the unit ledger (step 6003)
 	reserve map[*game.UnitInfo]bool // guards assigned to defend the base this turn
 	escort  map[*game.UnitInfo]bool // guards assigned to escort another unit this turn
+	*/
 	// tm is this turn's team threat map, built lazily for the first ready explorer. A
 	// recon unit does not scout into a cell under enemy fire and routes around defended
 	// ground, so a scanner or scout stops driving blindly into a hostile base.
@@ -33,7 +35,7 @@ type taskExplore struct {
 
 func newTaskExplore(team int, ctx *aiContext) *taskExplore {
 	return &taskExplore{
-		TaskBase: newTaskBase(team, nil, 900), // below the attack/turret roots (800): drives only idle units
+		TaskBase: newTaskBase(team, nil, taskPriorityExplore),
 		ctx:      ctx,
 	}
 }
@@ -47,10 +49,10 @@ func (t *taskExplore) BeginTurn() {
 		return
 	}
 
-	// Skip home defence guards and assigned escorts so they are not pulled off their
-	// post / charge to scout.
+	/* // note: unused code in Go port - replaced by the unit ledger: the reserve and escort tasks claim their guards (step 6003)
 	t.reserve = reservedGuards(g, t.team)
 	t.escort = escortGuards(g, t.team)
+	*/
 	t.tm = nil // built lazily on the first ready explorer (buildThreatMap is O(enemies x range^2))
 	for _, u := range g.Units.Units() {
 		if !t.isReadyExplorer(u) {
@@ -61,7 +63,10 @@ func (t *taskExplore) BeginTurn() {
 			t.tm = buildThreatMap(g, t.team)
 		}
 
-		t.nearestUnexploredMove(u)
+		// A scout that drives off is this task's for the turn.
+		if t.nearestUnexploredMove(u) {
+			t.claim(u)
+		}
 	}
 }
 
@@ -83,16 +88,8 @@ func (t *taskExplore) isReadyExplorer(u *game.UnitInfo) bool {
 		return false // the surveyor's job is the resource survey (taskSurvey), not fog explore
 	}
 
-	if unitDamaged(u) {
-		return false // a damaged unit is retreating to repair, not scouting into danger
-	}
-
-	if t.reserve[u] {
-		return false // a home defence guard holds its post, it does not scout
-	}
-
-	if t.escort[u] {
-		return false // an assigned escort shadows its charge, it does not scout
+	if !t.mayClaim(u) {
+		return false // a damaged unit, a home guard or an escort belongs to a more urgent task
 	}
 
 	if u.Values.Get(game.AttribScan) <= 0 {

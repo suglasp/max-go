@@ -33,7 +33,7 @@ type taskTransport struct {
 // C++ ported : tasktransport.cpp - TaskTransport::TaskTransport
 func newTaskTransport(team int, ctx *aiContext) *taskTransport {
 	return &taskTransport{
-		TaskBase: newTaskBase(team, nil, 800), // a ride takes the priority of the move that asked for it (an attack move)
+		TaskBase: newTaskBase(team, nil, taskPriorityAttackDefault), // a ride takes the priority of the move that asked for it (an attack move)
 		ctx:      ctx,
 	}
 }

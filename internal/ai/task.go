@@ -5,6 +5,8 @@
 // Licensed under the MIT License. See MIT.md file in the project root for full license information.
 package ai
 
+import "github.com/suglasp/max-go/internal/game"
+
 // TaskType identifies a concrete task kind. The manager treats most types
 // uniformly; only a few are special cased (transport tasks are scheduled last
 // each turn, obtain units tasks are also tracked in a request list). C++:
@@ -40,6 +42,15 @@ type Task interface {
 	// IsNeeded reports whether the task should keep running; an obsolete task
 	// is removed. C++: Task::IsNeeded.
 	IsNeeded() bool
+	// Priority is the task's current urgency (lower = more urgent, see
+	// priority.go). C++: Task::GetPriority (virtual).
+	Priority() uint16
+
+	// comparePriority and isUnitTransferable decide whether another task may take
+	// one of this task's units (the unit ledger). C++: Task::ComparePriority /
+	// Task::IsUnitTransferable.
+	comparePriority(p uint16) int
+	isUnitTransferable(u *game.UnitInfo) bool
 
 	// Init sets up the task after it is appended to the manager (create child
 	// tasks, schedule the first turn start reminder). C++: Task::Init.
@@ -48,7 +59,7 @@ type Task interface {
 	BeginTurn()
 	// EndTurn runs the task's end of turn evaluation. C++: Task::EndTurn.
 	EndTurn()
-	/* // note: ported but unused code in Go port - no task has children here, see TaskBase.parent
+	/* // note: ported but unused code in Go port - the port plans the turn synchronously, so a parent reads its children's state in its own BeginTurn
 	ChildComplete(child Task)
 	*/
 	// RemoveSelf tears the task down and unlinks it from the manager. C++:
@@ -91,6 +102,7 @@ type TaskBase struct {
 	needsProcessing       bool
 	scheduledForTurnStart bool
 	scheduledForTurnEnd   bool
+	removed               bool // set by RemoveSelf: the task and every child under it are no longer needed
 
 	self Task         // the concrete task value (C++ `this`); set by bind.
 	mgr  *TaskManager // the owning manager; set by bind.
@@ -116,19 +128,58 @@ func (t *TaskBase) Team() int {
 	return t.team
 }
 
+// Priority returns the task's base priority; a task whose urgency changes with
+// its work overrides it. C++: Task::GetPriority.
+func (t *TaskBase) Priority() uint16 {
+	return t.basePriority
+}
+
+// isUnitTransferable reports whether the task lets another task take u: yes,
+// unless a parent above it says no. C++: Task::IsUnitTransferable.
+func (t *TaskBase) isUnitTransferable(u *game.UnitInfo) bool {
+	// A child gives a unit away only when its parent would.
+	if t.parent != nil {
+		return t.parent.isUnitTransferable(u)
+	}
+
+	return true
+}
+
+// mayClaim reports whether the task could take u through the unit ledger, without
+// taking it. A task with no manager (a lone task in a test) may take any unit.
+func (t *TaskBase) mayClaim(u *game.UnitInfo) bool {
+	if t.mgr == nil {
+		return true
+	}
+
+	return t.mgr.mayClaimUnit(t.self, u)
+}
+
+// claim takes u for the task through the unit ledger and reports whether it got
+// it. A task with no manager (a lone task in a test) always gets the unit.
+func (t *TaskBase) claim(u *game.UnitInfo) bool {
+	if t.mgr == nil {
+		return true
+	}
+
+	return t.mgr.claimUnit(t.self, u)
+}
+
 func (t *TaskBase) Type() TaskType {
 	return TaskTypeGeneric
 }
 
 // IsNeeded defers to the parent chain (a child is only needed while its parent
-// is); a root task is always needed. C++: Task::IsNeeded.
-//
-// VESTIGIAL, kept on purpose: every task this port registers is a ROOT (all newTaskBase
-// sites pass a nil parent), so the parent chain is always empty and this is constant
-// true. The field and the walk stay because they mirror Task::Task's parent argument and
-// are what a ported child task would hang from. Its sibling ChildComplete is commented
-// out above.
+// is); a root task is needed until it is removed. The manager drops a task that
+// is not needed at the team's turn start (TaskManager.pruneUnneeded), so the
+// children of a removed task go with it. C++: Task::IsNeeded.
 func (t *TaskBase) IsNeeded() bool {
+	// A removed task never comes back.
+	if t.removed {
+		return false
+	}
+
+	// A child lives as long as its parent does.
 	if t.parent != nil {
 		return t.parent.IsNeeded()
 	}
@@ -154,7 +205,7 @@ func (t *TaskBase) EndTurn() {
 
 }
 
-/* // note: ported but unused code in Go port - a child task would notify its parent through this
+/* // note: ported but unused code in Go port - a child task would notify its parent through this; the parent polls its children instead
 func (t *TaskBase) ChildComplete(_ Task) {
 
 }
@@ -164,9 +215,11 @@ func (t *TaskBase) setProcessingNeeded(v bool) {
 	t.needsProcessing = v
 }
 
-// RemoveSelf unlinks the task from its parent and the manager. C++:
-// Task::RemoveSelf.
+// RemoveSelf marks the task removed, unlinks it from its parent and the manager.
+// Its children see the mark through IsNeeded and are pruned at the next turn
+// start. C++: Task::RemoveSelf.
 func (t *TaskBase) RemoveSelf() {
+	t.removed = true
 	t.parent = nil
 
 	if t.mgr != nil {

@@ -3326,8 +3326,13 @@ func TestAttackSkipsReservedGuard(t *testing.T) {
 	_ = armedTank(1, 3, 2, 5, mgr)
 	_ = armedTank(1, 4, 2, 18, mgr)
 
+	// The reserve claims its guard through the unit ledger; the attack task shares the ledger.
+	tasks := NewTaskManager()
+	reserveTask := newTaskDefenseReserve(1, &aiContext{Game: g, MakeUnit: testUnitFactory})
 	ta := newTaskAttackEnemies(1, &aiContext{Game: g, MakeUnit: testUnitFactory})
-	ta.reserve = reservedGuards(g, 1)
+	tasks.AppendTask(reserveTask)
+	tasks.AppendTask(ta)
+	reserveTask.BeginTurn()
 	if ta.isReadyAttacker(guard) {
 		t.Error("the attack task counts a reserve guard as a ready attacker; it should skip it")
 	}
@@ -3418,12 +3423,19 @@ func TestEscortAssignsGuardToMover(t *testing.T) {
 		t.Fatalf("assigned %d escorts, want exactly the nearest tank (id 2) shadowing the Scanner", len(a))
 	}
 
-	newTaskEscort(1, &aiContext{Game: g, MakeUnit: testUnitFactory}).BeginTurn()
+	// The escort claims its guard through the unit ledger; the attack task shares the ledger.
+	tasks := NewTaskManager()
+	escortTask := newTaskEscort(1, &aiContext{Game: g, MakeUnit: testUnitFactory})
+	ta := newTaskAttackEnemies(1, &aiContext{Game: g, MakeUnit: testUnitFactory})
+	tasks.AppendTask(escortTask)
+	tasks.AppendTask(ta)
+	escortTask.BeginTurn()
 	if !g.HasOrder(guard) {
 		t.Error("the escort guard issued no order to move to its charge")
 	}
-	ta := newTaskAttackEnemies(1, &aiContext{Game: g, MakeUnit: testUnitFactory})
-	ta.escort = escortGuards(g, 1)
+	if tasks.owner[guard] != Task(escortTask) {
+		t.Error("the escort task does not hold its guard in the unit ledger")
+	}
 	if ta.isReadyAttacker(guard) {
 		t.Error("the attack task counts the escort guard as a ready attacker; it should skip it")
 	}
@@ -3484,8 +3496,13 @@ func TestExploreSkipsEscort(t *testing.T) {
 	guard.Values.Set(game.AttribScan, 3) // both could scout if free
 	free.Values.Set(game.AttribScan, 3)
 
+	// The escort claims its guard through the unit ledger; the explore task shares the ledger.
+	tasks := NewTaskManager()
+	escortTask := newTaskEscort(1, &aiContext{Game: g, MakeUnit: testUnitFactory})
 	te := newTaskExplore(1, &aiContext{Game: g, MakeUnit: testUnitFactory})
-	te.escort = escortGuards(g, 1)
+	tasks.AppendTask(escortTask)
+	tasks.AppendTask(te)
+	escortTask.BeginTurn()
 	if te.isReadyExplorer(guard) {
 		t.Error("the explore task would pull the escort guard off its charge to scout")
 	}

@@ -56,7 +56,7 @@ var escortEnabled = false
 
 func newTaskEscort(team int, ctx *aiContext) *taskEscort {
 	return &taskEscort{
-		TaskBase: newTaskBase(team, nil, 730), // between the defence reserve (720) and commando (750)
+		TaskBase: newTaskBase(team, nil, taskPriorityEscort),
 		ctx:      ctx,
 	}
 }
@@ -87,6 +87,11 @@ func (t *taskEscort) BeginTurn() {
 
 	sort.Slice(guards, func(i, j int) bool { return guards[i].ID < guards[j].ID })
 	for _, guard := range guards {
+		// Every guard is this task's, even one that cannot act this turn.
+		if !t.claim(guard) {
+			continue
+		}
+
 		if g.HasOrder(guard) || guard.Speed <= 0 {
 			continue
 		}
@@ -164,6 +169,7 @@ func (t *taskEscort) follow(guard, target *game.UnitInfo) {
 	}
 }
 
+/* // note: unused code in Go port - the escort task claims its guards through the unit ledger (taskmanager.go, step 6003), so the attack and explore tasks no longer read this set
 // escortGuards is the set of units assigned as escorts this turn - the keys of
 // escortAssignments. The attack and explore tasks consult it to leave an escort alone,
 // the same decoupling reservedGuards provides for the home reserve.
@@ -180,6 +186,7 @@ func escortGuards(g *sim.Game, team int) map[*game.UnitInfo]bool {
 
 	return set
 }
+*/
 
 // escortAssignments pairs each escortable mover with a spare armed guard, as a pure,
 // deterministic function of the current positions (so the escort, attack and explore

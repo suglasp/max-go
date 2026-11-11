@@ -40,7 +40,7 @@ const bulldozeRange = 16
 
 func newTaskBulldozer(team int, ctx *aiContext) *taskBulldozer {
 	return &taskBulldozer{
-		TaskBase: newTaskBase(team, nil, 650), // a utility/economy task, ahead of the combat block
+		TaskBase: newTaskBase(team, nil, taskPriorityRemoveRubble),
 		ctx:      ctx,
 	}
 }

@@ -5,7 +5,7 @@
 // Licensed under the MIT License. See MIT.md file in the project root for full license information.
 package ai
 
-// taskConnectionAssistant is the thin root task that, once per turn, asks the
+// taskConnectionAssistant is the thin child task of the building manager that, once per turn, asks the
 // building manager to repair a split base by laying connectors. It holds the same
 // taskManageBuildings instance the team's economy runs on, so it shares its
 // pending map and build helpers - the connector site it seeds is driven and raised
@@ -17,12 +17,12 @@ type taskConnectionAssistant struct {
 	manager *taskManageBuildings
 }
 
-// newTaskConnectionAssistant builds the assistant bound to a team's building
-// manager. C++: TaskConnectionAssistant::TaskConnectionAssistant (priority taken
-// from the manager).
+// newTaskConnectionAssistant builds the assistant as a child of the team's
+// building manager: it takes the manager's priority and is removed with it.
+// C++: TaskConnectionAssistant::TaskConnectionAssistant.
 func newTaskConnectionAssistant(manager *taskManageBuildings) *taskConnectionAssistant {
 	return &taskConnectionAssistant{
-		TaskBase: newTaskBase(manager.team, nil, 1000), // mirrors the manager's priority
+		TaskBase: newTaskBase(manager.team, manager, manager.basePriority),
 		manager:  manager,
 	}
 }

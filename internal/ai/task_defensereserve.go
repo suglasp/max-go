@@ -24,9 +24,9 @@ import (
 // It is active only on the tiers that keep a reserve (aiKeepReserve - Master/God);
 // the easier tiers overcommit, going all in, so the default behaviour is unchanged.
 // The reserve membership is a PURE set (reservedGuards): the force/4 armed units
-// closest to base. The attack and explore tasks consult the same set and leave those
-// units alone, so a parked guard is never pulled into the assault or off to scout -
-// the same way unitDamaged decouples taskRetreat.
+// closest to base. The task claims the whole set through the unit ledger, so the
+// attack and explore tasks leave a parked guard alone (no pull into the assault or
+// off to scout).
 //
 // Reductions vs the original: no eight category DefenseManager production planning
 // (PlanDefenses / EvaluateNeeds, which overlaps the shipped factoryProducts and
@@ -59,7 +59,7 @@ const (
 
 func newTaskDefenseReserve(team int, ctx *aiContext) *taskDefenseReserve {
 	return &taskDefenseReserve{
-		TaskBase: newTaskBase(team, nil, 720), // between retreat (700) and the gun line (800)
+		TaskBase: newTaskBase(team, nil, taskPriorityDefenseReserve),
 		ctx:      ctx,
 	}
 }
@@ -81,7 +81,12 @@ func (t *taskDefenseReserve) BeginTurn() {
 	}
 
 	for _, u := range g.Units.Units() {
-		if !reserve[u] || g.HasOrder(u) || u.Speed <= 0 {
+		// Every guard is this task's, even one that cannot act this turn.
+		if !reserve[u] || !t.claim(u) {
+			continue
+		}
+
+		if g.HasOrder(u) || u.Speed <= 0 {
 			continue
 		}
 
