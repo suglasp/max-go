@@ -304,3 +304,19 @@ func TestProductionSkipsATypeThatStandsIdle(t *testing.T) {
 		t.Errorf("the plant did not build the one type with no idle unit (order %v)", order)
 	}
 }
+
+// TestDispatchSkipsAnotherTeamsRequest checks the request filter: a request of another team
+// never gets the unit, even when it is the only one that wants the type.
+func TestDispatchSkipsAnotherTeamsRequest(t *testing.T) {
+	f := newObtainFixture(t)
+	other := &probeTask{TaskBase: newTaskBase(2, nil, taskPriorityEmergency)}
+	f.tasks.AppendTask(other)
+	other.requestUnit(f.ctx, unbuildableSurveyor)
+	unit := liveSurveyor(1, 6, 6, f.units)
+
+	f.tasks.dispatchUnits(f.g, 1)
+
+	if f.tasks.handed[unit] {
+		t.Error("team 1's unit was handed to a request of team 2")
+	}
+}

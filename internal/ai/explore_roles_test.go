@@ -209,3 +209,144 @@ func TestLowHealthCoversUnarmedUnits(t *testing.T) {
 		t.Error("a unit at exactly the threshold counts as low")
 	}
 }
+
+// moveGoal returns the last cell of u's queued move, if it has one.
+func moveGoal(g *sim.Game, u *game.UnitInfo) (game.Point, bool) {
+	for _, o := range g.MoveOrders() {
+		if o.Unit == u && len(o.Steps) > 0 {
+			return o.Steps[len(o.Steps)-1].To, true
+		}
+	}
+
+	return game.Point{}, false
+}
+
+// exploreAllBut marks every cell explored for team 1 except the given ones.
+func exploreAllBut(g *sim.Game, cells ...game.Point) {
+	n := g.W * g.H
+	bits := make([]byte, (n+7)/8)
+	for i := range bits {
+		bits[i] = 0xFF
+	}
+	open := map[int]bool{}
+	for _, c := range cells {
+		open[c.Y*g.W+c.X] = true
+	}
+	for i := 0; i < n; i++ {
+		if open[i] {
+			bits[i/8] &^= 1 << uint(i%8)
+		}
+	}
+	teams := make([][]byte, game.TeamCount)
+	teams[1] = bits
+	g.Vis.ImportExplored(teams)
+}
+
+// TestExploreHeadsForTheNearestFog checks the ring search: with one near and one far fog
+// cell, the scout drives to the near one, wherever it lies on the ring and at the map edges.
+func TestExploreHeadsForTheNearestFog(t *testing.T) {
+	cases := []struct {
+		name      string
+		scout     game.Point
+		near, far game.Point
+	}{
+		{"left", game.Point{X: 12, Y: 12}, game.Point{X: 9, Y: 12}, game.Point{X: 22, Y: 22}},
+		{"right", game.Point{X: 12, Y: 12}, game.Point{X: 15, Y: 12}, game.Point{X: 1, Y: 1}},
+		{"above", game.Point{X: 12, Y: 12}, game.Point{X: 12, Y: 9}, game.Point{X: 22, Y: 22}},
+		{"below", game.Point{X: 12, Y: 12}, game.Point{X: 12, Y: 15}, game.Point{X: 1, Y: 1}},
+		{"a corner", game.Point{X: 12, Y: 12}, game.Point{X: 9, Y: 9}, game.Point{X: 22, Y: 22}},
+		{"the top left edge", game.Point{X: 3, Y: 3}, game.Point{X: 0, Y: 0}, game.Point{X: 22, Y: 22}},
+		{"the bottom right edge", game.Point{X: 20, Y: 20}, game.Point{X: 23, Y: 23}, game.Point{X: 1, Y: 1}},
+	}
+	for _, c := range cases {
+		f := newExploreFixture(t)
+		scout := reconUnit(f, 10, assets.Scout, flagLandUnit, c.scout.X, c.scout.Y)
+		scout.Values.Set(game.AttribScan, 1)
+		exploreAllBut(f.g, c.near, c.far)
+
+		f.run()
+
+		if goal, ok := moveGoal(f.g, scout); !ok || goal != c.near {
+			t.Errorf("%s: goal %v (moving %v), want the near fog %v", c.name, goal, ok, c.near)
+		}
+	}
+}
+
+// TestExploreReachesFogOnATallMap checks the ring bound: on a map taller than it is wide the
+// search still reaches a fog cell far down the long side.
+func TestExploreReachesFogOnATallMap(t *testing.T) {
+	const w, h = 4, 30
+	unitsMgr := units.NewManager()
+	grid := &access.Grid{W: w, H: h, Surf: allLand{}, Units: unitsMgr.Cells}
+	p := &game.StartParams{}
+	p.Teams[1].Type = game.TeamComputer
+	g := sim.NewWithGrid(game.NewGameState(p), unitsMgr, grid, w, h)
+	f := &exploreFixture{g: g, units: unitsMgr, tasks: NewTaskManager()}
+	f.explore = newTaskExplore(1, &aiContext{Game: g, MakeUnit: testUnitFactory})
+	scout := reconUnit(f, 10, assets.Scout, flagLandUnit, 1, 1)
+	scout.Values.Set(game.AttribScan, 1)
+	far := game.Point{X: 1, Y: 27}
+	exploreAllBut(g, far)
+
+	f.run()
+
+	if goal, ok := moveGoal(g, scout); !ok || goal != far {
+		t.Errorf("goal %v (moving %v), want the fog far down the map %v", goal, ok, far)
+	}
+}
+
+// TestExploreHoldsWithoutAFogView checks the guard: with no fog view the task does nothing.
+func TestExploreHoldsWithoutAFogView(t *testing.T) {
+	f := newExploreFixture(t)
+	scout := reconUnit(f, 10, assets.Scout, flagLandUnit, 12, 12)
+	f.g.Vis = nil
+
+	f.run()
+
+	if f.g.HasOrder(scout) {
+		t.Error("the explore task moved a scout with no fog view")
+	}
+}
+
+// TestExploreReadyRules checks the remaining gates: another team's scout, a scout with no
+// scan and a scout with no movement left are not explorers.
+func TestExploreReadyRules(t *testing.T) {
+	f := newExploreFixture(t)
+	theirs := reconUnit(f, 10, assets.Scout, flagLandUnit, 4, 4)
+	theirs.Team = 2
+	blind := reconUnit(f, 11, assets.Scout, flagLandUnit, 6, 4)
+	blind.Values.Set(game.AttribScan, 0)
+	spent := reconUnit(f, 12, assets.Scout, flagLandUnit, 8, 4)
+	spent.Speed = 0
+	ready := reconUnit(f, 13, assets.Scout, flagLandUnit, 10, 4)
+
+	for name, u := range map[string]*game.UnitInfo{"another team's scout": theirs, "a scout with no scan": blind, "a scout with no movement left": spent} {
+		if f.explore.isReadyExplorer(u) {
+			t.Errorf("%s counts as an explorer", name)
+		}
+	}
+	if !f.explore.isReadyExplorer(ready) {
+		t.Error("a ready scout does not count as an explorer")
+	}
+}
+
+// TestScoutFallsBackBesideTheBase checks the fall back target and hold: with a building on the
+// base centre the scout drives to the first free cell beside it, and the task holds it.
+func TestScoutFallsBackBesideTheBase(t *testing.T) {
+	f := newExploreFixture(t)
+	stationary(1, 50, assets.MiningSt, 2, 2, f.units)
+	scout := reconUnit(f, 10, assets.Scout, flagLandUnit, 12, 12)
+	scout.Values.Set(game.AttribRange, 1)
+	underFire(f, 16, 12, 8)
+	bx, by, _ := teamBaseCenter(f.g, 1)
+	first := f.g.AdjacentApproachCells(scout, bx, by)[0]
+
+	f.run()
+
+	if goal, ok := moveGoal(f.g, scout); !ok || goal.X != first.X || goal.Y != first.Y {
+		t.Errorf("fall back goal %v (moving %v), want the first free cell beside the base %v", goal, ok, first)
+	}
+	if f.tasks.owner[scout] != Task(f.explore) {
+		t.Error("the explore task does not hold the scout that fell back")
+	}
+}

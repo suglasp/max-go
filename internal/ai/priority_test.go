@@ -26,6 +26,8 @@ func TestComparePriorityAcrossAndInsideTiers(t *testing.T) {
 		{"inside the window, slightly less urgent", taskPriorityExplore + 0x10, -0x10},
 		{"the window edge still compares finely", taskPriorityExplore + taskPriorityTolerance, -taskPriorityTolerance},
 		{"one past the window edge is coarse", taskPriorityExplore + taskPriorityTolerance + 1, -1},
+		{"the urgent window edge still compares finely", taskPriorityExplore - taskPriorityTolerance, taskPriorityTolerance},
+		{"one past the urgent window edge is coarse", taskPriorityExplore - taskPriorityTolerance - 1, 1},
 	}
 	for _, c := range cases {
 		if got := task.comparePriority(c.other); got != c.want {

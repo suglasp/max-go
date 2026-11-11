@@ -448,3 +448,70 @@ func TestComputerTeamObtainsItsMissingSurveyor(t *testing.T) {
 		t.Errorf("Surveyor orders after the second turn = %d, want 1 (no double build)", n)
 	}
 }
+
+// TestObtainUnitsUsesOnlyItsOwnIdlePlantOfTheType checks the plant choice: another team's
+// plant, a plant of another type, a plant still being built and a busy plant are passed over
+// for a good one further down the unit list.
+func TestObtainUnitsUsesOnlyItsOwnIdlePlantOfTheType(t *testing.T) {
+	cases := []struct {
+		name  string
+		spoil func(f *obtainFixture)
+	}{
+		{"another team's plant", func(f *obtainFixture) { f.plant.Team = 2 }},
+		{"a plant of another type", func(f *obtainFixture) { f.plant.Type = assets.LandPlt }},
+		{"a plant still being built", func(f *obtainFixture) { f.plant.Building = true }},
+		{"a busy plant", func(f *obtainFixture) {
+			if produceUnit(f.ctx, f.plant, assets.Scout, flagLandUnit) == nil {
+				t.Fatal("fixture: could not busy the plant")
+			}
+		}},
+	}
+	for _, c := range cases {
+		f := newObtainFixture(t)
+		c.spoil(f)
+		good := stationary(1, 61, assets.LightPlt, 10, 10, f.units)
+
+		f.asker.requestUnit(f.ctx, surveyorNeed)
+
+		order := findOrder(f.g, assets.Surveyor)
+		if order == nil || order.Builder != good {
+			t.Errorf("%s: the Surveyor was not ordered at the good plant (order %v)", c.name, order)
+		}
+	}
+}
+
+// TestObtainUnitsKeepsTrackOfItsBuildAcrossTurns checks the tracking: a turn passes while the
+// unit is built, then it lands and another task drives it off at once; the request still
+// closes on it and orders no second one.
+func TestObtainUnitsKeepsTrackOfItsBuildAcrossTurns(t *testing.T) {
+	f := newObtainFixture(t)
+	f.asker.requestUnit(f.ctx, surveyorNeed)
+	request := f.requests()[0]
+
+	f.tasks.BeginTurn(1)
+	f.tasks.ExecuteReminders() // a turn while it is built
+
+	product := f.landBuild(t)
+	if !f.g.OrderMove(product, 12, 12) {
+		t.Fatal("fixture: could not drive the new Surveyor")
+	}
+	request.BeginTurn()
+
+	if request.IsNeeded() {
+		t.Error("the request lost track of its unit while it was built")
+	}
+	if n := f.orders(assets.Surveyor); n != 0 {
+		t.Errorf("Surveyor orders = %d, want 0 (no second build)", n)
+	}
+}
+
+// TestOrphanRequestKeepsItsOwnPriority checks the request made by a lone task with no task
+// value to point at: with no parent it reports the priority it was built with.
+func TestOrphanRequestKeepsItsOwnPriority(t *testing.T) {
+	f := newObtainFixture(t)
+	request := &taskObtainUnits{TaskBase: newTaskBase(1, nil, taskPriorityExplore), ctx: f.ctx}
+
+	if got := request.Priority(); got != taskPriorityExplore {
+		t.Errorf("orphan request Priority() = %#x, want its own %#x", got, taskPriorityExplore)
+	}
+}
