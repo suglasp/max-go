@@ -134,12 +134,16 @@ func (t *taskBulldozer) driveToNearestPile(u *game.UnitInfo, piles []sim.RubbleC
 // ensureBulldozer has one idle Light plant build a Bulldozer (the obtain), so a team with
 // rubble in the base area but no dozer can still reclaim its ground. Mirrors ensureRecon: one in
 // flight satisfies the need (countBulldozers counts production), so it builds at most one.
+// The build goes through a child obtain request (requestUnit).
 // C++: TaskObtainUnits(BULLDOZER) when ground needs clearing.
 func (t *taskBulldozer) ensureBulldozer() {
-	g := t.ctx.Game
 	if t.countBulldozers() > 0 {
 		return // already fielding or building one
 	}
+
+	t.requestUnit(t.ctx, unitNeed{unit: assets.Bulldozr, factory: assets.LightPlt, flags: flagLandUnit})
+	/* // note: unused code in Go port - replaced by the obtain request (requestUnit + produceUnit, task_obtainunits.go, step 6004)
+	g := t.ctx.Game
 	for _, f := range g.Units.Units() {
 		if f.Team != t.team || f.Type != assets.LightPlt || f.Building || g.BuildOrderFor(f) != nil {
 			continue
@@ -156,6 +160,7 @@ func (t *taskBulldozer) ensureBulldozer() {
 		dbg.Printf("ai: team %d builds a BULLDOZER to clear rubble", t.team)
 		return
 	}
+	*/
 }
 
 // countBulldozers counts the team's bulldozers, including any still in production.

@@ -119,29 +119,31 @@ func demolitionRank(t assets.UnitType) int {
 // already in production, it builds a fresh one at the plant that makes it - a Constructor
 // at the Heavy Vehicle Plant, an Engineer at the Light Vehicle Plant (menus/factorybuild
 // rosters). This is why a base whose only constructor got boxed in no longer sits idle
-// forever: the plant turns out a new one. C++ ported : aiplayer.cpp - TaskObtainUnits
-// (CONSTRUCTOR / ENGINEER) obtaining a missing builder.
+// forever: the plant turns out a new one. The build goes through a child obtain request
+// (requestUnit), which only counts a builder that can roam as found. C++ ported :
+// aiplayer.cpp - TaskObtainUnits (CONSTRUCTOR / ENGINEER) obtaining a missing builder.
 func (t *taskManageBuildings) ensureBuilders() {
 	for _, d := range builderDemand {
-		if t.usableBuilders(d.unit) > 0 || t.producing(d.unit) > 0 {
+		if t.usableBuilders(d.unit) > 0 || unitsInProduction(t.ctx.Game, t.team, d.unit) > 0 {
 			continue // one is working or already on the way
 		}
-		if t.produceAtFactory(d.factory, d.unit) {
-			dbg.Logf(dbg.AI, "team %d building a replacement %s at a %s", t.team, d.unit.Tag(), d.factory.Tag())
-		}
+
+		t.requestUnit(t.ctx, unitNeed{unit: d.unit, factory: d.factory, flags: d.flags, accept: t.canRoam})
 	}
 }
 
-// builderNeed pairs a builder the team must keep with the plant producing it.
+// builderNeed pairs a builder the team must keep with the plant producing it and its
+// deploy flags.
 type builderNeed struct {
 	unit    assets.UnitType
 	factory assets.UnitType
+	flags   game.Flags
 }
 
 // builderDemand maps each builder the team must keep to the plant that produces it.
 var builderDemand = []builderNeed{
-	{assets.Constrct, assets.LandPlt},  // 2x2 builder, Heavy Vehicle Plant
-	{assets.Engineer, assets.LightPlt}, // 1x1 builder, Light Vehicle Plant
+	{assets.Constrct, assets.LandPlt, flagLandUnit},  // 2x2 builder, Heavy Vehicle Plant
+	{assets.Engineer, assets.LightPlt, flagLandUnit}, // 1x1 builder, Light Vehicle Plant
 }
 
 // usableBuilders counts the team's builders of a type that are still doing their job:
@@ -163,6 +165,7 @@ func (t *taskManageBuildings) usableBuilders(unitType assets.UnitType) int {
 	return n
 }
 
+/* // note: unused code in Go port - replaced by unitsInProduction (task_obtainunits.go, step 6004)
 // producing counts how many of a type the team is already turning out at its factories,
 // so ensureBuilders never queues a second replacement while one is under construction.
 func (t *taskManageBuildings) producing(unitType assets.UnitType) int {
@@ -176,7 +179,9 @@ func (t *taskManageBuildings) producing(unitType assets.UnitType) int {
 
 	return n
 }
+*/
 
+/* // note: unused code in Go port - replaced by the obtain request (requestUnit + produceUnit, task_obtainunits.go, step 6004)
 // produceAtFactory starts one unit of unitType at an idle plant of factoryType, on a
 // free deploy cell. Returns whether an order was issued. C++: TaskManager.CreateUnit /
 // StartBuilding on the plant.
@@ -206,3 +211,4 @@ func (t *taskManageBuildings) produceAtFactory(factoryType, unitType assets.Unit
 
 	return false
 }
+*/

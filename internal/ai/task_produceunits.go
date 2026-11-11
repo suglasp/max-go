@@ -65,25 +65,17 @@ func (t *taskProduceUnits) BeginTurn() {
 // sees no new surveyed deposits, and base expansion silently stalls. It claims one
 // idle factory of the right type per missing recon unit; the order already flying then
 // satisfies the demand (teamUnitCount counts production), so it builds at most one
-// each until the minimum is met. C++ ported : aiplayer.cpp - CheckReconnaissanceNeeds
-// + taskfindmines.cpp - TaskObtainUnits(SURVEYOR) (obtaining the reconnaissance unit).
+// each until the minimum is met. The build goes through a child obtain request
+// (requestUnit), worked at once so it takes its plant before generic production.
+// C++ ported : aiplayer.cpp - CheckReconnaissanceNeeds + taskfindmines.cpp -
+// TaskObtainUnits(SURVEYOR) (obtaining the reconnaissance unit).
 func (t *taskProduceUnits) ensureRecon() {
-	g := t.ctx.Game
-
 	for _, d := range reconDemand {
 		if t.teamUnitCount(d.unit) >= d.min {
 			continue // already fielding / building enough of this recon unit
 		}
 
-		for _, f := range g.Units.Units() {
-			if f.Type != d.factory || !t.isIdleFactory(f) {
-				continue
-			}
-
-			if t.produce(f, producible{d.unit, d.flags}) {
-				break // one of this recon type per turn
-			}
-		}
+		t.requestUnit(t.ctx, unitNeed{unit: d.unit, factory: d.factory, flags: d.flags})
 	}
 }
 
@@ -110,18 +102,5 @@ func (t *taskProduceUnits) isIdleFactory(f *game.UnitInfo) bool {
 // produce finds a free deploy cell next to the factory and issues the build
 // order for the chosen unit. C++: TaskManager.CreateUnit / StartBuilding.
 func (t *taskProduceUnits) produce(factory *game.UnitInfo, prod producible) bool {
-	g := t.ctx.Game
-	x, y, ok := g.FactoryDeployCell(factory, prod.flags)
-	if !ok {
-		return false
-	}
-
-	unit := t.ctx.MakeUnit(t.team, prod.t, prod.flags)
-	if unit == nil {
-		return false
-	}
-
-	g.StartBuild(factory, unit, x, y, aiBuildRate(g, factory, unit))
-
-	return true
+	return produceUnit(t.ctx, factory, prod.t, prod.flags) != nil
 }

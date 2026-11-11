@@ -142,12 +142,24 @@ func TestConnectionAssistantIsAChildOfTheBuildingManager(t *testing.T) {
 		t.Errorf("assistant priority = %#x, want the manager's %#x", assistant.basePriority, assistant.manager.basePriority)
 	}
 
+	// Every child of the manager goes with it: the assistant and any open unit request
+	// (a bare map has no builders, so the manager asked for them).
+	children := 0
+	for _, task := range a.mgr.tasks {
+		if request, ok := task.(*taskObtainUnits); ok && request.parent == Task(assistant.manager) {
+			children++
+		}
+	}
+	if children == 0 {
+		t.Fatal("fixture: the building manager opened no unit request on a map without builders")
+	}
+
 	count := a.mgr.TaskCount()
 	assistant.manager.RemoveSelf()
 	a.mgr.BeginTurn(1)
 
-	if a.mgr.TaskCount() != count-2 {
-		t.Errorf("TaskCount = %d, want %d (manager and assistant gone)", a.mgr.TaskCount(), count-2)
+	if want := count - 2 - children; a.mgr.TaskCount() != want {
+		t.Errorf("TaskCount = %d, want %d (manager, assistant and %d requests gone)", a.mgr.TaskCount(), want, children)
 	}
 	for _, task := range a.mgr.tasks {
 		if task == Task(assistant) {
