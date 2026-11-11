@@ -263,9 +263,9 @@ func TestLedgerKeepsTheSameUnitsApart(t *testing.T) {
 	if explore.isReadyExplorer(damaged) {
 		t.Error("the explore task would send the damaged tank scouting")
 	}
-	// No enemy in sight: the attack leaves the healthy tank idle, so the explore task
-	// sends it scouting and holds it.
-	if m.owner[healthy] != Task(explore) || !g.HasOrder(healthy) {
-		t.Errorf("the healthy tank: owner %v, has order %v; want the explore task driving it", m.owner[healthy], g.HasOrder(healthy))
+	// No enemy in sight: the healthy tank stays in the attack's force, and the explore
+	// task (recon units only) leaves it alone.
+	if m.owner[healthy] != Task(attack) || g.HasOrder(healthy) {
+		t.Errorf("the healthy tank: owner %v, has order %v; want the attack holding it idle", m.owner[healthy], g.HasOrder(healthy))
 	}
 }

@@ -109,16 +109,22 @@ func (t *taskEscort) BeginTurn() {
 // stands (so the escort shoots a threat that wanders into range instead of only hugging
 // its charge), or nil. C++: AiAttack_EvaluateAssault on the escort unit.
 func (t *taskEscort) engageable(guard *game.UnitInfo) *game.UnitInfo {
-	g := t.ctx.Game
+	return engageableEnemy(t.ctx.Game, t.team, guard)
+}
+
+// engageableEnemy returns the spotted enemy nearest u that u can attack from where it
+// stands, or nil. Shared by the escort and the explore task (a scout under fire fights
+// back). C++: AiAttack_EvaluateAssault on the unit.
+func engageableEnemy(g *sim.Game, team int, guard *game.UnitInfo) *game.UnitInfo {
 	var best *game.UnitInfo
 	bestD := 1 << 30
 
 	for _, e := range g.Units.Units() {
-		if e.Team == t.team || e.Team < 0 || e.Team >= game.TeamCount {
+		if e.Team == team || e.Team < 0 || e.Team >= game.TeamCount {
 			continue
 		}
 
-		if e.GridX < 0 || e.GridY < 0 || !g.SpottedByTeam(e, t.team) {
+		if e.GridX < 0 || e.GridY < 0 || !g.SpottedByTeam(e, team) {
 			continue
 		}
 
@@ -126,7 +132,7 @@ func (t *taskEscort) engageable(guard *game.UnitInfo) *game.UnitInfo {
 			continue
 		}
 
-		ex, ey := believedCell(g, t.team, e)
+		ex, ey := believedCell(g, team, e)
 		if !g.CanAttack(guard, ex, ey) {
 			continue
 		}

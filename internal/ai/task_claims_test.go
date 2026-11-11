@@ -72,10 +72,10 @@ func TestEachTaskHoldsTheUnitsItUses(t *testing.T) {
 	}
 }
 
-// TestExploreStillTakesAnIdleAttacker checks the keep's contention with the run order: the
-// attack holds its ready tank, and the more urgent explore task, running after it, takes
-// the tank it drives off; the next turn the tank stays with explore while explore drives it.
-func TestExploreStillTakesAnIdleAttacker(t *testing.T) {
+// TestExploreLeavesCombatUnitsToTheAttack is the keep seam with the explore roles: an idle
+// tank with scan stays in the attack's force over two turns, and explore never drives it
+// (only recon units explore).
+func TestExploreLeavesCombatUnitsToTheAttack(t *testing.T) {
 	f := newObtainFixture(t)
 	tank := armedTank(1, 50, 8, 8, f.units)
 	tank.Hits = 10
@@ -87,13 +87,14 @@ func TestExploreStillTakesAnIdleAttacker(t *testing.T) {
 	f.tasks.AppendTask(explore)
 	f.tasks.ExecuteReminders()
 
-	if f.tasks.owner[tank] != Task(explore) || !f.g.HasOrder(tank) {
-		t.Fatalf("owner %v, order %v: want explore driving the idle tank", f.tasks.owner[tank], f.g.HasOrder(tank))
-	}
-
-	// Next turn the attack runs first and must not take the tank from the more urgent explore.
-	f.tasks.BeginTurn(1)
-	if attack.mayClaim(tank) {
-		t.Error("the attack may take a tank the more urgent explore keeps")
+	for turn := 1; turn <= 2; turn++ {
+		if f.tasks.owner[tank] != Task(attack) || f.g.HasOrder(tank) {
+			t.Errorf("turn %d: owner %v, order %v; want the attack holding the idle tank", turn, f.tasks.owner[tank], f.g.HasOrder(tank))
+		}
+		if explore.isReadyExplorer(tank) {
+			t.Errorf("turn %d: explore counts a tank as an explorer", turn)
+		}
+		f.tasks.BeginTurn(1)
+		f.tasks.ExecuteReminders()
 	}
 }

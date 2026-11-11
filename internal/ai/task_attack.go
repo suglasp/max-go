@@ -145,8 +145,8 @@ func (t *taskAttackEnemies) BeginTurn() {
 		}
 
 		// Can get no closer and not yet searching. Dedupe: only one unit begins a search
-		// for a given stale cell per turn; the rest stay idle for the explore task to
-		// spread them out (reacquiring from new angles instead of all crowding one cell).
+		// for a given stale cell per turn; the rest stay idle with the attack (only recon
+		// units explore), so the force does not all crowd one cell.
 		if t.claimSearchCell(tx, ty) {
 			t.beginSearch(u, target, tx, ty)
 		} else {

@@ -262,6 +262,16 @@ func unitDamaged(u *game.UnitInfo) bool {
 		return false // unarmed (scout / truck / surveyor): not a combat unit to retreat
 	}
 
+	return lowHealth(u)
+}
+
+// lowHealth reports whether u's hits are below the retreat threshold (hits < HITS *
+// num/den), armed or not. A unit without a hits value is never low.
+func lowHealth(u *game.UnitInfo) bool {
+	if u.Values == nil {
+		return false
+	}
+
 	maxHits := u.Values.Get(game.AttribHits)
 	if maxHits <= 0 {
 		return false

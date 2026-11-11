@@ -3477,8 +3477,9 @@ func TestEscortSurplusCap(t *testing.T) {
 	}
 }
 
-// TestExploreSkipsEscort: an escort guard that could otherwise scout (it has scan range)
-// is left on its charge, while a free scan unit is still a ready explorer.
+// TestExploreSkipsEscort: an escort guard that could otherwise scout (an armed Scout
+// with scan range) is left on its charge, while a free Scout is still a ready explorer.
+// Both are recon units, so only the ledger keeps the guard out of the explore.
 func TestExploreSkipsEscort(t *testing.T) {
 	setDifficulty(t, OpponentExpert) // escort on, muster 3
 	const w, h = 24, 24
@@ -3489,8 +3490,8 @@ func TestExploreSkipsEscort(t *testing.T) {
 	g := sim.NewWithGrid(game.NewGameState(p), mgr, grid, w, h)
 
 	_ = scannerUnit(1, 1, 10, 10, mgr)
-	guard := armedTank(1, 2, 6, 10, mgr) // nearest -> the escort
-	free := armedTank(1, 3, 2, 2, mgr)
+	guard := armedUnit(1, 2, assets.Scout, flagLandUnit, 6, 10, mgr) // nearest -> the escort
+	free := armedUnit(1, 3, assets.Scout, flagLandUnit, 2, 2, mgr)
 	_ = armedTank(1, 4, 2, 5, mgr)
 	_ = armedTank(1, 5, 18, 18, mgr)
 	guard.Values.Set(game.AttribScan, 3) // both could scout if free
@@ -3507,7 +3508,7 @@ func TestExploreSkipsEscort(t *testing.T) {
 		t.Error("the explore task would pull the escort guard off its charge to scout")
 	}
 	if !te.isReadyExplorer(free) {
-		t.Error("a free scan unit should still be a ready explorer")
+		t.Error("a free Scout should still be a ready explorer")
 	}
 }
 
