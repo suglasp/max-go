@@ -43,7 +43,6 @@ func TestAlienReactorNeverFires(t *testing.T) {
 // so it can be attacked and salvaged.
 func TestPlayerCanAttackAlien(t *testing.T) {
 	g := newGame(t, 20, 12)
-	/* mobile := game.FlagMobileLandUnit | game.FlagSelectable: note: unused code in Go port, never read (was _ = mobile) */
 
 	turret := addReactor(g, assets.GunTurrt, 1, 0, 5, 5, 4, 8, reactBuilding)
 	alienMover := addTankTarget(g, 2, 7, 5, game.AlienTeam) // alien, 2 tiles east -> in range

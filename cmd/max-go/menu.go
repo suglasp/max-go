@@ -618,11 +618,6 @@ func (f *menuFlow) menuLoop() error {
 			// (reachable via -emulate multiplayer) but the main button just say so.
 			menus.Message(f.ctx, "No multiplayer support in this version.")
 
-			/* // note: unused code in Go port
-				// the switch handles all eight MainMenuResult values, so this branch could not run.
-			default:
-				menus.NotImplemented(f.ctx, sel.String())
-			*/
 		}
 	}
 }
@@ -773,40 +768,12 @@ var npcOverride = 1
 // games read cfg.Game.AlienDerelicts because the benches have no setup screen.
 var derelictsLevel = 1
 
-/* // note: unused code in Go port
-// benchDerelictsLevel repeated resourceDensity (custom_flags.go) for every validated -derelicts value; main now calls resourceDensity.
-// benchDerelictsLevel maps -derelicts to the density used by random benches.
-// An empty value defaults to Rare, while None disables derelicts.
-func benchDerelictsLevel(v string) int {
-	switch strings.ToLower(strings.TrimSpace(v)) {
-	case "none":
-		return 0
-
-	case "common":
-		return 2
-
-	default: // "" (default) or "rare"
-		return 1
-	}
-}
-*/
-
 // npcCount resolves how many computer opponents a game fields, 1..3 (there are 4
 // team slots: one player plus up to three NPCs). It answers for a custom game as
 // well as the -random / -random2 benches, since the setup screen carries no
 // opponent COUNT panel: the only way to ask for more than one is -npc.
 func npcCount() int {
 	n := npcOverride
-	/* // note: unused code in Go port
-	// validateNPC (launch_args.go) refuses an -npc outside 1..3 before the run starts, so the clamp never fires.
-	if n < 1 {
-		n = 1
-	}
-
-	if n > game.TeamCount-1 {
-		n = game.TeamCount - 1
-	}
-	*/
 
 	return n
 }
@@ -869,19 +836,6 @@ func soLoudDLLPath() string {
 	}
 
 	name := soloudlib.DefaultLibName()
-	/* // note: unused code in Go port
-	// the name table the binding now owns (soloudlib.DefaultLibName).
-	name := "libsoloud_x64.so"
-	if runtime.GOOS == "windows" {
-		name = "soloud_x64.dll"
-
-		if runtime.GOARCH == "386" {
-			name = "soloud_x86.dll"
-		}
-	} else if runtime.GOOS == "darwin" {
-		name = "libsoloud_x64.dylib"
-	}
-	*/
 
 	path := filepath.Join(baseDir, name)
 	if _, err := os.Stat(path); err == nil {
@@ -903,15 +857,6 @@ func miniAudioDLLPath() string {
 	}
 
 	name := miniaudiolib.DefaultLibName()
-	/* // note: unused code in Go port
-	// the name table the binding now owns (miniaudiolib.DefaultLibName).
-	name := "libminiaudio_x64.so"
-	if runtime.GOOS == "windows" {
-		name = "miniaudio_x64.dll"
-	} else if runtime.GOOS == "darwin" {
-		name = "libminiaudio_x64.dylib"
-	}
-	*/
 
 	path := filepath.Join(baseDir, name)
 	if _, err := os.Stat(path); err == nil {

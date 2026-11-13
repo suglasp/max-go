@@ -62,7 +62,7 @@ func (s *Screen) beginSimRound() {
 	// saved. The restored FinishedTurn flags and the restored turn clock both stay.
 	// C++ ported : game_manager.cpp - the GAME_STATE_10_LOAD_GAME guards on
 	// ManageEconomy/ProgressBuildState (save data carries the AI state too, so it
-	// also skips Ai_BeginTurn; the port's do not, hence the replan half).
+	// also skips Ai_BeginTurn; the live-game paths do not, so this code rebuilds their plans.
 	if s.turnFlow.simLoadResume {
 		s.turnFlow.simLoadResume = false
 

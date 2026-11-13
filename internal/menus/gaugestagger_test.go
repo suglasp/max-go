@@ -7,19 +7,6 @@ package menus
 
 import "testing"
 
-/* // note: unused code in Go port
-// a copy of the report's line box; the test now calls the live statLineSpan and statGaugeBoxH.
-// The report cuts its 50px stat block into four, insetting each line a pixel top and
-// bottom, so the rows come out 10, 11, 10, 11 tall. drawStatBlock then hands the gauge
-// one pixel less than that, which is the box the icons are staggered in.
-func reportGaugeBoxH(row int) int {
-	top := (rpRowBodyH*row)/rpStatRows + 1
-	bottom := (rpRowBodyH*(row+1))/rpStatRows - 1
-
-	return bottom - top - 1
-}
-*/
-
 // reportGaugeBox is the icon box of report stat line row, from the same calls drawStatBlock makes for a row.
 func reportGaugeBox(row int) int {
 	top, bottom := statLineSpan(0, rpRowBodyH, row)

@@ -23,7 +23,7 @@ const (
 	taskPriorityExplore         uint16 = 0x1B00 // map exploration
 	taskPriorityManageBuildings uint16 = 0x1D00 // the economy: buildings and unit production
 	taskPriorityAttackDefault   uint16 = 0x1F00 // the default attack tier
-	taskPriorityAutoSurvey      uint16 = 0x2200 // resource surveying: the weakest claim the port uses
+	taskPriorityAutoSurvey      uint16 = 0x2200 // resource surveying: the weakest claim tier
 )
 
 // comparePriority compares the task against another priority p. It returns a positive

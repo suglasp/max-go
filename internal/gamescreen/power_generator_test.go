@@ -13,24 +13,6 @@ import (
 	"github.com/suglasp/max-go/internal/game"
 )
 
-/* // note: unused code in Go port
-// replaced by the shared newTestScreen(t, 16) in fixture_test.go
-// landGameForPower builds a 16x16 all land game with team 0 as the player.
-func landGameForPower(t *testing.T) (*sim.Game, *world.Map) {
-	t.Helper()
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
-	g.State.ActiveTeam, g.State.PlayerTeam = 0, 0
-	return g, m
-}
-*/
-
 // TestGeneratorPowerOffStaysOnlineWhenNeeded verifies a found gap:
 // powering a generator off seemed to do nothing (factories kept running, no
 // message). Generators are engine managed, so the optimizer repowers a generator

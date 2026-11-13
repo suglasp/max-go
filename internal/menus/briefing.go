@@ -72,8 +72,7 @@ func RunCampaignVictory(ctx *Context, dir string, index int) error {
 		return nil
 	}
 
-	// The port's PlayMusic ignores a repeat of the tag already playing, so stop
-	// first to force the win jingle to restart under the story.
+	// Stop the current music so the win jingle restarts under the story.
 	if ctx.Audio != nil {
 		ctx.Audio.StopMusic()
 		ctx.Audio.PlayMusic("WINR_MSC", false)
@@ -128,7 +127,7 @@ func RunMissionBriefing(ctx *Context, text string) error {
 
 	// The reveal: one more character every briefingCharMS. A normal typed key, ESC,
 	// or a left click finishes it at once. Only the F keys are left alone (the
-	// original speeds up on any input, but the port leaves the F keys alone).
+	// The original speeds up on any input, while this input path leaves the F keys alone.)
 	// The skipping key is flushed below, so the ESC that finished the text does not
 	// also dismiss the OK plate: leaving takes a second press.
 	prevButtons := ctx.Plat.Mouse().Buttons

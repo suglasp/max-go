@@ -12,25 +12,6 @@ import (
 	"github.com/suglasp/max-go/internal/game"
 )
 
-/* // note: unused code in Go port
-// replaced by the shared newTestScreen(t, 16) in fixture_test.go
-// newClickScreen builds a headless Screen on an all land map for click tests.
-func newClickScreen(t *testing.T) (*Screen, *sim.Game) {
-	t.Helper()
-	m := &world.Map{Surface: make([]uint8, 16*16)}
-	m.W, m.H = 16, 16
-	for i := range m.Surface {
-		m.Surface[i] = world.SurfaceLand
-	}
-	p := &game.StartParams{}
-	p.Teams[0].Type = game.TeamPlayer
-	g := sim.New(p, m)
-	g.State.ActiveTeam = 0
-	g.State.PlayerTeam = 0
-	return &Screen{game: g, wmap: m, r: drawmap.New(m)}, g
-}
-*/
-
 // TestClickCycleStackedUnits verifies that a unit
 // parked on a connector ("collector") could not be told apart from the building
 // under it. Clicking a cell the selected unit already sits on now cycles to the

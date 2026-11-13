@@ -574,14 +574,6 @@ func toUpper(key int) int {
 	return key
 }
 
-/* // note: unused code in Go port
-// only the unreachable default branch of the main menu switch called it; every MainMenuResult has its own case.
-// NotImplemented shows a modal dialog for menu entries that are not available.
-func NotImplemented(ctx *Context, what string) {
-	messageBox(ctx, what+" is not ported yet.")
-}
-*/
-
 // Message shows a MAX style OK modal with caller provided text.
 func Message(ctx *Context, text string) {
 	messageBox(ctx, text)
@@ -591,29 +583,6 @@ func Message(ctx *Context, text string) {
 func Confirm(ctx *Context, text string) bool {
 	return modalDialog(ctx, text, dialog.ModeOKCancel) == dialog.ResultAccept
 }
-
-/* // note: ported but unused code in Go port
-// OkCancel shows the vanilla OK/Cancel modal and invokes only the selected
-// callback. Quit callers can use this when they need callback style wiring.
-//
-// C++: OKCancelMenu (okcancelmenu.cpp)
-func OkCancel(ctx *Context, text string, okFn, cancelFn func()) bool {
-	return runOkCancelCallbacks(modalDialog(ctx, text, dialog.ModeOKCancel), okFn, cancelFn)
-}
-
-func runOkCancelCallbacks(result dialog.Result, okFn, cancelFn func()) bool {
-	if result == dialog.ResultAccept {
-		if okFn != nil {
-			okFn()
-		}
-		return true
-	}
-	if cancelFn != nil {
-		cancelFn()
-	}
-	return false
-}
-*/
 
 // messageBox shows a modal text dialog with an OK button.
 //

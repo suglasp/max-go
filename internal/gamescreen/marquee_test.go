@@ -29,18 +29,6 @@ func setMarqueeBox(s *Screen, ax, ay, bx, by int) {
 	s.commitMarquee()
 }
 
-/* // note: unused code in Go port
-// replaced by the shared mkTank(g.Units, team, id, gx, gy, tankStats{}) in fixture_test.go
-func mkMobile(g *sim.Game, team, id, gx, gy int) *game.UnitInfo {
-	u := game.NewUnitInfo(assets.Tank, team, id, 0)
-	u.Flags = game.FlagMobileLandUnit | game.FlagSelectable
-	u.Values = &game.UnitValues{}
-	g.Units.Deploy(u, gx, gy)
-
-	return u
-}
-*/
-
 // TestMarqueeSelectsOwnMobileUnitsInBox: a drag box takes the player's mobile units
 // inside it and leaves out an enemy, a building and units outside the box.
 func TestMarqueeSelectsOwnMobileUnitsInBox(t *testing.T) {

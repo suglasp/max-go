@@ -333,11 +333,8 @@ func TestComplexCargoMining(t *testing.T) {
 	}
 }
 
-// TestCapStoresWastesWhatTheBaseCannotHold pins the storage cap. The port used to keep an
-// unbounded pool: a mine kept filling past the base's capacity, the surplus stayed in the
-// pool unshown, and the gauge read a full 25/25 while the base secretly held more. The
-// original has no pool at all - the stock lives in the buildings - so anything over
-// capacity is simply lost, and the cure is to build storage.
+// TestCapStoresWastesWhatTheBaseCannotHold pins the storage cap. Stock lives in buildings,
+// so anything over capacity is lost and additional storage is required.
 func TestCapStoresWastesWhatTheBaseCannotHold(t *testing.T) {
 	c := NewComplex(1)
 	c.Grow(building(assets.MiningSt, 0, 5, 5, game.OrderPowerOn, 25)) // 25 raw, no fuel/gold

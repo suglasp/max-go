@@ -94,17 +94,6 @@ var (
 	wavStreamLoadFile      func(uintptr, uintptr) int32
 	wavStreamLoadFileToMem func(uintptr, uintptr) int32
 	wavStreamGetLength     func(uintptr) float64
-
-	/* // note: unused code in Go port
-	// bound but never called: every wrapper calls the Ex variant or loads from a path.
-	monotoneLoadMem func(uintptr, *byte, uint32) int32
-	openmptLoadMem func(uintptr, *byte, uint32) int32
-	sfxrLoadParamsMem func(uintptr, *byte, uint32) int32
-	tedSidLoadMem func(uintptr, *byte, uint32) int32
-	wavLoadMem func(uintptr, *byte, uint32) int32
-	wavLoadRawWave func(uintptr, *float32, uint32) int32
-	wavStreamLoadMem func(uintptr, *byte, uint32) int32
-	*/
 )
 
 func registerSources() {
@@ -191,15 +180,6 @@ func registerSources() {
 	reg(&wavStreamLoadFileToMem, "WavStream_loadFileToMem")
 	reg(&wavStreamGetLength, "WavStream_getLength")
 
-	/* // note: unused code in Go port, the binds of the never called func vars above
-	reg(&monotoneLoadMem, "Monotone_loadMem")
-	reg(&openmptLoadMem, "Openmpt_loadMem")
-	reg(&sfxrLoadParamsMem, "Sfxr_loadParamsMem")
-	reg(&tedSidLoadMem, "TedSid_loadMem")
-	reg(&wavLoadMem, "Wav_loadMem")
-	reg(&wavLoadRawWave, "Wav_loadRawWave")
-	reg(&wavStreamLoadMem, "WavStream_loadMem")
-	*/
 }
 
 /*

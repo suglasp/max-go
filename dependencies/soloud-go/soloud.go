@@ -140,14 +140,3 @@ func slicePtr[T any](s []T) *T {
 
 	return &s[0]
 }
-
-/* // note: unused code in Go port
-// bytePtr was the byte only form of slicePtr.
-func bytePtr(b []byte) *byte {
-	if len(b) == 0 {
-		return nil
-	}
-
-	return &b[0]
-}
-*/

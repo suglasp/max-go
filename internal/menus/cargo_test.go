@@ -189,7 +189,7 @@ func newTestCargoMenu(t *testing.T, lo *CargoLoadout) *cargoMenu {
 		sc: units.NewSpriteCache(lib, &pic.Palette), at: a.Attribs,
 		baseVals: map[assets.UnitType]*game.UnitValues{},
 		curVals:  map[assets.UnitType]*game.UnitValues{},
-		/* statIcons, portraitCache: note: unused code in Go port, the caches moved to Context */
+
 		buyBtn: -1, deleteBtn: -1,
 	}
 	m.entry = *lo

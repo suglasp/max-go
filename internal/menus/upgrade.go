@@ -47,10 +47,6 @@ const (
 	ugCostX                                = 321
 	ugGoldX, ugGoldY, ugGoldW, ugGoldH     = 366, 276, 40, 140 // UPGRADE gold slot opening is x~366..385
 	ugArrowsX                              = 283
-	/* // note: unused code in Go port
-	// ugRowStep had no reader; the rows step by ugRowH.
-	ugRowStep = 19
-	*/
 )
 
 // upgradeMenu is the Upgrade screen state: the unit set with its rollback
@@ -81,10 +77,7 @@ type upgradeMenu struct {
 	sc        *unitspr.SpriteCache
 
 	rowButtons []gnw.ButtonID // dynamic per selection arrow buttons
-	/* // note: unused code in Go port
-	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
-	statIcons map[string]*gfx.Buffer
-	*/
+
 }
 
 // RunUpgrade runs the Upgrade screen over the given unit types, spending from
@@ -139,7 +132,6 @@ func RunUpgrade(ctx *Context, units []*game.UpgradeUnit, gold *int, center gfx.R
 		visRows:   ugListH / ugRowH,
 		portraits: map[assets.UnitType]*gfx.Buffer{},
 		sc:        unitspr.NewSpriteCache(ctx.Lib, &pic.Palette),
-		/* statIcons: map[string]*gfx.Buffer{}: note: unused code in Go port, see the struct */
 	}
 
 	buttons := m.buildWidgets()
@@ -351,27 +343,6 @@ func (m *upgradeMenu) loadPortrait(t assets.UnitType) *gfx.Buffer {
 	m.portraits[t] = b
 	return b
 }
-
-/* // note: unused code in Go port
-// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
-// statIcon caches a keyed gauge icon for the stat panel (same as the cargo
-// screen, both are AbstractUpgradeMenu).
-func (m *upgradeMenu) statIcon(tag string) *gfx.Buffer {
-	if b, ok := m.statIcons[tag]; ok {
-		return b
-	}
-	var b *gfx.Buffer
-	if tag != "" {
-		if img, e := m.ctx.loadSimple(tag); e == nil {
-			c := img.Buffer().Clone()
-			c.KeyToZero(c.At(0, 0))
-			b = c
-		}
-	}
-	m.statIcons[tag] = b
-	return b
-}
-*/
 
 // drawList paints the right hand unit selector: a 32px icon + name row per
 // unit (the original UnitTypeSelector), the selected row marked with the

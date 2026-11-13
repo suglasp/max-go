@@ -365,24 +365,6 @@ func copyClipped(dst *gfx.Buffer, x, y int, src *gfx.Buffer) {
 	dst.Sub(x, y, w, h).Copy(src.Sub(0, 0, w, h))
 }
 
-/* // note: ported but unused code in Go port
-// LoadHorizontalBar draws the left part of bar into dst, using color 0 as
-// transparent. It mirrors the original's helper, with callers passing the decoded art.
-//
-// C++ ported : scrollbar.cpp - LoadHorizontalBar
-func LoadHorizontalBar(dst *gfx.Buffer, capacity, height int, bar *gfx.Buffer) {
-	drawBar(dst, 0, 0, capacity, height, bar)
-}
-
-// LoadVerticalBar draws a vertical bar segment into dst, using color 0 as
-// transparent. It mirrors the original's helper, with callers passing the decoded art.
-//
-// C++ ported : scrollbar.cpp - LoadVerticalBar
-func LoadVerticalBar(dst *gfx.Buffer, capacity, width int, bar *gfx.Buffer) {
-	drawBar(dst, 0, 0, width, capacity, bar)
-}
-*/
-
 // drawBar blits the top-left wExtent x hExtent rectangle of bar into dst at x,y,
 // using color 0 as transparent. Both extents clamp to the bar art size. The
 // horizontal and vertical scrollbar fills are the same blit, only the axis that
@@ -406,28 +388,3 @@ func drawBar(dst *gfx.Buffer, x, y, wExtent, hExtent int, bar *gfx.Buffer) {
 		}
 	}
 }
-
-/* // note: unused code in Go port
-// itoa repeated strconv.Itoa.
-func itoa(v int) string {
-	if v == 0 {
-		return "0"
-	}
-	neg := v < 0
-	if neg {
-		v = -v
-	}
-	var buf [20]byte
-	i := len(buf)
-	for v > 0 {
-		i--
-		buf[i] = byte('0' + v%10)
-		v /= 10
-	}
-	if neg {
-		i--
-		buf[i] = '-'
-	}
-	return string(buf[i:])
-}
-*/

@@ -351,13 +351,6 @@ func (s *Screen) Draw(dst *gfx.Buffer) {
 	}
 }
 
-/* // note: unused code in Go port
-// Done reports whether every line has scrolled past the top.
-func (s *Screen) Done() bool {
-	return s.done
-}
-*/
-
 // finishOffset returns the scroll offset where the last line has left the view.
 func (s *Screen) finishOffset() int {
 	return columnH + len(s.lines)*lineSpacing
@@ -413,14 +406,3 @@ func copyClipped(dst, src *gfx.Buffer, x, y int, transparentCopy bool, transpare
 		}
 	}
 }
-
-/* // note: unused code in Go port
-// the helper repeated the builtin min; callers use it directly.
-// min returns the smaller of two integers.
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-*/

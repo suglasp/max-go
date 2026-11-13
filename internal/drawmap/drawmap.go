@@ -24,12 +24,6 @@ const (
 	MaxZoom = world.TileSize // 64, one tile at 1:1
 )
 
-/* // note: unused code in Go port
-// ZoomLevels had no reader; the zoom slider sets any level between MinZoom and MaxZoom.
-// ZoomLevels are the preset steps the in game zoom buttons cycle through.
-var ZoomLevels = []int{4, 8, 16, 32, 64}
-*/
-
 // DefaultGridColor is the land grid overlay color used when a world
 // supplies none (the original's fallback in DrawMap_RenderSimpleGridOverlay).
 const DefaultGridColor uint8 = 37
@@ -249,28 +243,3 @@ func vline(b *gfx.Buffer, x, startY, endY int, c uint8) {
 		b.Set(x, y, c)
 	}
 }
-
-/* // note: unused code in Go port
-// clamp repeated the builtins (lo was always 0); callers write max(lo, min(v, hi)).
-// clamp constrains v to the inclusive lo..hi range.
-func clamp(v, lo, hi int) int {
-	if v < lo {
-		return lo
-	}
-	if v > hi {
-		return hi
-	}
-	return v
-}
-*/
-
-/* // note: unused code in Go port
-// the helper repeated the builtin max (max(0, v)); callers use it directly.
-// max0 clamps negative values up to zero.
-func max0(v int) int {
-	if v < 0 {
-		return 0
-	}
-	return v
-}
-*/

@@ -162,8 +162,8 @@ func TestConstructorDoneArmsSelectSite(t *testing.T) {
 // TestBuildRefusalNamesTheSurface: the original refuses a 1x1 build with one generic line
 // for every reason, which leaves the player guessing - and the map's art does not tell you
 // what the pass table calls a tile (a shoreline tile can be drawn as water meeting land
-// and still be classified LAND, so a Bridge refuses it). When the SURFACE is the blocker
-// the port now says so and names both surfaces.
+// and still be classified LAND, so a Bridge refuses it). When SURFACE blocks the build,
+// the message names both surfaces.
 func TestBuildRefusalNamesTheSurface(t *testing.T) {
 	s, g := newTestScreen(t, 16)
 

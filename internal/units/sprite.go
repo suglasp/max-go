@@ -274,25 +274,6 @@ func (c *SpriteCache) TurretCount(t assets.UnitType) int {
 	return set.Frame.TurretImageCount
 }
 
-/* // note: unused code in Go port
-// DrawFrame has no caller; effects and missiles draw through DrawFrameAtPixel.
-// DrawFrame composites one body frame of a unit type at a grid cell's centre, neutral
-// (team 0) coloured, for teamless effects such as explosions and rubble. A frame out
-// of range draws nothing. C++: the sprite blits for a hit explosion or rubble.
-func (c *SpriteCache) DrawFrame(dst *gfx.Buffer, t assets.UnitType, frame, cellX, cellY, zoom, scrollX, scrollY int) {
-	set := c.Set(t)
-	if set == nil || set.Body == nil {
-		return
-	}
-	const tile = 64
-	sx := cellX*zoom + zoom/2 - scrollX
-	sy := cellY*zoom + zoom/2 - scrollY
-	if f := frameAt(set.Body, frame); f != nil {
-		f.DrawScaled(dst, sx, sy, zoom, tile, &c.teams[0])
-	}
-}
-*/
-
 // DrawFrameAtPixel composites one body frame at an arbitrary PIXEL position (tile*64
 // world space, like UnitInfo.X/Y), neutral coloured. Used for a travelling missile +
 // its trail, which move smoothly between cells rather than snapping to one.
@@ -513,7 +494,7 @@ func (c *SpriteCache) bodyFrameFor(u *game.UnitInfo, set *SpriteSet) int {
 	case u.Type == assets.Submarne:
 		// A submarine always uses its clean surfaced facing set (base 8); when
 		// submerged it is drawn below as a dark underwater silhouette (the raw
-		// submerged frames 0-7 are a magenta placeholder the port cannot blend yet).
+		// submerged frames 0-7 are a magenta placeholder that the renderer cannot blend yet).
 		// It surfaces (u.Surfaced) only when it attacks, is attacked, or is spotted
 		// by a Corvette. C++: the SUBMARNE image_base 0/8 swap (SpotByTeam).
 		if bf := 8 + int(u.Angle&7); set.Body != nil && bf < len(set.Body.Frames) {
@@ -643,7 +624,7 @@ func isAnimatedBody(t assets.UnitType, flags game.Flags) bool {
 }
 
 // factoryHalted reports whether u is a factory the player STOPPED: it keeps a build
-// queue but its rate is 0 (paused). Such a factory stays ORDER_POWER_ON in the port's
+// queue but its rate is 0 (paused). Such a factory stays ORDER_POWER_ON in the live
 // model, so the lit "running" body frame must exclude it or a stopped plant reads as
 // still producing. A not a factory building never has a queue, so this is always false.
 func factoryHalted(u *game.UnitInfo) bool {

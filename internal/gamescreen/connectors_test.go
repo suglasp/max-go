@@ -14,19 +14,6 @@ import (
 	"github.com/suglasp/max-go/internal/units"
 )
 
-/* // note: unused code in Go port
-// replaced by the shared mkBuilding(t, team, id, -1, -1, flags, game.OrderPowerOn, 0)
-func connBld(t assets.UnitType, team int, id uint16, large bool) *game.UnitInfo {
-	flags := game.FlagStationary | game.FlagSelectable
-
-	if large {
-		flags |= game.FlagBuilding
-	}
-
-	return &game.UnitInfo{ID: id, Type: t, Team: team, Flags: flags, Order: game.OrderPowerOn}
-}
-*/
-
 // TestConnectorBitsAutoRig checks that two abutting 2x2 buildings each set their
 // connection bits toward the other (the auto rig), and that a 1x1 connector next
 // to a building connects both ways.

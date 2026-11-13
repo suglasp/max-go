@@ -55,10 +55,6 @@ type reportFilter struct {
 	label string
 	on    bool
 	y     int
-	/* // note: unused code in Go port
-	// location was set in the filter table and never read; reportRowMatches tells the location filters by index.
-	location bool
-	*/
 }
 
 // Filter checkbox indices into reportMenu.filters.
@@ -174,14 +170,14 @@ func RunReports(ctx *Context, data screendata.ReportData) (uint16, error) {
 		// Filter checkboxes: the four location filters default on, the four attribute
 		// filters off (reportmenu.cpp ButtonState defaults).
 		filters: []reportFilter{
-			{ctx.text("2ecc", "Air Units"), true /* , true: note: unused code in Go port, see reportFilter */, 218},
-			{ctx.text("4a3b", "Land Units"), true /* , true: note: unused code in Go port, see reportFilter */, 236},
-			{ctx.text("1c43", "Sea Units"), true /* , true: note: unused code in Go port, see reportFilter */, 254},
-			{ctx.text("4393", "Stationary Units"), true /* , true: note: unused code in Go port, see reportFilter */, 272},
-			{ctx.text("929b", "Production Units"), false /* , false: note: unused code in Go port, see reportFilter */, 312},
-			{ctx.text("1f97", "Combat Units"), false /* , false: note: unused code in Go port, see reportFilter */, 330},
-			{ctx.text("045b", "Damaged Units"), false /* , false: note: unused code in Go port, see reportFilter */, 348},
-			{ctx.text("e5ae", "Stealthy Units"), false /* , false: note: unused code in Go port, see reportFilter */, 366},
+			{ctx.text("2ecc", "Air Units"), true, 218},
+			{ctx.text("4a3b", "Land Units"), true, 236},
+			{ctx.text("1c43", "Sea Units"), true, 254},
+			{ctx.text("4393", "Stationary Units"), true, 272},
+			{ctx.text("929b", "Production Units"), false, 312},
+			{ctx.text("1f97", "Combat Units"), false, 330},
+			{ctx.text("045b", "Damaged Units"), false, 348},
+			{ctx.text("e5ae", "Stealthy Units"), false, 366},
 		},
 		pic:            pic,
 		f5:             ctx.Sys.Fonts().Get(fonts.Font5),

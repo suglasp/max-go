@@ -25,23 +25,6 @@ func newHaltScreen(t *testing.T) (*Screen, *sim.Game) {
 	return s, g
 }
 
-/* // note: unused code in Go port
-// replaced by the shared mkTank(g.Units, team, id, gx, gy, tankStats{angle: 2, speed: speed, scan: scan, hits: 30})
-// haltMover deploys a scanning, driving unit.
-func haltMover(g *sim.Game, team, id, gx, gy, speed, scan int) *game.UnitInfo {
-	u := game.NewUnitInfo(assets.Tank, team, id, 2)
-	u.Flags = game.FlagMobileLandUnit | game.FlagSelectable
-	u.Values = &game.UnitValues{}
-	u.Values.Set(game.AttribSpeed, speed)
-	u.Values.Set(game.AttribScan, scan)
-	u.Values.Set(game.AttribHits, 30)
-	u.InitState()
-	g.Units.Deploy(u, gx, gy)
-
-	return u
-}
-*/
-
 // TestComputerMoversHaltOnContact verifies that halt on contact applies to computer teams as well as the player's team (access.cpp:827).
 func TestComputerMoversHaltOnContact(t *testing.T) {
 	s, g := newHaltScreen(t)

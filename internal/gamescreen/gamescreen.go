@@ -206,7 +206,6 @@ func New(sys *gnw.System, plat *platform.Platform, m *world.Map, basePal gfx.Pal
 	s.attachGameServices()
 	s.lib = lib
 	s.effects.colRubble = pal.MapColor(72, 72, 72, true)
-	/* s.effects.colHazard = pal.MapColor(255, 210, 0, true): note: unused code in Go port, see effectsState */
 
 	s.loadHudArt()
 	s.loadGauges()
@@ -265,7 +264,7 @@ func (s *Screen) loadHudArt() {
 
 	// Lower strip Reports / Help buttons (the art carries its own label/icon).
 	s.hudArt.reptArt = loadSimpleArt(lib, "REPT_OFF")
-	/* s.hudArt.reptOnArt = loadSimpleArt(lib, "REPT_ON"): note: unused code in Go port, see hudArtState */
+
 	s.hudArt.helpArt = loadSimpleArt(lib, "HELP_OF")
 	s.hudArt.helpOnArt = loadSimpleArt(lib, "HELP_ON")
 	s.hudArt.untbtnUp = loadSimpleArt(lib, "UNTBTN_U")

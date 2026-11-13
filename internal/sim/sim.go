@@ -140,19 +140,7 @@ func New(p *game.StartParams, m *world.Map) *Game {
 	mgr := units.NewManager()
 	grid := &access.Grid{W: m.W, H: m.H, Surf: m, Units: mgr.Cells}
 	return NewWithGrid(game.NewGameState(p), mgr, grid, m.W, m.H)
-	/* // note: unused code in Go port
-	// the same body as NewWithGrid, New now builds through it
-	v := vis.NewView(m.W, m.H)
-	v.Surf = m
-	return &Game{
-		State: game.NewGameState(p),
-		Units: mgr,
-		Grid:  &access.Grid{W: m.W, H: m.H, Surf: m, Units: mgr.Cells},
-		Vis:   v,
-		W:     m.W,
-		H:     m.H,
-	}
-	*/
+
 }
 
 // NewWithGrid builds a game over an explicit grid and dimensions. New uses it
@@ -162,14 +150,6 @@ func NewWithGrid(state *game.GameState, mgr *units.Manager, grid *access.Grid, w
 	v.Surf = grid.Surf // access.SurfaceSource also satisfies vis.SurfaceSource
 	return &Game{State: state, Units: mgr, Grid: grid, Vis: v, W: w, H: h}
 }
-
-/* // note: unused code in Go port
-// unitCost builds the routing cost function for one unit (terrain + unit
-// blocking through the access grid).
-func (g *Game) unitCost(u *game.UnitInfo) paths.CostFunc {
-	return paths.GridCost(g.Grid, g.unitDesc(u), u.Team, access.SameClassBlocks)
-}
-*/
 
 // BeginTeamTurn refreshes a team for a fresh turn: clears finished_turn and
 // refills every team unit's movement budget (ResetMovement).

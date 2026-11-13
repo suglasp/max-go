@@ -319,33 +319,9 @@ func blitIcon(dst *gfx.Buffer, icon *gfx.Buffer, x, y int) {
 	dst.Sub(x, y, w, h).TransCopy(icon.Sub(0, 0, w, h))
 }
 
-/* // note: unused code in Go port
-// the helper repeated the builtin min; callers use it directly.
-// minInt / absInt are the small integer helpers the transfer math needs.
-func minInt(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-*/
-
 func absInt(v int) int {
 	if v < 0 {
 		return -v
 	}
 	return v
 }
-
-/* // note: unused code in Go port
-// clampInt repeated the builtins; callers write max(lo, min(v, hi)).
-func clampInt(v, lo, hi int) int {
-	if v < lo {
-		return lo
-	}
-	if v > hi {
-		return hi
-	}
-	return v
-}
-*/

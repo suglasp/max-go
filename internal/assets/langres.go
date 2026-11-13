@@ -1,4 +1,4 @@
-// langres.go : reads the port's LANG.RES addon archive (language strings and unit description keys).
+// langres.go : reads the LANG.RES addon archive (language strings and unit description keys).
 // Suglasp
 // github.com/suglasp/max-go
 // doc: docs/formats/lang-res.md.
@@ -17,7 +17,7 @@ import (
 	"github.com/suglasp/max-go/internal/resfile"
 )
 
-// LangResFile is the port's own addon archive, shipped next to the binary. It holds the language strings
+// LangResFile is the project's addon archive, shipped next to the binary. It holds the language strings
 // (LANG_<XX>) and the unit description keys (UNITDESC), the same way PATCHES.RES adds its resources.
 const LangResFile = "LANG.RES"
 

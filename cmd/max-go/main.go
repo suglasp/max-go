@@ -34,7 +34,7 @@ var menuScreens = []string{
 	"planetselect", "newgame", "multiplayer", "gameconfig", "chooseplayer", "clanselect",
 	"mapview", "drawmap", "sprite:<tag>", "shadow", "game", "random", "random2", "build", "blewup", "colony", "popup", "bevelart", "assets", "soldier", "apcunit", "headrotate", "transport", "commando", "mines", "bulldozer", "air", "missile", "navalfire", "parkedbuild", "reactionfire", "spotted", "aliens", "factoryrun", "death", "win", "lose", "ending",
 	"options", "prefs-game", "loadgame", "research", "alloc", "upgrade", "transfer", "selfdestruct", "repairshop", "reports", "help", "cargo", "construct", "construct-eng", "factorybuild", "scrollbar",
-	/* "listbox", note: unused code in Go port, the ListBox bench is commented out */ "saveload", "save", "load", "credits", "intro", "splash",
+	"saveload", "save", "load", "credits", "intro", "splash",
 	"setup", "gamesetup", "training", "campaign", "mission", "customscenario", "tips", "gameconfig-mission", "custom", "levelup", "submarine", "status",
 }
 
@@ -496,20 +496,7 @@ Menu screens:
 
 `)
 	}
-	/* // note: unused code in Go port
-		// The precedence rules are gone: two start modes are refused (startModeConflict), see "Start modes" below.
-		if DEBUG_GAME {
-			fmt.Fprint(w, `Precedence:
-	  -mve exits after movie playback and wins over -flic and -emulate.
-	  -flic exits after animation playback and wins over -emulate.
-	`)
-		} else {
-			fmt.Fprint(w, `Precedence:
-	  -mve exits after movie playback and wins over -flic.
-	  -flic exits after animation playback.
-	`)
-		}
-	*/
+
 	modes := "-mve, -flic, -mission, -save, -random"
 	if DEBUG_GAME {
 		modes += ", -emulate"

@@ -137,7 +137,7 @@ func TestReactionRequiresVisibility(t *testing.T) {
 	// scan 1: the turret sees only its own neighbourhood, NOT the tank 3 cells away,
 	// although the tank is inside weapon range 4 - so the fog gate suppresses it.
 	addReactor(g, assets.GunTurrt, 1, 0, 5, 5, 4, 1, reactBuilding)
-	/* turret := ...; _ = turret: note: unused code in Go port, the name was never read */
+
 	tank := addTankTarget(g, 2, 8, 5, 1) // distance 3: in range 4, outside scan 1
 	g.RefreshVisibility()
 

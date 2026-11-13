@@ -113,10 +113,6 @@ type ClanMod struct {
 //
 // C++: class Clans (clans.cpp)
 type Clan struct {
-	/* // note: unused code in Go port
-	// Key was only read by a test; the game picks a clan by its index.
-	Key      string // "Clan A" .. "Clan H"
-	*/
 	Name     string
 	Text     string
 	Upgrades []ClanUpgrade // raw display name lines, for the clan select menu text
@@ -142,7 +138,7 @@ func ParseClans(data []byte) ([]Clan, error) {
 				cur = nil
 				continue
 			}
-			clans = append(clans, Clan{ /* Key: text[1 : len(text)-1]: note: unused code in Go port, see Clan */ })
+			clans = append(clans, Clan{})
 			cur = &clans[len(clans)-1]
 
 		case cur == nil:
@@ -182,7 +178,7 @@ func ParseClans(data []byte) ([]Clan, error) {
 
 // clanUnitTypes maps each CLANATRB upgrade display name to its unit type. The
 // CLANATRB keys are the original game's singular unit names, which differ from a
-// few of the port's labels; checked against the resource tags and the MaxR unit
+// few of the project's labels; checked against the resource tags and the MaxR unit
 // folders. Notably "Ground Attack Plane" is the Bomber, "Infiltrator" the
 // Commando, "Gunboat" the ship tagged Battleship, "Missile Crawler" the mobile
 // MISSLLCH, "Missile Launcher" the ANTIMSSL defence turret, "Assault Gun" the
@@ -374,17 +370,6 @@ func Load(lib *resfile.Library, dataDir, language string) (*Assets, error) {
 
 	return a, nil
 }
-
-/* // note: unused code in Go port
-// languageStringsOrFallback was only read by a test; its body is one call to loadStrings, which the test now calls.
-// languageStringsOrFallback loads the string table from a loose ini only,
-// tolerating a missing file: the strings are a port asset, not vanilla game
-// data, so without one the game boots on the built in English fallback
-// strings and only logs it. Load also consults LANG.RES (loadStrings).
-func languageStringsOrFallback(dataDir, language string) (Strings, error) {
-	return loadStrings(dataDir, language, nil)
-}
-*/
 
 // LanguageFile returns the strings filename for a language code, e.g.
 // "en-us" -> "lang-en-us.ini".

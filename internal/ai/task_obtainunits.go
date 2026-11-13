@@ -179,8 +179,7 @@ func (t *taskObtainUnits) takeUnit(u *game.UnitInfo) {
 // findUnit returns the team's free unit of the wanted type nearest the base centre, or
 // nil: alive, not under construction, without an order, accepted by the need's own test,
 // and not held by a more urgent task. C++: TaskObtainUnits::FindUnit + IsValidCandidate
-// (the reference measures from the request's site; the port's requests have none, so
-// the base centre stands in).
+// Requests here have no site, so the base centre provides the distance origin.
 func (t *taskObtainUnits) findUnit(g *sim.Game, need unitNeed) *game.UnitInfo {
 	siteX, siteY, _ := teamBaseCenter(g, t.team)
 

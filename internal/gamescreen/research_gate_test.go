@@ -23,20 +23,6 @@ func newResearchScreen() *Screen {
 	return &Screen{game: &sim.Game{Units: units.NewManager(), State: game.NewGameState(p)}}
 }
 
-/* // note: unused code in Go port
-// replaced by the shared mkBuilding(assets.Research, team, id, -1, -1, game.FlagStationary|game.FlagBuilding|game.FlagSelectable, order, 0)
-// researchBld returns a research centre building with the given id and order.
-func researchBld(team int, id uint16, order game.Order) *game.UnitInfo {
-	return &game.UnitInfo{
-		ID:    id,
-		Type:  assets.Research,
-		Team:  team,
-		Flags: game.FlagStationary | game.FlagBuilding | game.FlagSelectable,
-		Order: order,
-	}
-}
-*/
-
 // countOrder reports how many of the units carry the given order.
 func countOrder(us []*game.UnitInfo, o game.Order) int {
 	n := 0
