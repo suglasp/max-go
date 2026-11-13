@@ -287,7 +287,7 @@ func TestRoundTripFixtureFillsEverySnapshotField(t *testing.T) {
 	// The game screen fills these after Capture, so Capture itself never sets them.
 	screenFilled := map[string]bool{
 		"Name": true, "Bookmarks": true, "Groups": true, "Displays": true,
-		"TurnSeconds": true, "MissionTitle": true, "MissionBrief": true,
+		"TurnSeconds": true, "MissionTitle": true, "MissionBrief": true, "SpawnSeq": true,
 	}
 	snap := Capture(newRichGame(t), richMapName)
 	value := reflect.ValueOf(snap).Elem()

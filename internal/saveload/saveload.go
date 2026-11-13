@@ -69,7 +69,11 @@ var magic = [8]byte{'M', 'A', 'X', 'G', 'O', 'S', 'V', 0}
 // win/loss OBJECTIVE is keyed on it - a reloaded mission without it would quietly revert
 // to the generic rules (0 for older saves = no scripted objective, which is exactly what
 // every pre v23 save ran on).
-const Version = 24
+// v25 the screen's unit counter (SpawnSeq), the number the last unit made by the unit factory
+// got: a load that starts it again at 0 hands out IDs the saved units already carry, and the
+// registry then drops the older unit. A pre v25 save has 0 here and the screen derives the
+// counter from the highest unit ID it restores.
+const Version = 25
 
 // Snapshot is the serializable game state. Restore rebuilds derived grids, visibility, and complexes from it.
 type Snapshot struct {
@@ -116,6 +120,7 @@ type Snapshot struct {
 	TurnSeconds  int                           // seconds left on the running turn's clock (v22); 0 = untimed / older save, and the turn restarts full
 	MissionTitle string                        // a scripted mission's title (v22); empty for a skirmish / older save
 	MissionBrief string                        // a scripted mission's briefing text (v22), so a reload keeps its objective instead of the "Random game:" block
+	SpawnSeq     int                           // the screen's unit counter (v25), so a load never reuses a saved unit's ID; 0 on an older save
 }
 
 // LossSiteSnapshot is one remembered casualty: the cell where a team lost a mobile unit

@@ -1,4 +1,4 @@
-# MAXGOSV: save game format (v24)
+# MAXGOSV: save game format (v25)
 
 This project uses its own save format,
 rather than the reference SmartFile V70/V71 format.
@@ -16,7 +16,7 @@ extension `.sav`.
 | Offset | Size | Field | Notes |
 |--------|------|-------|-------|
 | 0 | 8 | magic | ASCII `MAXGOSV\0` |
-| 8 | 4 | version | little endian `uint32`, currently `24` |
+| 8 | 4 | version | little endian `uint32`, currently `25` |
 | 12 | ... | payload | `encoding/gob` stream of the `Snapshot` struct |
 
 Loading validates the magic,
@@ -176,6 +176,12 @@ Both kinds drive on at the team's next turn start; Continue presses on at once i
 Restored as the destination alone,
 since continuing re paths from wherever the unit now stands.
 Empty on a pre-v24 save
+- `SpawnSeq int` (v25): the unit counter of the game screen, the number the last unit made by the unit factory got
+(computer builds, factory output before it is renumbered, laid mines).
+A load puts it back, so a unit made after the load never takes the ID of a saved unit.
+The unit registry is keyed by ID: two units with one ID would drop the older one from the board and from the next save.
+`0` on a pre-v25 save; the load then starts the counter at the highest restored unit ID below 10000.
+A load never sets the counter below that ID, whatever the save says
 
 ### UnitSnapshot
 

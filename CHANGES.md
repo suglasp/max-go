@@ -13,6 +13,7 @@ Check the version file next to the game executables.
 - `max-go.json` no longer carries a `language` setting by default; the game reads its texts from `LANG.RES`. Add `"language": "en-us"` by hand to use a loose `lang-en-us.ini` again; `-language` now applies to one run only and is never saved.
 
 ### Fixes
+- After loading a saved game, a newly built unit or a newly laid mine could take the place of an existing unit: that unit turned invisible, ignored its orders and was missing from the next save. Loaded games now keep every unit.
 - On Windows, fixed race condition that could crash the game at startup when the debug console is switched on.
 - An Engineer path build, stops before it cannot afford to build the next building: it waits on the last finished building with its exit markers (or stays on the last road),
   and the insufficient material warning shows, instead of starting the next cell and taking it down again.

@@ -115,6 +115,7 @@ func (s *Screen) saveToSlot(slot int, name string, announce bool) error {
 	snap.TurnSeconds = s.captureTurnClock()     // seconds left on the running turn (v22)
 	snap.MissionTitle = s.missionTitle          // a scripted mission's briefing, so a reload keeps its
 	snap.MissionBrief = s.missionBriefing       // objective instead of reading as a skirmish (v22)
+	snap.SpawnSeq = s.spawnSeq                  // the unit counter, so a load never reuses a saved unit's ID (v25)
 	f, err := os.Create(path)
 
 	if err != nil {
@@ -250,8 +251,9 @@ func (s *Screen) Load(slot int) error {
 	worldMap := s.reloadWorld(strings.TrimSpace(snap.MapName))
 
 	s.game = snap.Restore(worldMap)
-	s.attachGameServices() // Restore builds a fresh game: rewire the AI + unit factory
-	s.replayPanelAnim()    // a load rebuilds the bars, so they unfold again (C++: GameManager_LoadGame)
+	s.attachGameServices()              // Restore builds a fresh game: rewire the AI + unit factory
+	s.restoreUnitCounter(snap.SpawnSeq) // new units must not reuse a restored unit's ID (v25)
+	s.replayPanelAnim()                 // a load rebuilds the bars, so they unfold again (C++: GameManager_LoadGame)
 	// Reset UI state that referred to the old game instance.
 	s.clearSelected()
 	s.turnFlow.handover = -1
@@ -283,6 +285,57 @@ func (s *Screen) Load(slot int) error {
 	s.focusOnLoadedBase()                  // centre + zoom partly in to the base (vanilla zooms in on load)
 	s.selectFirstBuilder()                 // pre select the first builder, matching new game map entry (design choice)
 	s.restoreGoalBlock(snap)               // the mission's own briefing, or the random game info block
+	return nil
+}
+
+// spawnIDCeiling is where the built unit range starts (10000 + the sim's built counter).
+// The unit factory counter numbers units below it.
+const spawnIDCeiling = 10000
+
+// restoreUnitCounter puts the unit factory counter back after a load. The counter is
+// screen state, so a loaded game would otherwise start it at 0 and hand out IDs the
+// restored units already carry; the registry then drops the older unit from its ID map
+// and it turns into an invisible unit that no save keeps. A v25 save carries the counter.
+// An older one has 0, so the counter also never drops below the highest restored ID.
+// C++: the save keeps each team's number_of_objects_created (saveload.cpp).
+func (s *Screen) restoreUnitCounter(saved int) {
+	highest := highestSpawnID(s.game.Units.Units())
+	s.spawnSeq = max(saved, highest)
+	dbg.Printf("load: unit counter %d (saved %d, highest id %d)", s.spawnSeq, saved, highest)
+}
+
+// highestSpawnID returns the highest unit ID below the built range among units and the
+// units they carry (a unit aboard a transport is off the registry).
+func highestSpawnID(units []*game.UnitInfo) int {
+	highest := 0
+
+	for _, u := range units {
+		if id := int(u.ID); id < spawnIDCeiling && id > highest {
+			highest = id
+		}
+
+		if id := highestSpawnID(u.Carried); id > highest {
+			highest = id
+		}
+	}
+
+	return highest
+}
+
+// unitIDInUse reports whether a unit on the board, or a unit carried by one, has the ID.
+func (s *Screen) unitIDInUse(id uint16) *game.UnitInfo {
+	if u := s.game.Units.ByID.Get(id); u != nil {
+		return u
+	}
+
+	for _, u := range s.game.Units.Units() {
+		for _, c := range u.Carried {
+			if c.ID == id {
+				return c
+			}
+		}
+	}
+
 	return nil
 }
 

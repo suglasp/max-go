@@ -10,6 +10,7 @@ import (
 	"sort"
 
 	"github.com/suglasp/max-go/internal/assets"
+	"github.com/suglasp/max-go/internal/dbg"
 	"github.com/suglasp/max-go/internal/game"
 )
 
@@ -88,6 +89,20 @@ func (s *Screen) teamValues(team int, t assets.UnitType) *game.UnitValues {
 // team's current values (base stats, clan, research and upgrades) and its state set from them.
 func (s *Screen) newUnit(team int, t assets.UnitType, flags game.Flags) *game.UnitInfo {
 	s.spawnSeq++
+
+	// Step past an ID a live unit still carries: the registry is keyed by ID, so a second
+	// unit with it would push the first one out (invisible, and gone from the next save).
+	for s.game != nil && s.game.Units != nil {
+		holder := s.unitIDInUse(uint16(s.spawnSeq))
+
+		if holder == nil {
+			break
+		}
+
+		dbg.Printf("unit id %d in use by %s team %d: skipped", s.spawnSeq, displayName(holder.Type), holder.Team)
+		s.spawnSeq++
+	}
+
 	u := game.NewUnitInfo(t, team, s.spawnSeq, 0)
 	u.Flags = flags
 	u.Values = s.teamValues(team, t)

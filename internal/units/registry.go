@@ -7,7 +7,10 @@
 // C++ ported : units_manager.cpp - unit bookkeeping, cell hash, and unit enumeration
 package units
 
-import "github.com/suglasp/max-go/internal/game"
+import (
+	"github.com/suglasp/max-go/internal/dbg"
+	"github.com/suglasp/max-go/internal/game"
+)
 
 // MapHash buckets units by grid cell for fast "what is at (x,y)" queries.
 //
@@ -139,7 +142,16 @@ func NewUnitHash() *UnitHash {
 }
 
 // Add registers u by its id. C++: UnitHash::PushBack.
+//
+// A second unit with an id already taken replaces the first one here while the cell
+// hash still holds the first: that unit is no longer drawn, takes no orders and is
+// left out of the next save. Ids must be unique; a collision is logged so a stray
+// allocator shows in max-go.log.
 func (h *UnitHash) Add(u *game.UnitInfo) {
+	if old := h.byID[u.ID]; old != nil && old != u {
+		dbg.Printf("unit id collision: id %d %s team %d replaces %s team %d", u.ID, u.Type.Tag(), u.Team, old.Type.Tag(), old.Team)
+	}
+
 	h.byID[u.ID] = u
 }
 

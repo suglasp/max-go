@@ -6,8 +6,13 @@
 package units
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/suglasp/max-go/internal/assets"
+	"github.com/suglasp/max-go/internal/dbg"
 	"github.com/suglasp/max-go/internal/game"
 )
 
@@ -144,5 +149,35 @@ func TestManagerDeployMoveRemove(t *testing.T) {
 	m.Remove(u)
 	if m.ByID.Get(1) != nil || len(m.Cells.At(5, 6)) != 0 {
 		t.Error("Remove left the unit indexed")
+	}
+}
+
+// TestUnitHashAddLogsCollision checks that adding a different unit under a taken id writes a collision line, and re adding the same unit does not.
+func TestUnitHashAddLogsCollision(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "max-go.log")
+	if err := dbg.Init(true, path, 1); err != nil {
+		t.Fatal(err)
+	}
+	defer dbg.Close()
+
+	h := NewUnitHash()
+	tank := game.NewUnitInfo(assets.Tank, 0, 65, 0)
+	mine := game.NewUnitInfo(assets.LandMine, 1, 65, 0)
+
+	h.Add(tank)
+	h.Add(tank) // the same unit again is no collision
+	dbg.Flush()
+	if data, _ := os.ReadFile(path); strings.Contains(string(data), "unit id collision") {
+		t.Fatalf("re adding the same unit logged a collision:\n%s", data)
+	}
+
+	h.Add(mine)
+	dbg.Flush()
+	data, _ := os.ReadFile(path)
+	if !strings.Contains(string(data), "unit id collision: id 65") {
+		t.Errorf("a second unit under id 65 did not log a collision:\n%s", data)
+	}
+	if h.Get(65) != mine {
+		t.Error("Add must still register the newest unit under the id")
 	}
 }
