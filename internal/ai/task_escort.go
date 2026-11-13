@@ -175,6 +175,25 @@ func (t *taskEscort) follow(guard, target *game.UnitInfo) {
 	}
 }
 
+/* // note: unused code in Go port - the escort task claims its guards through the unit ledger (taskmanager.go, step 6003), so the attack and explore tasks no longer read this set
+// escortGuards is the set of units assigned as escorts this turn - the keys of
+// escortAssignments. The attack and explore tasks consult it to leave an escort alone,
+// the same decoupling reservedGuards provides for the home reserve.
+func escortGuards(g *sim.Game, team int) map[*game.UnitInfo]bool {
+	a := escortAssignments(g, team)
+	if len(a) == 0 {
+		return nil
+	}
+
+	set := make(map[*game.UnitInfo]bool, len(a))
+	for guard := range a {
+		set[guard] = true
+	}
+
+	return set
+}
+*/
+
 // escortAssignments pairs each escortable mover with a spare armed guard, as a pure,
 // deterministic function of the current positions (so the escort, attack and explore
 // tasks all derive the same pairing). It returns nil when the tier keeps no escorts
@@ -275,6 +294,15 @@ func escortableTarget(u *game.UnitInfo, team int) bool {
 
 	return false
 }
+
+/* // note: unused code in Go port
+// isAirUnit duplicated sim.IsAirUnit (the same FlagMobileAirUnit test); the escort pairing now calls sim.IsAirUnit.
+// isAirUnit reports whether u moves through the air (so an air mover is escorted by an
+// air guard, not a tank that cannot keep up).
+func isAirUnit(u *game.UnitInfo) bool {
+	return u.Flags.Has(game.FlagMobileAirUnit)
+}
+*/
 
 // unarmedSupportType reports whether t is a mobile unit that carries no weapon in the real
 // ATTRIBS - a recon, cargo or utility unit: a Surveyor, Scanner, Supply / Gold truck,

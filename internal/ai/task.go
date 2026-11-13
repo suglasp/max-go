@@ -59,7 +59,9 @@ type Task interface {
 	BeginTurn()
 	// EndTurn runs the task's end of turn evaluation. C++: Task::EndTurn.
 	EndTurn()
-
+	/* // note: ported but unused code in Go port - the port plans the turn synchronously, so a parent reads its children's state in its own BeginTurn
+	ChildComplete(child Task)
+	*/
 	// RemoveSelf tears the task down and unlinks it from the manager. C++:
 	// Task::RemoveSelf.
 	RemoveSelf()
@@ -73,7 +75,9 @@ type Task interface {
 	// scheduling state, used by the manager + reminders to avoid double queuing.
 	isScheduledForTurnStart() bool
 	setScheduledForTurnStart(bool)
-
+	/* // note: ported but unused code in Go port
+	isScheduledForTurnEnd() bool
+	*/
 	setScheduledForTurnEnd(bool)
 	setProcessingNeeded(bool)
 
@@ -201,6 +205,12 @@ func (t *TaskBase) EndTurn() {
 
 }
 
+/* // note: ported but unused code in Go port - a child task would notify its parent through this; the parent polls its children instead
+func (t *TaskBase) ChildComplete(_ Task) {
+
+}
+*/
+
 func (t *TaskBase) setProcessingNeeded(v bool) {
 	t.needsProcessing = v
 }
@@ -240,6 +250,12 @@ func (t *TaskBase) isScheduledForTurnStart() bool {
 func (t *TaskBase) setScheduledForTurnStart(v bool) {
 	t.scheduledForTurnStart = v
 }
+
+/* // note: ported but unused code in Go port
+func (t *TaskBase) isScheduledForTurnEnd() bool {
+	return t.scheduledForTurnEnd
+}
+*/
 
 func (t *TaskBase) setScheduledForTurnEnd(v bool) {
 	t.scheduledForTurnEnd = v

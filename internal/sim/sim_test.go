@@ -380,6 +380,24 @@ func TestHeadlessConstructorBuild(t *testing.T) {
 	}
 }
 
+/* // note: unused code in Go port
+// addConstructor(g, assets.Constrct, team, gx, gy, 16, 30, 40) builds the same unit, see fixture_test.go
+// constructorAt deploys a healthy mobile constructor with movement budget and
+// cargo at a cell for the build exit tests.
+func constructorAt(g *Game, team, gx, gy int) *game.UnitInfo {
+	c := game.NewUnitInfo(assets.Constrct, team, 1, 0)
+	c.Flags = game.FlagMobileLandUnit | game.FlagConstructorUnit | game.FlagSelectable
+	c.Values = &game.UnitValues{}
+	c.Values.Set(game.AttribSpeed, 16)
+	c.Values.Set(game.AttribHits, 30)
+	c.InitState()
+	c.Speed = 16
+	c.Storage = 40
+	g.Units.Deploy(c, gx, gy)
+	return c
+}
+*/
+
 // miningProduct builds a one turn 2x2 mining station product.
 func miningProduct() *game.UnitInfo {
 	prod := game.NewUnitInfo(assets.MiningSt, 0, 0, 0)
@@ -1114,6 +1132,65 @@ func TestFactoryStarvedByPowerDeficit(t *testing.T) {
 		t.Error("factory should finish the tank once it has power")
 	}
 }
+
+/* // note: unused code in Go port
+// tested Land, commented out with it; TestDeployStartBaseOneComplex covers the live landing.
+// TestHeadlessLanding verifies that a colony landing creates a powered mining complex and slab, sets team gold, and places loadout units on reachable cells.
+func TestHeadlessLanding(t *testing.T) {
+	g := newGame(t, 24, 24)
+	g.Resources = economy.NewResourceMap(24, 24)
+	g.Resources.SetDeposit(10, 10, economy.CargoRaw, 16)
+	g.Resources.SetDeposit(11, 10, economy.CargoRaw, 16)
+
+	mine := game.NewUnitInfo(assets.MiningSt, 0, 0, 0)
+	mine.Flags = game.FlagBuilding | game.FlagStationary | game.FlagRequiresSlab
+	mine.Values = &game.UnitValues{}
+	pg := game.NewUnitInfo(assets.PowGen, 0, 0, 0)
+	pg.Flags = game.FlagBuilding | game.FlagStationary | game.FlagRequiresSlab
+	pg.Values = &game.UnitValues{}
+
+	con := game.NewUnitInfo(assets.Constrct, 0, 0, 0)
+	con.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+	con.Values = &game.UnitValues{}
+	scout := game.NewUnitInfo(assets.Scout, 0, 0, 0)
+	scout.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+	scout.Values = &game.UnitValues{}
+
+	c := g.Land(0, 10, 10, 150, mine, pg, []*game.UnitInfo{con, scout})
+
+	// One complex with the mining station and the power generator.
+	if c.Buildings != 2 {
+		t.Errorf("starting complex buildings = %d, want 2 (mine + power gen)", c.Buildings)
+	}
+	if g.Networks[0] == nil || g.Networks[0].ComplexOf(mine) != g.Networks[0].ComplexOf(pg) {
+		t.Error("mine and power generator should share one complex")
+	}
+	if c.Gold != 150 || g.Gold[0] != 150 {
+		t.Errorf("gold = complex %d team %d, want 150/150", c.Gold, g.Gold[0])
+	}
+	// The mining station mined material (16 raw, no fuel deposit).
+	if mine.RawMining != 16 {
+		t.Errorf("mine raw mining = %d, want 16", mine.RawMining)
+	}
+	// A large slab was laid under the mining station.
+	slabs := 0
+	for _, u := range g.Units.Cells.At(10, 10) {
+		if u.Type == assets.LrgSlab {
+			slabs++
+		}
+	}
+	if slabs != 1 {
+		t.Errorf("large slabs under mining station = %d, want 1", slabs)
+	}
+	// Both loadout units were placed on the map.
+	if con.GridX < 0 || scout.GridX < 0 {
+		t.Errorf("loadout units not placed: con(%d,%d) scout(%d,%d)", con.GridX, con.GridY, scout.GridX, scout.GridY)
+	}
+	if con.Position() == scout.Position() {
+		t.Error("loadout units should land on distinct cells")
+	}
+}
+*/
 
 // TestHeadlessPlayToVictory verifies that play continues with two active teams and ends in victory after the player destroys the enemy's final unit.
 func TestHeadlessPlayToVictory(t *testing.T) {

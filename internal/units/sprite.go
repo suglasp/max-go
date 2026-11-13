@@ -274,6 +274,25 @@ func (c *SpriteCache) TurretCount(t assets.UnitType) int {
 	return set.Frame.TurretImageCount
 }
 
+/* // note: unused code in Go port
+// DrawFrame has no caller; effects and missiles draw through DrawFrameAtPixel.
+// DrawFrame composites one body frame of a unit type at a grid cell's centre, neutral
+// (team 0) coloured, for teamless effects such as explosions and rubble. A frame out
+// of range draws nothing. C++: the sprite blits for a hit explosion or rubble.
+func (c *SpriteCache) DrawFrame(dst *gfx.Buffer, t assets.UnitType, frame, cellX, cellY, zoom, scrollX, scrollY int) {
+	set := c.Set(t)
+	if set == nil || set.Body == nil {
+		return
+	}
+	const tile = 64
+	sx := cellX*zoom + zoom/2 - scrollX
+	sy := cellY*zoom + zoom/2 - scrollY
+	if f := frameAt(set.Body, frame); f != nil {
+		f.DrawScaled(dst, sx, sy, zoom, tile, &c.teams[0])
+	}
+}
+*/
+
 // DrawFrameAtPixel composites one body frame at an arbitrary PIXEL position (tile*64
 // world space, like UnitInfo.X/Y), neutral coloured. Used for a travelling missile +
 // its trail, which move smoothly between cells rather than snapping to one.

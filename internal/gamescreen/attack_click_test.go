@@ -18,6 +18,25 @@ import (
 // clickTank is the armed tank of the click tests (hits 80 survive a single 8 damage shot).
 var clickTank = tankStats{attack: 8, rng: 4, rounds: 1, ammo: 6, speed: 12, hits: 80}
 
+/* // note: unused code in Go port
+// replaced by the shared mkTank(mgr, team, id, gx, gy, clickTank) in fixture_test.go
+func clickTestUnit(team, id, gx, gy int, mgr *units.Manager) *game.UnitInfo {
+	u := game.NewUnitInfo(assets.Tank, team, id, 0)
+	u.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+	v := &game.UnitValues{}
+	v.Set(game.AttribAttack, 8)
+	v.Set(game.AttribRange, 4)
+	v.Set(game.AttribRounds, 1)
+	v.Set(game.AttribAmmo, 6)
+	v.Set(game.AttribSpeed, 12)
+	v.Set(game.AttribHits, 80) // survives a single 8-damage shot
+	u.Values = v
+	u.InitState()
+	mgr.Deploy(u, gx, gy)
+	return u
+}
+*/
+
 // TestLeftClickAttacksInRangeEnemy: a left click (clickCell) on an attackable
 // enemy within range fires on it (and keeps the attacker selected); out of range
 // it issues a move to attack (the unit pursues, keeping the attacker selected)

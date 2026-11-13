@@ -217,13 +217,15 @@ func (s *Screen) reportData() screendata.ReportData {
 			Status: s.unitStatusText(u),
 			Icon:   s.unitIcon(u),
 			Stats:  s.reportStats(u),
-			Hits:   u.Hits, MaxHits: maxHits,
+			Hits:   u.Hits, MaxHits: maxHits, /* TeamColor: 0xFF: note: unused code in Go port, see ReportRow */
 			Air:        u.Flags.Has(game.FlagMobileAirUnit),
 			Land:       u.Flags.Has(game.FlagMobileLandUnit),
 			Sea:        u.Flags.Has(game.FlagMobileSeaUnit),
 			Stationary: u.Flags.Has(game.FlagStationary),
 			Producer:   producerTypes[u.Type],
 			Combat:     combat,
+			// The reference keeps only these two types when the Stealthy box is ticked.
+			Stealthy: u.Type == assets.Submarne || u.Type == assets.Commando,
 		})
 	}
 

@@ -46,6 +46,22 @@ func raidCommando(g *sim.Game, team, cellX, cellY int) *game.UnitInfo {
 // raidTank is an electronic (raidable) tank.
 var raidTank = tankStats{angle: 2, turns: 8, hits: 30, flags: game.FlagElectronicUnit}
 
+/* // note: unused code in Go port
+// replaced by the shared mkTank(g.Units, team, id, cellX, cellY, raidTank) in fixture_test.go
+// raidTarget deploys an electronic (raidable) tank.
+func raidTarget(g *sim.Game, team, id, cellX, cellY int) *game.UnitInfo {
+	u := game.NewUnitInfo(assets.Tank, team, id, 2)
+	u.Flags = game.FlagMobileLandUnit | game.FlagSelectable | game.FlagElectronicUnit
+	u.Values = &game.UnitValues{}
+	u.Values.Set(game.AttribTurns, 8)
+	u.Values.Set(game.AttribHits, 30)
+	u.Hits = 30
+	g.Units.Deploy(u, cellX, cellY)
+
+	return u
+}
+*/
+
 // forceRoll installs a randomizer seed whose next roll succeeds (want true) or misses
 // (want false) against chance, so a raid's outcome is decided rather than rolled.
 func forceRoll(t *testing.T, chance int, want bool) {
@@ -231,6 +247,25 @@ func reactionTurret(g *sim.Game, team, id, cellX, cellY int) *game.UnitInfo {
 
 // reactionTank is a tank that drives into the turret's range.
 var reactionTank = tankStats{angle: 2, speed: 6, scan: 6, armor: 4, hits: 40}
+
+/* // note: unused code in Go port
+// replaced by the shared mkTank(g.Units, team, id, cellX, cellY, reactionTank) in fixture_test.go
+// reactionMover deploys a tank that drives into the turret's range.
+func reactionMover(g *sim.Game, team, id, cellX, cellY int) *game.UnitInfo {
+	u := game.NewUnitInfo(assets.Tank, team, id, 2)
+	u.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+	u.Values = &game.UnitValues{}
+	u.Values.Set(game.AttribSpeed, 6)
+	u.Values.Set(game.AttribScan, 6)
+	u.Values.Set(game.AttribArmor, 4)
+	u.Values.Set(game.AttribHits, 40)
+	u.Hits = 40
+	u.InitState()
+	g.Units.Deploy(u, cellX, cellY)
+
+	return u
+}
+*/
 
 // driveIntoReaction runs a mover into the turret's range, and checks the turret really
 // did take its opportunity shot - so a test asserting on the REPORT cannot pass by the

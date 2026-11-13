@@ -56,3 +56,19 @@ func TestTransferFuelAndGoldClamp(t *testing.T) {
 		t.Errorf("gold routed wrong: fuel=%d material=%d gold=%d", c.Fuel, c.Material, c.Gold)
 	}
 }
+
+/* // note: unused code in Go port
+// replaced by the shared mkBuilding(typ, 0, 1, -1, -1, game.FlagStationary|game.FlagBuilding, game.OrderPowerOn, capacity)
+// storeBuilding makes a powered storage building of a type with the given capacity: the
+// thing a base needs before it can keep anything (economy.Complex.CapStores).
+func storeBuilding(typ assets.UnitType, capacity int) *game.UnitInfo {
+	u := game.NewUnitInfo(typ, 0, 0, 0)
+	u.Flags = game.FlagBuilding | game.FlagStationary
+	u.Order = game.OrderPowerOn
+	u.State = game.OrderStateExecutingOrder
+	u.Values = &game.UnitValues{}
+	u.Values.Set(game.AttribStorage, capacity)
+
+	return u
+}
+*/

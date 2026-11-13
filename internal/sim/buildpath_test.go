@@ -217,6 +217,22 @@ func TestBuildPathStopsWhenOutOfMaterial(t *testing.T) {
 	}
 }
 
+/* // note: unused code in Go port
+// addConstructor(g, assets.Engineer, 0, x, y, 8, 30, storage) builds the same unit, see fixture_test.go
+// newPathEngineer deploys a live engineer with the given storage at (x,y).
+func newPathEngineer(g *Game, storage, x, y int) *game.UnitInfo {
+	eng := game.NewUnitInfo(assets.Engineer, 0, 1, 0)
+	eng.Flags = game.FlagMobileLandUnit | game.FlagConstructorUnit | game.FlagSelectable
+	eng.Values = &game.UnitValues{}
+	eng.Values.Set(game.AttribSpeed, 8)
+	eng.Values.Set(game.AttribHits, 30)
+	eng.InitState()
+	eng.Storage = storage
+	g.Units.Deploy(eng, x, y)
+	return eng
+}
+*/
+
 // runPathTurns plays turns until the run and its orders are done, and reports whether
 // any turn named eng among the path builders stopped short of material.
 func runPathTurns(g *Game, eng *game.UnitInfo) (short bool) {

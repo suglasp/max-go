@@ -19,7 +19,12 @@ func testLibPath() string {
 		return path
 	}
 	name := DefaultLibName()
-
+	/* // note: unused code in Go port
+	// DefaultLibName names libsoloud_x64.so on Linux now, so the override is the same name.
+	if runtime.GOOS == "linux" {
+		name = "libsoloud_x64.so"
+	}
+	*/
 	return filepath.Join("..", "soloud-bin", name)
 }
 

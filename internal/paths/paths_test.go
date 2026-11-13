@@ -244,3 +244,8 @@ func TestFindOnRealMap(t *testing.T) {
 		t.Errorf("route %v -> %v has %d steps, want at least %d (and the two cells 7 or more apart)", start, dest, len(r.Steps), want)
 	}
 }
+
+/* // note: unused code in Go port
+// a TestMain that only ran the tests, the default behaviour.
+func TestMain(m *testing.M) { os.Exit(m.Run()) }
+*/

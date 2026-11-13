@@ -164,3 +164,51 @@ func (t *taskManageBuildings) usableBuilders(unitType assets.UnitType) int {
 
 	return n
 }
+
+/* // note: unused code in Go port - replaced by unitsInProduction (task_obtainunits.go, step 6004)
+// producing counts how many of a type the team is already turning out at its factories,
+// so ensureBuilders never queues a second replacement while one is under construction.
+func (t *taskManageBuildings) producing(unitType assets.UnitType) int {
+	n := 0
+
+	for _, o := range t.ctx.Game.BuildOrders() {
+		if o.Builder != nil && o.Builder.Team == t.team && o.Product != nil && o.Product.Type == unitType {
+			n++
+		}
+	}
+
+	return n
+}
+*/
+
+/* // note: unused code in Go port - replaced by the obtain request (requestUnit + produceUnit, task_obtainunits.go, step 6004)
+// produceAtFactory starts one unit of unitType at an idle plant of factoryType, on a
+// free deploy cell. Returns whether an order was issued. C++: TaskManager.CreateUnit /
+// StartBuilding on the plant.
+func (t *taskManageBuildings) produceAtFactory(factoryType, unitType assets.UnitType) bool {
+	g := t.ctx.Game
+	flags := flagLandUnit // both builders are land units
+
+	for _, f := range g.Units.Units() {
+		if f.Team != t.team || f.Type != factoryType || f.Building || g.BuildOrderFor(f) != nil {
+			continue
+		}
+
+		x, y, ok := g.FactoryDeployCell(f, flags)
+		if !ok {
+			continue
+		}
+
+		unit := t.ctx.MakeUnit(t.team, unitType, flags)
+		if unit == nil {
+			return false
+		}
+
+		g.StartBuild(f, unit, x, y, aiBuildRate(g, f, unit))
+
+		return true
+	}
+
+	return false
+}
+*/

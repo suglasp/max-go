@@ -17,6 +17,11 @@ type reminderType int
 const (
 	reminderTurnStart reminderType = iota
 	reminderTurnEnd
+	/* // note: ported but unused code in Go port
+	reminderAvailable
+	reminderMove
+	reminderAttack
+	*/
 )
 
 // Reminder is a deferred task callback. Tasks do not run their logic inline;

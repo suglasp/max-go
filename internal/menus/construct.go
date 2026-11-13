@@ -154,6 +154,14 @@ type constructMenu struct {
 	listRows int
 
 	rateX1, rateX2, rateX4 gnw.ButtonID
+	/* // note: unused code in Go port
+	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+	statIcons map[string]*gfx.Buffer
+	*/
+	/* // note: unused code in Go port
+	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+	portraitCache map[assets.UnitType]*sprites.Big
+	*/
 }
 
 // RunConstruction shows the construction menu for builder (Constrct/Engineer) of
@@ -190,7 +198,8 @@ func RunConstruction(ctx *Context, builder assets.UnitType, team, storage int) (
 		sc:       units.NewSpriteCache(ctx.Lib, &pic.Palette),
 		at:       ctx.Assets.Attribs,
 		listRows: (cbListLRY - cbListY) / cbRowH, // 11
-
+		/* statIcons: map[string]*gfx.Buffer{}: note: unused code in Go port, see the struct */
+		/* portraitCache: map[assets.UnitType]*sprites.Big{}: note: unused code in Go port, see the struct */
 	}
 
 	buttons := m.buildWidgets(hasPath)
@@ -352,6 +361,44 @@ func (m *constructMenu) turnsBase(t assets.UnitType) int {
 	}
 	return 0
 }
+
+/* // note: unused code in Go port
+// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+// statIcon caches a keyed gauge icon (I_HITS/I_ARMOR/...).
+func (m *constructMenu) statIcon(tag string) *gfx.Buffer {
+	if b, ok := m.statIcons[tag]; ok {
+		return b
+	}
+	var b *gfx.Buffer
+	if tag != "" {
+		if img, e := m.ctx.loadSimple(tag); e == nil {
+			c := img.Buffer().Clone()
+			c.KeyToZero(c.At(0, 0))
+			b = c
+		}
+	}
+	m.statIcons[tag] = b
+	return b
+}
+*/
+
+/* // note: unused code in Go port
+// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+// loadPortrait caches a buildable's portrait art; nil when the type has none.
+func (m *constructMenu) loadPortrait(t assets.UnitType) *sprites.Big {
+	if b, ok := m.portraitCache[t]; ok {
+		return b
+	}
+	var b *sprites.Big
+	if tag := unitPortrait[t]; tag != "" {
+		if img, e := m.ctx.loadBig(tag); e == nil {
+			b = img
+		}
+	}
+	m.portraitCache[t] = b
+	return b
+}
+*/
 
 // drawList repaints the buildable list: icon + name + turns (red when the
 // builder can't afford the build at rate 1). C++: BuildUnitTypeSelector::Draw.

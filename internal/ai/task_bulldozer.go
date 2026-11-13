@@ -153,7 +153,25 @@ func (t *taskBulldozer) ensureBulldozer() {
 	}
 
 	t.requestUnit(t.ctx, unitNeed{unit: assets.Bulldozr, factory: assets.LightPlt, flags: flagLandUnit})
-
+	/* // note: unused code in Go port - replaced by the obtain request (requestUnit + produceUnit, task_obtainunits.go, step 6004)
+	g := t.ctx.Game
+	for _, f := range g.Units.Units() {
+		if f.Team != t.team || f.Type != assets.LightPlt || f.Building || g.BuildOrderFor(f) != nil {
+			continue
+		}
+		x, y, ok := g.FactoryDeployCell(f, flagLandUnit)
+		if !ok {
+			continue
+		}
+		unit := t.ctx.MakeUnit(t.team, assets.Bulldozr, flagLandUnit)
+		if unit == nil {
+			return
+		}
+		g.StartBuild(f, unit, x, y, aiBuildRate(g, f, unit))
+		dbg.Printf("ai: team %d builds a BULLDOZER to clear rubble", t.team)
+		return
+	}
+	*/
 }
 
 // countBulldozers counts the team's bulldozers, including any still in production.

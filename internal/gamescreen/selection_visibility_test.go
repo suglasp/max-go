@@ -12,6 +12,20 @@ import (
 	"github.com/suglasp/max-go/internal/game"
 )
 
+/* // note: unused code in Go port
+// replaced by the shared mkTank(g.Units, 1, id, gx, gy, tankStats{}) and the order set to OrderAwait
+// enemyTank deploys a team 1 tank in an awaiting (not idle) order so the fog model
+// evaluates its visibility by scan coverage rather than the idle early out.
+func enemyTank(g *sim.Game, id, gx, gy int) *game.UnitInfo {
+	u := game.NewUnitInfo(assets.Tank, 1, id, 0)
+	u.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+	u.Values = &game.UnitValues{}
+	u.Order = game.OrderAwait
+	g.Units.Deploy(u, gx, gy)
+	return u
+}
+*/
+
 // TestSelectionVisibilityGate verifies the rule: a cell occupant is selectable only if
 // the player can SEE it. A visible enemy is selectable (for inspection), a fogged
 // enemy is not, the F2 omniscient reveal (fogShow off) lifts the gate, and the

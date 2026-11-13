@@ -52,6 +52,9 @@ type AiPlayer struct {
 	coastal             bool // base sits near water: field a shipyard + a navy
 	endTurnRetryCounter int
 	ctx                 *aiContext
+	/* // note: ported but unused code in Go port - the tasks pending flag, see ChangeTasksPendingFlag below
+	tasksPending bool
+	*/
 }
 
 // Init resets the player for a new game. C++: AiPlayer::Init.
@@ -100,6 +103,11 @@ func (p *AiPlayer) GetStrategy() Strategy {
 // would matter, and the "wait until the orders resolve" job is done by the live loop's
 // ActiveOrders gate (gamescreen.go, aiTurn). Wiring it faithfully would need sim -> ai
 // event callbacks, which the one way ai -> sim seam does not allow.
+/* // note: ported but unused code in Go port
+func (p *AiPlayer) ChangeTasksPendingFlag(value bool) {
+	p.tasksPending = value
+}
+*/
 
 // BeginTurn performs the team's start-of-turn planning. The first call resolves a Random strategy and registers the team's root tasks. C++: AiPlayer::BeginTurn.
 func (p *AiPlayer) BeginTurn(mgr *TaskManager) {
@@ -189,6 +197,13 @@ func (p *AiPlayer) CheckEndTurn(mgr *TaskManager) bool {
 	if p.needInit {
 		return false
 	}
+
+	/* // note: ported but unused code in Go port - nothing raises tasksPending, see ChangeTasksPendingFlag
+	if p.tasksPending {
+		p.endTurnRetryCounter = 0
+		return false
+	}
+	*/
 
 	if p.endTurnRetryCounter == 0 {
 		mgr.MarkTasksForProcessing(p.team)

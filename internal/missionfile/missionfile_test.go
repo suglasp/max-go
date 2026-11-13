@@ -112,6 +112,14 @@ func serializeInfo(info *Info) []byte {
 	return []byte(b.String())
 }
 
+/* // note: unused code in Go port
+// a one line wrapper of testutil.DataDir; the tests call it directly
+func dataDir(t *testing.T) string {
+	t.Helper()
+	return testutil.DataDir(t)
+}
+*/
+
 func missionPaths(t *testing.T, dir string) []string {
 	t.Helper()
 	entries, err := os.ReadDir(dir)

@@ -16,6 +16,13 @@ import (
 	"github.com/suglasp/max-go/internal/units"
 )
 
+/* // note: unused code in Go port
+// the same surface as the shared allLandSurf in fixture_test.go
+type buildExitSurf struct{}
+
+func (buildExitSurf) SurfaceAt(x, y int) uint8 { return world.SurfaceLand }
+*/
+
 // finishedConstructor builds a headless game with a player constructor that has
 // just finished a 2x2 building, leaving it parked build ready on the site.
 func finishedConstructor(t *testing.T) (*sim.Game, *game.UnitInfo, int, int) {

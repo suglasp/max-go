@@ -16,6 +16,14 @@ import (
 // Retail M.A.X. maps are 112x112 cells.
 const mapW, mapH = 112, 112
 
+/* // note: unused code in Go port
+// a one line wrapper of testutil.DataDir; the tests call it directly
+func dataDir(t *testing.T) string {
+	t.Helper()
+	return testutil.DataDir(t)
+}
+*/
+
 // loadSave reads and parses one retail save file.
 func loadSave(t *testing.T, path string) *GameState {
 	t.Helper()

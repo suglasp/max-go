@@ -81,7 +81,7 @@ func (s *Screen) drawBuildReady(view *gfx.Buffer) {
 	for _, b := range s.game.BuildReadyUnits(team) {
 		br := s.game.BuildReadyInfo(b)
 
-		if br == nil {
+		if br == nil /* || br.FromStorage: note: unused code in Go port, nothing sets FromStorage (a storage bay unloads to a cell), see sim.BuildReady */ {
 			continue
 		}
 
@@ -290,7 +290,7 @@ func (s *Screen) announceBuildReady(team int) {
 	for _, b := range s.game.BuildReadyUnits(team) {
 		br := s.game.BuildReadyInfo(b)
 
-		if br == nil {
+		if br == nil /* || br.FromStorage: note: unused code in Go port, nothing sets FromStorage (a storage bay unloads to a cell), see sim.BuildReady */ {
 			continue // a depot unload is not a "Finished building" event
 		}
 

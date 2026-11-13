@@ -105,6 +105,27 @@ func (m *unitStatusMenu) paint() {
 		rowH                       = 19                // C++: each stat row advances screen_width*19
 	)
 
+	/* // note: unused code in Go port
+	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+	// statIcon caches a keyed gauge icon (I_HITS/I_ARMOR/...), with its fuchsia
+	// top left keyed to transparent.
+	statIcons := map[string]*gfx.Buffer{}
+	statIcon := func(tag string) *gfx.Buffer {
+		if b, ok := statIcons[tag]; ok {
+			return b
+		}
+		var b *gfx.Buffer
+		if tag != "" {
+			if img, e := ctx.loadSimple(tag); e == nil {
+				c := img.Buffer().Clone()
+				c.KeyToZero(c.At(0, 0))
+				b = c
+			}
+		}
+		statIcons[tag] = b
+		return b
+	}
+	*/
 	statIcon := ctx.statIcon
 
 	rows := unitStatRows(u)

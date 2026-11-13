@@ -87,6 +87,11 @@ const (
 type MouseState struct {
 	X, Y    int
 	Buttons uint32
+	/* // note: unused code in Go port
+	// WheelX / WheelY were written every frame and never read; wheel input reaches the game through ConsumeWheelY.
+	WheelX  int
+	WheelY  int
+	*/
 }
 
 // Config configures the platform window.
@@ -470,7 +475,7 @@ func (p *Platform) pollMouse() {
 	x, y := ebiten.CursorPosition()
 	left := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 	right := ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight)
-	_, wy := ebiten.Wheel()
+	_, wy := ebiten.Wheel() /* wx: note: unused code in Go port, the horizontal wheel only fed MouseState.WheelX */
 
 	var buttons uint32
 	if left {
@@ -490,7 +495,7 @@ func (p *Platform) pollMouse() {
 
 	p.mu.Lock()
 	p.wheelAccum += quantizeWheel(wy, &p.wheelRemainder)
-	p.mouse = MouseState{X: x, Y: y, Buttons: buttons}
+	p.mouse = MouseState{X: x, Y: y, Buttons: buttons /* , WheelX: int(wx), WheelY: int(wy): note: unused code in Go port, see MouseState */}
 	p.mu.Unlock()
 }
 
@@ -565,3 +570,13 @@ func blitRGBA(src *gfx.Buffer, lut *[256][4]uint8, dst []uint8) {
 		}
 	}
 }
+
+/* // note: unused code in Go port
+// String was a diagnostic Stringer; nothing calls it and no *Platform is ever passed to fmt.
+// String returns a compact diagnostic description of the platform state.
+func (p *Platform) String() string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return fmt.Sprintf("platform %dx%d scale %d", p.logicalW, p.logicalH, p.cfg.WindowScale)
+}
+*/

@@ -111,10 +111,27 @@ func New(art Art, font *fonts.Font, mode Mode, caption, acceptLabel, cancelLabel
 	return d
 }
 
+/* // note: ported but unused code in Go port
+// Origin reports where Draw places the frame's top left corner.
+func (d *Dialog) Origin() game.Point {
+	return d.origin
+}
+*/
+
 // SetOrigin overrides the default centered frame origin.
 func (d *Dialog) SetOrigin(p game.Point) {
 	d.origin = p
 }
+
+/* // note: ported but unused code in Go port
+// Bounds is the frame rect at the current origin.
+func (d *Dialog) Bounds() gfx.Rect {
+	if d.art.Frame == nil {
+		return gfx.NewRect(d.origin.X, d.origin.Y, d.origin.X-1, d.origin.Y-1)
+	}
+	return gfx.NewRect(d.origin.X, d.origin.Y, d.origin.X+d.art.Frame.W-1, d.origin.Y+d.art.Frame.H-1)
+}
+*/
 
 // Scrollable reports whether the OK dialog caption needs scroll controls.
 func (d *Dialog) Scrollable() bool {
@@ -155,6 +172,35 @@ func (d *Dialog) HandleKey(key int) Result {
 	}
 	return ResultNone
 }
+
+/* // note: ported but unused code in Go port
+// HandleMouse updates the pressed visual state and returns a result on click
+// release over a matching button.
+func (d *Dialog) HandleMouse(x, y int, pressed bool) Result {
+	if pressed {
+		d.pressed = d.hitButton(x, y)
+		return ResultNone
+	}
+
+	was := d.pressed
+	d.pressed = buttonNone
+	if was == buttonNone || d.hitButton(x, y) != was {
+		return ResultNone
+	}
+
+	switch was {
+	case buttonAccept:
+		return ResultAccept
+	case buttonCancel:
+		return ResultCancel
+	case buttonScrollUp:
+		d.pageUp()
+	case buttonScrollDown:
+		d.pageDown()
+	}
+	return ResultNone
+}
+*/
 
 // rewrap rebuilds wrapped message lines for the current dialog width.
 func (d *Dialog) rewrap() {
@@ -269,6 +315,27 @@ func (d *Dialog) scrollUpRect() gfx.Rect {
 func (d *Dialog) scrollDownRect() gfx.Rect {
 	return rectAt(d.origin, scrollDownX, scrollY, d.art.ScrollDownUp)
 }
+
+/* // note: ported but unused code in Go port
+// hitButton maps a point to the dialog button under it, if any.
+func (d *Dialog) hitButton(x, y int) buttonKind {
+	if d.acceptRect().Contains(x, y) {
+		return buttonAccept
+	}
+	if d.mode == ModeOKCancel && d.cancelRect().Contains(x, y) {
+		return buttonCancel
+	}
+	if d.scrollable() {
+		if d.scrollUpRect().Contains(x, y) {
+			return buttonScrollUp
+		}
+		if d.scrollDownRect().Contains(x, y) {
+			return buttonScrollDown
+		}
+	}
+	return buttonNone
+}
+*/
 
 // scrollable reports whether the message has more rows than the visible area.
 func (d *Dialog) scrollable() bool {
@@ -397,3 +464,14 @@ func appendLimited(lines []string, line string, limit int) []string {
 	}
 	return append(lines, line)
 }
+
+/* // note: unused code in Go port
+// the helper repeated the builtin min; callers use it directly.
+// min returns the smaller of two integers.
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+*/

@@ -359,6 +359,20 @@ func (s *Settings) Validate() {
 	}
 }
 
+/* // note: unused code in Go port
+// clamp repeated the builtins; callers write max(lo, min(v, hi)).
+// clamp constrains v to the inclusive lo..hi range.
+func clamp(v, lo, hi int) int {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
+*/
+
 // Load reads settings from path.
 func Load(path string) (Settings, error) {
 	data, err := os.ReadFile(path)

@@ -23,7 +23,11 @@ type Complex struct {
 	Material int
 	Fuel     int
 	Gold     int
-
+	/* // note: unused code in Go port
+	// Power / Workers were a stale per turn snapshot nothing read; spare power and the worker surplus are computed live.
+	Power     int
+	Workers   int
+	*/
 	Buildings int
 
 	Members []*game.UnitInfo
@@ -226,7 +230,11 @@ func (c *Complex) BalanceTurn(difficultyFactor int) Cargo {
 	c.Fuel = max(0, c.Fuel+net.Fuel)
 	c.Gold = max(0, c.Gold+net.Gold)
 	c.CapStores() // a base cannot hold more than its storage: the rest spills
-
+	/* // note: unused code in Go port
+	// the writes of the Power / Workers snapshot (see the Complex fields).
+	c.Power = c.activeGeneratorOutput() - c.consumerPowerDemand() // spare power (>=0 after the shed)
+	c.Workers = net.Life
+	*/
 	c.redistribute() // mirror the pooled stores into the member buildings' cargo bars
 	return net
 }
@@ -297,6 +305,45 @@ func (c *Complex) redistribute() {
 	}
 }
 
+/* // note: unused code in Go port
+// maxInt repeated the builtin max, which the economy now calls.
+// maxInt returns the larger of two ints (stores clamp at zero).
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+*/
+
+/* // note: unused code in Go port
+// minInt repeated the builtin min, which the economy now calls.
+// minInt returns the smaller of two ints (stores clamp at capacity).
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+
+	return b
+}
+*/
+
+/* // note: unused code in Go port
+// CanPower is only read by tests; the live power on gate is StartShortage, which shares hasPowerSupply.
+// CanPower reports whether the complex can run unit u: u makes its own power or
+// needs none, or the complex has a generator AND a fuel source (fuel in stock OR a
+// member mining fuel). A base on a raw+fuel deposit sustains itself even at 0 stock
+// (generators ignore fuel STOCK, the per turn balance refills from mining). Only a
+// generator with NO fuel at all, or an isolated complex with no generator, bounces
+// "not enough power". C++: the power/no fuel check in ValidateAuxilaryIndustry.
+func (c *Complex) CanPower(u *game.UnitInfo) bool {
+	if isGenerator(u.Type) || PowerConsumptionRate(u.Type) == 0 {
+		return true
+	}
+	return c.hasPowerSupply()
+}
+*/
+
 // isGenerator reports whether a type produces power (a power generator or station).
 func isGenerator(t assets.UnitType) bool {
 	return t == assets.PowGen || t == assets.PowerStn
@@ -361,6 +408,21 @@ func (c *Complex) StartShortage(u *game.UnitInfo) Shortage {
 	}
 	return ShortageNone
 }
+
+/* // note: unused code in Go port
+// HasActiveGenerator is only read by a test; the live checks use hasGeneratorMember (the optimizer powers idle generators off).
+// HasActiveGenerator reports whether any active member produces power, so the
+// complex can run its power consuming buildings. A detached complex with no
+// generator cannot power its consumers at all.
+func (c *Complex) HasActiveGenerator() bool {
+	for _, u := range c.Members {
+		if active(u) && isGenerator(u.Type) {
+			return true
+		}
+	}
+	return false
+}
+*/
 
 // hasGeneratorMember reports whether the complex has a generator at all (on OR off,
 // but not disabled) - a power SOURCE it can switch on. Distinct from
@@ -734,3 +796,18 @@ func isFactory(t assets.UnitType) bool {
 	}
 	return false
 }
+
+/* // note: unused code in Go port
+// PowerShort is only read by Game.PowerShort, which has no caller; the alert reads u.PowerStarved.
+// PowerShort reports whether any of the complex's powered on consumers was starved
+// for power this turn (a deficit cut it). The in game screen reads this to flash the
+// "not enough power" alert. C++: the power deficit warning.
+func (c *Complex) PowerShort() bool {
+	for _, u := range c.Members {
+		if u.PowerStarved {
+			return true
+		}
+	}
+	return false
+}
+*/

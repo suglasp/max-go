@@ -11,6 +11,20 @@ import (
 	"github.com/suglasp/max-go/internal/screendata"
 )
 
+/* // note: unused code in Go port
+// a copy of the transfer math; the tests now call the live transferLimits and sliderFill in transfer.go.
+// transferLimits mirrors the give/take/start math at the top of RunTransfer so
+// the slider bounds can be checked without a window/render context.
+// C++: the TransferMenu constructor (transfermenu.cpp).
+func transferLimits(srcMat, srcCap, tgtMat, tgtCap int) (giveMax, takeMax, start int) {
+	giveMax = min(tgtCap-tgtMat, srcMat)
+	srcFree := min(srcCap-srcMat, tgtMat)
+	takeMax = -srcFree
+	start = giveMax
+	return
+}
+*/
+
 func TestTransferLimits(t *testing.T) {
 	tests := []struct {
 		name                           string
@@ -49,7 +63,16 @@ func TestTransferLimits(t *testing.T) {
 // level to a fraction of the slider width (LoadHorizontalBar's proportional
 // fill), so an empty target reads 0 and a full one reads the whole bar.
 func TestTransferSliderFill(t *testing.T) {
-
+	/* // note: unused code in Go port
+	// a copy of the fill math; fill now calls the live sliderFill.
+	const sliderW = 223
+	fill := func(value, tgtMat, tgtCap int) int {
+		zeroOffset := -tgtMat
+		capacity := tgtCap // freeCapacity - zeroOffset
+		f := (value - zeroOffset) * sliderW / capacity
+		return max(0, min(f, sliderW))
+	}
+	*/
 	fill := func(value, tgtMat, tgtCap int) int {
 		return sliderFill(value, -tgtMat, tgtCap, sliderW) // as drawDynamic: capacity = the target's full storage
 	}

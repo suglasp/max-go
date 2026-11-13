@@ -131,3 +131,18 @@ func TestPowerOnBouncesAtCapacity(t *testing.T) {
 		t.Errorf("setPower must arm the bounce for the capacity-short consumer, got %v", s.sound.powerBounceUnit)
 	}
 }
+
+/* // note: unused code in Go port
+// replaced by the shared mkBuilding(t, team, 1, gx, gy, game.FlagStationary|game.FlagBuilding, order, storage) in fixture_test.go
+// building makes a stationary building of a type/team at a cell (gamescreen test helper).
+func building(t assets.UnitType, team, gx, gy int, order game.Order, storage int) *game.UnitInfo {
+	u := game.NewUnitInfo(t, team, 1, 0)
+	u.Flags = game.FlagStationary | game.FlagBuilding
+	u.GridX, u.GridY = gx, gy
+	u.Order = order
+	u.State = game.OrderStateExecutingOrder
+	u.Values = &game.UnitValues{}
+	u.Values.Set(game.AttribStorage, storage)
+	return u
+}
+*/

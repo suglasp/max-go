@@ -234,6 +234,20 @@ func TestTransferRefillFromComplexBuilding(t *testing.T) {
 	}
 }
 
+/* // note: unused code in Go port
+// replaced by the shared newTestScreen(t, size) in fixture_test.go
+// allLandGame returns a sim game over an all land w x h map for transfer tests.
+func allLandGame(w, h int) *sim.Game {
+	m := &world.Map{Preview: world.Preview{W: w, H: h}, Surface: make([]uint8, w*h)}
+	for i := range m.Surface {
+		m.Surface[i] = world.SurfaceLand
+	}
+	p := &game.StartParams{}
+	p.Teams[0].Type = game.TeamPlayer
+	return sim.New(p, m)
+}
+*/
+
 // placeStorer places and registers a storage building (1x1 or 2x2) holding cargo.
 func placeStorer(g *sim.Game, ty assets.UnitType, gx, gy int, big bool) *game.UnitInfo {
 	fl := game.FlagStationary | game.FlagSelectable | game.FlagRequiresSlab
@@ -245,6 +259,23 @@ func placeStorer(g *sim.Game, ty assets.UnitType, gx, gy int, big bool) *game.Un
 	g.PlaceBuilding(u, gx, gy)
 	return u
 }
+
+/* // note: unused code in Go port
+// replaced by the shared t4Truck(g, ty, 0, gx, gy, 40, 0) in fixture_test.go
+// mobileCargo returns a mobile cargo unit (truck/constructor) at a cell.
+func mobileCargo(g *sim.Game, ty assets.UnitType, gx, gy int) *game.UnitInfo {
+	u := &game.UnitInfo{
+		Type:  ty,
+		Team:  0,
+		GridX: gx, GridY: gy,
+		Flags:  game.FlagMobileLandUnit | game.FlagSelectable,
+		Values: &game.UnitValues{},
+	}
+	u.Values.Set(game.AttribStorage, 40)
+	g.Units.Deploy(u, gx, gy)
+	return u
+}
+*/
 
 // TestTransferReachesAcrossComplex verifies the manual's rule (p.64): a connected
 // complex is ONE transfer endpoint, so a unit adjacent to ANY connected structure
@@ -296,6 +327,7 @@ func TestTransferTargetMatchesCargoKind(t *testing.T) {
 	placeStorer(g, assets.FDump, 5, 5, false)    // fuel, 1x1
 	placeStorer(g, assets.GoldSm, 15, 5, false)  // gold, 1x1
 	placeStorer(g, assets.MiningSt, 5, 15, true) // raw, 2x2
+	/* fuelStore, goldStore, rawMine := ...; _ = fuelStore; _ = rawMine; _ = goldStore: note: unused code in Go port, the names were never read */
 
 	s := &Screen{game: g}
 
@@ -338,6 +370,7 @@ func TestTransferTwoMobileUnitsNeedAdjacency(t *testing.T) {
 	a := t4Truck(g, assets.SplyTrck, 0, 5, 5, 40, 0)
 	t4Truck(g, assets.SplyTrck, 0, 6, 5, 40, 0) // touching a
 	t4Truck(g, assets.SplyTrck, 0, 9, 5, 40, 0) // 4 cells from a
+	/* adjacent, apart := ...; _ = adjacent; _ = apart: note: unused code in Go port, the names were never read */
 
 	s := &Screen{game: g}
 	s.orderInput.xferSource = a

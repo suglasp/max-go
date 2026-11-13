@@ -182,6 +182,9 @@ func reminderTask(r Reminder) Task {
 // other tasks asked for this turn.
 func (m *TaskManager) BeginTurn(team int) {
 	m.pruneUnneeded(team)
+	/* // note: unused code in Go port - the ledger keeps units across turns now (step 6005): a task lets go at the end of its pass (endPass)
+	m.releaseTeamUnits(team)
+	*/
 
 	for _, t := range m.tasks {
 		if t.Team() == team && t.Type() != TaskTypeTransport {
@@ -363,6 +366,18 @@ func (m *TaskManager) claimUnit(task Task, u *game.UnitInfo) bool {
 
 	return true
 }
+
+/* // note: unused code in Go port - the ledger keeps units across turns now (step 6005): a task lets go at the end of its pass (endPass)
+// releaseTeamUnits empties the ledger entries of the team's tasks, so they claim
+// again in run order this turn.
+func (m *TaskManager) releaseTeamUnits(team int) {
+	for u, owner := range m.owner {
+		if owner.Team() == team {
+			delete(m.owner, u)
+		}
+	}
+}
+*/
 
 // pruneUnneeded removes the team's tasks that are no longer needed: a removed
 // parent takes its children with it, since a child's IsNeeded follows its

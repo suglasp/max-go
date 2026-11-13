@@ -28,7 +28,10 @@ type taskAttackEnemies struct {
 	committed  bool                   // latches once the team spots an enemy and musters minStrikeForce attackers; until then it holds/scouts. C++: AiPlayer commits after recon+buildup
 	searchMode map[*game.UnitInfo]int // per searching unit, HOW it hunts a lost target: searchZone sweep or searchExplore wander; rolled once per lost contact, cleared on reacquire
 	tm         *threatMap             // team threat map for THIS turn (rebuilt in BeginTurn once committed); sortApproachSafest prefers the SAFEST in range cell. nil = rank by distance
-
+	/* // note: unused code in Go port - the reserve and escort tasks claim their guards through the unit ledger (step 6003)
+	reserve      map[*game.UnitInfo]bool // this turn's home defence reserve (reservedGuards), excluded from the assault so the two tasks do not fight over them; nil on no reserve tiers
+	escort       map[*game.UnitInfo]bool // this turn's escort guards (escortGuards) shadowing a fragile mover; excluded from the assault; nil on no escort tiers
+	*/
 	abandoned    map[*game.UnitInfo]int // lost target -> turn shelved; nearestEnemy skips it while fogged until abandonCooldown passes or it is seen again. C++: AiPlayer aging out a stale SpottedUnit
 	searchSince  map[*game.UnitInfo]int // per searching unit, the turn it began hunting its CURRENT lost target, so it gives up after searchPatience; cleared on reacquire/retarget
 	searchClaims map[int]bool           // reserves a lost contact cell for ONE searcher per turn (no stack all searching the same stale cell); rebuilt each BeginTurn
@@ -151,13 +154,25 @@ func (t *taskAttackEnemies) BeginTurn() {
 		}
 	}
 
+	/* // note: unused code in Go port - planAssault claims the whole ready force now (step 6005)
+	// The units this pass ordered are the attack's for the turn; the ones it left idle
+	// stay free for the explore task.
+	for _, u := range ready {
+		if g.HasOrder(u) {
+			t.claim(u)
+		}
+	}
+	*/
 }
 
 // planAssault settles this turn's plan before any unit acts: who is held back, whether
 // the team is committed, the threat map and shared objective that follow from that, how
 // many units may advance, and the ready attackers in the order they get their turn.
 func (t *taskAttackEnemies) planAssault(g *sim.Game) (ready []*game.UnitInfo, sortie int) {
-
+	/* // note: unused code in Go port - replaced by the unit ledger: the reserve and escort tasks claim their guards (step 6003)
+	t.reserve = reservedGuards(g, t.team)
+	t.escort = escortGuards(g, t.team)
+	*/
 	t.searchClaims = nil // one searcher per stale cell, reset each turn
 	committed := t.isCommitted()
 

@@ -158,7 +158,12 @@ func TestRaisedBridgeDrawsOverSeaUnit(t *testing.T) {
 
 	// With a sea unit on the cell the bridge raises and reports elevated.
 	runBridgeAnim(s)
-
+	/* // note: unused code in Go port
+	// TestUpdateBridgesRaisesToMaxAndLowersBack drives the live updateBridges to the cap
+	if bridge.BridgeRaise != game.BridgeRaiseMax {
+		t.Errorf("bridge raise under a sea unit = %d, want %d (fully up)", bridge.BridgeRaise, game.BridgeRaiseMax)
+	}
+	*/
 	if !isElevatedBridge(bridge) {
 		t.Fatal("bridge should report elevated while raised")
 	}
@@ -174,5 +179,18 @@ func TestRaisedBridgeDrawsOverSeaUnit(t *testing.T) {
 			t.Errorf("boat at (%d,%d): raised bridge draw index %d should be after the boat at %d (over it)", boatCell[0], boatCell[1], bi, boi)
 		}
 	}
+	/* // note: unused code in Go port
+	// TestUpdateBridgesRaisesToMaxAndLowersBack pins the lower phase
+	mgr.Move(boat, 3, 3) // restore the boat onto the cell for the lower phase
 
+	// The boat leaves: the bridge lowers back to flat (ground cover under crossers).
+	g.Units.Remove(boat)
+	runBridgeAnim(s)
+	if bridge.BridgeRaise != 0 {
+		t.Errorf("bridge raise with no sea unit = %d, want 0 (flat)", bridge.BridgeRaise)
+	}
+	if isElevatedBridge(bridge) {
+		t.Error("bridge should not be elevated once flat")
+	}
+	*/
 }

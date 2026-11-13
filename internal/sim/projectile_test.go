@@ -27,6 +27,21 @@ func addBomber(g *Game, id, gx, gy, team int) *game.UnitInfo {
 	return u
 }
 
+/* // note: unused code in Go port
+// addTankTarget(g, id, gx, gy, 1) builds the same tank, see fixture_test.go
+// addEnemyTarget deploys a team 1 ground tank to be shot at.
+func addEnemyTarget(g *Game, id, gx, gy int) *game.UnitInfo {
+	u := game.NewUnitInfo(assets.Tank, 1, id, 0)
+	u.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+	u.Values = &game.UnitValues{}
+	u.Values.Set(game.AttribHits, 30)
+	u.Values.Set(game.AttribArmor, 2)
+	u.Hits = 30
+	g.Units.Deploy(u, gx, gy)
+	return u
+}
+*/
+
 // TestBomberLaunchesProjectile: a missile firer's Attack spawns a flying projectile,
 // spends the shot, and deals NO immediate damage (it resolves on arrival).
 func TestBomberLaunchesProjectile(t *testing.T) {

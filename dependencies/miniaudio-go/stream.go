@@ -13,6 +13,10 @@ import "unsafe"
 type Stream struct {
 	h        uintptr
 	channels uint32
+	/* // note: unused code in Go port
+	// format was stored and never read; the C side keeps the sample format.
+	format Format
+	*/
 }
 
 var (
@@ -42,7 +46,7 @@ func NewStream(format Format, channels, sampleRate, capacityFrames uint32) (*Str
 	if h == 0 {
 		return nil, errCreate("stream")
 	}
-	return &Stream{h: h, channels: channels}, nil
+	return &Stream{h: h /* , format: format: note: unused code in Go port, see Stream */, channels: channels}, nil
 }
 
 // Destroy stops and frees the stream and its device.

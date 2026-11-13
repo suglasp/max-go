@@ -109,6 +109,23 @@ func TestBuildExitAfterSentryEndsPose(t *testing.T) {
 	}
 }
 
+/* // note: unused code in Go port
+// addConstructor(g, assets.Engineer, team, gx, gy, 16, 20, 40) builds the same unit, see fixture_test.go
+// engineerAt deploys a healthy mobile engineer with movement budget and cargo at a cell for the build exit tests.
+func engineerAt(g *Game, team, gx, gy int) *game.UnitInfo {
+	e := game.NewUnitInfo(assets.Engineer, team, 1, 0)
+	e.Flags = game.FlagMobileLandUnit | game.FlagConstructorUnit | game.FlagSelectable
+	e.Values = &game.UnitValues{}
+	e.Values.Set(game.AttribSpeed, 16)
+	e.Values.Set(game.AttribHits, 20)
+	e.InitState()
+	e.Speed = 16
+	e.Storage = 40
+	g.Units.Deploy(e, gx, gy)
+	return e
+}
+*/
+
 // turretProduct builds a one turn 1x1 gun turret product, a real building an engineer parks on.
 func turretProduct() *game.UnitInfo {
 	prod := game.NewUnitInfo(assets.GunTurrt, 0, 0, 0)

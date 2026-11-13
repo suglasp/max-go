@@ -228,7 +228,7 @@ func (s *Screen) selectForInspect(cellX, cellY int) {
 }
 
 // rightClickMap opens the unit's Status Screen, or deselects on empty terrain
-// Empty ground leaves the current selection unchanged. C++: UnitStats_Menu.
+// (a deliberate deviation: vanilla does nothing on empty ground). C++: UnitStats_Menu.
 func (s *Screen) rightClickMap(cellX, cellY int) {
 	if u := s.topUnitAt(cellX, cellY); u != nil {
 		s.openStatus(u)

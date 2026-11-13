@@ -121,6 +121,14 @@ type cargoMenu struct {
 	buyBtn, deleteBtn gnw.ButtonID
 
 	dbl menuDoubleClick
+	/* // note: unused code in Go port
+	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+	statIcons map[string]*gfx.Buffer
+	*/
+	/* // note: unused code in Go port
+	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
+	portraitCache map[assets.UnitType]*sprites.Big
+	*/
 }
 
 // RunCargo edits a CARGOPIC loadout in place. Done commits changes; Cancel or Escape restores the entry state
@@ -149,7 +157,8 @@ func RunCargo(ctx *Context, lo *CargoLoadout) error {
 		at:        ctx.Assets.Attribs,
 		baseVals:  map[assets.UnitType]*game.UnitValues{},
 		curVals:   map[assets.UnitType]*game.UnitValues{},
-
+		/* statIcons: map[string]*gfx.Buffer{}: note: unused code in Go port, see the struct */
+		/* portraitCache: map[assets.UnitType]*sprites.Big{}: note: unused code in Go port, see the struct */
 		buyBtn:    -1,
 		deleteBtn: -1,
 	}
@@ -398,6 +407,32 @@ func wrapTwoLines(f *fonts.Font, label string, w int) []string {
 	}
 	return []string{l1, l2}
 }
+
+/* // note: unused code in Go port
+// wrapText repeated wrapLines without a row limit; callers use wrapLines(f, text, w, 0).
+// wrapText greedily splits text into lines that each fit width w (unlimited
+// lines): for the multi line description overlay.
+func wrapText(f *fonts.Font, text string, w int) []string {
+	var lines []string
+	cur := ""
+	for _, word := range strings.Fields(text) {
+		try := word
+		if cur != "" {
+			try = cur + " " + word
+		}
+		if f.Width(try) <= w || cur == "" {
+			cur = try
+		} else {
+			lines = append(lines, cur)
+			cur = word
+		}
+	}
+	if cur != "" {
+		lines = append(lines, cur)
+	}
+	return lines
+}
+*/
 
 // cargoPlateButtonWithDisabled builds a Cargo screen captioned button with a
 // real disabled face. The generic plateButton helper has no disabled image hook,

@@ -356,3 +356,15 @@ func romanNumeral(n int) string {
 
 	return out
 }
+
+/* // note: unused code in Go port
+// the helper repeated the builtin min; callers use it directly.
+// minInt is the smaller of two ints.
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+
+	return b
+}
+*/

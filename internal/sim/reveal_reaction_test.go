@@ -82,7 +82,7 @@ func TestRevealReactionRespectsChecklist(t *testing.T) {
 	g := newGame(t, 30, 12)
 	g.reactOnReveal = true
 	addScanner(g, 2, 0, 9, 5, 10) // already adjacent: the enemy is revealed at once
-
+	/* recon := ...; _ = recon: note: unused code in Go port, the name was never read */
 	tank := addTankTarget(g, 3, 8, 5, 1)
 	tank.DisabledReactionFire = true
 

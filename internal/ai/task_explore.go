@@ -25,7 +25,10 @@ import (
 type taskExplore struct {
 	TaskBase
 	ctx *aiContext
-
+	/* // note: unused code in Go port - the reserve and escort tasks claim their guards through the unit ledger (step 6003)
+	reserve map[*game.UnitInfo]bool // guards assigned to defend the base this turn
+	escort  map[*game.UnitInfo]bool // guards assigned to escort another unit this turn
+	*/
 	// tm is this turn's team threat map, built lazily for the first ready explorer. A
 	// recon unit does not scout into a cell under enemy fire and routes around defended
 	// ground, so a scanner or scout stops driving blindly into a hostile base.
@@ -58,6 +61,10 @@ func (t *taskExplore) BeginTurn() {
 		return
 	}
 
+	/* // note: unused code in Go port - replaced by the unit ledger: the reserve and escort tasks claim their guards (step 6003)
+	t.reserve = reservedGuards(g, t.team)
+	t.escort = escortGuards(g, t.team)
+	*/
 	t.tm = nil // built lazily on the first ready explorer (buildThreatMap is O(enemies x range^2))
 	sent := map[assets.UnitType]int{}
 	for _, u := range g.Units.Units() {
