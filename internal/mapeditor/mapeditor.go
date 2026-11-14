@@ -7,7 +7,7 @@ package mapeditor
 
 import (
 	"fmt"
-	"os"
+	/* "os": note: unused code in Go port, the palette read is gfx.LoadBasePalette */
 	"strings"
 
 	"github.com/suglasp/max-go/internal/drawmap"
@@ -98,11 +98,16 @@ func open(ctx *menus.Context, worldIndex int) (*Editor, error) {
 	}
 
 	// COLOR.PAL stays the base palette; the map installs the terrain slots 64..159.
+	// A missing or invalid file leaves the zero palette.
+	editor.palette, _ = gfx.LoadBasePalette(ctx.DataDir)
+	/* // note: unused code in Go port
+	// The read and parse block is gfx.LoadBasePalette.
 	if data, err := os.ReadFile(resfile.DataPath(ctx.DataDir, "COLOR.PAL")); err == nil {
 		if palFile, err := gfx.ParsePalFile(data); err == nil {
 			editor.palette = palFile.Palette
 		}
 	}
+	*/
 	worldMap.ApplyTerrainPalette(&editor.palette)
 	ctx.Plat.SetPalette(&editor.palette)
 
@@ -129,8 +134,12 @@ func (e *Editor) loop() error {
 	ctx.Sys.MouseShow()
 	ctx.Sys.FlushInput()
 
+	var cycler world.ColorCycler
+	/* // note: unused code in Go port
+	// The cycle clocks are world.ColorCycler.
 	cycleStamps := make([]uint64, len(world.ColorCycles))
 	var cyclePulse uint8
+	*/
 
 	for {
 		switch key := ctx.Sys.GetInput(); key {
@@ -167,6 +176,11 @@ func (e *Editor) loop() error {
 		e.recenterOnMinimap(buf, mouse)
 
 		// Advance each terrain color cycle at its own rate, like the game tick.
+		if cycler.Advance(&e.palette, platform.Ticks()) {
+			ctx.Plat.SetPalette(&e.palette)
+		}
+		/* // note: unused code in Go port
+		// The loop moved into world.ColorCycler.Advance.
 		now := platform.Ticks()
 		paletteChanged := false
 
@@ -181,6 +195,7 @@ func (e *Editor) loop() error {
 		if paletteChanged {
 			ctx.Plat.SetPalette(&e.palette)
 		}
+		*/
 
 		e.scrollX, e.scrollY = e.renderer.ClampScroll(e.scrollX, e.scrollY, buf.W, buf.H)
 

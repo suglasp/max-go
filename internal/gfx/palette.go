@@ -9,6 +9,9 @@ package gfx
 import (
 	"encoding/binary"
 	"fmt"
+	"os"
+
+	"github.com/suglasp/max-go/internal/resfile"
 )
 
 // Palette and color table handling ported from color.cpp. The format
@@ -73,6 +76,23 @@ type PalFile struct {
 	// Intensity maps [color][level] to a palette index; nil when the
 	// file has no 'NEWC' section (true for the retail COLOR.PAL).
 	Intensity *[PaletteSize][PaletteSize]uint8
+}
+
+// LoadBasePalette reads COLOR.PAL from the game data folder and returns its
+// palette. On a missing or invalid file it returns the zero palette and the
+// error, so a caller that only wants a fallback can ignore the error.
+func LoadBasePalette(dataDir string) (Palette, error) {
+	data, err := os.ReadFile(resfile.DataPath(dataDir, "COLOR.PAL"))
+	if err != nil {
+		return Palette{}, err
+	}
+
+	pf, err := ParsePalFile(data)
+	if err != nil {
+		return Palette{}, err
+	}
+
+	return pf.Palette, nil
 }
 
 // ParsePalFile parses COLOR.PAL data.

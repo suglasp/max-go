@@ -32,7 +32,7 @@ const DEBUG_GAME = true // Flip to false for a release build
 // validateEmulate checks a name against this list and the help prints it.
 var menuScreens = []string{
 	"planetselect", "newgame", "multiplayer", "gameconfig", "chooseplayer", "clanselect",
-	"mapview", "drawmap", "sprite:<tag>", "shadow", "game", "random", "random2", "build", "blewup", "colony", "popup", "bevelart", "assets", "soldier", "apcunit", "headrotate", "transport", "commando", "mines", "bulldozer", "air", "missile", "navalfire", "parkedbuild", "reactionfire", "spotted", "aliens", "factoryrun", "death", "win", "lose", "ending",
+	"mapview" /* "drawmap", note: unused code in Go port, the jump is retired (see mapdebug.go) */, "sprite:<tag>", "shadow", "game", "random", "random2", "build", "blewup", "colony", "popup", "bevelart", "assets", "soldier", "apcunit", "headrotate", "transport", "commando", "mines", "bulldozer", "air", "missile", "navalfire", "parkedbuild", "reactionfire", "spotted", "aliens", "factoryrun", "death", "win", "lose", "ending",
 	"options", "prefs-game", "loadgame", "research", "alloc", "upgrade", "transfer", "selfdestruct", "repairshop", "reports", "help", "cargo", "construct", "construct-eng", "factorybuild", "scrollbar",
 	/* "listbox", note: unused code in Go port, the ListBox bench is commented out */ "saveload", "save", "load", "credits", "intro", "splash",
 	"setup", "gamesetup", "training", "campaign", "mission", "customscenario", "tips", "gameconfig-mission", "custom", "levelup", "submarine", "status",

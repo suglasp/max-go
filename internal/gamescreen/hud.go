@@ -14,14 +14,19 @@ import (
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/platform"
 	"github.com/suglasp/max-go/internal/sprites"
+	/* "github.com/suglasp/max-go/internal/world": note: unused code in Go port, animatePalette uses Screen.cycler */
 	"github.com/suglasp/max-go/internal/units"
-	"github.com/suglasp/max-go/internal/world"
 )
 
 // animatePalette advances terrain colour cycles on their own clocks and reinstalls the palette when one changes.
 //
 // C++: World_UpdateColorAnimations driven from the game tick.
 func (s *Screen) animatePalette() {
+	if s.cycler.Advance(&s.pal, platform.Ticks()) {
+		s.plat.SetPalette(&s.pal)
+	}
+	/* // note: unused code in Go port
+	// The loop moved into world.ColorCycler.Advance, shared with the map editor and the mapview debug screen.
 	now := platform.Ticks()
 	changed := false
 
@@ -36,6 +41,7 @@ func (s *Screen) animatePalette() {
 	if changed {
 		s.plat.SetPalette(&s.pal)
 	}
+	*/
 }
 
 const colorTurnText = 0xA2 // gold palette index for the turn counter/timer. C++: GameManager_DrawTurnCounter/Timer
@@ -48,17 +54,36 @@ func (s *Screen) drawTopBar(buf *gfx.Buffer) {
 	s.drawEndTurnButton(buf)
 	s.drawReadout(buf, TurnCounter, s.hudArt.turnCounterBg, 0, fmt.Sprintf("%d", s.game.State.TurnCounter), colorTurnText)
 
-	remaining, color := s.turnFlow.turnSeconds, colorTurnText
+	remaining := s.turnFlow.turnSeconds
+	/* remaining, color := s.turnFlow.turnSeconds, colorTurnText: note: unused code in Go port, the colour is turnClockColor (N25) */
 
 	if s.turnFlow.turnSeconds > 0 && s.turnFlow.handover == -1 && !s.gameOver {
 		remaining = s.turnRemaining()
 	}
 
+	/* // note: unused code in Go port
+	// The colour rule moved into turnClockColor, which adds the yellow full round clock (N25).
 	if s.turnFlow.turnSeconds > 0 && remaining <= 20 {
 		color = colorTurnTimerWarn
 	}
+	*/
 
-	s.drawReadout(buf, TurnTimer, s.hudArt.turnTimerBg, 0, formatClock(remaining), color)
+	s.drawReadout(buf, TurnTimer, s.hudArt.turnTimerBg, 0, formatClock(remaining), s.turnClockColor(remaining))
+}
+
+// turnClockColor picks the turn timer colour: red at 20 seconds or less, yellow while a simultaneous round still
+// runs on its full Turn Time (no team has ended yet, so it reads apart from the End Turn countdown), else gold.
+// The yellow is a port addition (user 2026-11-14); the reference draws gold and red only.
+func (s *Screen) turnClockColor(remaining int) int {
+	switch {
+	case s.turnFlow.turnSeconds > 0 && remaining <= 20:
+		return colorTurnTimerWarn
+
+	case s.simMode() && s.turnFlow.turnSeconds > 0 && !s.turnFlow.graceArmed:
+		return int(gfx.ColorYellow)
+	}
+
+	return colorTurnText
 }
 
 // drawBottomBar paints the map cell under the cursor and the selected unit's name. Empty values remain blank.

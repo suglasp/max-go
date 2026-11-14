@@ -337,7 +337,7 @@ Known screen values:
 
 ```text
 Pre game menus:   planetselect, newgame, multiplayer, gameconfig, chooseplayer, clanselect
-Render/inspect:   mapview, drawmap, sprite:<tag>, shadow, assets, soldier, apcunit, transport, commando, mines
+Render/inspect:   mapview, sprite:<tag>, shadow, assets, soldier, apcunit, transport, commando, mines
 In game screens:  game, random, random2, custom, build, popup, death, win, lose, blewup, colony
 Main menu screens: setup
 In game dialogs:  options, prefs-game, loadgame, research, alloc, upgrade, transfer, selfdestruct, repairshop, reports, help

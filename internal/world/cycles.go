@@ -69,3 +69,29 @@ func CycleStep(pal *gfx.Palette, c ColorCycle, pulse *uint8) {
 		pal.SetRGB(c.Last, r, g, b)
 	}
 }
+
+// ColorCycler runs the terrain color cycles on their own clocks: one timestamp
+// per cycle plus the pulse byte. The zero value is ready to use.
+type ColorCycler struct {
+	stamps [len(ColorCycles)]uint64
+	pulse  uint8
+}
+
+// Advance steps every cycle whose interval has passed at tick now (in
+// milliseconds) and reports whether the palette changed, so the caller
+// installs it only then.
+//
+// C++: World::UpdateColorAnimations driven from the game tick (world.cpp)
+func (c *ColorCycler) Advance(pal *gfx.Palette, now uint64) bool {
+	changed := false
+
+	for i, cycle := range ColorCycles {
+		if now-c.stamps[i] >= uint64(1000/cycle.FPS) {
+			c.stamps[i] = now
+			CycleStep(pal, cycle, &c.pulse)
+			changed = true
+		}
+	}
+
+	return changed
+}

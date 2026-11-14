@@ -325,3 +325,14 @@ func TestLaunchErrorsExit(t *testing.T) {
 		})
 	}
 }
+
+// TestRetiredDrawmapScreenIsRefused checks that the retired "drawmap" debug jump is no longer a known
+// -emulate screen: the check refuses it and the help does not list it.
+func TestRetiredDrawmapScreenIsRefused(t *testing.T) {
+	if err := validateEmulate("drawmap"); err == nil {
+		t.Error("-emulate drawmap passed the check; the jump is retired")
+	}
+	if strings.Contains(menuScreensHelp, "drawmap") {
+		t.Error("the help still lists drawmap")
+	}
+}

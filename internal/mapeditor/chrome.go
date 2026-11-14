@@ -63,10 +63,13 @@ var fileActions = []fileAction{
 	{"Exit", actExit},
 }
 
+/* // note: unused code in Go port
+// One caller and it only returned e.font; drawChrome reads e.font like the rest of the chrome.
 // chromeFont is the font every tool-bar label uses (cached at open).
 func (e *Editor) chromeFont() *fonts.Font {
 	return e.font
 }
+*/
 
 // overUI reports whether a screen point lies on the toolbar. The open toolbar occupies the left strip; when folded, only the unfold button remains.
 func (e *Editor) overUI(x, y int) bool {
@@ -83,6 +86,8 @@ func (e *Editor) minimapRect(buf *gfx.Buffer) gfx.Rect {
 	return gfx.NewRect(x, y, x+MINIMAP_SIZE-1, y+MINIMAP_SIZE-1)
 }
 
+/* // note: unused code in Go port
+// The same per pixel lookup as gfx Buffer.Recolor; drawChrome calls buf.Sub(...).Recolor(lut).
 // dimBand blends a rect's pixels toward black through the recolor LUT, the
 // translucent panel look shared with the F2 debug overlay.
 func dimBand(buf *gfx.Buffer, x, y, w, h int, lut *[256]uint8) {
@@ -94,6 +99,7 @@ func dimBand(buf *gfx.Buffer, x, y, w, h int, lut *[256]uint8) {
 		}
 	}
 }
+*/
 
 // boxButton draws a yellow box outline (white while hovered or active) and
 // reports a click, the left release frame over the box, which plays KBUY0.
@@ -181,11 +187,12 @@ func rotateInto(dst, src *gfx.Buffer, destX, destY int) {
 // clicked this frame. Tab, fold and zoom clicks are pure state, settled here;
 // file actions run in the loop (some open a modal).
 func (e *Editor) drawChrome(buf *gfx.Buffer, mouse platform.MouseState) editorAction {
-	f := e.chromeFont()
+	f := e.font
 	lut := e.palette.IntensityTable1(0, 0, 0, 60, 40)
 
-	// The status band spans the full width in both states.
-	dimBand(buf, 0, buf.H-statusH, buf.W, statusH, lut)
+	// The status band spans the full width in both states. Recolor through the
+	// LUT blends it toward black, the translucent panel look of the F2 debug overlay.
+	buf.Sub(0, buf.H-statusH, buf.W, statusH).Recolor(lut)
 
 	if e.barFolded {
 		// Only a small unfold button at the top left; the map is full screen.
@@ -198,7 +205,7 @@ func (e *Editor) drawChrome(buf *gfx.Buffer, mouse platform.MouseState) editorAc
 
 	// Left bar: the translucent band from the top down to the status strip, with
 	// the minimap drawn over it (after the dim, so it stays crisp).
-	dimBand(buf, 0, 0, barWidth, buf.H-statusH, lut)
+	buf.Sub(0, 0, barWidth, buf.H-statusH).Recolor(lut)
 	mm := e.minimapRect(buf)
 	e.renderer.Minimap(buf.Sub(mm.ULX, mm.ULY, MINIMAP_SIZE, MINIMAP_SIZE), e.scrollX, e.scrollY, buf.W, buf.H, 0xFF)
 

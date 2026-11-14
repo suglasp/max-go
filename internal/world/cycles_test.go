@@ -88,3 +88,47 @@ func TestCyclePulse(t *testing.T) {
 		t.Errorf("red/blue changed: %d, %d", r, b)
 	}
 }
+
+// TestColorCyclerAdvance checks the shared cycle clock: every cycle steps on the first call, a cycle
+// steps again only once its own interval has passed, and the result says whether the palette changed.
+func TestColorCyclerAdvance(t *testing.T) {
+	var c ColorCycler
+	p := numberedPal()
+	start := p
+
+	if !c.Advance(&p, 1000) {
+		t.Fatal("first Advance reported no change")
+	}
+
+	// One step of every cycle, in table order, on a second palette must give the same result.
+	want := start
+	var pulse uint8
+	for _, cycle := range ColorCycles {
+		CycleStep(&want, cycle, &pulse)
+	}
+	if p != want {
+		t.Fatal("first Advance is not one step of every cycle")
+	}
+
+	// 50 ms later no cycle is due (the fastest runs at 10 steps a second, 100 ms apart).
+	before := p
+	if c.Advance(&p, 1050) {
+		t.Error("Advance changed the palette before any interval passed")
+	}
+	if p != before {
+		t.Error("palette changed although Advance reported no change")
+	}
+
+	// 100 ms after the start only the 10 FPS cycle (entries 110..116) is due.
+	if !c.Advance(&p, 1100) {
+		t.Fatal("Advance at 100 ms reported no change")
+	}
+	for i := 0; i < gfx.PaletteSize; i++ {
+		moved := i >= 110 && i <= 116
+		br, bg, bb := before.RGB(i)
+		r, g, b := p.RGB(i)
+		if same := r == br && g == bg && b == bb; same == moved {
+			t.Errorf("entry %d: changed = %v, want %v", i, !same, moved)
+		}
+	}
+}

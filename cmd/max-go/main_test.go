@@ -67,7 +67,7 @@ func TestPrintUsageMatchesLaunchFlags(t *testing.T) {
 		"max-go -emulate <screen> [-screenshot <file>]",
 		"max-go -emulate sprite:<tag> [-screenshot <file>]",
 		"planetselect", "newgame", "multiplayer", "gameconfig", "chooseplayer",
-		"clanselect", "mapview", "drawmap", "shadow", "build", "sprite:<tag>",
+		"clanselect", "mapview" /* "drawmap", note: unused code in Go port, the jump is retired */, "shadow", "build", "sprite:<tag>",
 	}
 	if DEBUG_GAME {
 		want = append(want, emulateOnly...)

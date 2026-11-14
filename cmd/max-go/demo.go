@@ -6,7 +6,7 @@
 package main
 
 import (
-	"os"
+	/* "os": note: unused code in Go port, the palette read is gfx.LoadBasePalette */
 
 	"github.com/suglasp/max-go/internal/dbg"
 	"github.com/suglasp/max-go/internal/fonts"
@@ -146,6 +146,13 @@ func loadGamePalette(p *platform.Platform, cfg settings.Settings) {
 		return
 	}
 
+	pal, err := gfx.LoadBasePalette(dir)
+	if err != nil {
+		dbg.Printf("no game palette: %v", err)
+		return
+	}
+	/* // note: unused code in Go port
+	// The read and parse block is gfx.LoadBasePalette; one log line covers a missing and a bad file.
 	data, err := os.ReadFile(resfile.DataPath(dir, "COLOR.PAL"))
 	if err != nil {
 		dbg.Printf("no game palette: %v", err)
@@ -159,6 +166,9 @@ func loadGamePalette(p *platform.Platform, cfg settings.Settings) {
 	}
 
 	p.SetPalette(&pal.Palette)
+	*/
+
+	p.SetPalette(&pal)
 
 	dbg.Printf("loaded COLOR.PAL from %s", dir)
 }
@@ -170,11 +180,16 @@ var demoPal gfx.Palette
 func setupDemo(p *platform.Platform, cfg settings.Settings) {
 	// Use the game palette when available, or build a synthetic fallback.
 	if dir, err := cfg.ResolveDataDir(); err == nil {
+		// A missing or invalid file leaves the zero palette, and the synthetic one below takes over.
+		demoPal, _ = gfx.LoadBasePalette(dir)
+		/* // note: unused code in Go port
+		// The read and parse block is gfx.LoadBasePalette.
 		if data, err := os.ReadFile(resfile.DataPath(dir, "COLOR.PAL")); err == nil {
 			if pal, err := gfx.ParsePalFile(data); err == nil {
 				demoPal = pal.Palette
 			}
 		}
+		*/
 	}
 
 	if demoPal == (gfx.Palette{}) {

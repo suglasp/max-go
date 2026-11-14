@@ -6,13 +6,11 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	/* "fmt", "os": note: unused code in Go port, only the retired drawMapDebug and the old palette read used them */
 	"strings"
 
 	"github.com/suglasp/max-go/internal/dbg"
-	"github.com/suglasp/max-go/internal/drawmap"
-	"github.com/suglasp/max-go/internal/fonts"
+	/* "github.com/suglasp/max-go/internal/drawmap", "github.com/suglasp/max-go/internal/fonts": note: unused code in Go port, only the retired drawMapDebug used them */
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/menus"
 	"github.com/suglasp/max-go/internal/platform"
@@ -21,6 +19,8 @@ import (
 	"github.com/suglasp/max-go/internal/world"
 )
 
+/* // note: unused code in Go port
+// Retired: the -mapeditor viewport covers this bare renderer view (same scroll, zoom and grid keys plus a minimap).
 // drawMapDebug renders the selected world through the drawmap tactical
 // renderer: scroll with the arrow keys, zoom with PageUp/PageDown, toggle
 // the grid with G, and shows the minimap viewport box.
@@ -97,6 +97,7 @@ func drawMapDebug(ctx *menus.Context, cfg *settings.Settings) error {
 		ctx.Sys.Print(1, fmt.Sprintf("%s  zoom %d  scroll %d,%d  (arrows scroll, PgUp/PgDn zoom, G grid, ESC)", strings.TrimSpace(name), r.Zoom(), scrollX, scrollY), 620, 8, buf.H-16, 0xFF)
 	}
 }
+*/
 
 // mapViewDebug draws the top left corner of a fully loaded map with
 // live palette cycling. drawmap provides the scrolling renderer.
@@ -115,12 +116,17 @@ func mapViewDebug(ctx *menus.Context, cfg *settings.Settings) error {
 	dbg.Printf("mapview: %s %dx%d cells, %d tiles", strings.TrimSpace(name), m.W, m.H, m.TileCount)
 
 	// Keep COLOR.PAL as the base and install map colors in entries 64 through 159.
+	// A missing or invalid file leaves the zero palette.
+	pal, _ := gfx.LoadBasePalette(ctx.DataDir)
+	/* // note: unused code in Go port
+	// The read and parse block is gfx.LoadBasePalette.
 	var pal gfx.Palette
 	if data, err := os.ReadFile(resfile.DataPath(ctx.DataDir, "COLOR.PAL")); err == nil {
 		if pf, err := gfx.ParsePalFile(data); err == nil {
 			pal = pf.Palette
 		}
 	}
+	*/
 
 	m.ApplyTerrainPalette(&pal)
 	ctx.Plat.SetPalette(&pal)
@@ -152,9 +158,18 @@ func mapViewDebug(ctx *menus.Context, cfg *settings.Settings) error {
 
 	// Advance each color cycle at its own rate, like
 	// World::UpdateColorAnimations driven from the game tick.
+	var cycler world.ColorCycler
+	/* // note: unused code in Go port
+	// The cycle clocks are world.ColorCycler.
 	stamps := make([]uint64, len(world.ColorCycles))
 	var pulse uint8
+	*/
 	for {
+		if cycler.Advance(&pal, platform.Ticks()) {
+			ctx.Plat.SetPalette(&pal)
+		}
+		/* // note: unused code in Go port
+		// The loop moved into world.ColorCycler.Advance.
 		now := platform.Ticks()
 		changed := false
 
@@ -169,6 +184,7 @@ func mapViewDebug(ctx *menus.Context, cfg *settings.Settings) error {
 		if changed {
 			ctx.Plat.SetPalette(&pal)
 		}
+		*/
 
 		switch ctx.Sys.GetInput() {
 		case platform.KeyEscape, platform.KeyReturn:

@@ -261,3 +261,34 @@ func TestParsePalFileWithIntensity(t *testing.T) {
 		t.Error("truncated intensity table should fail")
 	}
 }
+
+// TestLoadBasePalette checks the COLOR.PAL loader the game, the map editor and the debug screens share:
+// a valid file gives its palette, a missing or a short file gives the zero palette and an error.
+func TestLoadBasePalette(t *testing.T) {
+	dir := t.TempDir()
+
+	if pal, err := LoadBasePalette(dir); err == nil || pal != (Palette{}) {
+		t.Errorf("missing file: palette zero = %v, err = %v; want the zero palette and an error", pal == (Palette{}), err)
+	}
+
+	data := make([]byte, PalFileBaseSize)
+	data[3], data[4], data[5] = 63, 31, 7 // entry 1
+	if err := os.WriteFile(filepath.Join(dir, "COLOR.PAL"), data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	pal, err := LoadBasePalette(dir)
+	if err != nil {
+		t.Fatalf("valid file: %v", err)
+	}
+	if r, g, b := pal.RGB(1); r != 63 || g != 31 || b != 7 {
+		t.Errorf("entry 1 = %d,%d,%d, want 63,31,7", r, g, b)
+	}
+
+	if err := os.WriteFile(filepath.Join(dir, "COLOR.PAL"), data[:100], 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if pal, err := LoadBasePalette(dir); err == nil || pal != (Palette{}) {
+		t.Errorf("short file: palette zero = %v, err = %v; want the zero palette and an error", pal == (Palette{}), err)
+	}
+}

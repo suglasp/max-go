@@ -196,11 +196,16 @@ func loadGameScreenArt(ctx *menus.Context) (gfx.Palette, *gfx.Buffer) {
 	}
 
 	if basePal == (gfx.Palette{}) {
+		// A missing or invalid file leaves the zero palette.
+		basePal, _ = gfx.LoadBasePalette(ctx.DataDir)
+		/* // note: unused code in Go port
+		// The read and parse block is gfx.LoadBasePalette.
 		if data, err := os.ReadFile(resfile.DataPath(ctx.DataDir, "COLOR.PAL")); err == nil {
 			if pf, err := gfx.ParsePalFile(data); err == nil {
 				basePal = pf.Palette
 			}
 		}
+		*/
 	}
 
 	return basePal, bg

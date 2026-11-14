@@ -520,6 +520,9 @@ func (s *Screen) drawDebugMenu(buf *gfx.Buffer) {
 	// Blend the terrain under the panel toward black at 60% (40% of the terrain
 	// shows through) so the flags read clearly while the map stays a little visible.
 	lut := s.pal.IntensityTable1(0, 0, 0, 60, 40)
+	buf.Sub(x0, y0, panelW, panelH).Recolor(lut)
+	/* // note: unused code in Go port
+	// The per pixel loop is gfx Buffer.Recolor.
 	band := buf.Sub(x0, y0, panelW, panelH)
 
 	for y := 0; y < band.H; y++ {
@@ -529,6 +532,7 @@ func (s *Screen) drawDebugMenu(buf *gfx.Buffer) {
 			row[x] = lut[row[x]]
 		}
 	}
+	*/
 
 	white := messageColor
 	sel := fonts.Color{Base: s.colorOrange, Outline: s.colorOrange, Shadow: 199}

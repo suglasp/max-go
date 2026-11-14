@@ -109,14 +109,13 @@ type Screen struct {
 	keybinds           [bindActionCount]int // remappable action keys
 	unitGroups         [9][]uint16          // numbered unit control groups
 
-	cycleStamps     []uint64 // terrain colour cycle timestamps
-	pulse           uint8    // current pulse animation value
-	turretStamp     uint64   // turret animation timestamp
-	bridgeStamp     uint64   // bridge animation timestamp
-	spinStamp       uint64   // spinning turret timestamp
-	bodyStamp       uint64   // building body animation timestamp
-	walkStamp       uint64   // soldier walk animation timestamp
-	buildSlideStamp uint64   // build pose animation timestamp
+	cycler          world.ColorCycler // terrain colour cycle clocks and pulse value
+	turretStamp     uint64            // turret animation timestamp
+	bridgeStamp     uint64            // bridge animation timestamp
+	spinStamp       uint64            // spinning turret timestamp
+	bodyStamp       uint64            // building body animation timestamp
+	walkStamp       uint64            // soldier walk animation timestamp
+	buildSlideStamp uint64            // build pose animation timestamp
 
 	demoMode        bool   // attract demo mode
 	demoTurnStart   int    // first attract demo turn
@@ -148,6 +147,11 @@ type Screen struct {
 	winMovieTag       string // victory movie resource tag
 	loseMovieTag      string // defeat movie resource tag
 	*/
+	/* // note: unused code in Go port
+	// The cycle clocks moved into world.ColorCycler (field cycler), shared with the map editor.
+	cycleStamps     []uint64 // terrain colour cycle timestamps
+	pulse           uint8    // current pulse animation value
+	*/
 }
 
 // New builds the screen for a loaded map.
@@ -173,10 +177,10 @@ func New(sys *gnw.System, plat *platform.Platform, m *world.Map, basePal gfx.Pal
 		bg:       bg,
 		bgNarrow: bg,
 		pal:      pal,
+		/* cycleStamps: make([]uint64, len(world.ColorCycles)): note: unused code in Go port, see Screen.cycler */
 		// Grid overlay defaults OFF, matching the original (GameManager_DisplayButtonGrid
 		// is a zero initialised global); the GRID toggle button turns it on.
 		grid:        false,
-		cycleStamps: make([]uint64, len(world.ColorCycles)),
 		game:        sim.New(p, m),
 		sprites:     units.NewSpriteCache(lib, &pal),
 		lang:        lang,

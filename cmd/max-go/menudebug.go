@@ -8,7 +8,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"os"
+	/* "os": note: unused code in Go port, the palette read is gfx.LoadBasePalette */
 	"strings"
 
 	"github.com/suglasp/max-go/internal/assets"
@@ -120,8 +120,11 @@ func jumpToMenu(ctx *menus.Context, cfg *settings.Settings, name string, noMovie
 	case "mapview":
 		err = mapViewDebug(ctx, cfg)
 
+	/* // note: unused code in Go port
+	// The "drawmap" jump is retired, see drawMapDebug in mapdebug.go; -mapeditor covers it.
 	case "drawmap":
 		err = drawMapDebug(ctx, cfg)
+	*/
 
 	case "mapeditor":
 		err = mapeditor.Run(ctx, cfg)
@@ -605,12 +608,17 @@ func spriteViewDebug(ctx *menus.Context, tag string) error {
 
 	dbg.Printf("sprite: %s frames=%d f0=%dx%d hot=%d,%d", tag, len(m.Frames), m.Frames[0].W, m.Frames[0].H, m.Frames[0].HotX, m.Frames[0].HotY)
 
+	// A missing or invalid file leaves the zero palette.
+	pal, _ := gfx.LoadBasePalette(ctx.DataDir)
+	/* // note: unused code in Go port
+	// The read and parse block is gfx.LoadBasePalette.
 	var pal gfx.Palette
 	if d, err := os.ReadFile(resfile.DataPath(ctx.DataDir, "COLOR.PAL")); err == nil {
 		if pf, err := gfx.ParsePalFile(d); err == nil {
 			pal = pf.Palette
 		}
 	}
+	*/
 
 	ctx.Plat.SetPalette(&pal)
 
