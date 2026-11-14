@@ -113,7 +113,20 @@ const (
 	fbStatX, fbStatY, fbStatW, fbStatH = 11, 293, 250, 174 // stats
 	// Rate turns/cost number boxes (right edges); rows at y 376/401/426.
 	fbTurnsRightX, fbCostRightX = 398, 444
+	// Gap in pixels kept between a wrapped name and the left edge of the turns number.
+	fbNameGap = 4
 )
+
+// fbNameWrapW returns the wrap width of a list name: the pixels from where the
+// name starts to the left edge of the widest two digit turns number, less a small
+// gap, so a name never runs over the right aligned turns number.
+func fbNameWrapW(f *fonts.Font, nameX, turnsRX int) int {
+	digitW := 0
+	for d := '0'; d <= '9'; d++ {
+		digitW = max(digitW, f.Width(string([]rune{d, d})))
+	}
+	return turnsRX - digitW - fbNameGap - nameX
+}
 
 // factoryBuildMenu is the FACBUILD screen state: the roster and the edited
 // queue, the two list selections, the rate gating, and the shared art/caches.
@@ -444,7 +457,7 @@ func (m *factoryBuildMenu) drawAvail() {
 		e := m.roster[m.scrollAvail+r]
 		y := fbListY + r*fbRowH
 		m.sc.DrawIcon(m.buf, e.t, m.team, fbIconCX, y+16)
-		lines := wrapLines(m.f5, e.name, fbNameW, 0)
+		lines := wrapLines(m.f5, e.name, fbNameWrapW(m.f5, fbNameX, fbTurnsRX), 0)
 		lh := m.f5.Height + 1
 		top := y + (fbRowH-len(lines)*lh)/2
 		for li, ln := range lines {
@@ -469,7 +482,7 @@ func (m *factoryBuildMenu) drawQueue() {
 		y := fbQueueY + r*fbRowH
 		m.sc.DrawIcon(m.buf, t, m.team, fbQIconCX, y+16)
 		name := unitName(m.roster, t)
-		lines := wrapLines(m.f5, name, fbQNameW, 0)
+		lines := wrapLines(m.f5, name, fbNameWrapW(m.f5, fbQNameX, fbQTurnsRX), 0)
 		lh := m.f5.Height + 1
 		top := y + (fbRowH-len(lines)*lh)/2
 		for li, ln := range lines {
