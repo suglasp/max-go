@@ -75,7 +75,7 @@ func runRes(args []string) int {
 		usage()
 		return 2
 	}
-	pal, err := loadPalette(*palPath, dir)
+	pal, err := loadPalette(os.Stderr, *palPath, dir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -85,7 +85,7 @@ func runRes(args []string) int {
 		Palette:     pal,
 		DumpPalette: pal != nil,
 		Format:      imgFormat,
-		OnFile:      printFileResult,
+		OnFile:      func(r convert.FileResult) { printFileResult(os.Stdout, r) },
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -96,14 +96,18 @@ func runRes(args []string) int {
 }
 
 // printFileResult reports each file as the walk proceeds so large directories
-// continue to show progress.
-func printFileResult(r convert.FileResult) {
+// continue to show progress. A failed file names the reason on the same line.
+func printFileResult(w io.Writer, r convert.FileResult) {
 	switch r.Status {
 	case convert.StatusAlreadyConverted:
-		fmt.Printf("file %s already converted!\n", r.Source)
+		fmt.Fprintf(w, "file %s already converted!\n", r.Source)
 
 	case convert.StatusFailed:
-		fmt.Printf("file %s failed to convert!\n", r.Source)
+		if r.Err == nil {
+			fmt.Fprintf(w, "file %s failed to convert!\n", r.Source)
+			break
+		}
+		fmt.Fprintf(w, "file %s failed to convert: %v\n", r.Source, r.Err)
 
 	case convert.StatusConverted:
 		// Animations and movies can produce many frames. Show the source file
@@ -112,7 +116,7 @@ func printFileResult(r convert.FileResult) {
 		if rest := len(r.Outputs) - 1; rest > 0 {
 			more = fmt.Sprintf(" (+%d more)", rest)
 		}
-		fmt.Printf("file %s converted to %s [%s]%s\n", r.Source, r.Outputs[0], r.Ext(), more)
+		fmt.Fprintf(w, "file %s converted to %s [%s]%s\n", r.Source, r.Outputs[0], r.Ext(), more)
 	}
 }
 
@@ -129,7 +133,7 @@ func runFile(args []string) int {
 	}
 
 	src, outDir := fs.Arg(0), fs.Arg(1)
-	pal, err := loadPalette(*palPath, filepath.Dir(src))
+	pal, err := loadPalette(os.Stderr, *palPath, filepath.Dir(src))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -163,9 +167,9 @@ func resolveDir(path string, rest []string) (string, bool) {
 }
 
 // loadPalette reads an explicit COLOR.PAL or looks beside the input. A missing
-// implicit palette selects the grayscale fallback, while an invalid explicit
-// palette returns an error.
-func loadPalette(explicit, dir string) (*gfx.Palette, error) {
+// or invalid implicit palette selects the grayscale fallback and writes one
+// warning to w saying why, while an invalid explicit palette returns an error.
+func loadPalette(w io.Writer, explicit, dir string) (*gfx.Palette, error) {
 	path := explicit
 	if path == "" {
 		path = resfile.DataPath(dir, "COLOR.PAL")
@@ -173,6 +177,7 @@ func loadPalette(explicit, dir string) (*gfx.Palette, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if explicit == "" {
+			fmt.Fprintf(w, "warning: palette %s is missing or unreadable (%v), output will be grayscale\n", path, err)
 			return nil, nil
 		}
 		return nil, err
@@ -180,6 +185,7 @@ func loadPalette(explicit, dir string) (*gfx.Palette, error) {
 	pf, err := gfx.ParsePalFile(data)
 	if err != nil {
 		if explicit == "" {
+			fmt.Fprintf(w, "warning: palette %s is invalid (%v), output will be grayscale\n", path, err)
 			return nil, nil
 		}
 		return nil, err

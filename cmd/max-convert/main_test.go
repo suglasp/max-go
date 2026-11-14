@@ -6,10 +6,15 @@
 package main
 
 import (
+	"bytes"
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/suglasp/max-go/internal/convert"
 	"github.com/suglasp/max-go/internal/restool"
 )
 
@@ -134,7 +139,7 @@ func TestRunFileMissingInput(t *testing.T) {
 
 // Without -pal, a missing COLOR.PAL selects the grayscale fallback.
 func TestLoadPaletteMissingIsNotAnError(t *testing.T) {
-	pal, err := loadPalette("", t.TempDir())
+	pal, err := loadPalette(io.Discard, "", t.TempDir())
 	if err != nil {
 		t.Fatalf("loadPalette: %v", err)
 	}
@@ -146,7 +151,7 @@ func TestLoadPaletteMissingIsNotAnError(t *testing.T) {
 // An explicit -pal that cannot be read or parsed is an error.
 func TestLoadPaletteExplicitBad(t *testing.T) {
 	dir := t.TempDir()
-	if _, err := loadPalette(filepath.Join(dir, "nope.pal"), dir); err == nil {
+	if _, err := loadPalette(io.Discard, filepath.Join(dir, "nope.pal"), dir); err == nil {
 		t.Errorf("expected an error for a missing explicit palette")
 	}
 
@@ -154,7 +159,7 @@ func TestLoadPaletteExplicitBad(t *testing.T) {
 	if err := os.WriteFile(bad, []byte("too short"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := loadPalette(bad, dir); err == nil {
+	if _, err := loadPalette(io.Discard, bad, dir); err == nil {
 		t.Errorf("expected an error for an unparseable explicit palette")
 	}
 }
@@ -169,11 +174,97 @@ func TestLoadPaletteBesideInput(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "COLOR.PAL"), data, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	pal, err := loadPalette("", dir)
+	pal, err := loadPalette(io.Discard, "", dir)
 	if err != nil {
 		t.Fatalf("loadPalette: %v", err)
 	}
 	if pal == nil {
 		t.Fatalf("expected the neighbouring COLOR.PAL to be loaded")
+	}
+}
+
+// A failed file prints its name and the reason it failed.
+func TestPrintFileResultFailedShowsReason(t *testing.T) {
+	var buf bytes.Buffer
+	printFileResult(&buf, convert.FileResult{
+		Source: "BAD_RES",
+		Status: convert.StatusFailed,
+		Err:    errors.New("unsupported header"),
+	})
+	want := "file BAD_RES failed to convert: unsupported header\n"
+	if got := buf.String(); got != want {
+		t.Fatalf("printed %q, want %q", got, want)
+	}
+}
+
+// Converted and already converted files print the same lines as before.
+func TestPrintFileResultOtherStatuses(t *testing.T) {
+	cases := []struct {
+		name string
+		res  convert.FileResult
+		want string
+	}{
+		{"already", convert.FileResult{Source: "A", Status: convert.StatusAlreadyConverted},
+			"file A already converted!\n"},
+		{"converted", convert.FileResult{Source: "B", Status: convert.StatusConverted, Outputs: []string{"B.txt"}},
+			"file B converted to B.txt [txt]\n"},
+		{"many frames", convert.FileResult{Source: "C", Status: convert.StatusConverted, Outputs: []string{"C_0.bmp", "C_1.bmp", "C_2.bmp"}},
+			"file C converted to C_0.bmp [bmp] (+2 more)\n"},
+	}
+	for _, tc := range cases {
+		var buf bytes.Buffer
+		printFileResult(&buf, tc.res)
+		if got := buf.String(); got != tc.want {
+			t.Errorf("%s: printed %q, want %q", tc.name, got, tc.want)
+		}
+	}
+}
+
+// A missing implicit COLOR.PAL warns once, names the path, and says grayscale.
+func TestLoadPaletteMissingWarns(t *testing.T) {
+	dir := t.TempDir()
+	var buf bytes.Buffer
+	if _, err := loadPalette(&buf, "", dir); err != nil {
+		t.Fatalf("loadPalette: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "COLOR.PAL") || !strings.Contains(out, "missing") || !strings.Contains(out, "grayscale") {
+		t.Fatalf("warning %q lacks path, reason or grayscale note", out)
+	}
+	if n := strings.Count(out, "\n"); n != 1 {
+		t.Fatalf("want exactly one warning line, got %d: %q", n, out)
+	}
+}
+
+// An implicit COLOR.PAL of the wrong size warns that it is invalid.
+func TestLoadPaletteInvalidWarns(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "COLOR.PAL"), []byte("too short"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	pal, err := loadPalette(&buf, "", dir)
+	if err != nil || pal != nil {
+		t.Fatalf("loadPalette = (%v, %v), want (nil, nil)", pal, err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "invalid") || !strings.Contains(out, "grayscale") {
+		t.Fatalf("warning %q lacks reason or grayscale note", out)
+	}
+}
+
+// A valid palette beside the input gives no warning.
+func TestLoadPaletteValidNoWarning(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "COLOR.PAL"), make([]byte, 768+32768), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	pal, err := loadPalette(&buf, "", dir)
+	if err != nil || pal == nil {
+		t.Fatalf("loadPalette = (%v, %v), want a palette", pal, err)
+	}
+	if buf.Len() != 0 {
+		t.Fatalf("unexpected warning %q", buf.String())
 	}
 }
