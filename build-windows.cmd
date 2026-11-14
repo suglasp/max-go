@@ -118,9 +118,17 @@ if errorlevel 1 goto FAIL
 
 REM Pack the Linux folder only when it contains the game binary.
 REM pack-linux-tar.py writes Unix modes because NTFS does not store executable bits.
+REM The packer is not in the repo: it lives one level up, next to the repo folder.
+REM Old call, the repo folder does not hold the packer:
+REM     python "%WORKDIR%pack-linux-tar.py" "%LINUXDIR%" "%RELEASEDIR%\%LINUXNAME%.tar.zst" "%LINUXNAME%"
+set "PACKPY=%WORKDIR%..\pack-linux-tar.py"
 if exist "%LINUXDIR%\max-go" (
-    python "%WORKDIR%pack-linux-tar.py" "%LINUXDIR%" "%RELEASEDIR%\%LINUXNAME%.tar.zst" "%LINUXNAME%"
-    if errorlevel 1 goto FAILTAR
+    if exist "%PACKPY%" (
+        python "%PACKPY%" "%LINUXDIR%" "%RELEASEDIR%\%LINUXNAME%.tar.zst" "%LINUXNAME%"
+        if errorlevel 1 goto FAILTAR
+    ) else (
+        echo   Linux archive skipped, pack-linux-tar.py is not one level up from this folder.
+    )
 ) else (
     echo   Linux archive skipped, build\linux-x64\max-go is not there.
 )

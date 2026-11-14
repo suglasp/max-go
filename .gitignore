@@ -38,8 +38,9 @@ max-go.log
 *.PY
 *.PS1
 # Windows matches these patterns case-insensitively, so they also ignore lowercase .py and .ps1 files.
-# The Linux tarball packer remains tracked because the release build uses it.
-!/pack-linux-tar.py
+# The Linux tarball packer is not tracked: pack-linux-tar.py lives one level up, next to the repo folder.
+# Old line, the packer is no longer kept in the repo:
+# !/pack-linux-tar.py
 *.RES
 *.WRL
 *.PAL

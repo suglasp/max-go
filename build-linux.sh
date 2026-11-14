@@ -33,42 +33,45 @@ version="$(head -n 1 "$script_dir/version" | tr -d '\r')"
 # Let unmatched globs expand to nothing so optional payload files need no special case.
 shopt -s nullglob
 
+# Old check for gcc and the alsa / gl / x11 development packages. The build runs with CGO_ENABLED=0 now
+# (pure Go Ebitengine), so no C compiler or development package is needed and the check is switched off.
 # function to track dependencies on Linux
-check_linux_dependencies() {
-  if [[ "$os_name" != "Linux" ]]; then
-    return
-  fi
-
-  local missing=()
-  for cmd in go gcc g++ pkg-config; do
-    if ! command -v "$cmd" >/dev/null 2>&1; then
-      missing+=("$cmd")
-    fi
-  done
-
-  if command -v pkg-config >/dev/null 2>&1; then
-    local pkg
-    for pkg in alsa gl x11 xcursor xrandr xinerama xi xxf86vm; do
-      if ! pkg-config --exists "$pkg"; then
-        missing+=("$pkg.pc")
-      fi
-    done
-  fi
-
-  if ((${#missing[@]} == 0)); then
-    return
-  fi
-
-  echo "Missing Linux build dependencies:"
-  printf '  %s\n' "${missing[@]}"
-  echo
-  echo "Fedora/Alma/RHEL:"
-  echo "  sudo dnf install gcc gcc-c++ pkgconf-pkg-config alsa-lib-devel libX11-devel libXcursor-devel libXrandr-devel libXinerama-devel libXi-devel libXxf86vm-devel libglvnd-devel mesa-libGL-devel"
-  echo
-  echo "Debian/Ubuntu:"
-  echo "  sudo apt install build-essential pkg-config libasound2-dev libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev"
-  exit 1
-}
+# check_linux_dependencies() {
+#   if [[ "$os_name" != "Linux" ]]; then
+#     return
+#   fi
+#
+#   local missing=()
+#   for cmd in go gcc g++ pkg-config; do
+#     if ! command -v "$cmd" >/dev/null 2>&1; then
+#       missing+=("$cmd")
+#     fi
+#   done
+#
+#   if command -v pkg-config >/dev/null 2>&1; then
+#     local pkg
+#     for pkg in alsa gl x11 xcursor xrandr xinerama xi xxf86vm; do
+#       if ! pkg-config --exists "$pkg"; then
+#         missing+=("$pkg.pc")
+#       fi
+#     done
+#   fi
+#
+#   if ((${#missing[@]} == 0)); then
+#     return
+#   fi
+#
+#   echo "Missing Linux build dependencies:"
+#   printf '  %s\n' "${missing[@]}"
+#   echo
+#   echo "Fedora/Alma/RHEL:"
+#   echo "  sudo dnf install gcc gcc-c++ pkgconf-pkg-config alsa-lib-devel libX11-devel libXcursor-devel libXrandr-devel libXinerama-devel libXi-devel libXxf86vm-devel libglvnd-devel mesa-libGL-devel"
+#   echo
+#   echo "Debian/Ubuntu:"
+#   echo "  sudo apt install build-essential pkg-config libasound2-dev libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev"
+#   exit 1
+# }
+#
 
 write_help() {
   local output="$1"
@@ -191,7 +194,7 @@ fi
 
 echo
 echo "Prepping ..."
-check_linux_dependencies
+# check_linux_dependencies   # switched off, see the note above the old function
 go mod tidy
 
 # Rebuild the native output folder so stale files cannot enter a release archive.
@@ -200,13 +203,18 @@ mkdir -p "$build_dir"
 
 echo
 echo "Building M.A.X. in Golang ..."
-go build -o "$build_dir/" ./cmd/max-go
+# Old calls, built with whatever CGO_ENABLED the shell had; the other build scripts force it to 0:
+# go build -o "$build_dir/" ./cmd/max-go
+CGO_ENABLED=0 go build -o "$build_dir/" ./cmd/max-go
 
 echo
 echo "Building M.A.X. utilities ..."
-go build -o "$build_dir/" ./cmd/max-restool
-go build -o "$build_dir/" ./cmd/max-convert
-go build -o "$build_dir/" ./cmd/max-settings
+# go build -o "$build_dir/" ./cmd/max-restool
+# go build -o "$build_dir/" ./cmd/max-convert
+# go build -o "$build_dir/" ./cmd/max-settings
+CGO_ENABLED=0 go build -o "$build_dir/" ./cmd/max-restool
+CGO_ENABLED=0 go build -o "$build_dir/" ./cmd/max-convert
+CGO_ENABLED=0 go build -o "$build_dir/" ./cmd/max-settings
 
 echo
 echo "Writing CLI help ..."

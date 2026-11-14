@@ -11,7 +11,12 @@ set "BUILDDIR=%WORKDIR%build\windows-x64"
 REM cls
 if not exist "%WORKDIR%bin" mkdir "%WORKDIR%bin"
 if exist "%BUILDDIR%" goto PREP
-GOTO RUN
+REM Old line, there is no :RUN label in this script (copied from run-windows.cmd):
+REM GOTO RUN
+REM No build folder means nothing to stage: say so and leave, as stage-linux.sh does.
+echo.
+echo Err: No build folder, run build-windows.cmd first.
+GOTO EXIT
 
 :PREP
 REM PREP FILES
