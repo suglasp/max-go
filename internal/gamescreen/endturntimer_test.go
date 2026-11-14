@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/game"
+	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/platform"
 )
 
@@ -203,6 +204,75 @@ func TestEndTurnTimeChangeAppliesToRunningCountdown(t *testing.T) {
 	}
 	if s3.turnFlow.turnStart != start || s3.turnFlow.turnSeconds != secs {
 		t.Error("a turn that already ended sooner than the grace was lengthened by an End Turn Time change")
+	}
+}
+
+// TestEndTurnTimeChangeShortensAnEarlyTurn: a turn armed while it already ended sooner than the grace (25 seconds
+// left under a 30 grace, also how a countdown resumed from a save arms) takes a shorter End Turn Time at once.
+func TestEndTurnTimeChangeShortensAnEarlyTurn(t *testing.T) {
+	s, st := graceScreen(t)
+	s.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 30})
+	s.turnFlow.turnSeconds = 25
+	s.turnFlow.turnStart = platform.Ticks()
+	st.Teams[1].FinishedTurn = true
+	s.armEndTurnGrace()
+	if !s.turnFlow.graceArmed || s.turnFlow.graceOnClock {
+		t.Fatalf("armed %v, on clock %v; want armed, not on the clock", s.turnFlow.graceArmed, s.turnFlow.graceOnClock)
+	}
+
+	s.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 20})
+	if s.turnFlow.turnSeconds != 20 || !s.turnFlow.graceOnClock {
+		t.Errorf("End Turn Time 20 on 25 seconds left: budget %d, on clock %v; want a fresh 20 on the clock", s.turnFlow.turnSeconds, s.turnFlow.graceOnClock)
+	}
+}
+
+// TestTurnClockColor: a simultaneous round on its full Turn Time draws yellow, the End Turn countdown gold, and
+// both turn red at 20 seconds or less; a turn based clock stays gold.
+func TestTurnClockColor(t *testing.T) {
+	s, st := graceScreen(t)
+	s.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 30})
+	if got := s.turnClockColor(180); got != int(gfx.ColorYellow) {
+		t.Errorf("full round clock colour = %#x, want yellow", got)
+	}
+	if got := s.turnClockColor(20); got != colorTurnTimerWarn {
+		t.Errorf("full round clock at 0:20 colour = %#x, want red", got)
+	}
+
+	st.Teams[1].FinishedTurn = true
+	s.armEndTurnGrace()
+	if got := s.turnClockColor(30); got != colorTurnText {
+		t.Errorf("End Turn countdown colour = %#x, want gold", got)
+	}
+	if got := s.turnClockColor(19); got != colorTurnTimerWarn {
+		t.Errorf("End Turn countdown at 0:19 colour = %#x, want red", got)
+	}
+
+	tb, _ := graceScreen(t)
+	tb.game.State.PlayMode = game.PlayTurnBased
+	if got := tb.turnClockColor(180); got != colorTurnText {
+		t.Errorf("turn based clock colour = %#x, want gold", got)
+	}
+}
+
+// TestEndTurnTimeSwitchInsideModalIsNotCreditedTwice: a countdown switched while Preferences is open is credited
+// only from the switch, so the clock does not stand still after the modal closes.
+func TestEndTurnTimeSwitchInsideModalIsNotCreditedTwice(t *testing.T) {
+	s, st := graceScreen(t)
+	s.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 30})
+	st.Teams[1].FinishedTurn = true
+	s.armEndTurnGrace()
+
+	s.withTurnClockPaused(func() {
+		waitForTicks(platform.Ticks() + 50)
+		s.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 60})
+		waitForTicks(platform.Ticks() + 50)
+	})
+
+	if now := platform.Ticks(); s.turnFlow.turnStart > now {
+		t.Errorf("turn clock start %d lies after now %d: the switched countdown was credited twice", s.turnFlow.turnStart, now)
+	}
+	if s.turnFlow.turnSeconds != 60 {
+		t.Errorf("budget %d, want the switched 60", s.turnFlow.turnSeconds)
 	}
 }
 

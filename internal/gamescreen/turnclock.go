@@ -52,7 +52,9 @@ func (s *Screen) withTurnClockPaused(fn func()) {
 	s.turnFlow.wdModalDepth.Add(1) // mark a blocking modal open so the stall watchdog ignores the parked loop
 	fn()
 	s.turnFlow.wdModalDepth.Add(-1)
-	s.resumeTurnClock(before, platform.Ticks())
+	// A clock restarted inside the modal (an End Turn Time switch) is credited only from that restart.
+	s.resumeTurnClock(max(before, s.turnFlow.turnStart), platform.Ticks())
+	/* s.resumeTurnClock(before, platform.Ticks()): note: unused code in Go port, credited a clock restarted inside the modal twice (N25) */
 }
 
 // resumeTurnClock shifts turnStart forward by the modal's [before, after] wall

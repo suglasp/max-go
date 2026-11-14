@@ -69,6 +69,7 @@ func (s *Screen) armEndTurnGrace() {
 	// Never EXTEND the turn: a grace longer than what is left changes nothing.
 	if left := s.turnRemaining(); s.turnFlow.turnSeconds > 0 && left <= grace {
 		s.turnFlow.graceArmed = true // the turn already ends sooner than the grace would
+		s.logTurnClock("end turn grace armed, the turn already ends sooner than the grace")
 
 		return
 	}
@@ -97,15 +98,22 @@ func (s *Screen) startGraceCountdown(grace int, reason string) {
 }
 
 // switchGraceCountdown applies a new End Turn Time to a countdown that is already running: the clock switches to
-// the new value at once, shorter or longer (user 2026-11-09: "use new time now"). A countdown that has not started
-// yet, or a turn that already ended sooner than the grace, keeps its clock; the next countdown uses the new value.
-// The reference reads the setting only when a team ends its turn; this goes past it on the player's request.
+// the new value at once, shorter or longer (user 2026-11-09: "use new time now"). A turn that was armed while it
+// already ended sooner than the grace (also a countdown resumed from a save, which arms that way) takes only a
+// shorter value and is never lengthened. A countdown that has not started yet keeps its clock; the next countdown
+// uses the new value. The reference reads the setting only when a team ends its turn; this goes past it on the
+// player's request.
 func (s *Screen) switchGraceCountdown() {
-	if !s.simMode() || !s.turnFlow.graceArmed || !s.turnFlow.graceOnClock || s.turnFlow.endTurnSeconds <= 0 {
+	/* if !s.simMode() || !s.turnFlow.graceArmed || !s.turnFlow.graceOnClock || s.turnFlow.endTurnSeconds <= 0 {: note: unused code in Go port, the guard skipped a loaded countdown (N25), replaced by the shorter only rule below */
+	if !s.simMode() || !s.turnFlow.graceArmed || s.turnFlow.endTurnSeconds <= 0 {
 		return
 	}
 
 	grace := s.graceSeconds()
+
+	if !s.turnFlow.graceOnClock && grace >= s.turnRemaining() {
+		return // the turn already ends sooner: only a shorter End Turn Time applies
+	}
 	s.startGraceCountdown(grace, "End Turn Time changed, the running countdown switches")
 
 	if grace > 20 {
