@@ -14,6 +14,36 @@ import (
 	"github.com/suglasp/max-go/internal/world"
 )
 
+// TestBuildOrderCostUsesTheBuilderType checks that an order pays its builder's rate: a road an Engineer lays costs
+// the Engineer's 2 (not the factory 3 its ground cover flags would map to), a factory and a training hall pay their
+// own rates, and a builder less order keeps the product category rate.
+func TestBuildOrderCostUsesTheBuilderType(t *testing.T) {
+	mk := func(ut assets.UnitType, flags game.Flags) *game.UnitInfo {
+		u := game.NewUnitInfo(ut, 0, 1, 0)
+		u.Flags = flags
+		u.Values = &game.UnitValues{}
+		u.Values.Set(game.AttribTurns, 1)
+		return u
+	}
+
+	cases := []struct {
+		name    string
+		builder *game.UnitInfo
+		product *game.UnitInfo
+		want    int
+	}{
+		{"engineer road", mk(assets.Engineer, game.FlagMobileLandUnit|game.FlagConstructorUnit), mk(assets.Road, game.FlagGroundCover), 2},
+		{"light plant tank", mk(assets.LightPlt, game.FlagStationary), mk(assets.Tank, game.FlagMobileLandUnit), 3},
+		{"training hall infantry", mk(assets.TrainHal, game.FlagStationary), mk(assets.Infantry, game.FlagMobileLandUnit), 1},
+		{"builder less tank", nil, mk(assets.Tank, game.FlagMobileLandUnit), 3},
+	}
+	for _, c := range cases {
+		if got := NewBuildOrder(c.builder, c.product, 0, 0, 1).CostPerTurn(); got != c.want {
+			t.Errorf("%s: cost/turn = %d, want %d", c.name, got, c.want)
+		}
+	}
+}
+
 // TestBuildOrderTurnsLeft checks the "N turns left" readout: it rounds up by the
 // build rate and bottoms out at 0 once the work is done.
 func TestBuildOrderTurnsLeft(t *testing.T) {

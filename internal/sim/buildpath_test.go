@@ -287,6 +287,41 @@ func TestBuildPathStopsParkedWhenNextCellUnaffordable(t *testing.T) {
 	}
 }
 
+// TestBuildPathRoadNeverStartsAnUnpayableCell checks a road run whose storage pays for two cells and a part: the
+// order and the path check charge the same Engineer rate, so the run lays two roads and stops with the rest left in
+// storage, instead of starting a third cell it can never pay for (the Engineer hung on "1 turn to go", N28).
+func TestBuildPathRoadNeverStartsAnUnpayableCell(t *testing.T) {
+	g := newGame(t, 24, 24)
+	eng := addConstructor(g, assets.Engineer, 0, 5, 5, 8, 30, 5) // a road costs 1 turn x 2 raw: two roads, 1 left
+
+	template := game.NewUnitInfo(assets.Road, 0, 2, 0)
+	template.Flags = game.FlagGroundCover
+	template.Values = &game.UnitValues{}
+	template.Values.Set(game.AttribTurns, 1)
+	template.Values.Set(game.AttribHits, 2)
+
+	if !g.StartBuildPath(eng, template, 1, 5, 8) {
+		t.Fatal("StartBuildPath rejected the run")
+	}
+	short := runPathTurns(g, eng)
+
+	if g.BuildPathActive(eng) || len(g.BuildOrders()) > 0 {
+		t.Fatalf("the run hung: path active %v, %d build order(s) left", g.BuildPathActive(eng), len(g.BuildOrders()))
+	}
+	if !short {
+		t.Error("LastPathShortBuilders never named the engineer (no warning would show)")
+	}
+	laid := 0
+	for y := 5; y <= 8; y++ {
+		if roadAt(g, 5, y) {
+			laid++
+		}
+	}
+	if laid != 2 || eng.Storage != 1 {
+		t.Errorf("laid %d roads with %d raw left, want 2 roads and 1 raw", laid, eng.Storage)
+	}
+}
+
 // TestBuildPathRoadStopsInPlaceWhenUnaffordable checks a road run whose storage pays for one
 // cell only: the engineer stops on the road it laid, with no half built cell left behind.
 func TestBuildPathRoadStopsInPlaceWhenUnaffordable(t *testing.T) {

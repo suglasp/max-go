@@ -149,13 +149,28 @@ func NewBuildOrder(builder, product *game.UnitInfo, gx, gy, rate int) *BuildOrde
 }
 
 // CostPerTurn is the raw material this order draws this turn at its build rate.
-// Building faster grows faster than linear: rate 1/2/4 draws the category rate
+// Building faster grows faster than linear: rate 1/2/4 draws the builder's rate
 // times 1/4/12, not a flat multiple, so a rushed build costs more total material.
 //
 // C++ ported : unitinfo.cpp - Cargo_GetRawConsumptionRate(unit_type, build_rate)
 // (the draw each turn in UnitInfo::UpdateProduction / the factory StartBuilding).
 func (o *BuildOrder) CostPerTurn() int {
-	return economy.RawConsumptionRate(repType(o.Product), o.BuildRate)
+	return economy.RawConsumptionRate(costType(o), o.BuildRate)
+	/* return economy.RawConsumptionRate(repType(o.Product), o.BuildRate): note: unused code in Go port, a road (ground cover) drew the factory rate 3, not the Engineer's 2 (N28) */
+}
+
+// costType is the unit type whose consumption rate an order pays: the builder's own type, as the reference
+// charges it, so a road an Engineer lays costs the Engineer rate the Construction Menu shows. A builder less
+// order, or a builder type without a rate, falls back to the product category (repType).
+//
+// C++ ported : unitinfo.cpp - UnitInfo::UpdateProduction (storage -= Cargo_GetRawConsumptionRate(unit_type, build_rate),
+// unit_type being the builder).
+func costType(o *BuildOrder) assets.UnitType {
+	if o.Builder != nil && economy.RawConsumptionRate(o.Builder.Type, 1) > 0 {
+		return o.Builder.Type
+	}
+
+	return repType(o.Product)
 }
 
 // Done reports whether the product is finished.
@@ -197,7 +212,8 @@ func (o *BuildOrder) Advance(pool *int) bool {
 	// Slow the rate to what the pool sustains for the remaining work (never below
 	// 1). This ratchets down: a build that hit a shortage keeps the slower speed.
 	remaining := o.TotalTurns - o.Progress
-	if lim := MaxBuildRate(repType(o.Product), remaining, *pool); o.BuildRate > lim {
+	/* if lim := MaxBuildRate(repType(o.Product), remaining, *pool); o.BuildRate > lim {: note: unused code in Go port, the clamp now uses costType like CostPerTurn (N28) */
+	if lim := MaxBuildRate(costType(o), remaining, *pool); o.BuildRate > lim {
 		o.BuildRate = lim
 	}
 	if o.BuildRate < 1 {
