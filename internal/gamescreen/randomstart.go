@@ -424,6 +424,14 @@ func (s *Screen) deployStartBase(team int, center game.Point, roster []unitSpec,
 	// C++ ported : aiplayer.cpp - ChooseInitialUpgrades, run while the supplies are rolled.
 	s.applyAIStartUpgrades(team, roster)
 
+	// The whole roster counts as units built on the score screen, for every team (the
+	// computer teams land through here too). The starting buildings are not part of it,
+	// and a unit that finds no free cell is still counted, as in the reference.
+	// C++ ported : game_manager.cpp - GameManager_ProcessTeamMissionSupplyUnits (stats_units_built)
+	if team >= 0 && team < game.TeamCount {
+		s.game.TeamStats[team].UnitsBuilt += len(roster)
+	}
+
 	// Buildings first, so the units cluster around the finished base. The mining
 	// station anchors the base near the centre; each later building (the power
 	// generator) is placed orthogonally adjacent to an already placed footprint

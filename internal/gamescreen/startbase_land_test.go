@@ -83,8 +83,6 @@ func TestDeployStartBaseOneComplex(t *testing.T) {
 //
 // C++ ported : game_manager.cpp - GameManager_ProcessTeamMissionSupplyUnits (stats_units_built += units count)
 func TestDeployStartBaseCountsRoster(t *testing.T) {
-	t.Skip("port bug, TODO.md DC-F8 / PLAN-NOV2026 N17: the live landing does not add the roster to UnitsBuilt")
-
 	s, g := newTestScreen(t, 16)
 	roster := founderRoster()
 
@@ -92,5 +90,24 @@ func TestDeployStartBaseCountsRoster(t *testing.T) {
 
 	if got := g.TeamStats[1].UnitsBuilt; got != len(roster) {
 		t.Errorf("UnitsBuilt = %d, want %d (the landed roster)", got, len(roster))
+	}
+}
+
+// TestDeployStartBaseCountsRosterOnly checks that only the roster counts as units built: a computer team
+// is counted like a human one, the landed mining station and power generator are not, and a team that lands
+// nothing stays at zero.
+//
+// C++ ported : game_manager.cpp - GameManager_ProcessTeamMissionSupplyUnits (stats_units_built += units count)
+func TestDeployStartBaseCountsRosterOnly(t *testing.T) {
+	s, g := newTestScreen(t, 16, 2)
+	roster := founderRoster()
+
+	s.deployStartBase(2, game.Point{X: 8, Y: 8}, roster[:3], nil, false, rand.New(rand.NewSource(7)))
+
+	if got := g.TeamStats[2].UnitsBuilt; got != 3 {
+		t.Errorf("computer team UnitsBuilt = %d, want 3 (the roster only, no buildings)", got)
+	}
+	if got := g.TeamStats[1].UnitsBuilt; got != 0 {
+		t.Errorf("untouched team UnitsBuilt = %d, want 0", got)
 	}
 }

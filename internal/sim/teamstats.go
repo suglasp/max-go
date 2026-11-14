@@ -72,8 +72,8 @@ func (g *Game) recordBuildingBuilt(u *game.UnitInfo) {
 	}
 }
 
-// recordUnitBuilt tallies a mobile unit produced by a factory or deployed in the
-// team's landing roster.
+// recordUnitBuilt tallies a mobile unit produced by a factory (the landing roster
+// is counted in one sum by gamescreen deployStartBase).
 //
 // C++ ported : game_manager.cpp - stats_units_built (unit completion / supply).
 func (g *Game) recordUnitBuilt(team int) {
