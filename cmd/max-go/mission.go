@@ -75,6 +75,11 @@ func missionRules(gs *maxsave.GameState) gamescreen.MissionRules {
 		VictoryType:  vt,
 		VictoryLimit: opt.VictoryLimit,
 		TurnTimer:    opt.Timer,
+		// The rest of the file's options: a mission plays with them, not with the
+		// player's settings (N13, the user's rule; the reference puts the settings back).
+		EndTurn:  opt.EndTurn,
+		PlayMode: opt.PlayMode,
+		Opponent: opt.Opponent,
 	}
 	for team := 0; team < game.TeamCount && team < len(gs.Gold); team++ {
 		rules.TeamGold[team] = gs.Gold[team]
@@ -177,12 +182,15 @@ func emulateMission(ctx *menus.Context, m missionfile.Mission, teamTypesFn func(
 	category := missionCategoryOf(m.SavePath)
 	scr.SetMissionCategory(category)
 	scr.SetMissionIndex(int(m.Info.MissionIndex)) // its scripted objective is keyed on this
+	/* // note: unused code in Go port
+	// The settings set the play mode, End Turn Time and opponent of a mission; a mission plays with the options fixed in its file (N13, the user's rule of 2026-11-07, kept 2026-11-14).
 	scr.SetAIDifficulty(missionDifficulty(category, ctx.Settings.Game.Opponent))
 	// Mirror the menu launch path (launchMission): the saved play mode + the End
 	// Turn grace ride a direct -mission launch too, so -simultane and game.end_turn
 	// are not silently dropped.
 	scr.SetPlayMode(ctx.Settings.Game.PlayMode)
 	scr.SetEndTurnTimer(ctx.Settings.Game.EndTurn)
+	*/
 
 	seed := int64(m.Info.RNGSeed)
 	if seed == 0 {
@@ -191,14 +199,32 @@ func emulateMission(ctx *menus.Context, m missionfile.Mission, teamTypesFn func(
 	w, h := scr.MapSize()
 	if units, res, rules, err := loadMissionState(m.SavePath, w, h, m.Info); err == nil {
 		dbg.Printf("emulate mission %q: world=%d units=%d victory=%d/%d teams=%v (scripted)", m.Title, world, len(units), rules.VictoryType, rules.VictoryLimit, teamTypesFn(m.Info))
+		applyMissionOptions(scr, category, rules) // the same as the menu launch path (launchMission)
 		scr.MissionStart(units, teamTypesFn(m.Info), res, rules, seed)
 	} else {
 		dbg.Printf("emulate mission %q: world=%d (header-only, body parse failed: %v)", m.Title, world, err)
+		// No options to read: the header only landing plays with the player's settings.
+		scr.SetAIDifficulty(missionDifficulty(category, ctx.Settings.Game.Opponent))
+		scr.SetPlayMode(ctx.Settings.Game.PlayMode)
+		scr.SetEndTurnTimer(ctx.Settings.Game.EndTurn)
 		scr.CustomStart(nil, nil, 200, seed) // header only fallback: a modest default gold reserve
 	}
 	scr.SetMissionGoal(m.Title, m.Description) // light the GOAL button with the mission briefing
 
 	return runGameOverAfter(ctx, scr)
+}
+
+// applyMissionOptions sets the play mode and the computer opponent a mission file fixes,
+// before MissionStart (the AI rolls its strategy at the start; MissionStart sets the two
+// timers). Training still locks the opponent to Clueless and -difficulty still overrides it
+// (missionDifficulty). Nothing is written to max-go.json. This is the user's rule (N13): the
+// reference puts the player's settings back for a training, campaign or scenario file.
+func applyMissionOptions(scr *gamescreen.Screen, category game.MissionCategory, rules gamescreen.MissionRules) {
+	difficulty := missionDifficulty(category, rules.Opponent)
+	scr.SetPlayMode(rules.PlayMode)
+	scr.SetAIDifficulty(difficulty)
+	dbg.Printf("mission options: play mode %d, turn time %ds, end turn %ds, opponent %d (file %d)",
+		rules.PlayMode, rules.TurnTimer, rules.EndTurn, difficulty, rules.Opponent)
 }
 
 // missionCategoryOf reads a mission's kind off the file it lives in: the retail

@@ -113,6 +113,26 @@ func TestSetResourceLevels(t *testing.T) {
 	}
 }
 
+// TestMissionStartAppliesTheFileTimers checks that a mission runs on its own timers: an untimed
+// mission is untimed even when the player has a turn timer set, and its End Turn Time replaces
+// the player's (N13).
+func TestMissionStartAppliesTheFileTimers(t *testing.T) {
+	s, _ := newTestScreen(t, 16)
+	s.SetTurnTimer(120) // the player's settings, as the screen build sets them
+	s.SetEndTurnTimer(30)
+
+	s.MissionStart(nil, []game.TeamType{game.TeamPlayer, game.TeamComputer}, nil, MissionRules{TurnTimer: 0, EndTurn: 45}, 7)
+	if s.turnFlow.turnSeconds != 0 || s.turnFlow.endTurnSeconds != 45 {
+		t.Errorf("untimed mission: turn %ds, end turn %ds; want 0 and 45", s.turnFlow.turnSeconds, s.turnFlow.endTurnSeconds)
+	}
+
+	s2, _ := newTestScreen(t, 16)
+	s2.MissionStart(nil, []game.TeamType{game.TeamPlayer, game.TeamComputer}, nil, MissionRules{TurnTimer: 180, EndTurn: 45}, 7)
+	if s2.turnFlow.turnSeconds != 180 || s2.turnFlow.fullTurnSeconds != 180 {
+		t.Errorf("timed mission: turn %ds (full %ds), want 180", s2.turnFlow.turnSeconds, s2.turnFlow.fullTurnSeconds)
+	}
+}
+
 // TestMissionStartAppliesClan checks that a mission's scripted clan is honoured (a 0
 // stays random for resolveTeamClans to fill).
 func TestMissionStartAppliesClan(t *testing.T) {

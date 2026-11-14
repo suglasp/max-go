@@ -23,7 +23,10 @@ import (
 type MissionRules struct {
 	VictoryType     winloss.VictoryType                                         // duration (turns) or score
 	VictoryLimit    int                                                         // the duration/score threshold (0 = none)
-	TurnTimer       int                                                         // per turn seconds (0 = leave the default)
+	TurnTimer       int                                                         // per turn seconds (0 = untimed)
+	EndTurn         int                                                         // the End Turn Time in seconds (0 = none)
+	PlayMode        int                                                         // 0 turn based, 1 simultaneous
+	Opponent        int                                                         // the computer opponent tier
 	TeamGold        [game.TeamCount]int                                         // scripted treasury
 	TeamResearch    [game.TeamCount][game.ResearchTopicCount]game.ResearchTopic // scripted research progress (level + mid research remainder)
 	TeamUpgrades    [game.TeamCount]map[assets.UnitType][game.AttribCount]int   // per type gold bought attribute offsets (nil = none)
@@ -68,9 +71,11 @@ func (s *Screen) MissionStart(units []*game.UnitInfo, teamTypes []game.TeamType,
 	// rules, as every mission in the port did before.
 	s.applyMissionObjective()
 
-	if rules.TurnTimer > 0 {
-		s.SetTurnTimer(rules.TurnTimer)
-	}
+	// The mission's own timers rule, an untimed mission included (N13). The player's settings
+	// are never written: max-go.json keeps them for the next custom game.
+	/* if rules.TurnTimer > 0 {: note: unused code in Go port, an untimed mission kept the player's turn timer; a mission plays with the options fixed in its file (N13, the user's rule of 2026-11-07, kept 2026-11-14) */
+	s.SetTurnTimer(rules.TurnTimer)
+	s.SetEndTurnTimer(rules.EndTurn)
 
 	s.applyMissionEconomy(rules)
 

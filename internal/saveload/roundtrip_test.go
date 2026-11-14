@@ -288,6 +288,7 @@ func TestRoundTripFixtureFillsEverySnapshotField(t *testing.T) {
 	screenFilled := map[string]bool{
 		"Name": true, "Bookmarks": true, "Groups": true, "Displays": true,
 		"TurnSeconds": true, "MissionTitle": true, "MissionBrief": true, "SpawnSeq": true,
+		"TurnTimer": true, "EndTurn": true, // v26, the screen's own timers
 	}
 	snap := Capture(newRichGame(t), richMapName)
 	value := reflect.ValueOf(snap).Elem()

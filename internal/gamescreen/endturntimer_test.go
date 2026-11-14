@@ -11,6 +11,7 @@ import (
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/platform"
+	"github.com/suglasp/max-go/internal/saveload"
 )
 
 // graceScreen is a simultaneous game mid round: a human team and a computer team, a 180
@@ -305,6 +306,37 @@ func TestEndTurnTimeChangeNextRoundFlow(t *testing.T) {
 	s.armEndTurnGrace()
 	if s.turnFlow.turnSeconds != 20 {
 		t.Errorf("next round countdown %d, want 20", s.turnFlow.turnSeconds)
+	}
+}
+
+// TestLoadKeepsTheSavedTimers: a loaded game runs on the Turn Time and End Turn Time it was
+// saved with, not on the current settings (N14); a save from before v26 keeps the settings.
+func TestLoadKeepsTheSavedTimers(t *testing.T) {
+	dir := t.TempDir()
+	saver, _ := graceScreen(t)
+	saver.SetTurnTimer(300)
+	saver.SetEndTurnTimer(20)
+	saver.SetSaveInfo(dir, "GREEN_1.WRL")
+	if err := saver.saveToSlot(1, "timers", false); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	loader, _ := graceScreen(t)
+	loader.SetSaveInfo(dir, "GREEN_1.WRL")
+	loader.ApplyPrefs(LivePrefs{TurnTimer: 180, EndTurn: 45}) // the current settings
+	if err := loader.Load(1); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if loader.turnFlow.fullTurnSeconds != 300 || loader.turnFlow.endTurnSeconds != 20 {
+		t.Errorf("after a load: turn time %ds, end turn %ds; want the saved 300 and 20",
+			loader.turnFlow.fullTurnSeconds, loader.turnFlow.endTurnSeconds)
+	}
+
+	old, _ := graceScreen(t) // 180 and 30, as the settings set them
+	old.applySavedTimers(&saveload.Snapshot{Version: 25, TurnTimer: 300, EndTurn: 20})
+	if old.turnFlow.fullTurnSeconds != 180 || old.turnFlow.endTurnSeconds != 30 {
+		t.Errorf("v25 save: turn time %ds, end turn %ds; want the settings 180 and 30",
+			old.turnFlow.fullTurnSeconds, old.turnFlow.endTurnSeconds)
 	}
 }
 

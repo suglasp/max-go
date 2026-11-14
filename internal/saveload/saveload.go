@@ -73,7 +73,9 @@ var magic = [8]byte{'M', 'A', 'X', 'G', 'O', 'S', 'V', 0}
 // got: a load that starts it again at 0 hands out IDs the saved units already carry, and the
 // registry then drops the older unit. A pre v25 save has 0 here and the screen derives the
 // counter from the highest unit ID it restores.
-const Version = 25
+// v26 the game's own Turn Time and End Turn Time (TurnTimer, EndTurn): a load used to take both
+// from the current settings. A pre v26 save has no fields and keeps the settings, as before.
+const Version = 26
 
 // Snapshot is the serializable game state. Restore rebuilds derived grids, visibility, and complexes from it.
 type Snapshot struct {
@@ -121,6 +123,8 @@ type Snapshot struct {
 	MissionTitle string                        // a scripted mission's title (v22); empty for a skirmish / older save
 	MissionBrief string                        // a scripted mission's briefing text (v22), so a reload keeps its objective instead of the "Random game:" block
 	SpawnSeq     int                           // the screen's unit counter (v25), so a load never reuses a saved unit's ID; 0 on an older save
+	TurnTimer    int                           // the game's full Turn Time in seconds (v26); 0 = untimed, or an older save (see Version)
+	EndTurn      int                           // the game's End Turn Time in seconds (v26); 0 = none, or an older save (see Version)
 }
 
 // LossSiteSnapshot is one remembered casualty: the cell where a team lost a mobile unit

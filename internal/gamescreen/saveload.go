@@ -116,6 +116,8 @@ func (s *Screen) saveToSlot(slot int, name string, announce bool) error {
 	snap.MissionTitle = s.missionTitle          // a scripted mission's briefing, so a reload keeps its
 	snap.MissionBrief = s.missionBriefing       // objective instead of reading as a skirmish (v22)
 	snap.SpawnSeq = s.spawnSeq                  // the unit counter, so a load never reuses a saved unit's ID (v25)
+	snap.TurnTimer = s.turnFlow.fullTurnSeconds // the game's own Turn Time (v26)
+	snap.EndTurn = s.turnFlow.endTurnSeconds    // and its End Turn Time (v26)
 	f, err := os.Create(path)
 
 	if err != nil {
@@ -281,11 +283,26 @@ func (s *Screen) Load(slot int) error {
 	s.applyCameraBookmarks(snap.Bookmarks) // the save's F5..F8 camera pins replace the current ones (v15)
 	s.applyUnitGroups(snap.Groups)         // the save's 1..9 control groups replace the current ones (v16)
 	s.applyDisplayToggles(snap.Displays)   // the save's display overlays come back with it (v20)
+	s.applySavedTimers(snap)               // the save's own Turn Time and End Turn Time (v26)
 	s.applyTurnClock(snap.TurnSeconds)     // resume the countdown where the save left it (v22)
 	s.focusOnLoadedBase()                  // centre + zoom partly in to the base (vanilla zooms in on load)
 	s.selectFirstBuilder()                 // pre select the first builder, matching new game map entry (design choice)
 	s.restoreGoalBlock(snap)               // the mission's own briefing, or the random game info block
 	return nil
+}
+
+// applySavedTimers puts back the Turn Time and End Turn Time the game was saved with: a
+// loaded game uses the state of its save, not the current settings (N14, the user's rule of
+// 2026-11-07). A pre v26 save carries neither and keeps the settings; a version check, as 0
+// is a real value (untimed). A later settings change in Options still applies as in any game.
+// C++: SaveLoad_LoadOptions writes a save's timer and endturn over the settings.
+func (s *Screen) applySavedTimers(snap *saveload.Snapshot) {
+	if snap.Version < 26 {
+		return
+	}
+
+	s.SetTurnTimer(snap.TurnTimer)
+	s.SetEndTurnTimer(snap.EndTurn)
 }
 
 // spawnIDCeiling is where the built unit range starts (10000 + the sim's built counter).

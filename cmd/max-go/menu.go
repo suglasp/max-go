@@ -312,14 +312,17 @@ func (f *menuFlow) launchMission(m missionfile.Mission, teamTypesFn func(*missio
 		return winloss.Continue, err
 	}
 
-	scr.SetNoMovie(f.noMovie)               // honour -nomovie for the landing cinematic
+	scr.SetNoMovie(f.noMovie) // honour -nomovie for the landing cinematic
+	/* // note: unused code in Go port
+	// The settings set the play mode and End Turn Time of a mission; a mission plays with the options fixed in its file (N13, the user's rule of 2026-11-07, kept 2026-11-14).
 	scr.SetPlayMode(f.cfg.Game.PlayMode)    // turn based or simultaneous, per the campaign/mission setup screen / -simultane
 	scr.SetEndTurnTimer(f.cfg.Game.EndTurn) // the simultaneous End Turn grace period
-	scr.SetMissionCategory(category)        // training trims the build roster, locks the AI and speaks the build prompt
+	*/
+	scr.SetMissionCategory(category) // training trims the build roster, locks the AI and speaks the build prompt
 	// WHICH mission of that kind: the header's mission_index is what its scripted win and
 	// loss conditions are keyed on (campaign 1 is not won the way campaign 8 is).
 	scr.SetMissionIndex(int(m.Info.MissionIndex))
-	scr.SetAIDifficulty(missionDifficulty(category, f.cfg.Game.Opponent))
+	/* scr.SetAIDifficulty(missionDifficulty(category, f.cfg.Game.Opponent)): note: unused code in Go port, a mission plays with the options fixed in its file (N13, the user's rule of 2026-11-07, kept 2026-11-14) */
 	seed := int64(m.Info.RNGSeed)
 	if seed == 0 {
 		seed = time.Now().UnixNano()
@@ -328,9 +331,14 @@ func (f *menuFlow) launchMission(m missionfile.Mission, teamTypesFn func(*missio
 	w, h := scr.MapSize()
 	if units, res, rules, err := loadMissionState(m.SavePath, w, h, m.Info); err == nil {
 		dbg.Printf("start mission %q: world=%d seed=%d units=%d victory=%d/%d (scripted)", m.Title, world, seed, len(units), rules.VictoryType, rules.VictoryLimit)
+		applyMissionOptions(scr, category, rules) // the file's play mode and opponent; MissionStart sets its timers
 		scr.MissionStart(units, teamTypesFn(m.Info), res, rules, seed)
 	} else {
 		dbg.Printf("start mission %q: world=%d seed=%d (header-only, body parse failed: %v)", m.Title, world, seed, err)
+		// No options to read: the header only landing plays with the player's settings.
+		scr.SetPlayMode(f.cfg.Game.PlayMode)
+		scr.SetEndTurnTimer(f.cfg.Game.EndTurn)
+		scr.SetAIDifficulty(missionDifficulty(category, f.cfg.Game.Opponent))
 		scr.CustomStart(nil, nil, 200, seed) // header only fallback: a modest default gold reserve
 	}
 
