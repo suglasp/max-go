@@ -13,7 +13,12 @@ Check the version file next to the game executables.
 - `max-go.json` no longer carries a `language` setting by default; the game reads its texts from `LANG.RES`. Add `"language": "en-us"` by hand to use a loose `lang-en-us.ini` again; `-language` now applies to one run only and is never saved.
 
 ### Fixes
+- The end of game score now counts the starting units of every player as units built.
+- In the Factory Menu build queue, a long unit name such as Repair Unit now wraps onto a second line instead of running over its number of turns.
+- A shorter End Turn Time set in Preferences now also applies at once when the turn already had less time left, for example right after loading a game. A countdown switched in Preferences no longer stands still for the time the screen was open.
 - In the Reports screen, the Stealthy box on the Units tab now lists your Submarines and Infiltrators; it used to empty the list.
+- A destroyed aircraft or ship now plays its own air or sea explosion, instead of the land one.
+- `max-convert` now says why a file failed to convert, and warns when `COLOR.PAL` is missing or invalid and the output will be grayscale.
 - After loading a saved game, a newly built unit or a newly laid mine could take the place of an existing unit: that unit turned invisible, ignored its orders and was missing from the next save. Loaded games now keep every unit.
 - On Windows, fixed race condition that could crash the game at startup when the debug console is switched on.
 - An Engineer path build, stops before it cannot afford to build the next building: it waits on the last finished building with its exit markers (or stays on the last road),
@@ -27,6 +32,7 @@ Check the version file next to the game executables.
 - The launch help no longer offers `none` for `-turnlimit`, `-endturn`, `-score`, `-duration` and `-startcredit`, which never accepted it; `-derelicts` lists its `None` choice.
 
 ### QOL
+- In simultaneous play the turn clock shows yellow while the round still runs on its full Turn Time, and gold once the End Turn countdown runs; both turn red at 0:20 or less.
 - F12 screenshots are now saved scaled up 3x, so they stay sharp on a big display.
 
 ### Improvements
