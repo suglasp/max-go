@@ -17,6 +17,7 @@ import (
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/platform"
+	"github.com/suglasp/max-go/internal/sim"
 	"github.com/suglasp/max-go/internal/sprites"
 )
 
@@ -69,10 +70,11 @@ type explosion struct {
 // LNDEXPLD/BLDEXPLD; the LRGRUBLE/SMLRUBLE debris is the sim's rubble record).
 func (s *Screen) spawnExplosion(u *game.UnitInfo) {
 	// DestroyUnit records rubble; this path only adds the blast.
-	sprite, dur := smallExplosionType, uint64(smallExplosionMS)
+	sprite := explosionSprite(u)
+	dur := uint64(smallExplosionMS)
 
-	if u.Flags.Has(game.FlagBuilding) {
-		sprite, dur = bldExplosionType, bldExplosionMS
+	if sprite == bldExplosionType {
+		dur = bldExplosionMS
 	}
 
 	cellX, cellY, n := effectFootprint(u)
@@ -87,6 +89,23 @@ func (s *Screen) spawnExplosion(u *game.UnitInfo) {
 	})
 
 	s.playSfx(blastSfx) // the destruction blast
+}
+
+// explosionSprite picks the destruction blast sheet for a unit by its class. A building gets the building blast, then a land unit (so an amphibious unit counts as land), an air unit, a ship, and anything else the land blast.
+// C++ ported : units_manager.cpp - UnitsManager_StartExplosion (the unit_type choice)
+func explosionSprite(u *game.UnitInfo) assets.UnitType {
+	switch {
+	case u.Flags.Has(game.FlagBuilding):
+		return bldExplosionType
+	case u.Flags.Has(game.FlagMobileLandUnit):
+		return smallExplosionType
+	case sim.IsAirUnit(u):
+		return airExplosionType
+	case u.Flags.Has(game.FlagMobileSeaUnit):
+		return seaExplosionType
+	default:
+		return smallExplosionType
+	}
 }
 
 // spawnHitImpact records a HITEXPLD flash over a surviving target's footprint. It adds no rubble or destruction sound and remains active when Animate Effects is off.
@@ -342,6 +361,8 @@ const blastSfx = "GEN_XPLD"
 // effect sprite resources: small unit vs building blasts, small vs large rubble.
 const (
 	smallExplosionType = assets.LndExpld
+	airExplosionType   = assets.AirExpld
+	seaExplosionType   = assets.SeaExpld
 	bldExplosionType   = assets.BldExpld
 	hitImpactType      = assets.HitExpld
 	smallRubbleType    = assets.SmlRuble
