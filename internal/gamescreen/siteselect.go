@@ -89,15 +89,14 @@ const (
 )
 
 // siteSelectState holds the live landing site selection: the candidate cell (the
-// mining station anchor), the MASTER lander drawn there, the other teams' chosen
-// start cells (for the proximity check), and the closure that deploys this
-// team's base at the chosen cell and starts the descent. introStart is 0 while
+// mining station anchor), the MASTER lander drawn there, and the closure that
+// deploys this team's base at the chosen cell and starts the descent. introStart is 0 while
 // the player is still picking and the confirm tick timestamp once the landing is
 // committed (the ring grow animation is playing).
 type siteSelectState struct {
-	cx, cy     int
-	master     *game.UnitInfo
-	enemy      []game.Point
+	cx, cy int
+	master *game.UnitInfo
+	/* enemy      []game.Point: note: unused code in Go port, the computer teams now land after the human (N1), so no enemy start exists while the human picks */
 	confirm    func(cx, cy int)
 	introStart uint64 // ring grow stage start (0 while still picking)
 	slideStart uint64 // panel slide stage start (0 until the rings finish)
@@ -107,13 +106,15 @@ type siteSelectState struct {
 // lander at the candidate cell, shows the planet zoomed for picking, and centres
 // the view. confirm is called with the final cell when the player accepts.
 // C++: GameManager_SelectSite (UnitsManager_SpawnUnit(MASTER, ...) + ORDER_IDLE).
-func (s *Screen) BeginSiteSelect(team, cx, cy int, enemy []game.Point, confirm func(cx, cy int)) {
+/* func (s *Screen) BeginSiteSelect(team, cx, cy int, enemy []game.Point, confirm func(cx, cy int)) {: note: unused code in Go port, the enemy parameter dropped, the computer teams now land after the human (N1), so no enemy start exists while the human picks */
+func (s *Screen) BeginSiteSelect(team, cx, cy int, confirm func(cx, cy int)) {
 	master := game.NewUnitInfo(assets.Master, team, s.spawnSeq+1, 0)
 	master.Flags = game.FlagStationary | game.FlagBuilding
 	master.Order = game.OrderIdle
 	s.spawnSeq++
 	s.game.Units.Deploy(master, cx, cy)
-	s.siteSelect = &siteSelectState{cx: cx, cy: cy, master: master, enemy: enemy, confirm: confirm}
+	/* s.siteSelect = &siteSelectState{cx: cx, cy: cy, master: master, enemy: enemy, confirm: confirm}: note: unused code in Go port, the computer teams now land after the human (N1), so no enemy start exists while the human picks */
+	s.siteSelect = &siteSelectState{cx: cx, cy: cy, master: master, confirm: confirm}
 	s.selected = nil // the lander is a marker, not a selectable unit
 	s.r.SetZoom(landingStartZoom * 2)
 	s.centerSiteSelect()
@@ -161,6 +162,10 @@ func (s *Screen) confirmSiteAt(cx, cy int) {
 	s.confirmSite()
 }
 
+/* // note: unused code in Go port
+// tooCloseToEnemy only checked the computer start cells fixed before the human picked;
+// the computer teams now land after the human (N1), so no enemy start exists while the human picks. The reference check is between human teams (GameManager_CheckLandingZones).
+//
 // tooCloseToEnemy reports whether (cx, cy) sits within the exclude range of any
 // other team's chosen start cell - a landing that is not allowed. The test is
 // per axis (Chebyshev), matching the original. C++: GameManager_CheckLandingZones
@@ -174,9 +179,9 @@ func (s *Screen) tooCloseToEnemy(cx, cy int) bool {
 
 	return false
 }
+*/
 
-// confirmSite commits the chosen landing site: a site too close to an enemy
-// start is rejected (the player must pick another). Otherwise it starts the
+// confirmSite commits the chosen landing site: it starts the
 // ring grow intro animation - the proximity rings expand, the confirm sound
 // plays, and the pointer becomes the hand - which tickSiteIntro finishes by
 // deploying the base. C++: GameManager_SelectSite accepting the site (PlaySfx +
@@ -188,12 +193,15 @@ func (s *Screen) confirmSite() {
 		return // not selecting, or the landing animation is already playing
 	}
 
+	/* // note: unused code in Go port
+	// the computer teams now land after the human (N1), so no enemy start exists while the human picks.
 	if s.tooCloseToEnemy(ss.cx, ss.cy) {
 		// A blocking placement error (the deploy exclusion zone overlap): the original reds
 		// it (type 2, game_manager.cpp:1430 _(3a97)). No log (site select phase).
 		s.showAlertBanner("Too close to the enemy - choose another site.")
 		return
 	}
+	*/
 
 	ss.introStart = platform.Ticks()
 	s.installCursor(cursors.Hand) // pointer switches to the hand on confirm

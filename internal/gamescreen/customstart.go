@@ -9,8 +9,10 @@ import (
 	"math/rand"
 
 	"github.com/suglasp/max-go/internal/assets"
+	"github.com/suglasp/max-go/internal/dbg"
 	"github.com/suglasp/max-go/internal/economy"
 	"github.com/suglasp/max-go/internal/game"
+	"github.com/suglasp/max-go/internal/landmass"
 )
 
 // CustomStart lands a custom single player game: the human team (0) deploys with
@@ -58,9 +60,10 @@ func (s *Screen) CustomStart(units []assets.UnitType, cargos []int, gold int, se
 		rosters[team] = opponentRoster
 	}
 
-	// One landing spot per team (distinct islands where the map allows), then seed
-	// the map's deposits around them so the mining stations land on real resources
-	// (the same N team spot picker the random2 bench uses).
+	// One landing spot per team (distinct islands where the map allows): spot[0] is the
+	// human's first candidate cell, the others are each computer team's preferred spot,
+	// kept only when it lands clear of the human (placeComputerSpots, once the human has
+	// landed). The deposits are seeded around the final spots.
 	spot := s.chooseStartSpots(teams, rng)
 
 	// The human is team 0; every opponent is a computer team.
@@ -79,6 +82,9 @@ func (s *Screen) CustomStart(units []assets.UnitType, cargos []int, gold int, se
 	// opponents' spots are chosen automatically). C++: GameManager_ProcessTeamMissionSupplyUnits.
 	deployBases := func(humanX, humanY int) {
 		spot[0] = game.Point{X: humanX, Y: humanY} // the player's chosen site
+
+		// The computer teams land after the human, clear of every team already down (N1).
+		s.placeComputerSpots(spot, rng)
 
 		if s.game.MiningDifficulty == 0 {
 			s.game.MiningDifficulty = 4 // human normal mining scale
@@ -116,9 +122,128 @@ func (s *Screen) CustomStart(units []assets.UnitType, cargos []int, gold int, se
 		s.StartLanding(s.r.Zoom() * 2)
 	}
 
-	// Let the player pick the human team's landing site (proximity rings vs the
-	// opponents' spots) before deploying.
-	s.BeginSiteSelect(0, spot[0].X, spot[0].Y, spot[1:], deployBases)
+	// Let the player pick the human team's landing site before deploying. No computer
+	// team has landed yet, so there is no enemy zone to keep clear of.
+	// C++ ported : game_manager.cpp - the human teams run GameManager_PlayerMissionSetup
+	// before any computer team sets up.
+	/* s.BeginSiteSelect(0, spot[0].X, spot[0].Y, spot[1:], deployBases): note: unused code in Go port, the computer spots were fixed before the human picked and only a 3 cell zone around them was refused, so the human could land beside the computer (N1) */
+	s.BeginSiteSelect(0, spot[0].X, spot[0].Y, deployBases)
+}
+
+// landingSafeRange is how far, in grid cells on either axis, a computer team lands from
+// every team already down: the proximity range plus 4, as the reference keeps it.
+// C++ ported : continent.cpp - Continent::IsViableSite (IsDangerousProximity with
+// proximity_range + 4).
+const landingSafeRange = landingProximityRange + 4
+
+// placeComputerSpots picks the computer teams' landing spots once the human has landed
+// on spot[0]. Each team in turn keeps its preferred spot when it lies clear of every team
+// already down; otherwise it takes the best inland cell that does, trying the roomy
+// islands no team holds yet first, then any roomy land, then any land. On a map too small
+// to keep that distance it takes the land cell farthest from the teams already down, so
+// the pick never hangs (the reference retries without end).
+//
+// C++ ported : continent.cpp - Continent::SelectLandingSite / IsViableSite (the computer
+// teams set up after the humans, game_manager.cpp).
+func (s *Screen) placeComputerSpots(spot []game.Point, rng *rand.Rand) {
+	islands := s.islandsWithRoom(landmass.Find(s.wmap))
+
+	for team := 1; team < len(spot); team++ {
+		placed := spot[:team]
+		spot[team] = s.safeComputerSpot(spot[team], placed, islands, rng)
+		dbg.Printf("landing: team %d at (%d,%d), %d cells from the nearest team", team, spot[team].X, spot[team].Y,
+			nearestTeamRange(spot[team], placed))
+	}
+}
+
+// safeComputerSpot returns the landing cell of one computer team: preferred when it is
+// clear of placed, else the best clear cell of the free roomy islands, of all roomy land,
+// or of all land, in that order; the farthest land cell when none is clear.
+func (s *Screen) safeComputerSpot(preferred game.Point, placed []game.Point, islands []landmass.Component, rng *rand.Rand) game.Point {
+	if landingClear(preferred, placed) {
+		return preferred
+	}
+
+	var free, roomy []game.Point
+
+	for _, c := range islands {
+		clear := clearCells(c.Cells, placed)
+		roomy = append(roomy, clear...)
+
+		if !holdsAny(c.Cells, placed) {
+			free = append(free, clear...)
+		}
+	}
+
+	land := s.landCells()
+
+	for _, cells := range [][]game.Point{free, roomy, clearCells(land, placed)} {
+		if len(cells) > 0 {
+			return s.landingSpot(cells, rng)
+		}
+	}
+
+	return farthestCell(land, placed, preferred)
+}
+
+// landingClear reports whether p lies more than landingSafeRange cells from every placed
+// spot on at least one axis. C++ ported : continent.cpp - Continent::IsDangerousProximity.
+func landingClear(p game.Point, placed []game.Point) bool {
+	return nearestTeamRange(p, placed) > landingSafeRange
+}
+
+// nearestTeamRange is the per axis (Chebyshev) distance from p to the nearest placed spot.
+func nearestTeamRange(p game.Point, placed []game.Point) int {
+	nearest := -1
+
+	for _, q := range placed {
+		d := max(iabsInt(p.X-q.X), iabsInt(p.Y-q.Y))
+		if nearest < 0 || d < nearest {
+			nearest = d
+		}
+	}
+
+	return nearest
+}
+
+// clearCells returns the cells that lie clear of every placed spot (landingClear).
+func clearCells(cells, placed []game.Point) []game.Point {
+	var out []game.Point
+
+	for _, c := range cells {
+		if landingClear(c, placed) {
+			out = append(out, c)
+		}
+	}
+
+	return out
+}
+
+// holdsAny reports whether any placed spot is one of the cells.
+func holdsAny(cells, placed []game.Point) bool {
+	for _, c := range cells {
+		for _, q := range placed {
+			if c == q {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// farthestCell returns the cell with the largest distance to its nearest placed spot (the
+// first one on a tie), or fallback when there are no cells.
+func farthestCell(cells, placed []game.Point, fallback game.Point) game.Point {
+	best, bestRange := fallback, -1
+
+	for _, c := range cells {
+		if d := nearestTeamRange(c, placed); d > bestRange {
+			best, bestRange = c, d
+		}
+	}
+
+	return best
 }
 
 // seedCustomWorld fills the map around the chosen landing spots before any base deploys:

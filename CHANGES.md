@@ -13,6 +13,7 @@ Check the version file next to the game executables.
 - `max-go.json` no longer carries a `language` setting by default; the game reads its texts from `LANG.RES`. Add `"language": "en-us"` by hand to use a loose `lang-en-us.ini` again; `-language` now applies to one run only and is never saved.
 
 ### Fixes
+- In a custom game the computer no longer lands right next to your base; it picks its site after you, well away from it.
 - An Engineer laying a road path no longer hangs on its last tile with 1 turn to go; a road now costs the 2 raw a turn the build menu shows.
 - The end of game score now counts the starting units of every player as units built.
 - In the Factory Menu build queue, a long unit name such as Repair Unit now wraps onto a second line instead of running over its number of turns.

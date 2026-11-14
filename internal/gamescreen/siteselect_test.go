@@ -47,6 +47,8 @@ func TestPhasePrecedence(t *testing.T) {
 // TestTooCloseToEnemy checks the per axis exclude range landing check: a site
 // within exclude_range on BOTH axes of an enemy start is rejected; one beyond on
 // either axis is allowed.
+/* // note: unused code in Go port
+// The test of tooCloseToEnemy, commented out with it: the computer teams now land after the human (N1), so no enemy start exists while the human picks.
 func TestTooCloseToEnemy(t *testing.T) {
 	s := &Screen{siteSelect: &siteSelectState{enemy: []game.Point{{X: 50, Y: 50}}}}
 	cases := []struct {
@@ -66,6 +68,7 @@ func TestTooCloseToEnemy(t *testing.T) {
 		}
 	}
 }
+*/
 
 // TestSiteSelectRingCenterMatchesUnitDrawPosition checks that the proximity
 // ring the confirm animation grows is centred on the SAME screen pixel the
