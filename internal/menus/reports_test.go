@@ -56,9 +56,37 @@ func TestReportRowMatches(t *testing.T) {
 		t.Error("Combat+Damaged should show a damaged combat unit")
 	}
 
-	// Stealthy excludes everything (no stealth model yet).
+	// Stealthy keeps only the stealth units (Submarine, Commando) and drops the rest.
+	sub := screendata.ReportRow{Sea: true, Combat: true, Stealthy: true, Hits: 8, MaxHits: 8}
+	commando := screendata.ReportRow{Land: true, Combat: true, Stealthy: true, Hits: 4, MaxHits: 8}
 	if reportRowMatches(tank, true, true, true, true, false, false, false, true) {
-		t.Error("Stealthy filter should currently exclude all units")
+		t.Error("Stealthy filter should drop a plain tank")
+	}
+	for name, r := range map[string]screendata.ReportRow{"submarine": sub, "commando": commando} {
+		if !reportRowMatches(r, true, true, true, true, false, false, false, true) {
+			t.Errorf("Stealthy filter should keep the %s", name)
+		}
+	}
+
+	// Stealthy unticked leaves the stealth units listed like any other unit.
+	if !reportRowMatches(sub, true, true, true, true, false, false, false, false) {
+		t.Error("Stealthy off should show a submarine")
+	}
+
+	// Stealthy combines with the other boxes: Damaged drops the intact submarine, keeps the hurt commando.
+	if reportRowMatches(sub, true, true, true, true, false, false, true, true) {
+		t.Error("Stealthy+Damaged should hide an intact submarine")
+	}
+	if !reportRowMatches(commando, true, true, true, true, false, false, true, true) {
+		t.Error("Stealthy+Damaged should show a damaged commando")
+	}
+
+	// Stealthy with a location box: Sea only keeps the submarine, not the land commando.
+	if !reportRowMatches(sub, false, false, true, false, false, false, false, true) {
+		t.Error("Stealthy+Sea should show the submarine")
+	}
+	if reportRowMatches(commando, false, false, true, false, false, false, false, true) {
+		t.Error("Stealthy+Sea should hide the land commando")
 	}
 }
 

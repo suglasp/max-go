@@ -43,6 +43,7 @@ type ReportRow struct {
 	Stationary    bool
 	Producer      bool
 	Combat        bool
+	Stealthy      bool // a Submarine or a Commando: the only units the Stealthy filter keeps
 	/* // note: unused code in Go port
 	// TeamColor was written once and never read; the Reports screen colours rows by team itself.
 	TeamColor     int
