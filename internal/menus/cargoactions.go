@@ -112,10 +112,8 @@ func (m *cargoMenu) selectedType() (assets.UnitType, bool) {
 		}
 		return 0, false
 	}
-	if m.buySel < len(cargoRoster) {
-		return cargoRoster[m.buySel].t, true
-	}
-	return 0, false
+	/* cargoRoster[m.buySel].t: note: unused code in Go port, the right list is now rightList() via buySelectedType */
+	return m.buySelectedType()
 }
 
 // loadCargoTo sets the selected Purchased unit's cargo to target (rounded to a
@@ -148,10 +146,13 @@ func (m *cargoMenu) loadCargoTo(target int) {
 
 // updateBuyButton enables Buy only while the roster selection is affordable.
 func (m *cargoMenu) updateBuyButton() {
-	if m.buyBtn < 0 || m.buySel >= len(cargoRoster) {
+	/* cargoRoster[m.buySel].t: note: unused code in Go port, the right list is now rightList() via buySelectedType */
+	t, ok := m.buySelectedType()
+	if m.buyBtn < 0 || !ok {
 		return
 	}
-	if cargoCanBuy(m.at, m.lo.TeamGold, cargoRoster[m.buySel].t) {
+	// Buy needs a roster type; the Upgrades list also holds buildings and other types that cannot be bought.
+	if isRosterType(t) && cargoCanBuy(m.at, m.lo.TeamGold, t) {
 		m.ctx.Sys.EnableButton(m.buyBtn)
 	} else {
 		m.ctx.Sys.DisableButton(m.buyBtn)
@@ -188,10 +189,11 @@ func (m *cargoMenu) clampScroll() {
 
 // buySelected buys the roster selection into the loadout, spending gold.
 func (m *cargoMenu) buySelected() {
-	if m.buySel >= len(cargoRoster) {
+	/* cargoRoster[m.buySel].t: note: unused code in Go port, the right list is now rightList() via buySelectedType */
+	t, ok := m.buySelectedType()
+	if !ok || !isRosterType(t) {
 		return
 	}
-	t := cargoRoster[m.buySel].t
 	cost := cargoUnitCost(m.at, t)
 	if !cargoCanBuy(m.at, m.lo.TeamGold, t) {
 		return

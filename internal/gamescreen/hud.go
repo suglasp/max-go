@@ -147,6 +147,14 @@ func (s *Screen) commandoRankLabel(u *game.UnitInfo) string {
 	return label
 }
 
+// displayName returns a readable name for a unit type, falling back to its resource tag. The table lives in
+// game (UnitDisplayName) so the menus share it.
+func displayName(t assets.UnitType) string {
+	return game.UnitDisplayName(t)
+}
+
+/* // note: unused code in Go port
+// the name table and lookup moved to game.UnitDisplayName (internal/game/unitnames.go) so menus can share them.
 // unitDisplayNames gives readable names for unit types shown by the game screen. Tag is the fallback.
 var unitDisplayNames = map[assets.UnitType]string{
 	// Mobile land units.
@@ -196,6 +204,7 @@ func displayName(t assets.UnitType) string {
 
 	return t.Tag()
 }
+*/
 
 // drawEndTurnButton draws the ENDTRN bevel and caption. It is white during the local turn, red while held, and green during another team's turn.
 // C++ ported : game_manager.cpp - GameManager_MenuClickEndTurnButton.

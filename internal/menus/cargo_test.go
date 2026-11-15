@@ -281,3 +281,226 @@ func TestCargoBuyLoadDelete(t *testing.T) {
 		t.Errorf("gold after delete = %d, want %d", lo.TeamGold, goldBefore+truckCost+2)
 	}
 }
+
+// TestCargoDisabledFacesHaveNoCaption checks the disabled Buy face is the plain CRGBUY_X art, with no caption.
+func TestCargoDisabledFacesHaveNoCaption(t *testing.T) {
+	m := newTestCargoMenu(t, NewCargoLoadout(0, 250))
+	ctx := m.ctx
+
+	bid, err := ctx.cargoPlateButtonWithDisabled(mainWindow, 590, 386, "CRGBUY_U", "CRGBUY_D", "CRGBUY_X", "Buy", 1102)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx.Sys.DisableButton(bid)
+
+	art, err := ctx.loadSimple("CRGBUY_X")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := art.Buffer()
+	got := ctx.Sys.Buf(mainWindow)
+
+	for y := 0; y < want.H; y++ {
+		for x := 0; x < want.W; x++ {
+			if w := want.At(x, y); w != 0 && got.At(590+x, 386+y) != w {
+				t.Fatalf("disabled Buy face differs from CRGBUY_X at %d,%d: got %d want %d", x, y, got.At(590+x, 386+y), w)
+			}
+		}
+	}
+}
+
+// TestRepairShopDisabledCaptionGray checks the Repair Shop disabled face keeps its caption in dark gray.
+func TestRepairShopDisabledCaptionGray(t *testing.T) {
+	m := newTestCargoMenu(t, NewCargoLoadout(0, 250))
+	ctx := m.ctx
+	const x, y = 100, 100
+
+	bid, err := ctx.captionButton(x, y, "DPTMNUUP", "DPTMNUDN", "DPTMNUDN", "Repair", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx.Sys.DisableButton(bid)
+
+	// bake renders the disabled art with the caption colour, as the button does.
+	bake := func(color fonts.Color) *gfx.Buffer {
+		img, err := ctx.loadSimple("DPTMNUDN")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		b := img.Buffer().Clone()
+		keyButtonCorner(b)
+		f := ctx.Sys.Fonts().Font()
+		tx, ty := max((b.W-f.Width("Repair"))/2, 0), max((b.H-f.Height)/2, 0)
+		f.BlitShadowed(b.Sub(tx, ty, b.W-tx, b.H-ty), "Repair", 0, color)
+
+		return b
+	}
+
+	matches := func(want *gfx.Buffer) bool {
+		got := ctx.Sys.Buf(mainWindow)
+
+		for yy := 0; yy < want.H; yy++ {
+			for xx := 0; xx < want.W; xx++ {
+				if w := want.At(xx, yy); w != 0 && got.At(x+xx, y+yy) != w {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+
+	if !matches(bake(fonts.ColorDarkGray)) {
+		t.Error("the disabled caption is not dark gray")
+	}
+
+	if matches(bake(fonts.ColorDarkOrange)) {
+		t.Error("the disabled caption is still dark orange")
+	}
+}
+
+// TestCargoRowCost checks the row cost rule per unit class.
+func TestCargoRowCost(t *testing.T) {
+	at := make([]assets.UnitAttributes, int(assets.Commando)+int(assets.Tank)+int(assets.PowGen)+8)
+	for _, ty := range []assets.UnitType{assets.PowGen, assets.Infantry, assets.Tank} {
+		at[ty] = assets.UnitAttributes{TurnsToBuild: 10}
+	}
+
+	cases := []struct {
+		t    assets.UnitType
+		want int
+	}{
+		{assets.PowGen, 20},   // stationary: Constructor rate 2
+		{assets.Infantry, 10}, // Training Hall rate 1
+		{assets.Tank, 30},     // heavy plant rate 3
+	}
+
+	for _, c := range cases {
+		if got := cargoRowCost(at, c.t); got != c.want {
+			t.Errorf("cargoRowCost(%v) = %d, want %d", c.t, got, c.want)
+		}
+	}
+}
+
+// resetUpgradeFilter restores the shared filter state after a test.
+func resetUpgradeFilter(t *testing.T) {
+	t.Helper()
+
+	saved := upgradeFilterState
+	t.Cleanup(func() { upgradeFilterState = saved })
+
+	upgradeFilterState = upgradeFilter{ground: true, air: true, sea: true, building: true}
+}
+
+// indexOfType returns the row of type ty in list, or -1.
+func indexOfType(list []cargoRosterEntry, ty assets.UnitType) int {
+	for i, e := range list {
+		if e.t == ty {
+			return i
+		}
+	}
+
+	return -1
+}
+
+// TestCargoUpgradesMode checks the Upgrades list content and order, the plates, the selection rule on a
+// switch, and that Buy only works for a roster type.
+func TestCargoUpgradesMode(t *testing.T) {
+	resetUpgradeFilter(t)
+
+	lo := NewCargoLoadout(0, 250)
+	m := newTestCargoMenu(t, lo)
+
+	if len(m.rightList()) != len(cargoRoster) {
+		t.Fatalf("Buy mode list has %d rows, want the roster %d", len(m.rightList()), len(cargoRoster))
+	}
+
+	m.buySel = indexOfType(cargoRoster, assets.Tank)
+	m.setMode(cgModeUpgrades)
+
+	list := m.rightList()
+	tank, corvette := indexOfType(list, assets.Tank), indexOfType(list, assets.Corvette)
+	fighter, powGen := indexOfType(list, assets.Fighter), indexOfType(list, assets.PowGen)
+	surveyor := indexOfType(list, assets.Surveyor)
+
+	if tank < 0 || corvette < 0 || fighter < 0 || powGen < 0 || surveyor < 0 {
+		t.Fatalf("Upgrades list misses a type: tank %d corvette %d fighter %d powgen %d surveyor %d", tank, corvette, fighter, powGen, surveyor)
+	}
+
+	if !(tank < surveyor && surveyor < corvette && corvette < fighter && fighter < powGen) {
+		t.Errorf("order wrong: tank %d surveyor %d corvette %d fighter %d powgen %d", tank, surveyor, corvette, fighter, powGen)
+	}
+
+	if got, _ := m.buySelectedType(); got != assets.Tank {
+		t.Errorf("the Tank selection was not kept on the switch, got %v", got)
+	}
+
+	// A plate off removes its class.
+	upgradeFilterState.air = false
+	m.refreshList(assets.Tank, true)
+
+	if indexOfType(m.rightList(), assets.Fighter) >= 0 {
+		t.Error("the Air plate is off but the Fighter is still listed")
+	}
+
+	// Buy is refused for a non roster type.
+	m.buySel = indexOfType(m.rightList(), assets.PowGen)
+	before := len(lo.Units)
+	m.buySelected()
+
+	if len(lo.Units) != before {
+		t.Error("Buy bought a building")
+	}
+
+	// Back to Buy: the roster again; a type that is not in it resets the selection to row 0.
+	m.setMode(cgModeBuy)
+
+	if len(m.rightList()) != len(cargoRoster) || m.buySel != 0 {
+		t.Errorf("Buy mode: %d rows, selection %d, want the roster and row 0", len(m.rightList()), m.buySel)
+	}
+}
+
+// TestCargoModeWidgets checks the plates start disabled in Buy mode and the toggle and plates drive the
+// shared filter.
+func TestCargoModeWidgets(t *testing.T) {
+	resetUpgradeFilter(t)
+
+	m := newTestCargoMenu(t, NewCargoLoadout(0, 250))
+	m.buildModeWidgets()
+
+	if len(m.plates) != 5 {
+		t.Fatalf("%d plates built, want 5", len(m.plates))
+	}
+
+	air := m.plates[1005].bid
+	if !m.ctx.Sys.ButtonDisabled(air) {
+		t.Error("the plates must be disabled in Buy mode")
+	}
+
+	m.setMode(cgModeUpgrades)
+
+	if m.ctx.Sys.ButtonDisabled(air) {
+		t.Error("the plates must be enabled in Upgrades mode")
+	}
+
+	press := func(x, y int) {
+		m.ctx.Sys.CheckButtons(platform.MouseState{X: x, Y: y, Buttons: platform.MousePressLeft})
+		m.ctx.Sys.CheckButtons(platform.MouseState{X: x, Y: y, Buttons: platform.MouseReleaseLeft})
+	}
+
+	press(500+4, cgPlateY+4)
+
+	if !m.applyPlateToggle(1005) || upgradeFilterState.air {
+		t.Error("a click on the Air plate did not turn the shared filter off")
+	}
+
+	press(cgToggleX+4, cgToggleY+4)
+
+	if !m.ctx.Sys.ButtonChecked(m.toggleBtn) {
+		t.Error("the toggle did not latch to Upgrades")
+	}
+}

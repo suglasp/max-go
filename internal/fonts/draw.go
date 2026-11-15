@@ -142,6 +142,7 @@ var (
 	// a disabled caption in vanilla is a blank plate (DOS check 2026-11-07), so the reference default is unused.
 	ColorDarkGray     = Color{179, 215, 199}
 	*/
+	ColorDarkGray     = Color{179, 215, 199} // the Repair Shop disabled captions (the block above is now used)
 	ColorBrightBrown  = Color{164, 173, 199}
 	ColorBrightYellow = Color{162, 8, 199}
 	ColorBrightSilver = Color{162, 172, 199}

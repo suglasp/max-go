@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/suglasp/max-go/internal/assets"
+	"github.com/suglasp/max-go/internal/game"
 )
 
 // TestBuilderRosters verifies the engineer/constructor split: the constructor
@@ -55,5 +56,20 @@ func TestBuilderRosters(t *testing.T) {
 	}
 	if !hasRefinery {
 		t.Error("constructor roster is missing the Gold Refinery (COMMTWR)")
+	}
+}
+
+// TestUpgradableBuildingTypesMatchRoster guards the shared building list in game against drifting from the
+// in game build roster: the roster order, then the two mines.
+func TestUpgradableBuildingTypesMatchRoster(t *testing.T) {
+	got := game.UpgradableBuildingTypes()
+	if len(got) != len(buildableTypes)+2 {
+		t.Fatalf("game lists %d building types, want the roster %d plus 2 mines", len(got), len(buildableTypes))
+	}
+
+	for i, b := range buildableTypes {
+		if got[i] != b.t {
+			t.Errorf("building %d: game has %v, roster has %v", i, got[i], b.t)
+		}
 	}
 }

@@ -14,6 +14,7 @@ Check the version file next to the game executables.
 
 ### Fixes
 - The Upgrades screen's unit type buttons now stay pressed to show the filter, and keep it when you open the screen again.
+- In the Purchase Menu a disabled Buy or Delete button is a blank plate, as in the original, and the Buy Units / Upgrades switch and the unit type buttons are back.
 - A mission now plays with the play mode, turn timer, End Turn Time and opponent fixed in the mission itself.
 - A loaded save game keeps its own turn timer and End Turn Time.
 - In a custom game the computer no longer lands right next to your base; it picks its site after you, well away from it.

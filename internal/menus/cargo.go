@@ -120,6 +120,11 @@ type cargoMenu struct {
 
 	buyBtn, deleteBtn gnw.ButtonID
 
+	mode      int                        // cgModeBuy (zero value) or cgModeUpgrades
+	list      []cargoRosterEntry         // the Upgrades mode right list; Buy mode reads cargoRoster
+	toggleBtn gnw.ButtonID               // the Buy Units / Upgrades toggle
+	plates    map[int]upgradeFilterPlate // the five type plates by event value, sharing upgradeFilterState
+
 	dbl menuDoubleClick
 	/* // note: unused code in Go port
 	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
@@ -242,16 +247,17 @@ func (m *cargoMenu) buildWidgets() []gnw.ButtonID {
 		buttons = append(buttons, b)
 	}
 	// Captioned buttons: Buy / Delete / Cancel / Done.
-	if bid, e := ctx.cargoPlateButtonWithDisabled(mainWindow, 590, 386, "CRGBUY_U", "CRGBUY_D", ctx.text("64e3", "Buy"), 1102); e == nil {
+	if bid, e := ctx.cargoPlateButtonWithDisabled(mainWindow, 590, 386, "CRGBUY_U", "CRGBUY_D", "CRGBUY_X", ctx.text("64e3", "Buy"), 1102); e == nil {
 		m.buyBtn = bid
 		ctx.registerButtonSfx(bid, "KCARG0")
 		buttons = append(buttons, bid)
 	}
-	if bid, e := ctx.cargoPlateButtonWithDisabled(mainWindow, 412, 240, "CRGDEL_U", "CRGDEL_D", ctx.text("4d73", "Delete"), 1103); e == nil {
+	if bid, e := ctx.cargoPlateButtonWithDisabled(mainWindow, 412, 240, "CRGDEL_U", "CRGDEL_D", "CRGDEL_X", ctx.text("4d73", "Delete"), 1103); e == nil {
 		m.deleteBtn = bid
 		ctx.registerButtonSfx(bid, "KCARG0")
 		buttons = append(buttons, bid)
 	}
+	buttons = append(buttons, m.buildModeWidgets()...)
 	addPlate(357, 452, "BLDCAN_U", "BLDCAN_D", ctx.text("c6aa", "Cancel"), 1002, "NCANC0")
 	addPlate(447, 452, "BLDONE_U", "BLDONE_D", ctx.text("bd89", "Done"), 1000, "NDONE0")
 	// Invisible click regions over each list so a row click registers (a bare
@@ -314,7 +320,8 @@ func (m *cargoMenu) handleKey(key int) (done bool, err error) {
 			m.drawBuyList()
 		}
 	case key == 1111: // roster scroll down
-		if m.buyScroll+m.buyRows < len(cargoRoster) {
+		/* len(cargoRoster): note: unused code in Go port, the right list is now rightList() (roster or Upgrades list) */
+		if m.buyScroll+m.buyRows < len(m.rightList()) {
 			m.buyScroll++
 			m.drawBuyList()
 		}
@@ -343,12 +350,21 @@ func (m *cargoMenu) handleKey(key int) (done bool, err error) {
 			my := max(top, min(ctx.Plat.Mouse().Y, bot))
 			m.loadCargoTo(st * (bot - my) / (bot - top))
 		}
+	case key == cgToggleEvent: // Buy Units / Upgrades toggle: checked is Upgrades mode
+		if ctx.Sys.ButtonChecked(m.toggleBtn) {
+			m.setMode(cgModeUpgrades)
+		} else {
+			m.setMode(cgModeBuy)
+		}
+	case m.applyPlateToggle(key): // a type plate flipped the shared filter
+		prev, had := m.buySelectedType()
+		m.refreshList(prev, had)
 	case key == 1102: // Buy
 		m.buySelected()
 	case key == 1103: // Delete (only a bought unit, not a protected mission supply one)
 		m.deleteSelected()
 	case key == 1300: // click in the Available (roster) list
-		if r := (ctx.Plat.Mouse().Y - cgBuyY) / cgRowH; r >= 0 && m.buyScroll+r < len(cargoRoster) {
+		if r := (ctx.Plat.Mouse().Y - cgBuyY) / cgRowH; r >= 0 && m.buyScroll+r < len(m.rightList()) {
 			// Picking a row is audible, even when it was already the selected one.
 			// C++: UnitTypeSelector::Select plays KCARG0, inherited by the purchase
 			// screen's two selectors (purchasetypeselector / cargoselector).
@@ -437,7 +453,10 @@ func wrapText(f *fonts.Font, text string, w int) []string {
 // cargoPlateButtonWithDisabled builds a Cargo screen captioned button with a
 // real disabled face. The generic plateButton helper has no disabled image hook,
 // but Buy/Delete both need to visibly gray out when their action is unavailable.
-func (ctx *Context) cargoPlateButtonWithDisabled(win gnw.WinID, x, y int, upTag, downTag, label string, value int) (gnw.ButtonID, error) {
+// The disabled face is the plain disTag art (CRGBUY_X / CRGDEL_X) with no caption.
+//
+// C++ ported : cargomenu.cpp - CargoMenu ctor (SetCaption, then CopyUpDisabled(CRGBUY_X / CRGDEL_X))
+func (ctx *Context) cargoPlateButtonWithDisabled(win gnw.WinID, x, y int, upTag, downTag, disTag, label string, value int) (gnw.ButtonID, error) {
 	upImg, err := ctx.loadSimple(upTag)
 	if err != nil {
 		return -1, err
@@ -446,9 +465,14 @@ func (ctx *Context) cargoPlateButtonWithDisabled(win gnw.WinID, x, y int, upTag,
 	if err != nil {
 		return -1, err
 	}
+	disImg, err := ctx.loadSimple(disTag)
+	if err != nil {
+		return -1, err
+	}
 	up := upImg.Buffer().Clone()
 	down := downImg.Buffer().Clone()
-	disabled := up.Clone()
+	disabled := disImg.Buffer().Clone()
+	/* disabled := up.Clone(): note: unused code in Go port, the disabled face is now the disTag art, not a captioned copy of the up face */
 	var flags uint32
 	if keyButtonCorner(up) {
 		keyButtonCorner(down)
@@ -468,7 +492,7 @@ func (ctx *Context) cargoPlateButtonWithDisabled(win gnw.WinID, x, y int, upTag,
 	}
 	f.BlitShadowed(up.Sub(textX, textY, up.W-textX, up.H-textY), label, 0, fonts.ColorGold)
 	f.BlitShadowed(down.Sub(textX, textY, down.W-textX, down.H-textY), label, 0, fonts.ColorDarkOrange)
-	f.BlitShadowed(disabled.Sub(textX, textY, disabled.W-textX, disabled.H-textY), label, 0, fonts.ColorDarkOrange)
+	/* f.BlitShadowed(disabled..., label, 0, fonts.ColorDarkOrange): note: unused code in Go port, the disabled face carries no caption */
 
 	bid := ctx.Sys.AddButton(win, x, y, up.W, up.H,
 		gnw.NoValue, gnw.NoValue, gnw.NoValue, value, up, down, nil, flags)

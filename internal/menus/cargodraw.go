@@ -76,9 +76,11 @@ func (m *cargoMenu) drawBuyList() {
 	m.ctx.Sys.Lock()
 	defer m.ctx.Sys.Unlock()
 	m.buf.Sub(cgBuyX, cgBuyY, cgBuyW, cgBuyH).Copy(m.pic.Buffer().Sub(cgBuyX, cgBuyY, cgBuyW, cgBuyH))
-	for r := 0; r < m.buyRows && m.buyScroll+r < len(cargoRoster); r++ {
-		e := cargoRoster[m.buyScroll+r]
-		m.drawRow(cgBuyX, cgBuyY+r*cgRowH, cgBuyW, e.t, e.name, cargoUnitCost(m.at, e.t), m.active == cgBuyList && m.buyScroll+r == m.buySel)
+	list := m.rightList()
+	for r := 0; r < m.buyRows && m.buyScroll+r < len(list); r++ {
+		e := list[m.buyScroll+r]
+		/* cargoUnitCost(m.at, e.t): note: unused code in Go port, the row cost now follows the unit class (cargoRowCost) */
+		m.drawRow(cgBuyX, cgBuyY+r*cgRowH, cgBuyW, e.t, e.name, cargoRowCost(m.at, e.t), m.active == cgBuyList && m.buyScroll+r == m.buySel)
 	}
 }
 

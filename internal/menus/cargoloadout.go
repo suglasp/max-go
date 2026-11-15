@@ -128,7 +128,8 @@ func rosterName(t assets.UnitType) string {
 			return e.name
 		}
 	}
-	return t.Tag()
+	/* return t.Tag(): note: unused code in Go port, the Upgrades mode lists non roster types, which have display names */
+	return game.UnitDisplayName(t)
 }
 
 // cargoCanBuy reports whether the team can still afford one more unit of type t.

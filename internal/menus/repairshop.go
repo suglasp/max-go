@@ -488,7 +488,7 @@ func rsEnable(sys *gnw.System, bid gnw.ButtonID, on bool) {
 
 // captionButton builds a button from up/down simple image faces with a centred
 // bevel and shadow caption (gold at rest, dark orange pressed), optionally a
-// disabled face (disTag, captioned dark orange). It auto keys a fuchsia
+// disabled face (disTag, captioned dark gray). It auto keys a fuchsia
 // transparent corner like plateButton/imageButton. An empty label leaves the
 // faces uncaptioned (the scroll arrows / help button).
 //
@@ -535,7 +535,8 @@ func (ctx *Context) captionButton(x, y int, upTag, downTag, disTag, label string
 			if flags&gnw.ButtonTransparent != 0 {
 				keyButtonCorner(dis)
 			}
-			bake(dis, fonts.ColorDarkOrange)
+			/* bake(dis, fonts.ColorDarkOrange): note: unused code in Go port, the reference captions the disabled face dark gray */
+			bake(dis, fonts.ColorDarkGray)
 		}
 	}
 
