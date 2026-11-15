@@ -42,9 +42,6 @@ type soundState struct {
 	powerBounceSfx      int                                                                  // held rev up sound handle
 	powerBounceDue      uint64                                                               // tick the bounce cuts and shows the message
 	powerBounceShort    economy.Shortage                                                     // which resource the bounce message names
-	/* // note: unused code in Go port (step 1469: the halt check reads the team sightings, no per drive baseline)
-	haltSeen            map[*game.UnitInfo]map[uint16]bool                                   // enemy IDs already within scan range per moving player unit (Halt on enemy pref)
-	*/
 	/* // note: unused code in Go port
 	// movingUnits was the old drive start / stop detection; the driveSfx map does that now.
 	movingUnits         map[*game.UnitInfo]bool                                              // units in motion last frame (drive start/stop detection)

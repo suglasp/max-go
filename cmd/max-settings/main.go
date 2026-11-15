@@ -103,29 +103,6 @@ func usage(out io.Writer) {
 	fmt.Fprintf(out, "usage:\n  max-settings [-file <file>]\n\n-file names the settings file; without it max-go.json next to the program is used.\n")
 }
 
-/* // note: unused code in Go port, main now goes through runTool: a ContinueOnError flag set with named errors, no write at start (LoadOrCreate rewrote the file), exit codes 0, 1 and 2
-func main() {
-	pathFlag := flag.String("file", "", "settings file path (default: max-go.json next to the binary, else a legacy settings.json)")
-	flag.Parse()
-
-	path, err := settingsPath(*pathFlag)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	cfg, err := settings.LoadOrCreate(path)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	if err := run(path, cfg, os.Stdin, os.Stdout); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-}
-*/
 
 // Prefer max-go.json, but continue to recognize the legacy settings.json path.
 func settingsPath(path string) (string, error) {

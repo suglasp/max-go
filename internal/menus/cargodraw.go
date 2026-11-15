@@ -79,7 +79,6 @@ func (m *cargoMenu) drawBuyList() {
 	list := m.rightList()
 	for r := 0; r < m.buyRows && m.buyScroll+r < len(list); r++ {
 		e := list[m.buyScroll+r]
-		/* cargoUnitCost(m.at, e.t): note: unused code in Go port, the row cost now follows the unit class (cargoRowCost) */
 		m.drawRow(cgBuyX, cgBuyY+r*cgRowH, cgBuyW, e.t, e.name, cargoRowCost(m.at, e.t), m.active == cgBuyList && m.buyScroll+r == m.buySel)
 	}
 }
@@ -95,43 +94,7 @@ func (m *cargoMenu) drawCargoList() {
 	}
 }
 
-/* // note: unused code in Go port
-// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
-// statIcon caches a keyed gauge icon (I_ARMOR/I_HITS/... keyed transparent).
-func (m *cargoMenu) statIcon(tag string) *gfx.Buffer {
-	if b, ok := m.statIcons[tag]; ok {
-		return b
-	}
-	var b *gfx.Buffer
-	if tag != "" {
-		if img, e := m.ctx.loadSimple(tag); e == nil {
-			c := img.Buffer().Clone()
-			c.KeyToZero(c.At(0, 0))
-			b = c
-		}
-	}
-	m.statIcons[tag] = b
-	return b
-}
-*/
 
-/* // note: unused code in Go port
-// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
-// loadPortrait caches the P_* BIG image per roster unit, loaded on first use.
-func (m *cargoMenu) loadPortrait(t assets.UnitType) *sprites.Big {
-	if b, ok := m.portraitCache[t]; ok {
-		return b
-	}
-	var b *sprites.Big
-	if tag := unitPortrait[t]; tag != "" {
-		if img, e := m.ctx.loadBig(tag); e == nil {
-			b = img
-		}
-	}
-	m.portraitCache[t] = b
-	return b
-}
-*/
 
 // drawDetail repaints the left preview (the unit's large portrait) and the
 // stats panel. C++: AbstractUpgradeMenu::DrawUnitInfo + DrawUnitStats.

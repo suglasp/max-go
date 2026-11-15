@@ -128,10 +128,6 @@ type cargoMenu struct {
 	dbl menuDoubleClick
 	/* // note: unused code in Go port
 	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
-	statIcons map[string]*gfx.Buffer
-	*/
-	/* // note: unused code in Go port
-	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
 	portraitCache map[assets.UnitType]*sprites.Big
 	*/
 }
@@ -320,7 +316,6 @@ func (m *cargoMenu) handleKey(key int) (done bool, err error) {
 			m.drawBuyList()
 		}
 	case key == 1111: // roster scroll down
-		/* len(cargoRoster): note: unused code in Go port, the right list is now rightList() (roster or Upgrades list) */
 		if m.buyScroll+m.buyRows < len(m.rightList()) {
 			m.buyScroll++
 			m.drawBuyList()
@@ -424,31 +419,6 @@ func wrapTwoLines(f *fonts.Font, label string, w int) []string {
 	return []string{l1, l2}
 }
 
-/* // note: unused code in Go port
-// wrapText repeated wrapLines without a row limit; callers use wrapLines(f, text, w, 0).
-// wrapText greedily splits text into lines that each fit width w (unlimited
-// lines): for the multi line description overlay.
-func wrapText(f *fonts.Font, text string, w int) []string {
-	var lines []string
-	cur := ""
-	for _, word := range strings.Fields(text) {
-		try := word
-		if cur != "" {
-			try = cur + " " + word
-		}
-		if f.Width(try) <= w || cur == "" {
-			cur = try
-		} else {
-			lines = append(lines, cur)
-			cur = word
-		}
-	}
-	if cur != "" {
-		lines = append(lines, cur)
-	}
-	return lines
-}
-*/
 
 // cargoPlateButtonWithDisabled builds a Cargo screen captioned button with a
 // real disabled face. The generic plateButton helper has no disabled image hook,
@@ -472,7 +442,6 @@ func (ctx *Context) cargoPlateButtonWithDisabled(win gnw.WinID, x, y int, upTag,
 	up := upImg.Buffer().Clone()
 	down := downImg.Buffer().Clone()
 	disabled := disImg.Buffer().Clone()
-	/* disabled := up.Clone(): note: unused code in Go port, the disabled face is now the disTag art, not a captioned copy of the up face */
 	var flags uint32
 	if keyButtonCorner(up) {
 		keyButtonCorner(down)
@@ -492,7 +461,6 @@ func (ctx *Context) cargoPlateButtonWithDisabled(win gnw.WinID, x, y int, upTag,
 	}
 	f.BlitShadowed(up.Sub(textX, textY, up.W-textX, up.H-textY), label, 0, fonts.ColorGold)
 	f.BlitShadowed(down.Sub(textX, textY, down.W-textX, down.H-textY), label, 0, fonts.ColorDarkOrange)
-	/* f.BlitShadowed(disabled..., label, 0, fonts.ColorDarkOrange): note: unused code in Go port, the disabled face carries no caption */
 
 	bid := ctx.Sys.AddButton(win, x, y, up.W, up.H,
 		gnw.NoValue, gnw.NoValue, gnw.NoValue, value, up, down, nil, flags)

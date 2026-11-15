@@ -208,50 +208,6 @@ func upgradableAttribs(base *game.UnitValues) []game.Attrib {
 	return game.UpgradableAttribs(base)
 }
 
-/* // note: unused code in Go port
-// the body moved to game.UpgradableAttribs (internal/game/upgradable.go) so menus can share it.
-// upgradableAttribs lists the upgradable attributes a unit type offers, in the
-// menu row order (attack family, then armor/hits/scan, then speed), gating the
-// attack family on a nonzero attack value. C++: AddUpgradeMilitary /
-// AddUpgradeGeneric / AddUpgradeMobile.
-func upgradableAttribs(base *game.UnitValues) []game.Attrib {
-	var a []game.Attrib
-
-	if base.Get(game.AttribAttack) > 0 {
-		a = append(a, game.AttribAttack)
-
-		if base.Get(game.AttribRounds) > 0 {
-			a = append(a, game.AttribRounds)
-		}
-
-		if base.Get(game.AttribRange) > 0 {
-			a = append(a, game.AttribRange)
-		}
-
-		if base.Get(game.AttribAmmo) > 0 {
-			a = append(a, game.AttribAmmo)
-		}
-	}
-
-	if base.Get(game.AttribArmor) > 0 {
-		a = append(a, game.AttribArmor)
-	}
-
-	if base.Get(game.AttribHits) > 0 {
-		a = append(a, game.AttribHits)
-	}
-
-	if base.Get(game.AttribScan) > 0 {
-		a = append(a, game.AttribScan)
-	}
-
-	if base.Get(game.AttribSpeed) > 0 {
-		a = append(a, game.AttribSpeed)
-	}
-
-	return a
-}
-*/
 
 // openUpgrade runs the Upgrade screen and, on commit, stores purchased offsets and refreshes the team's in-service units.
 func (s *Screen) openUpgrade() {

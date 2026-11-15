@@ -535,7 +535,6 @@ func (ctx *Context) captionButton(x, y int, upTag, downTag, disTag, label string
 			if flags&gnw.ButtonTransparent != 0 {
 				keyButtonCorner(dis)
 			}
-			/* bake(dis, fonts.ColorDarkOrange): note: unused code in Go port, the reference captions the disabled face dark gray */
 			bake(dis, fonts.ColorDarkGray)
 		}
 	}

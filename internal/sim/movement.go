@@ -51,11 +51,6 @@ func (g *Game) orderMoveToAvoiding(u *game.UnitInfo, cx, cy int, penalty func(x,
 	if g.IsClearingRubble(u) {
 		return false // a bulldozer busy clearing rubble cannot move
 	}
-	/* // note: unused code in Go port (N20: a landed plane rose at once on a move order; the air move order now climbs for a few ticks before it flies, see units.NewAirMoveOrder)
-	if IsAirUnit(u) && !IsHovering(u) {
-		g.TakeOff(u) // a landed air unit rises on its own when ordered to move (auto take off)
-	}
-	*/
 	g.cancel(u)
 	delete(g.pending, u) // a fresh explicit order supersedes any queued route
 	g.ClearHeldRoute(u)  // and any route held by an enemy halt (Auto Survey, the AI, a Path build)

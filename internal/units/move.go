@@ -47,9 +47,6 @@ const (
 // C++ ported : unitinfo.hpp - UnitInfo::MOVEMENT_WAIT_LIMIT
 const maxWaitTicks = 512
 
-/* // note: unused code in Go port (N20: the wait limit was stretched to 90 for 60 ticks per second; the order tick is gated to 43 ms now, so the reference value 512 replaces it)
-const maxWaitTicksOld = 90
-*/
 
 // MoveOrder is an ORDER_MOVE in progress: a unit, the route it is following
 // (the pathfinder's Steps), the index of the next step to take, and the cost
@@ -256,9 +253,6 @@ func (m *MoveOrder) Tick() MoveStatus {
 
 	if u.Moved >= tileSize {
 		u.Moved = 0
-		/* // note: unused code in Go port (N20: this reset the ramp on every cell, so every cell started from rest; the reference keeps the velocity and zeroes it only when a move ends)
-		u.Velocity = 0
-		*/
 		if m.Mgr != nil {
 			m.Mgr.Arrive(u, step.To.X, step.To.Y) // completes the reservation, snaps to cell center
 			m.reserved = false

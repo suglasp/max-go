@@ -401,17 +401,6 @@ func (s *Settings) ValidateReport() []Repair {
 			*p = fixed
 		}
 	}
-	/* // note: unused code in Go port, the per field int checks below are the IntRanges table now (one place for Validate and max-settings)
-	s.Audio.MusicVolume = max(0, min(s.Audio.MusicVolume, 100))
-	s.Audio.SfxVolume = max(0, min(s.Audio.SfxVolume, 100))
-	s.Audio.VoiceVolume = max(0, min(s.Audio.VoiceVolume, 100))
-	if s.Video.WindowScale < 1 || s.Video.WindowScale > 8 {
-		s.Video.WindowScale = 2
-	}
-	if s.Video.Brightness < 1 || s.Video.Brightness > 5 {
-		s.Video.Brightness = 3
-	}
-	*/
 	wasWidescreen := s.Video.Widescreen
 	switch s.Video.Widescreen {
 	case WidescreenOn, WidescreenOff, WidescreenAuto:
@@ -429,13 +418,6 @@ func (s *Settings) ValidateReport() []Repair {
 	if s.Video.Widescreen != wasWidescreen {
 		repairs = append(repairs, Repair{"video.widescreen", strconv.Quote(string(wasWidescreen)), strconv.Quote(string(s.Video.Widescreen))})
 	}
-	/* // note: unused code in Go port, the log_buffer_lines check is an IntRanges row now (below 1 gives 100, above 100000 gives 100000)
-	if s.Debug.LogBufferLines <= 0 {
-		s.Debug.LogBufferLines = 100
-	} else if s.Debug.LogBufferLines > 100000 {
-		s.Debug.LogBufferLines = 100000
-	}
-	*/
 	if s.Keybinds == nil {
 		s.Keybinds = Default().Keybinds
 	} else {
@@ -464,19 +446,6 @@ func (s *Settings) ValidateReport() []Repair {
 	return repairs
 }
 
-/* // note: unused code in Go port
-// clamp repeated the builtins; callers write max(lo, min(v, hi)).
-// clamp constrains v to the inclusive lo..hi range.
-func clamp(v, lo, hi int) int {
-	if v < lo {
-		return lo
-	}
-	if v > hi {
-		return hi
-	}
-	return v
-}
-*/
 
 // Load reads settings from path.
 func Load(path string) (Settings, error) {

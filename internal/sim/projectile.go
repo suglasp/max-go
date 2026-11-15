@@ -29,9 +29,6 @@ import (
 // C++ ported : units_manager.cpp - UnitsManager_GetMissilePath
 const projectileSpeed = 64
 
-/* // note: unused code in Go port (N20: projectiles move 64 px per tick now, the reference pace once ticks are gated to 43 ms; 24 only matched 60 ticks per second)
-const projectileSpeedOld = 24
-*/
 
 // firesMissile reports whether a unit launches a travelling projectile on attack
 // (vs an instant tracer hit). The set mirrors the original's FIRES_MISSILES / MaxR's
@@ -198,23 +195,6 @@ func (g *Game) attackArea(attacker *game.UnitInfo, cx, cy, radius int) {
 	g.RefreshVisibility()
 }
 
-/* // note: unused code in Go port
-// projApproxDistance repeated access.ApproximateDistance, which the area damage spread now calls.
-// projApproxDistance is the octile metric (2*long + short) the area damage spread
-// uses as the attackPotential. C++ ported : access.cpp - Access_GetApproximateDistance.
-func projApproxDistance(dx, dy int) int {
-	if dx < 0 {
-		dx = -dx
-	}
-	if dy < 0 {
-		dy = -dy
-	}
-	if dx >= dy {
-		return 2*dx + dy
-	}
-	return 2*dy + dx
-}
-*/
 
 // advance moves the projectile up to speed pixels toward its target, reporting
 // arrival (within one step).

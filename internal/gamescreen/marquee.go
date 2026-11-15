@@ -255,9 +255,6 @@ func (s *Screen) orderGroupMoveTo(destX, destY int) {
 // about 43 ms (moveTickMS), so 2 ticks give about the old pause of 4 frames at 60 per second.
 const groupDepartStagger = 2
 
-/* // note: unused code in Go port (N20: 4 was counted in frames at 60 per second; the order tick is gated to 43 ms now, so 2 ticks give about the same pause)
-const groupDepartStaggerOld = 4
-*/
 
 // sqGridDist is the squared cell distance, used to rank a group's units by how close they
 // already are to where the group is going.

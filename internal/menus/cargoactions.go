@@ -112,7 +112,6 @@ func (m *cargoMenu) selectedType() (assets.UnitType, bool) {
 		}
 		return 0, false
 	}
-	/* cargoRoster[m.buySel].t: note: unused code in Go port, the right list is now rightList() via buySelectedType */
 	return m.buySelectedType()
 }
 
@@ -146,7 +145,6 @@ func (m *cargoMenu) loadCargoTo(target int) {
 
 // updateBuyButton enables Buy only while the roster selection is affordable.
 func (m *cargoMenu) updateBuyButton() {
-	/* cargoRoster[m.buySel].t: note: unused code in Go port, the right list is now rightList() via buySelectedType */
 	t, ok := m.buySelectedType()
 	if m.buyBtn < 0 || !ok {
 		return
@@ -189,7 +187,6 @@ func (m *cargoMenu) clampScroll() {
 
 // buySelected buys the roster selection into the loadout, spending gold.
 func (m *cargoMenu) buySelected() {
-	/* cargoRoster[m.buySel].t: note: unused code in Go port, the right list is now rightList() via buySelectedType */
 	t, ok := m.buySelectedType()
 	if !ok || !isRosterType(t) {
 		return

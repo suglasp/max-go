@@ -52,10 +52,6 @@ const (
 	ugCostX                                = 321
 	ugGoldX, ugGoldY, ugGoldW, ugGoldH     = 366, 276, 40, 140 // UPGRADE gold slot opening is x~366..385
 	ugArrowsX                              = 283
-	/* // note: unused code in Go port
-	// ugRowStep had no reader; the rows step by ugRowH.
-	ugRowStep = 19
-	*/
 )
 
 // upgradeMenu is the Upgrade screen state: the unit set with its rollback
@@ -87,10 +83,6 @@ type upgradeMenu struct {
 	sc        *unitspr.SpriteCache
 
 	rowButtons []gnw.ButtonID // dynamic per selection arrow buttons
-	/* // note: unused code in Go port
-	// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
-	statIcons map[string]*gfx.Buffer
-	*/
 }
 
 // RunUpgrade runs the Upgrade screen over the given unit types, spending from
@@ -137,7 +129,6 @@ func RunUpgrade(ctx *Context, units []*game.UpgradeUnit, gold *int, center gfx.R
 		gold:      gold,
 		startGold: startGold,
 		snaps:     snaps,
-		/* filter: upgradeFilter{ground: true, ...}: note: unused code in Go port, the filter now starts from the package level upgradeFilterState so it survives reopening */
 		filter:    upgradeFilterState,
 		win:       win,
 		oy:        oy,
@@ -146,7 +137,6 @@ func RunUpgrade(ctx *Context, units []*game.UpgradeUnit, gold *int, center gfx.R
 		visRows:   ugListH / ugRowH,
 		portraits: map[assets.UnitType]*gfx.Buffer{},
 		sc:        unitspr.NewSpriteCache(ctx.Lib, &pic.Palette),
-		/* statIcons: map[string]*gfx.Buffer{}: note: unused code in Go port, see the struct */
 	}
 
 	buttons := m.buildWidgets()
@@ -270,8 +260,6 @@ func (m *upgradeMenu) buildFilterPlates(win gnw.WinID) []gnw.ButtonID {
 		{598, "SELCBT_U", "SELCBT_D", 1011, &m.filter.combat},
 	}
 	for _, fb := range filts {
-		/* old plate: ctx.imageButton(win, fb.x, 411, fb.up, fb.down, "", 0, 0, false, fb.on): note: unused code in Go port,
-		a momentary button never showed the filter; replaced by a sticky toggle that rests in the filter state */
 		b, e := ctx.imageButton(win, fb.x, 411, fb.up, fb.down, "", 0, 0, true, fb.on)
 		if e != nil {
 			continue
@@ -329,24 +317,6 @@ func (m *upgradeMenu) handleKey(key int) (done, commit bool) {
 			m.scroll++
 			m.drawList()
 		}
-	/* case key == 1003..1012: note: unused code in Go port, the plates flipped the flag on every press and
-	never showed it; replaced by the sticky plates read through applyFilterToggle
-	case key == 1003, key == 1004:
-		m.filter.ground = !m.filter.ground
-		m.rebuild()
-	case key == 1005, key == 1006:
-		m.filter.air = !m.filter.air
-		m.rebuild()
-	case key == 1007, key == 1008:
-		m.filter.sea = !m.filter.sea
-		m.rebuild()
-	case key == 1009, key == 1010:
-		m.filter.building = !m.filter.building
-		m.rebuild()
-	case key == 1011, key == 1012:
-		m.filter.combat = !m.filter.combat
-		m.rebuild()
-	*/
 	case m.applyFilterToggle(key):
 		m.rebuild()
 	case key >= 2000 && key < 2000+int(game.AttribCount): // left arrow: sell back a step
@@ -392,26 +362,6 @@ func (m *upgradeMenu) loadPortrait(t assets.UnitType) *gfx.Buffer {
 	return b
 }
 
-/* // note: unused code in Go port
-// the per menu cache moved to Context (statIcon / loadPortrait), shared by every menu.
-// statIcon caches a keyed gauge icon for the stat panel (same as the cargo
-// screen, both are AbstractUpgradeMenu).
-func (m *upgradeMenu) statIcon(tag string) *gfx.Buffer {
-	if b, ok := m.statIcons[tag]; ok {
-		return b
-	}
-	var b *gfx.Buffer
-	if tag != "" {
-		if img, e := m.ctx.loadSimple(tag); e == nil {
-			c := img.Buffer().Clone()
-			c.KeyToZero(c.At(0, 0))
-			b = c
-		}
-	}
-	m.statIcons[tag] = b
-	return b
-}
-*/
 
 // drawList paints the right hand unit selector: a 32px icon + name row per
 // unit (the original UnitTypeSelector), the selected row marked with the
@@ -570,7 +520,6 @@ type upgradeFilterButton struct {
 	x        int
 	up, down string
 	on       int // press value; the release value is unused (sticky plate)
-	/* off int: note: unused code in Go port, never read; the plate is a sticky toggle with one event value */
 	state *bool
 }
 

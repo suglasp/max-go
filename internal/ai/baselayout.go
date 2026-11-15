@@ -181,19 +181,6 @@ func (t *taskManageBuildings) onlyClearableUnits(x, y int) bool {
 	return true
 }
 
-/* // note: unused code in Go port
-// footprintSet duplicated sim.FootprintCells byte for byte; baselayout now calls sim.FootprintCells.
-// footprintSet returns the cells a fp x fp structure at (x, y) occupies, as a set.
-func footprintSet(x, y, fp int) map[[2]int]bool {
-	cells := make(map[[2]int]bool, fp*fp)
-	for cy := y; cy < y+fp; cy++ {
-		for cx := x; cx < x+fp; cx++ {
-			cells[[2]int{cx, cy}] = true
-		}
-	}
-	return cells
-}
-*/
 
 // borderSeeds returns the in bounds border cells around a footprint that are not part
 // of it - the cells a builder would step out onto, the flood seeds for preservesEscape.

@@ -25,23 +25,6 @@ func (s *Screen) animatePalette() {
 	if s.cycler.Advance(&s.pal, platform.Ticks()) {
 		s.plat.SetPalette(&s.pal)
 	}
-	/* // note: unused code in Go port
-	// The loop moved into world.ColorCycler.Advance, shared with the map editor and the mapview debug screen.
-	now := platform.Ticks()
-	changed := false
-
-	for i, c := range world.ColorCycles {
-		if now-s.cycleStamps[i] >= uint64(1000/c.FPS) {
-			s.cycleStamps[i] = now
-			world.CycleStep(&s.pal, c, &s.pulse)
-			changed = true
-		}
-	}
-
-	if changed {
-		s.plat.SetPalette(&s.pal)
-	}
-	*/
 }
 
 const colorTurnText = 0xA2 // gold palette index for the turn counter/timer. C++: GameManager_DrawTurnCounter/Timer
@@ -61,12 +44,6 @@ func (s *Screen) drawTopBar(buf *gfx.Buffer) {
 		remaining = s.turnRemaining()
 	}
 
-	/* // note: unused code in Go port
-	// The colour rule moved into turnClockColor, which adds the yellow full round clock (N25).
-	if s.turnFlow.turnSeconds > 0 && remaining <= 20 {
-		color = colorTurnTimerWarn
-	}
-	*/
 
 	s.drawReadout(buf, TurnTimer, s.hudArt.turnTimerBg, 0, formatClock(remaining), s.turnClockColor(remaining))
 }
@@ -153,58 +130,6 @@ func displayName(t assets.UnitType) string {
 	return game.UnitDisplayName(t)
 }
 
-/* // note: unused code in Go port
-// the name table and lookup moved to game.UnitDisplayName (internal/game/unitnames.go) so menus can share them.
-// unitDisplayNames gives readable names for unit types shown by the game screen. Tag is the fallback.
-var unitDisplayNames = map[assets.UnitType]string{
-	// Mobile land units.
-	assets.Tank: "Tank", assets.Scout: "Scout Car", assets.Constrct: "Constructor",
-	assets.Engineer: "Engineer", assets.Bulldozr: "Bulldozer",
-	assets.Surveyor: "Surveyor", assets.Scanner: "Scanner",
-	assets.MisslLch: "Missile Launcher", assets.Artillry: "Assault Gun",
-	assets.RocktLch: "Rocket Launcher", assets.SpFlak: "SP Flak",
-	assets.MineLayr: "Mine Layer", assets.SplyTrck: "Supply Truck",
-	assets.GoldTrck: "Gold Truck", assets.FuelTrck: "Fuel Truck",
-	assets.Repair: "Repair Unit", assets.ClnTrans: "Personnel Carrier",
-	assets.Commando: "Commando", assets.Infantry: "Infantry",
-	// Air units.
-	assets.Awac: "AWAC", assets.Bomber: "Bomber", assets.Fighter: "Fighter",
-	assets.AirTrans: "Air Transport",
-	// Sea units.
-	assets.FastBoat: "Escort", assets.Corvette: "Corvette",
-	assets.Battlshp: "Battleship", assets.Submarne: "Submarine",
-	assets.SeaTrans: "Sea Transport", assets.MsslBoat: "Missile Cruiser",
-	assets.SeaMnLyr: "Sea Mine Layer", assets.CargoShp: "Cargo Ship",
-	// Structures.
-	assets.MiningSt: "Mining Station", assets.PowGen: "Power Generator",
-	assets.PowerStn: "Power Station", assets.LandPlt: "Heavy Vehicle Plant",
-	assets.LightPlt: "Light Vehicle Plant", assets.AirPlt: "Air Units Plant",
-	assets.Shipyard: "Shipyard", assets.Radar: "Radar",
-	assets.Barracks: "Barracks", assets.Depot: "Depot",
-	assets.Habitat: "Habitat", assets.Research: "Research Centre",
-	assets.ShieldGn: "Shield Generator", assets.GunTurrt: "Gun Turret",
-	assets.AntiAir: "Anti Aircraft", assets.ArtyTrrt: "Artillery",
-	assets.AntiMssl: "Missile Turret",
-	assets.SuprtPlt: "Life Support", assets.Greenhse: "Eco-sphere",
-	assets.RecCentr: "Recreation Center", assets.Hangar: "Hangar",
-	assets.Dock: "Dock", assets.TrainHal: "Training Hall",
-	assets.CommTwr: "Gold Refinery", assets.ADump: "Storage Unit",
-	assets.FDump: "Fuel Tank", assets.GoldSm: "Gold Vault",
-	assets.Cnct4W: "Connector", assets.WtrPltfm: "Water Platform",
-	assets.Bridge: "Bridge", assets.Road: "Road",
-	assets.LandPad: "Landing Pad", assets.Block: "Block",
-}
-
-// displayName returns a readable name for a unit type, falling back to its
-// resource tag for types not yet in the table.
-func displayName(t assets.UnitType) string {
-	if n, ok := unitDisplayNames[t]; ok {
-		return n
-	}
-
-	return t.Tag()
-}
-*/
 
 // drawEndTurnButton draws the ENDTRN bevel and caption. It is white during the local turn, red while held, and green during another team's turn.
 // C++ ported : game_manager.cpp - GameManager_MenuClickEndTurnButton.
