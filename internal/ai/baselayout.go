@@ -98,6 +98,89 @@ func (t *taskManageBuildings) roamReaches(builder *game.UnitInfo, seeds [][2]int
 	return count >= threshold
 }
 
+// ownUnitsInTheWay reports whether the builder is boxed in only by the team's own parked
+// units: a flood from its cell over ground that is free or holds clearable own units
+// alone reaches minRoamCells. It returns the reached cells occupied by those units in flood
+// order. A pocket sealed by buildings, enemies, or busy units fails the reach test.
+// C++ reference: taskclearzone.cpp, TaskClearZone::AddZone.
+func (t *taskManageBuildings) ownUnitsInTheWay(builder *game.UnitInfo) ([][2]int, bool) {
+	g := t.ctx.Game
+
+	// The builder is lifted out of the hash so it never blocks its own cell.
+	g.Units.Cells.Remove(builder)
+	defer g.Units.Cells.Add(builder)
+
+	d := access.UnitDesc{Type: builder.Type, Flags: builder.Flags, LandType: access.LandTypeForUnit(builder.Type, builder.Flags)}
+	seed := [2]int{builder.GridX, builder.GridY}
+	seen := map[[2]int]bool{seed: true}
+	queue := [][2]int{seed}
+	var cells [][2]int
+	count := 0
+
+	for len(queue) > 0 {
+		c := queue[0]
+		queue = queue[1:]
+		count++
+
+// A cell with a clearable friendly unit is one the zone must free.
+		if t.holdsClearableUnit(c[0], c[1]) {
+			cells = append(cells, c)
+		}
+
+		// Enough ground reached: the builder is walled in by units alone.
+		if count >= minRoamCells {
+			return cells, true
+		}
+
+		for _, step := range [4][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+			n := [2]int{c[0] + step[0], c[1] + step[1]}
+
+			if seen[n] || n[0] < 0 || n[1] < 0 || n[0] >= g.W || n[1] >= g.H {
+				continue
+			}
+
+			// Terrain and buildings only: a cell no mobile unit could stand on is a wall.
+			if !g.Grid.IsAccessible(d, builder.Team, n[0], n[1], access.IgnoreMobileUnits).Passable() {
+				continue
+			}
+
+			// A unit that cannot be moved aside (an enemy, a busy unit) is a wall too.
+			if !t.onlyClearableUnits(n[0], n[1]) {
+				continue
+			}
+
+			seen[n] = true
+			queue = append(queue, n)
+		}
+	}
+
+	return cells, false
+}
+
+// holdsClearableUnit reports whether a clearable friendly ground unit occupies the cell.
+func (t *taskManageBuildings) holdsClearableUnit(x, y int) bool {
+	for _, o := range t.ctx.Game.Units.Cells.At(x, y) {
+		// isClearableUnit already restricts this to friendly ground units.
+		if isClearableUnit(t.ctx, t.team, o) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// onlyClearableUnits reports whether every ground mobile unit on the cell is a clearable
+// own unit (a cell with none at all counts as true).
+func (t *taskManageBuildings) onlyClearableUnits(x, y int) bool {
+	for _, o := range t.ctx.Game.Units.Cells.At(x, y) {
+		if isGroundMobile(o) && !isClearableUnit(t.ctx, t.team, o) {
+			return false
+		}
+	}
+
+	return true
+}
+
 /* // note: unused code in Go port
 // footprintSet duplicated sim.FootprintCells byte for byte; baselayout now calls sim.FootprintCells.
 // footprintSet returns the cells a fp x fp structure at (x, y) occupies, as a set.

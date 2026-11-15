@@ -6,6 +6,8 @@
 package ai
 
 import (
+	"sort"
+
 	"github.com/suglasp/max-go/internal/access"
 	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/build"
@@ -56,6 +58,7 @@ type taskManageBuildings struct {
 	goal     winGoal                             // the team's match objective; a coloniser also builds Eco Spheres
 	coastal  bool                                // base near water: include a shipyard in the roster, else drop it
 	pending  map[*game.UnitInfo]pendingBuildSite // pending records, per builder
+	clearer  *taskClearZone                      // the team's zone clearing task; nil when unavailable
 }
 
 // pendingBuildSite is a build the manager has committed a builder to but not yet
@@ -326,10 +329,62 @@ func (t *taskManageBuildings) startBuilding(builder *game.UnitInfo, spec buildSp
 
 	x, y, ok := t.findSite(builder, d)
 	if !ok {
+		// Only the team's own parked units may be blocking every site: ask for one to be cleared.
+		if t.clearer != nil {
+			t.findSiteClearingUnits(builder, d)
+		}
+
 		return false
 	}
 
 	return t.buildOrDrive(builder, spec.t, spec.large, x, y)
+}
+
+// findSiteClearingUnits looks for a site as if the team's clearable parked units were
+// gone. When one exists it opens a clear zone over the footprint for the builder, so the
+// units move off it; the caller still waits a turn for the site to clear. Every lifted
+// unit is put back before it returns. C++ reference: taskcreatebuilding.cpp, ClearZone.
+func (t *taskManageBuildings) findSiteClearingUnits(builder *game.UnitInfo, d access.UnitDesc) {
+	g := t.ctx.Game
+	var lifted []*game.UnitInfo
+
+	// The builder stays in the hash: findSite lifts and puts it back itself.
+	for _, u := range g.Units.Units() {
+		if u != builder && isClearableUnit(t.ctx, t.team, u) {
+			lifted = append(lifted, u)
+		}
+	}
+
+	// Sort by ID so units return to the hash in a stable order.
+	sort.Slice(lifted, func(i, j int) bool { return lifted[i].ID < lifted[j].ID })
+
+	for _, u := range lifted {
+		g.Units.Cells.Remove(u)
+	}
+
+	x, y, ok := t.findSite(builder, d)
+
+	for _, u := range lifted {
+		g.Units.Cells.Add(u)
+	}
+
+	// No site even with the units gone: nothing to clear.
+	if !ok {
+		return
+	}
+
+	fp := build.Footprint(d.Flags)
+	var cells [][2]int
+
+	// The footprint cells, in row order.
+	for cy := y; cy < y+fp; cy++ {
+		for cx := x; cx < x+fp; cx++ {
+			cells = append(cells, [2]int{cx, cy})
+		}
+	}
+
+	t.clearer.addZone(builder, cells)
+	dbg.Logf(dbg.AI, "team %d asks to clear the site of %s at (%d,%d)", t.team, d.Type.Tag(), x, y)
 }
 
 // buildOrDrive raises the structure now when the builder already stands INSIDE the

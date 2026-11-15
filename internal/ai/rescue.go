@@ -1,5 +1,4 @@
-// rescue.go : the M.A.X. AI recovery for a builder its own base has boxed in - free it
-// by demolishing the least needed adjacent building, or build a replacement.
+// rescue.go recovers builders trapped by their own base.
 // Suglasp
 // github.com/suglasp/max-go
 //
@@ -15,14 +14,12 @@ import (
 )
 
 // rescueTrappedBuilders finds any of the team's builders that its own structures have
-// sealed in (a builder that cannot roam to open ground and so takes no job, the "locked
-// between buildings" stall) and recovers it. First it tries to FREE the builder by
-// blowing up the least needed building beside it (the wreck leaves drivable rubble, so
-// the builder drives out next turn). Then, for any builder type the team has none of in
-// working order, it builds a REPLACEMENT at the right plant. Prevention (the lattice +
-// escape guard in findSite, the exterior exit in the sim) makes this rare, but a loaded
-// save or an irregular map can still strand one. C++ ported : the AI freeing / rebuilding
-// a stuck builder (taskmanagebuildings.cpp - TaskManager unit recovery).
+// sealed in and unable to reach open ground. If parked friendly units block it, the task
+// opens a clear zone so they can move aside. Otherwise it demolishes the least needed
+// adjacent storage building, whose rubble lets the builder leave. If no working builder
+// of a type remains, it orders a replacement at the appropriate plant. Site placement and
+// map exits reduce these cases, but saved games or irregular maps can still trap a builder.
+// C++ reference: taskmanagebuildings.cpp, TaskManager unit recovery.
 func (t *taskManageBuildings) rescueTrappedBuilders() {
 	g := t.ctx.Game
 	if g == nil {
@@ -45,12 +42,53 @@ func (t *taskManageBuildings) rescueTrappedBuilders() {
 
 	sort.Slice(trapped, func(i, j int) bool { return trapped[i].ID < trapped[j].ID })
 	for _, u := range trapped {
+		// Its own parked units walled it in: have them moved aside, keep the buildings.
+		if t.clearWayOut(u) {
+			continue
+		}
+
+		// Sealed by buildings: demolition stays the last resort.
 		if t.freeByDemolition(u) {
 			dbg.Logf(dbg.AI, "team %d freed trapped %s at (%d,%d) by demolition", t.team, u.Type.Tag(), u.GridX, u.GridY)
 		}
 	}
 
 	t.ensureBuilders() // replace a builder type the team has none of in working order
+}
+
+// clearWayOut asks the zone clearing task to move friendly parked units off the cells
+// blocking the builder. It returns false when buildings block the route or no clearing
+// task is available, allowing the caller to try demolition. C++ reference:
+// taskcreatebuilding.cpp, ClearZone.
+func (t *taskManageBuildings) clearWayOut(builder *game.UnitInfo) bool {
+	// A manager without a clearing task cannot move units aside.
+	if t.clearer == nil {
+		return false
+	}
+
+	cells, ok := t.ownUnitsInTheWay(builder)
+
+	// Not boxed in by own units alone, or nothing to move: leave it to demolition.
+	if !ok || len(cells) == 0 {
+		return false
+	}
+
+	t.clearer.addZone(builder, cells)
+	dbg.Logf(dbg.AI, "team %d clears a way out for %s at (%d,%d): %d own units in the way", t.team, builder.Type.Tag(), builder.GridX, builder.GridY, len(cells))
+
+	return true
+}
+
+// boxedByOwnUnits reports whether the zone clearing task will free the builder soon: it
+// has a clearing task and only the team's own parked units box it in.
+func (t *taskManageBuildings) boxedByOwnUnits(builder *game.UnitInfo) bool {
+	if t.clearer == nil {
+		return false
+	}
+
+	_, ok := t.ownUnitsInTheWay(builder)
+
+	return ok
 }
 
 // freeByDemolition blows up the least needed building next to a trapped builder so its
@@ -114,14 +152,10 @@ func demolitionRank(t assets.UnitType) int {
 	}
 }
 
-// ensureBuilders keeps the team fielding a working constructor and engineer: if every
-// one of a type is trapped or gone (none can roam and none is mid build) and none is
-// already in production, it builds a fresh one at the plant that makes it - a Constructor
-// at the Heavy Vehicle Plant, an Engineer at the Light Vehicle Plant (menus/factorybuild
-// rosters). This is why a base whose only constructor got boxed in no longer sits idle
-// forever: the plant turns out a new one. The build goes through a child obtain request
-// (requestUnit), which only counts a builder that can roam as found. C++ ported :
-// aiplayer.cpp - TaskObtainUnits (CONSTRUCTOR / ENGINEER) obtaining a missing builder.
+// ensureBuilders keeps a working Constructor and Engineer available. When no builder of
+// a type is working or in production, it requests one from the plant that builds it. The
+// child obtain request counts a builder only when it can roam. C++ reference: aiplayer.cpp,
+// TaskObtainUnits(CONSTRUCTOR / ENGINEER).
 func (t *taskManageBuildings) ensureBuilders() {
 	for _, d := range builderDemand {
 		if t.usableBuilders(d.unit) > 0 || unitsInProduction(t.ctx.Game, t.team, d.unit) > 0 {
@@ -146,9 +180,8 @@ var builderDemand = []builderNeed{
 	{assets.Engineer, assets.LightPlt, flagLandUnit}, // 1x1 builder, Light Vehicle Plant
 }
 
-// usableBuilders counts the team's builders of a type that are still doing their job:
-// mid build, or free and able to roam. A trapped one does not count, so a base with only
-// a boxed in constructor reads as zero and triggers a replacement.
+// usableBuilders counts builders that are working, can roam, or will be freed by the zone
+// clearing task. A builder sealed by buildings does not count and can trigger a replacement.
 func (t *taskManageBuildings) usableBuilders(unitType assets.UnitType) int {
 	g := t.ctx.Game
 	n := 0
@@ -157,7 +190,8 @@ func (t *taskManageBuildings) usableBuilders(unitType assets.UnitType) int {
 		if u.Team != t.team || u.Type != unitType {
 			continue
 		}
-		if u.Building || t.canRoam(u) {
+		// Working, free to roam, or about to be freed by the zone clearing task.
+		if u.Building || t.canRoam(u) || t.boxedByOwnUnits(u) {
 			n++
 		}
 	}

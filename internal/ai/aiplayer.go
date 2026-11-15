@@ -145,6 +145,13 @@ func (p *AiPlayer) BeginTurn(mgr *TaskManager) {
 			mb := newTaskManageBuildings(p.team, p.strategy, p.goal, p.coastal, p.ctx)
 			mgr.AppendTask(newTaskConnectionAssistant(mb))
 			mgr.AppendTask(mb)
+
+			// Run zone clearing after the manager opens zones and before other tasks can
+			// claim the parked units. The building manager opens zones while creating
+			// buildings or clearing blocked sites, as TaskClearZone does in C++.
+			zoneClearer := newTaskClearZone(p.team, p.ctx)
+			mb.clearer = zoneClearer
+			mgr.AppendTask(zoneClearer)
 			mgr.AppendTask(newTaskProduceUnits(p.team, p.strategy, p.ctx))
 			mgr.AppendTask(newTaskSurvey(p.team, p.ctx))
 
