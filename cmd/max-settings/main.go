@@ -7,8 +7,10 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"strconv"
@@ -24,7 +26,84 @@ type field struct {
 	presets []string // fixed value list for bool/choice settings. non nil switches the editor from typed input to the Left/Right adjuster.
 }
 
+// Exit codes, the same in every max-go tool: 0 for success (help included), 1 for a runtime failure
+// (a settings file that cannot be read or written), 2 for a bad command line.
+const (
+	exitRuntime     = 1
+	exitCommandLine = 2
+)
+
 // main runs the max-settings tool.
+func main() {
+	os.Exit(runTool(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
+}
+
+// runTool parses the command line, loads the settings file without writing it, and runs the editor. It
+// returns the exit code.
+func runTool(args []string, in, out *os.File, errOut io.Writer) int {
+	fs := flag.NewFlagSet("max-settings", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	pathFlag := fs.String("file", "", "settings file path (default: max-go.json next to the binary, else a legacy settings.json)")
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			usage(errOut)
+			return 0
+		}
+		return badCommandLine(errOut, err)
+	}
+	if fs.NArg() > 0 {
+		return badCommandLine(errOut, fmt.Errorf("unexpected argument %q", fs.Arg(0)))
+	}
+	fileGiven := false
+	fs.Visit(func(f *flag.Flag) { fileGiven = fileGiven || f.Name == "file" })
+	if fileGiven && strings.TrimSpace(*pathFlag) == "" {
+		return badCommandLine(errOut, fmt.Errorf("flag -file needs a value"))
+	}
+
+	path, err := settingsPath(*pathFlag)
+	if err != nil {
+		return runtimeFailure(errOut, err)
+	}
+
+	// Load never writes: the file is only touched by an explicit save. A missing file starts from the defaults.
+	cfg, repairs, err := settings.LoadReport(path)
+	if errors.Is(err, os.ErrNotExist) {
+		cfg, repairs, err = settings.Default(), nil, nil
+		fmt.Fprintf(errOut, "max-settings: %s does not exist yet, starting from the defaults (s creates it)\n", path)
+	}
+	if err != nil {
+		return runtimeFailure(errOut, err)
+	}
+	for _, r := range repairs {
+		fmt.Fprintf(errOut, "max-settings: repaired on load: %v\n", r)
+	}
+
+	// A repaired value is only fixed in memory, so the session starts modified until it is saved.
+	if err := run(path, cfg, in, out, len(repairs) > 0); err != nil {
+		return runtimeFailure(errOut, err)
+	}
+	return 0
+}
+
+// badCommandLine prints the reason in the max-settings form with a hint and returns the command line exit code.
+func badCommandLine(errOut io.Writer, err error) int {
+	fmt.Fprintf(errOut, "max-settings: %v\nRun max-settings -h for the usage.\n", err)
+	return exitCommandLine
+}
+
+// runtimeFailure prints a runtime error in the max-settings form and returns the runtime exit code.
+func runtimeFailure(errOut io.Writer, err error) int {
+	fmt.Fprintf(errOut, "max-settings: %v\n", err)
+	return exitRuntime
+}
+
+// usage prints the command line.
+func usage(out io.Writer) {
+	fmt.Fprintf(out, "usage:\n  max-settings [-file <file>]\n\n-file names the settings file; without it max-go.json next to the program is used.\n")
+}
+
+/* // note: unused code in Go port, main now goes through runTool: a ContinueOnError flag set with named errors, no write at start (LoadOrCreate rewrote the file), exit codes 0, 1 and 2
 func main() {
 	pathFlag := flag.String("file", "", "settings file path (default: max-go.json next to the binary, else a legacy settings.json)")
 	flag.Parse()
@@ -46,6 +125,7 @@ func main() {
 		os.Exit(1)
 	}
 }
+*/
 
 // Prefer max-go.json, but continue to recognize the legacy settings.json path.
 func settingsPath(path string) (string, error) {
@@ -61,17 +141,20 @@ func settingsPath(path string) (string, error) {
 	return settings.ResolvePath(baseDir), nil
 }
 
-func run(path string, cfg settings.Settings, in *os.File, out *os.File) error {
+func run(path string, cfg settings.Settings, in *os.File, out *os.File, startDirty bool) error {
 	reader := bufio.NewReader(in)
 	fields := settingFields(cfg)
 
-	dirty := false
+	dirty := startDirty
 
 	for {
 		printMenu(out, path, cfg, fields, dirty)
 		fmt.Fprint(out, "> ")
 		line, err := reader.ReadString('\n')
 		if err != nil && len(line) == 0 {
+			if errors.Is(err, io.EOF) {
+				return nil // piped input ran out: end like quit
+			}
 			return err
 		}
 
@@ -122,6 +205,9 @@ func run(path string, cfg settings.Settings, in *os.File, out *os.File) error {
 			value, err := reader.ReadString('\n')
 
 			if err != nil && len(value) == 0 {
+				if errors.Is(err, io.EOF) {
+					return nil // piped input ran out: end like quit
+				}
 				return err
 			}
 
@@ -262,6 +348,9 @@ func intField(name string, get func(settings.Settings) int, set func(*settings.S
 		n, err := strconv.Atoi(v)
 		if err != nil {
 			return fmt.Errorf("%s expects an integer", name)
+		}
+		if r, ok := settings.IntRangeFor(name); ok && !r.Contains(n) {
+			return fmt.Errorf("%s expects a number from %d to %d, got %d", name, r.Min, r.Max, n)
 		}
 		set(s, n)
 

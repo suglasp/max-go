@@ -6,11 +6,14 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/suglasp/max-go/internal/convert"
 	"github.com/suglasp/max-go/internal/gfx"
@@ -18,34 +21,52 @@ import (
 	"github.com/suglasp/max-go/internal/restool"
 )
 
+// Exit codes, the same in every max-go tool: 0 for success (help included), 1 for a runtime failure
+// (a file that could not be read or written), 2 for a bad command line.
+const (
+	exitRuntime     = 1
+	exitCommandLine = 2
+)
+
 func main() {
-	os.Exit(run(os.Args[1:]))
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
 
-func run(args []string) int {
+func run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		usage()
+		usage(stderr)
 		return 0
 	}
 
 	switch args[0] {
 	case "help", "-h", "-help", "--help":
 		// Print command help.
-		usage()
+		usage(stderr)
 		return 0
 
 	case "res":
 		// Convert every resource unpacked by max-restool.
-		return runRes(args[1:])
+		return runRes(args[1:], stdout, stderr)
 
 	case "file":
 		// Detect and convert one asset.
-		return runFile(args[1:])
+		return runFile(args[1:], stdout, stderr)
 
 	default:
-		usage()
-		return 2
+		return badCommandLine(stderr, fmt.Errorf("unknown command %q, want res, file or help", args[0]))
 	}
+}
+
+// badCommandLine prints the reason in the max-convert form with a hint and returns the command line exit code.
+func badCommandLine(stderr io.Writer, err error) int {
+	fmt.Fprintf(stderr, "max-convert: %v\nRun max-convert help for the usage.\n", err)
+	return exitCommandLine
+}
+
+// runtimeFailure prints a runtime error in the max-convert form and returns the runtime exit code.
+func runtimeFailure(stderr io.Writer, err error) int {
+	fmt.Fprintf(stderr, "max-convert: %v\n", err)
+	return exitRuntime
 }
 
 // flags builds the option set both verbs share.
@@ -57,41 +78,75 @@ func flags(name string) (*flag.FlagSet, *string, *string) {
 	return fs, format, pal
 }
 
-func runRes(args []string) int {
+// parseVerb parses the arguments of one verb and refuses a flag that was given with an empty value. It returns
+// done with the exit code when the run ends here: -h exits 0, anything else wrong exits 2.
+func parseVerb(fs *flag.FlagSet, args []string, stderr io.Writer, valueFlags ...string) (code int, done bool) {
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			usage(stderr)
+			return 0, true
+		}
+		return badCommandLine(stderr, err), true
+	}
+	given := map[string]bool{}
+	fs.Visit(func(f *flag.Flag) { given[f.Name] = true })
+	for _, name := range valueFlags {
+		if given[name] && strings.TrimSpace(fs.Lookup(name).Value.String()) == "" {
+			return badCommandLine(stderr, fmt.Errorf("flag -%s needs a value", name)), true
+		}
+	}
+	return 0, false
+}
+
+// isFileFailure reports whether err means a file could not be read or written. A resource that is only not
+// an image, a font or a text (a raw blob) is not one: retail MAX.RES carries 32 of those.
+func isFileFailure(err error) bool {
+	var pathErr *fs.PathError
+	return errors.As(err, &pathErr)
+}
+
+func runRes(args []string, stdout, stderr io.Writer) int {
 	fs, format, palPath := flags("res")
 	path := fs.String("path", "", "folder of unpacked resources")
-	if err := fs.Parse(args); err != nil || fs.NArg() > 1 {
-		usage()
-		return 2
+	if code, done := parseVerb(fs, args, stderr, "path", "pal"); done {
+		return code
+	}
+	if fs.NArg() > 1 {
+		return badCommandLine(stderr, fmt.Errorf("unexpected argument %q", fs.Arg(1)))
 	}
 	imgFormat, ok := convert.ParseFormat(*format)
 	if !ok {
-		fmt.Fprintf(os.Stderr, "unknown format %q, want bmp or png\n", *format)
-		return 2
+		return badCommandLine(stderr, fmt.Errorf("unknown format %q, want bmp or png", *format))
 	}
 
 	dir, ok := resolveDir(*path, fs.Args())
 	if !ok {
-		usage()
-		return 2
+		return badCommandLine(stderr, fmt.Errorf("the folder is named twice: -path %q and the argument %q", *path, fs.Arg(0)))
 	}
-	pal, err := loadPalette(os.Stderr, *palPath, dir)
+	pal, err := loadPalette(stderr, *palPath, dir)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
+		return runtimeFailure(stderr, err)
 	}
 
+	fileFailures := 0
 	rep, err := convert.ConvertDir(dir, convert.Options{
 		Palette:     pal,
 		DumpPalette: pal != nil,
 		Format:      imgFormat,
-		OnFile:      func(r convert.FileResult) { printFileResult(os.Stdout, r) },
+		OnFile: func(r convert.FileResult) {
+			printFileResult(stdout, r)
+			if r.Status == convert.StatusFailed && isFileFailure(r.Err) {
+				fileFailures++
+			}
+		},
 	})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
+		return runtimeFailure(stderr, err)
 	}
-	fmt.Printf("converted %d, already converted %d, failed %d\n", rep.Converted, rep.AlreadyDone, rep.Failed)
+	fmt.Fprintf(stdout, "converted %d, already converted %d, failed %d\n", rep.Converted, rep.AlreadyDone, rep.Failed)
+	if fileFailures > 0 {
+		return runtimeFailure(stderr, fmt.Errorf("%d file(s) could not be read or written", fileFailures))
+	}
 	return 0
 }
 
@@ -120,32 +175,31 @@ func printFileResult(w io.Writer, r convert.FileResult) {
 	}
 }
 
-func runFile(args []string) int {
+func runFile(args []string, stdout, stderr io.Writer) int {
 	fs, format, palPath := flags("file")
-	if err := fs.Parse(args); err != nil || fs.NArg() != 2 {
-		usage()
-		return 2
+	if code, done := parseVerb(fs, args, stderr, "pal"); done {
+		return code
+	}
+	if fs.NArg() != 2 {
+		return badCommandLine(stderr, fmt.Errorf("file needs <input> and <outdir>, got %d argument(s)", fs.NArg()))
 	}
 	imgFormat, ok := convert.ParseFormat(*format)
 	if !ok {
-		fmt.Fprintf(os.Stderr, "unknown format %q, want bmp or png\n", *format)
-		return 2
+		return badCommandLine(stderr, fmt.Errorf("unknown format %q, want bmp or png", *format))
 	}
 
 	src, outDir := fs.Arg(0), fs.Arg(1)
-	pal, err := loadPalette(os.Stderr, *palPath, filepath.Dir(src))
+	pal, err := loadPalette(stderr, *palPath, filepath.Dir(src))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
+		return runtimeFailure(stderr, err)
 	}
 
 	written, err := convert.ConvertFile(src, outDir, convert.Options{Palette: pal, Format: imgFormat})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
+		return runtimeFailure(stderr, err)
 	}
 	for _, name := range written {
-		fmt.Println(name)
+		fmt.Fprintln(stdout, name)
 	}
 	return 0
 }
@@ -193,8 +247,7 @@ func loadPalette(w io.Writer, explicit, dir string) (*gfx.Palette, error) {
 	return &pf.Palette, nil
 }
 
-func usage() {
-	out := os.Stderr
+func usage(out io.Writer) {
 	fmt.Fprintf(out, "usage:\n")
 	fmt.Fprintf(out, "  max-convert help\n")
 	fmt.Fprintf(out, "  max-convert res  [-format bmp|png] [-pal COLOR.PAL] [-path <dir>]\n")

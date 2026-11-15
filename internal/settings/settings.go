@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -297,15 +298,110 @@ func Default() Settings {
 	}
 }
 
-// Validate normalizes missing or invalid values to supported defaults.
+// IntRange is the allowed span of one integer setting. A value below Min is repaired to Below and a value
+// above Max to Above, so a volume clamps while a scale falls back to its default.
+type IntRange struct {
+	Field string // the JSON path, for example "video.window_scale"
+	Min   int
+	Max   int
+	Below int // repair for a value under Min
+	Above int // repair for a value over Max
+	value func(*Settings) *int
+}
+
+// Contains reports whether v lies inside the range.
+func (r IntRange) Contains(v int) bool { return v >= r.Min && v <= r.Max }
+
+// Fix returns v when it is in range, else the repair for its side.
+func (r IntRange) Fix(v int) int {
+	switch {
+	case v < r.Min:
+		return r.Below
+	case v > r.Max:
+		return r.Above
+	}
+	return v
+}
+
+// IntRanges lists every integer setting with its range. Validate repairs by this table and max-settings
+// refuses a typed value outside it. The game.* spans follow the setup screen and its consumers: world is
+// one of the 24 maps, play_mode and victory_type take two values, opponent is the six tiers, the three
+// resource levels and the derelict density take three, and the two timers share the 0..32767 box of the
+// Options screen. quick_scroll is the Options slider; below 4 the game itself falls back to 16.
+var IntRanges = []IntRange{
+	{Field: "audio.music_volume", Min: 0, Max: 100, Below: 0, Above: 100, value: func(s *Settings) *int { return &s.Audio.MusicVolume }},
+	{Field: "audio.sfx_volume", Min: 0, Max: 100, Below: 0, Above: 100, value: func(s *Settings) *int { return &s.Audio.SfxVolume }},
+	{Field: "audio.voice_volume", Min: 0, Max: 100, Below: 0, Above: 100, value: func(s *Settings) *int { return &s.Audio.VoiceVolume }},
+	{Field: "video.window_scale", Min: 1, Max: 8, Below: 2, Above: 2, value: func(s *Settings) *int { return &s.Video.WindowScale }},
+	{Field: "video.brightness", Min: 1, Max: 5, Below: 3, Above: 3, value: func(s *Settings) *int { return &s.Video.Brightness }},
+	{Field: "player.clan", Min: 0, Max: 8, Below: 7, Above: 7, value: func(s *Settings) *int { return &s.Player.Clan }}, // 0 is the random clan
+	{Field: "game.world", Min: 0, Max: 23, Below: 0, Above: 0, value: func(s *Settings) *int { return &s.Game.World }},
+	{Field: "game.turn_timer", Min: 0, Max: 32767, Below: 180, Above: 180, value: func(s *Settings) *int { return &s.Game.TurnTimer }},
+	{Field: "game.end_turn", Min: 0, Max: 32767, Below: 30, Above: 30, value: func(s *Settings) *int { return &s.Game.EndTurn }},
+	{Field: "game.start_gold", Min: 0, Max: 32767, Below: 200, Above: 200, value: func(s *Settings) *int { return &s.Game.StartGold }},
+	{Field: "game.play_mode", Min: 0, Max: 1, Below: 0, Above: 0, value: func(s *Settings) *int { return &s.Game.PlayMode }},
+	{Field: "game.victory_type", Min: 0, Max: 1, Below: 0, Above: 0, value: func(s *Settings) *int { return &s.Game.VictoryType }},
+	{Field: "game.victory_limit", Min: 1, Max: 9999, Below: 100, Above: 100, value: func(s *Settings) *int { return &s.Game.VictoryLimit }},
+	{Field: "game.opponent", Min: 0, Max: 5, Below: 2, Above: 2, value: func(s *Settings) *int { return &s.Game.Opponent }},
+	{Field: "game.raw_resource", Min: 0, Max: 2, Below: 1, Above: 1, value: func(s *Settings) *int { return &s.Game.RawResource }},
+	{Field: "game.fuel_resource", Min: 0, Max: 2, Below: 1, Above: 1, value: func(s *Settings) *int { return &s.Game.FuelResource }},
+	{Field: "game.gold_resource", Min: 0, Max: 2, Below: 1, Above: 1, value: func(s *Settings) *int { return &s.Game.GoldResource }},
+	{Field: "game.alien_derelicts", Min: 0, Max: 2, Below: 0, Above: 0, value: func(s *Settings) *int { return &s.Game.AlienDerelicts }},
+	{Field: "game.last_campaign", Min: 1, Max: 999, Below: 1, Above: 1, value: func(s *Settings) *int { return &s.Game.LastCampaign }},
+	{Field: "preferences.quick_scroll", Min: 4, Max: 128, Below: 16, Above: 128, value: func(s *Settings) *int { return &s.Prefs.QuickScroll }},
+	{Field: "debug.log_buffer_lines", Min: 1, Max: 100000, Below: 100, Above: 100000, value: func(s *Settings) *int { return &s.Debug.LogBufferLines }},
+}
+
+// IntRangeFor returns the range of the integer setting named by its JSON path.
+func IntRangeFor(field string) (IntRange, bool) {
+	for _, r := range IntRanges {
+		if r.Field == field {
+			return r, true
+		}
+	}
+	return IntRange{}, false
+}
+
+// Repair is one value Validate had to change.
+type Repair struct {
+	Field string // the JSON path
+	Was   string
+	Now   string
+}
+
+// String reads like "video.window_scale was 99, now 2".
+func (r Repair) String() string { return fmt.Sprintf("%s was %s, now %s", r.Field, r.Was, r.Now) }
+
+// Validate normalizes missing or invalid values to supported defaults. ValidateReport does the same and
+// lists what it changed.
 func (s *Settings) Validate() {
+	s.ValidateReport()
+}
+
+// ValidateReport normalizes missing or invalid values to supported defaults and returns the repairs it made.
+// Keybind actions added for an older file are not counted as repairs.
+func (s *Settings) ValidateReport() []Repair {
+	var repairs []Repair
 	if s.Audio.Backend != BackendDefault && s.Audio.Backend != BackendEbiten && s.Audio.Backend != BackendSoLoud && s.Audio.Backend != BackendMiniAudio {
+		repairs = append(repairs, Repair{"audio.backend", strconv.Quote(s.Audio.Backend), strconv.Quote(BackendDefault)})
 		s.Audio.Backend = BackendDefault
 	}
-	s.Audio.SoLoudBackend = strings.ToLower(strings.TrimSpace(s.Audio.SoLoudBackend))
-	if !slices.Contains(SoLoudBackends, s.Audio.SoLoudBackend) {
-		s.Audio.SoLoudBackend = "auto" // empty or unknown: SoLoud picks the device itself
+	soloud := strings.ToLower(strings.TrimSpace(s.Audio.SoLoudBackend))
+	if !slices.Contains(SoLoudBackends, soloud) {
+		soloud = "auto" // empty or unknown: SoLoud picks the device itself
 	}
+	if soloud != s.Audio.SoLoudBackend {
+		repairs = append(repairs, Repair{"audio.soloud_backend", strconv.Quote(s.Audio.SoLoudBackend), strconv.Quote(soloud)})
+		s.Audio.SoLoudBackend = soloud
+	}
+	for _, r := range IntRanges {
+		p := r.value(s)
+		if fixed := r.Fix(*p); fixed != *p {
+			repairs = append(repairs, Repair{r.Field, strconv.Itoa(*p), strconv.Itoa(fixed)})
+			*p = fixed
+		}
+	}
+	/* // note: unused code in Go port, the per field int checks below are the IntRanges table now (one place for Validate and max-settings)
 	s.Audio.MusicVolume = max(0, min(s.Audio.MusicVolume, 100))
 	s.Audio.SfxVolume = max(0, min(s.Audio.SfxVolume, 100))
 	s.Audio.VoiceVolume = max(0, min(s.Audio.VoiceVolume, 100))
@@ -315,6 +411,8 @@ func (s *Settings) Validate() {
 	if s.Video.Brightness < 1 || s.Video.Brightness > 5 {
 		s.Video.Brightness = 3
 	}
+	*/
+	wasWidescreen := s.Video.Widescreen
 	switch s.Video.Widescreen {
 	case WidescreenOn, WidescreenOff, WidescreenAuto:
 	default:
@@ -328,11 +426,16 @@ func (s *Settings) Validate() {
 			s.Video.Widescreen = WidescreenAuto
 		}
 	}
+	if s.Video.Widescreen != wasWidescreen {
+		repairs = append(repairs, Repair{"video.widescreen", strconv.Quote(string(wasWidescreen)), strconv.Quote(string(s.Video.Widescreen))})
+	}
+	/* // note: unused code in Go port, the log_buffer_lines check is an IntRanges row now (below 1 gives 100, above 100000 gives 100000)
 	if s.Debug.LogBufferLines <= 0 {
 		s.Debug.LogBufferLines = 100
 	} else if s.Debug.LogBufferLines > 100000 {
 		s.Debug.LogBufferLines = 100000
 	}
+	*/
 	if s.Keybinds == nil {
 		s.Keybinds = Default().Keybinds
 	} else {
@@ -355,8 +458,10 @@ func (s *Settings) Validate() {
 		}
 	}
 	if s.Language != "" && !IsSupportedLanguage(s.Language) {
+		repairs = append(repairs, Repair{"language", strconv.Quote(s.Language), `""`})
 		s.Language = "" // an unknown code counts as absent: the texts come from LANG.RES
 	}
+	return repairs
 }
 
 /* // note: unused code in Go port
@@ -375,19 +480,24 @@ func clamp(v, lo, hi int) int {
 
 // Load reads settings from path.
 func Load(path string) (Settings, error) {
+	s, _, err := LoadReport(path)
+	return s, err
+}
+
+// LoadReport is Load that also returns the values Validate repaired.
+func LoadReport(path string) (Settings, []Repair, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return Settings{}, err
+		return Settings{}, nil, err
 	}
 
 	// Decode over the defaults, not over a zero Settings. A key the file predates
 	// keeps its default instead of reading back as 0/false/"".
 	s := Default()
 	if err := json.Unmarshal(data, &s); err != nil {
-		return Settings{}, fmt.Errorf("settings: parse %s: %w", path, err)
+		return Settings{}, nil, fmt.Errorf("settings: parse %s: %w", path, err)
 	}
-	s.Validate()
-	return s, nil
+	return s, s.ValidateReport(), nil
 }
 
 // Save writes settings to path as indented JSON. One-run launch overrides are

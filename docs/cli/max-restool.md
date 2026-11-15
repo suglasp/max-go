@@ -80,5 +80,28 @@ files that max-convert may have written beside the raw resources (`.bmp`,
 
 ## Notes
 
-`max-restool` uses subcommands and positional arguments only.
-There are no dash style flags.
+`max-restool` takes either a subcommand with positional paths (`list`, `unpack`, `pack`) or the short form,
+where the dash flags `-res`, `-file` and `-archive` name the archive and `-path` names the folder.
+The two forms do not mix: a leading dash selects the short form.
+
+The short form refuses:
+
+- two of `-res`, `-file` and `-archive` together, even with the same value;
+- an empty value (`-res=`, `-path=`);
+- a missing archive (only `-path` given);
+- a stray argument after the flags;
+- an unknown flag.
+
+A subcommand refuses the wrong number of paths and an empty path.
+
+## Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| `0` | the run ended normally, or `help` / `-h` |
+| `1` | a runtime failure: an archive or folder that cannot be read or written, a manifest hash that does not match |
+| `2` | a bad command line: an unknown subcommand or flag, a missing archive, an empty value or path, two archive flags together, a stray argument or the wrong number of paths |
+
+Every message starts with the tool name and says which of these happened,
+for example `max-restool: flags -res and -file both name the archive, give only one`.
+A bad command line also prints a hint to run `max-restool help`.

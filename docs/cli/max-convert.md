@@ -47,7 +47,7 @@ Every file gets a line as it is handled:
 file ILOGO converted to ILOGO.bmp [bmp]
 file REPAIR02.FLC converted to REPAIR02_0000.bmp [bmp] (+29 more)
 file ILOGO.bmp already converted!
-file SC_SCHEM failed to convert!
+file D_FIXED failed to convert: convert: D_FIXED: unrecognised resource
 ```
 
 A file wearing an extension this tool writes (`.bmp`,
@@ -58,6 +58,13 @@ A file wearing an extension this tool writes (`.bmp`,
 `.otf`,
 `.ttc`) is output from an earlier run and is left alone.
 A file nothing can be made of does not stop the walk.
+Retail `MAX.RES` holds 32 of those raw blobs (the `D_` resources, for one),
+and they stay as raw bytes.
+The last line counts them (`converted 1795,
+already converted 0,
+failed 32`),
+and they do not fail the run.
+A file that cannot be read or written does: the run ends with exit code 1.
 
 The walk handles whatever it finds,
 so `-path` can just as well point at a folder of loose game data holding `.MSC` music,
@@ -128,3 +135,15 @@ Conversion is one way and for inspection only.
 Nothing here reads a `.bmp` or a `.wav` back into game data.
 
 Both subcommands take their dash style flags before their positional arguments.
+
+## Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| `0` | the run ended normally, or `help` / `-h` (also after `res` or `file`) |
+| `1` | a runtime failure: an input folder or file that cannot be read, an output that cannot be written, a `-pal` file that is missing or invalid, or (for `res`) at least one file that could not be read or written |
+| `2` | a bad command line: an unknown subcommand, an unknown flag, a bad `-format`, an empty `-path=` or `-pal=`, the folder named twice (`-path` and an argument), or the wrong number of arguments |
+
+Every message starts with the tool name,
+for example `max-convert: flag provided but not defined: -bogus` or `max-convert: unknown command "bogus", want res, file or help`.
+A bad command line also prints a hint to run `max-convert help`.

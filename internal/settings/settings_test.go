@@ -350,3 +350,156 @@ func TestChannelsReversedKey(t *testing.T) {
 		t.Errorf("loaded channels_reversed=%v sfx_volume=%d, want true and 80", s.Audio.ChannelsReversed, s.Audio.SfxVolume)
 	}
 }
+
+// Every integer setting is bounded: a value under or over its range is repaired by the table, and a value on
+// each edge of the range stays.
+func TestValidateBoundsEveryInt(t *testing.T) {
+	for _, r := range IntRanges {
+		cfg := Default()
+		p := r.value(&cfg)
+
+		*p = r.Min - 1
+		cfg.Validate()
+		if *p != r.Below {
+			t.Errorf("%s: %d repaired to %d, want %d", r.Field, r.Min-1, *p, r.Below)
+		}
+		*p = r.Max + 1
+		cfg.Validate()
+		if *p != r.Above {
+			t.Errorf("%s: %d repaired to %d, want %d", r.Field, r.Max+1, *p, r.Above)
+		}
+		for _, edge := range []int{r.Min, r.Max} {
+			*p = edge
+			cfg.Validate()
+			if *p != edge {
+				t.Errorf("%s: the valid value %d was repaired to %d", r.Field, edge, *p)
+			}
+		}
+	}
+}
+
+// The defaults sit inside every range, so a fresh file reports no repairs.
+func TestDefaultsAreInRange(t *testing.T) {
+	cfg := Default()
+	if repairs := cfg.ValidateReport(); len(repairs) != 0 {
+		t.Fatalf("the defaults needed repairs: %v", repairs)
+	}
+}
+
+// The ranges the game documents: the retail clan numbers, the Options slider and the volumes.
+func TestValidateKnownRanges(t *testing.T) {
+	cases := []struct {
+		field string
+		min   int
+		max   int
+	}{
+		{"player.clan", 0, 8},
+		{"preferences.quick_scroll", 4, 128},
+		{"audio.music_volume", 0, 100},
+		{"video.window_scale", 1, 8},
+		{"game.opponent", 0, 5},
+	}
+	for _, tc := range cases {
+		r, ok := IntRangeFor(tc.field)
+		if !ok || r.Min != tc.min || r.Max != tc.max {
+			t.Errorf("%s: range %+v (found %v), want %d..%d", tc.field, r, ok, tc.min, tc.max)
+		}
+	}
+	if _, ok := IntRangeFor("no.such.field"); ok {
+		t.Errorf("IntRangeFor found a field that does not exist")
+	}
+}
+
+// ValidateReport lists each repair with its field, old and new value, and Validate makes the same changes.
+func TestValidateReportListsRepairs(t *testing.T) {
+	cfg := Default()
+	cfg.Video.WindowScale = 99
+	cfg.Player.Clan = -3
+	cfg.Audio.MusicVolume = 250
+	cfg.Audio.Backend = "bogus"
+	cfg.Video.Widescreen = "on"
+	cfg.Language = "xx"
+	cfg.Prefs.QuickScroll = 2
+
+	twin := cfg
+	repairs := cfg.ValidateReport()
+	var got []string
+	for _, r := range repairs {
+		got = append(got, r.String())
+	}
+	want := []string{
+		`audio.backend was "bogus", now "default"`,
+		"audio.music_volume was 250, now 100",
+		"video.window_scale was 99, now 2",
+		"player.clan was -3, now 7",
+		"preferences.quick_scroll was 2, now 16",
+		`video.widescreen was "on", now "true"`,
+		`language was "xx", now ""`,
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("repairs\n got %q\nwant %q", got, want)
+	}
+
+	twin.Validate()
+	if !reflect.DeepEqual(twin, cfg) {
+		t.Errorf("Validate and ValidateReport differ:\n%+v\n%+v", twin, cfg)
+	}
+}
+
+// A second pass finds nothing left to repair.
+func TestValidateReportIsIdempotent(t *testing.T) {
+	cfg := Default()
+	cfg.Game.Opponent = 77
+	cfg.Game.World = -1
+	cfg.ValidateReport()
+	if repairs := cfg.ValidateReport(); len(repairs) != 0 {
+		t.Errorf("second pass repaired again: %v", repairs)
+	}
+}
+
+// LoadReport hands back what Load repaired, and Load still returns the repaired settings.
+func TestLoadReportListsRepairs(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "max-go.json")
+	body := `{"video": {"window_scale": 99}, "game": {"opponent": 9, "last_campaign": 0}}`
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, repairs, err := LoadReport(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Video.WindowScale != 2 || cfg.Game.Opponent != 2 || cfg.Game.LastCampaign != 1 {
+		t.Errorf("loaded %+v, want the repaired values", cfg)
+	}
+	if len(repairs) != 3 {
+		t.Errorf("repairs %v, want 3", repairs)
+	}
+	plain, err := Load(path)
+	if err != nil || !reflect.DeepEqual(plain, cfg) {
+		t.Errorf("Load differs from LoadReport: %v", err)
+	}
+	after, _ := os.ReadFile(path)
+	if string(after) != body {
+		t.Errorf("Load rewrote the file: %q", after)
+	}
+}
+
+// Repairs land on the value the game falls back to: a slider speed caps, a volume clamps, the rest reset.
+func TestValidateRepairTargets(t *testing.T) {
+	cfg := Default()
+	cfg.Prefs.QuickScroll = 500
+	cfg.Audio.SfxVolume = -1
+	cfg.Player.Clan = 42
+	cfg.Game.VictoryLimit = 0
+	cfg.Debug.LogBufferLines = 1 << 20
+	cfg.Validate()
+	if cfg.Prefs.QuickScroll != 128 || cfg.Audio.SfxVolume != 0 || cfg.Player.Clan != 7 ||
+		cfg.Game.VictoryLimit != 100 || cfg.Debug.LogBufferLines != 100000 {
+		t.Errorf("repair targets wrong: %+v", cfg)
+	}
+	cfg.Prefs.QuickScroll = 2
+	cfg.Validate()
+	if cfg.Prefs.QuickScroll != 16 {
+		t.Errorf("quick_scroll 2 repaired to %d, want 16", cfg.Prefs.QuickScroll)
+	}
+}

@@ -37,6 +37,8 @@ An older `max-go.json` therefore keeps a new boolean setting enabled when the fi
 
 `Validate()` runs after every load and clamps/repairs invalid values back to a supported default (see the per-field notes below for exactly what it checks) - a hand-edited or corrupted field degrades gracefully instead of crashing the game.
 
+[max-settings](max-settings.md) lists what the load repaired and refuses a typed number outside these ranges.
+
 `Save` first backs out any one-run launch-override flag (`-fullscreen`,
 `-audio`,
 `-scale`,
@@ -97,7 +99,7 @@ The game renders at a fixed logical 640x480 (854x480 in widescreen);
 | --- | --- | --- | --- |
 |
 ame` | string | `"Player 1"` | **Multiplayer only** - single player never displays it. |
-| `clan` | int | `7` | Clan index into the 8 clans (`A`..`H`) defined in `CLANATRB` - see `docs/formats/tables.md`; resolved per team through the Choose Players screen. |
+| `clan` | int | `7` | Clan index into the 8 clans (`A`..`H`) defined in `CLANATRB` - see `docs/formats/tables.md`; resolved per team through the Choose Players screen. `0..8` (`0` is the random clan); an out of range value resets to `7` (`Validate`). |
 
 ## `game`
 
@@ -109,19 +111,19 @@ an unpassed flag leaves this saved value untouched).
 | --- | --- | --- | --- |
 | `intro_movie` | bool | `true` | Play the MAXINT intro movie on boot. |
 | `auto_save` | bool | `true` | Silent auto-save to save slot 10 (gated on this flag; failure only logs, never blocks play). |
-| `world` | int | `0` | Which bundled `.WRL` map a quick-start bench/menu defaults to. |
-| `turn_timer` | int | `180` | Per-turn time budget in seconds (`0` = untimed). Custom Game screen's Turn Time box; CLI `-turnlimit`/`-turns` (`60..250`). |
-| `end_turn` | int | `30` | The simultaneous-mode End Turn grace period in seconds. CLI `-endturn` (`15..90`). |
-| `start_gold` | int | `200` | Starting cargo credit for the landing purchase screen. CLI `-startcredit`/`-credit` (`Low`/`Limited`/`Normal`/`High`/`TooMuch`, mapping to `0/50/100/150/200/250`). |
-| `play_mode` | int | `0` | `0` = turn based, `1` = simultaneous. CLI `-turnbased`/`-simultane`. Note this port's default (turn based) is the opposite of the original's shipped default (simultaneous) - a deliberate opt-in choice. |
-| `victory_type` | int | `0` | `0` = Duration (win at a turn count), `1` = Score (win at a point total). CLI `-duration`/`-score` (mutually exclusive). |
-| `victory_limit` | int | `100` | The turn count (Duration) or point total (Score) `victory_type` counts toward. |
-| `opponent` | int | `2` | AI difficulty tier, `0..5` = Clueless/Apprentice/Average/Expert/Master/God (matches `ai.OpponentClueless..OpponentGod`). CLI `-difficulty N` overrides for one run without changing this. |
-| `raw_resource` | int | `1` | Map raw-material richness, `0/1/2` = Poor/Medium/Rich. CLI `-raw`. |
-| `fuel_resource` | int | `1` | Map fuel richness, `0/1/2` = Poor/Medium/Rich. CLI `-fuel`. |
-| `gold_resource` | int | `1` | Map gold richness, `0/1/2` = Poor/Medium/Rich. CLI `-gold`. |
-| `alien_derelicts` | int | `0` | Neutral alien derelict density on the map. CLI `-derelicts` (`Rare`/`Common`). |
-| `last_campaign` | int | `1` | One-based number of unlocked campaign missions (campaign progression). |
+| `world` | int | `0` | Which bundled `.WRL` map a quick-start bench/menu defaults to. `0..23` (the 24 maps); an out of range value resets to `0` (`Validate`). |
+| `turn_timer` | int | `180` | Per-turn time budget in seconds (`0` = untimed). Custom Game screen's Turn Time box; CLI `-turnlimit`/`-turns` (`60..250`). The file takes `0..32767`, the Options box; out of range resets to `180` (`Validate`). |
+| `end_turn` | int | `30` | The simultaneous-mode End Turn grace period in seconds. CLI `-endturn` (`15..90`). The file takes `0..32767`; out of range resets to `30` (`Validate`). |
+| `start_gold` | int | `200` | Starting cargo credit for the landing purchase screen. CLI `-startcredit`/`-credit` (`Low`/`Limited`/`Normal`/`High`/`TooMuch`, mapping to `0/50/100/150/200/250`). The file takes `0..32767`; out of range resets to `200` (`Validate`). |
+| `play_mode` | int | `0` | `0` = turn based, `1` = simultaneous. `0..1`; out of range resets to `0` (`Validate`). CLI `-turnbased`/`-simultane`. Note this port's default (turn based) is the opposite of the original's shipped default (simultaneous) - a deliberate opt-in choice. |
+| `victory_type` | int | `0` | `0` = Duration (win at a turn count), `1` = Score (win at a point total). `0..1`; out of range resets to `0` (`Validate`). CLI `-duration`/`-score` (mutually exclusive). |
+| `victory_limit` | int | `100` | The turn count (Duration) or point total (Score) `victory_type` counts toward. `1..9999`; out of range resets to `100` (`Validate`). |
+| `opponent` | int | `2` | AI difficulty tier, `0..5` = Clueless/Apprentice/Average/Expert/Master/God (matches `ai.OpponentClueless..OpponentGod`). Out of range resets to `2` (`Validate`). CLI `-difficulty N` overrides for one run without changing this. |
+| `raw_resource` | int | `1` | Map raw-material richness, `0/1/2` = Poor/Medium/Rich; out of range resets to `1` (`Validate`). CLI `-raw`. |
+| `fuel_resource` | int | `1` | Map fuel richness, `0/1/2` = Poor/Medium/Rich; out of range resets to `1` (`Validate`). CLI `-fuel`. |
+| `gold_resource` | int | `1` | Map gold richness, `0/1/2` = Poor/Medium/Rich; out of range resets to `1` (`Validate`). CLI `-gold`. |
+| `alien_derelicts` | int | `0` | Neutral alien derelict density on the map. `0..2` (None/Rare/Common); out of range resets to `0` (`Validate`). CLI `-derelicts` (`Rare`/`Common`). |
+| `last_campaign` | int | `1` | One-based number of unlocked campaign missions (campaign progression). `1..999`; out of range resets to `1` (`Validate`). |
 
 ## `preferences`
 
@@ -132,7 +134,7 @@ no relaunch needed.
 | --- | --- | --- | --- |
 | `effects` | bool | `true` | "Animate Effects" - sfx/animation flourishes. |
 | `click_scroll` | bool | `false` | "Click-to-Scroll" edge-scroll behavior. |
-| `quick_scroll` | int | `16` | Edge-scroll speed. |
+| `quick_scroll` | int | `16` | Edge-scroll speed, the Options slider (`4..128`). Below `4` resets to `16` and above `128` is capped at `128` (`Validate`). |
 | `fast_movement` | bool | `true` | "Double Unit Steps" - faster unit move animation. |
 | `follow_unit` | bool | `false` | "Follow Unit" - camera tracks the selected unit. |
 | `auto_select` | bool | `false` | "Auto-Select" - automatically select the next idle unit. |
