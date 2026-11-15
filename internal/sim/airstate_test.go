@@ -65,7 +65,7 @@ func TestAirTakeOffAndLand(t *testing.T) {
 }
 
 // TestAirAutoTakeOffOnMove: ordering a LANDED air unit to move automatically takes off
-// (it rises on its own) and then moves - the player need not take off manually first.
+// (it climbs for a few ticks on its own) and then moves - the player need not take off manually first.
 func TestAirAutoTakeOffOnMove(t *testing.T) {
 	g := newGame(t, 16, 16)
 	addLandPad(g, 9, 5, 5)
@@ -79,8 +79,18 @@ func TestAirAutoTakeOffOnMove(t *testing.T) {
 	if !g.OrderMove(bomber, 9, 9) {
 		t.Error("ordering a landed air unit to move should automatically take off and move")
 	}
+	if IsHovering(bomber) {
+		t.Error("the climb takes a few ticks: the plane must not hover the moment it is ordered")
+	}
+	for i := 0; i < 4; i++ {
+		g.Tick()
+	}
+	if IsHovering(bomber) {
+		t.Error("the plane hovers before the fifth take off tick")
+	}
+	g.Tick()
 	if !IsHovering(bomber) {
-		t.Error("a landed air unit ordered to move should automatically take off (become hovering)")
+		t.Error("a landed air unit ordered to move should take off (become hovering) on the fifth tick")
 	}
 }
 

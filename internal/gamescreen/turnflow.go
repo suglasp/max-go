@@ -43,6 +43,9 @@ type turnFlowState struct {
 	heartbeat       atomic.Int64 // unix nano start of the current Run() iteration (AI turn hang watchdog)
 	wdInAITurn      atomic.Bool  // whether the current frame is animating a computer turn (watchdog)
 	wdModalDepth    atomic.Int32 // open blocking modal count, so the stall watchdog ignores a parked modal loop
+
+	moveTickStamp uint64        // time of the last sim order tick (the moveTickMS gate; zero fires at once)
+	moveClock     func() uint64 // clock override for the order tick gate (tests); nil reads platform.Ticks
 }
 
 // endTurn ends the active team's turn and hands over to the next: resolves movement

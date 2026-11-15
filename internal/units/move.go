@@ -42,7 +42,14 @@ const (
 // maxWaitTicks caps how long a unit will stand fast for a contested cell to
 // clear before falling back to the ordinary MoveBlocked handling - a bounded
 // wait so two units queued nose to nose can never deadlock the game forever.
-const maxWaitTicks = 90
+// It is the reference movement wait limit, counted in order ticks.
+//
+// C++ ported : unitinfo.hpp - UnitInfo::MOVEMENT_WAIT_LIMIT
+const maxWaitTicks = 512
+
+/* // note: unused code in Go port (N20: the wait limit was stretched to 90 for 60 ticks per second; the order tick is gated to 43 ms now, so the reference value 512 replaces it)
+const maxWaitTicksOld = 90
+*/
 
 // MoveOrder is an ORDER_MOVE in progress: a unit, the route it is following
 // (the pathfinder's Steps), the index of the next step to take, and the cost
@@ -59,8 +66,16 @@ type MoveOrder struct {
 	Fast  bool // GameManager_FastMovement
 	Delay int  // animation ticks to hold before pulling out (a group's departure stagger)
 
-	reserved  bool // the current step's destination is claimed in Mgr.Cells (AddAt)
-	waitTicks int  // consecutive ticks stood fast for a contested next cell
+	// OnTakeOff, when set, lifts a landed plane at the end of its take off (the sim sets the
+	// hovering flag and refreshes the fog); nil sets the flag only. Air orders only.
+	OnTakeOff func(u *game.UnitInfo)
+	// OnCellChange, when set, runs after a flying plane crosses into another cell (the sim
+	// refreshes the fog). Air orders only.
+	OnCellChange func(u *game.UnitInfo)
+
+	reserved  bool     // the current step's destination is claimed in Mgr.Cells (AddAt)
+	waitTicks int      // consecutive ticks stood fast for a contested next cell
+	air       *airMove // set for a straight air flight (airmove.go); the ground fields above are unused then
 }
 
 // NewMoveOrder starts a unit moving along steps (the route from a
@@ -70,6 +85,7 @@ type MoveOrder struct {
 func NewMoveOrder(mgr *Manager, u *game.UnitInfo, steps []paths.Step, cost paths.CostFunc, fast bool) *MoveOrder {
 	u.SetOrder(game.OrderMove)
 	u.SetOrderState(game.OrderStateInProgress)
+	u.Velocity = 0 // a new order pulls out from rest
 	return &MoveOrder{Mgr: mgr, Unit: u, Steps: steps, Index: 0, Cost: cost, Fast: fast}
 }
 
@@ -100,9 +116,21 @@ func (m *MoveOrder) StopAtNextCell() []paths.Step {
 	if m.Done() {
 		return nil
 	}
+	if m.air != nil {
+		return m.airStopAtNextCell()
+	}
 	rest := append([]paths.Step(nil), m.Steps[m.Index+1:]...)
 	m.Steps = m.Steps[:m.Index+1]
 	return rest
+}
+
+// MidCell reports whether the unit is between cell centres: partway across a cell for a
+// ground unit, off the centre of its cell for a plane in flight.
+func (m *MoveOrder) MidCell() bool {
+	if m.air != nil {
+		return airOffCentre(m.Unit)
+	}
+	return m.Unit.Moved > 0
 }
 
 // RemainingSteps returns the steps of the route not yet taken. The slice
@@ -120,6 +148,9 @@ func (m *MoveOrder) RemainingSteps() []paths.Step {
 // (next cell impassable), so a route halted only by that turn's budget can be
 // queued and resumed next turn instead of discarded.
 func (m *MoveOrder) NextCellPassable() bool {
+	if m.air != nil {
+		return !m.Done() // a plane flies over everything
+	}
 	if m.Done() || m.Cost == nil {
 		return false
 	}
@@ -134,8 +165,12 @@ func (m *MoveOrder) NextCellPassable() bool {
 //
 // C++ ported : unitinfo.cpp - UnitInfo::Move
 func (m *MoveOrder) Tick() MoveStatus {
+	if m.air != nil {
+		return m.airTick()
+	}
 	u := m.Unit
 	if m.Done() {
+		u.Velocity = 0 // the move is over (UnitInfo::MoveFinished)
 		u.SetOrder(game.OrderAwait)
 		u.SetOrderState(game.OrderStateExecutingOrder)
 		return MoveDone
@@ -167,13 +202,16 @@ func (m *MoveOrder) Tick() MoveStatus {
 			// parked) is a transient chokepoint jam, not impassable terrain -
 			// stand fast and retry rather than abandoning the whole route,
 			// bounded so two units nose to nose can never deadlock forever.
-			if m.Mgr != nil && len(m.Mgr.Cells.At(step.To.X, step.To.Y)) > 0 && m.waitTicks < maxWaitTicks {
+			if m.Mgr != nil && len(m.Mgr.Cells.At(step.To.X, step.To.Y)) > 0 && m.waitTicks+1 < maxWaitTicks {
 				m.waitTicks++
+				u.Velocity = 0 // standing fast: the pull out starts from rest
 				return MoveWaiting
 			}
+			u.Velocity = 0
 			return MoveBlocked
 		}
 		if !calculateStep(u, c, step.Dir&1 != 0, m.Fast) {
+			u.Velocity = 0
 			return MoveBlocked
 		}
 		m.waitTicks = 0
@@ -218,7 +256,9 @@ func (m *MoveOrder) Tick() MoveStatus {
 
 	if u.Moved >= tileSize {
 		u.Moved = 0
+		/* // note: unused code in Go port (N20: this reset the ramp on every cell, so every cell started from rest; the reference keeps the velocity and zeroes it only when a move ends)
 		u.Velocity = 0
+		*/
 		if m.Mgr != nil {
 			m.Mgr.Arrive(u, step.To.X, step.To.Y) // completes the reservation, snaps to cell center
 			m.reserved = false
@@ -227,10 +267,14 @@ func (m *MoveOrder) Tick() MoveStatus {
 		}
 		m.Index++
 		if m.Done() {
+			u.Velocity = 0 // the move is over (UnitInfo::MoveFinished)
 			u.SetOrder(game.OrderAwait)
 			u.SetOrderState(game.OrderStateExecutingOrder)
 			return MoveDone
 		}
+		// A free one eighth turn toward the next step on arrival.
+		// C++ ported : groundpath.cpp - GroundPath::UpdateUnitAngle
+		u.TurnToward(uint8(m.Steps[m.Index].Dir))
 	}
 	return MoveDriving
 }

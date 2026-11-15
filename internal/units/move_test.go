@@ -195,3 +195,111 @@ func TestCalculateStepClampsShots(t *testing.T) {
 		t.Errorf("shots after move = %d, want 1 (clamped to remaining speed)", u.Shots)
 	}
 }
+
+// eastSteps builds a straight route of n cells east from cell (1,1).
+func eastSteps(n int) []paths.Step {
+	steps := make([]paths.Step, n)
+	for i := range steps {
+		steps[i] = paths.Step{To: game.Point{X: 2 + i, Y: 1}, Dir: 2}
+	}
+	return steps
+}
+
+// TestMoveTickTotalsGround locks the order tick count of a straight ground route over Clear
+// cost cells to the reference ramp: the velocity carries across cells, so every cell after the
+// first takes 8 ticks (4 fast) and the last cell eases out. Normal 8N+6, fast 4N+8.
+func TestMoveTickTotalsGround(t *testing.T) {
+	cases := []struct {
+		fast  bool
+		cells int
+		want  int
+	}{
+		{false, 2, 8*2 + 6},
+		{false, 3, 8*3 + 6},
+		{false, 5, 8*5 + 6},
+		{false, 10, 8*10 + 6},
+		{true, 2, 4*2 + 8},
+		{true, 3, 4*3 + 8},
+		{true, 5, 4*5 + 8},
+		{true, 10, 4*10 + 8},
+	}
+	for _, c := range cases {
+		u := newTank(t, nil, 200, 1, 1, 2)
+		m := NewMoveOrder(nil, u, eastSteps(c.cells), clearCost, c.fast)
+		status, ticks := run(t, m)
+		if status != MoveDone {
+			t.Fatalf("fast=%v cells=%d: status = %v, want MoveDone", c.fast, c.cells, status)
+		}
+		if ticks != c.want {
+			t.Errorf("fast=%v cells=%d: ticks = %d, want %d", c.fast, c.cells, ticks, c.want)
+		}
+	}
+}
+
+// TestMoveVelocityCarriesAcrossCells checks the ramp is kept when a unit enters the next
+// cell (it used to restart from rest on every cell) and is zero once the move has ended.
+func TestMoveVelocityCarriesAcrossCells(t *testing.T) {
+	u := newTank(t, nil, 200, 1, 1, 2)
+	m := NewMoveOrder(nil, u, eastSteps(3), clearCost, false)
+	for m.Index == 0 {
+		if s := m.Tick(); s == MoveDone || s == MoveBlocked {
+			t.Fatalf("unexpected status %v before the first cell was crossed", s)
+		}
+	}
+	if u.Velocity != u.MaxVelocity || u.Velocity == 0 {
+		t.Errorf("velocity after crossing the first cell = %d (max %d), want it kept at the maximum", u.Velocity, u.MaxVelocity)
+	}
+	if status, _ := run(t, m); status != MoveDone {
+		t.Fatalf("status = %v, want MoveDone", status)
+	}
+	if u.Velocity != 0 {
+		t.Errorf("velocity after the move ended = %d, want 0", u.Velocity)
+	}
+}
+
+// TestMoveVelocityZeroWhenBlocked checks both MoveBlocked exits zero the velocity: running
+// out of speed and meeting an impassable cell.
+func TestMoveVelocityZeroWhenBlocked(t *testing.T) {
+	// Out of speed after the first cell: the budget is one point.
+	u := newTank(t, nil, 1, 1, 1, 2)
+	m := NewMoveOrder(nil, u, eastSteps(3), clearCost, false)
+	if status, _ := run(t, m); status != MoveBlocked {
+		t.Fatalf("out of speed: status = %v, want MoveBlocked", status)
+	}
+	if u.Velocity != 0 {
+		t.Errorf("out of speed: velocity = %d, want 0", u.Velocity)
+	}
+
+	// An impassable cell ahead, after a cell was crossed at speed.
+	u = newTank(t, nil, 200, 1, 1, 2)
+	cost := func(x, y int) int {
+		if x >= 3 {
+			return 0
+		}
+		return 4
+	}
+	m = NewMoveOrder(nil, u, eastSteps(4), cost, false)
+	if status, _ := run(t, m); status != MoveBlocked {
+		t.Fatalf("impassable: status = %v, want MoveBlocked", status)
+	}
+	if u.Velocity != 0 {
+		t.Errorf("impassable: velocity = %d, want 0", u.Velocity)
+	}
+}
+
+// TestMoveFreeTurnOnArrival checks a unit that arrives in a cell with a bend ahead turns one
+// eighth toward the next step at no tick cost.
+func TestMoveFreeTurnOnArrival(t *testing.T) {
+	u := newTank(t, nil, 200, 1, 1, 2)
+	steps := []paths.Step{
+		{To: game.Point{X: 2, Y: 1}, Dir: 2},
+		{To: game.Point{X: 2, Y: 2}, Dir: 4}, // a quarter turn to the south
+	}
+	m := NewMoveOrder(nil, u, steps, clearCost, false)
+	for m.Index == 0 {
+		m.Tick()
+	}
+	if u.Angle != 3 {
+		t.Errorf("angle on arrival = %d, want 3 (one eighth from east toward south)", u.Angle)
+	}
+}

@@ -13,6 +13,7 @@ Check the version file next to the game executables.
 - `max-go.json` no longer carries a `language` setting by default; the game reads its texts from `LANG.RES`. Add `"language": "en-us"` by hand to use a loose `lang-en-us.ini` again; `-language` now applies to one run only and is never saved.
 
 ### Fixes
+- Units now move at the original speed: ground units no longer drive too fast, and aircraft take off with a short climb and fly a straight line.
 - The Upgrades screen's unit type buttons now stay pressed to show the filter, and keep it when you open the screen again.
 - In the Purchase Menu a disabled Buy or Delete button is a blank plate, as in the original, and the Buy Units / Upgrades switch and the unit type buttons are back.
 - max-convert, max-restool and max-settings now say what is wrong with a command line and exit with 2; max-settings no longer writes the settings file until you save.

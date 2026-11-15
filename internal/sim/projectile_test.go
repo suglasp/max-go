@@ -276,3 +276,23 @@ func TestNonMissileAttackIsInstant(t *testing.T) {
 		t.Errorf("instant attack dealt no damage: enemy Hits=%d", enemy.Hits)
 	}
 }
+
+// TestProjectileFliesOneCellPerTick locks projectileSpeed to the reference missile pace of one
+// map cell (64 px) per tick: a missile fired 6 cells away is still in flight after 5 ticks and
+// lands on the 6th.
+func TestProjectileFliesOneCellPerTick(t *testing.T) {
+	g := newGame(t, 24, 8)
+	bomber := addBomber(g, 1, 2, 4, 0)
+	addTankTarget(g, 2, 8, 4, 1)
+	if _, ok := g.Attack(bomber, 8, 4); !ok {
+		t.Fatal("attack not ok")
+	}
+	ticks := 0
+	for len(g.ActiveProjectiles()) > 0 && ticks < 100 {
+		g.Tick()
+		ticks++
+	}
+	if ticks != 6 {
+		t.Errorf("a 6 cell shot took %d ticks, want 6 (one cell per tick)", ticks)
+	}
+}

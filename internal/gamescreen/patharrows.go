@@ -18,6 +18,8 @@ import (
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/gfx"
 	"github.com/suglasp/max-go/internal/paths"
+	"github.com/suglasp/max-go/internal/sim"
+	"github.com/suglasp/max-go/internal/units"
 )
 
 // The 8-direction ground path arrow marker: a triangle (three vertices) per
@@ -196,6 +198,16 @@ func (s *Screen) collectRoute(cells map[game.Point]routeCell, unit *game.UnitInf
 		return
 	}
 
+	// A plane flies a straight line: its route is one marker per movement point along that line,
+	// each worth one point, not the grid steps.
+	// C++ ported : airpath.cpp - AirPath::Draw
+	air := sim.IsAirUnit(unit) && len(steps) > 0
+
+	if air {
+		dest := steps[len(steps)-1].To
+		steps = units.AirRouteMarkers(unit.GridX, unit.GridY, dest.X, dest.Y)
+	}
+
 	// Vanilla shows only the local player's own routes; an NPC route needs the
 	// debug flag and uses the gray/red palette to distinguish it.
 	npc := unit.Team != s.game.State.PlayerTeam
@@ -252,7 +264,7 @@ func (s *Screen) collectRoute(cells map[game.Point]routeCell, unit *game.UnitInf
 	for _, st := range steps {
 		// Approximate the per cell move cost: 1 for a cardinal step, 2 for a
 		// diagonal (the odd Dir values).
-		if st.Dir&1 != 0 {
+		if st.Dir&1 != 0 && !air {
 			acc += 2
 		} else {
 			acc++

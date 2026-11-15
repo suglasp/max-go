@@ -24,7 +24,7 @@ func (g *Game) HaltForEnemy(u *game.UnitInfo) {
 
 	// Halfway into a cell: finish the crossing and stop on that cell, holding the steps
 	// after it. Cancelling here would leave the unit drawn between two cells.
-	if o := g.activeOrder(u); o != nil && u.Moved > 0 {
+	if o := g.activeOrder(u); o != nil && o.MidCell() {
 		rest := o.StopAtNextCell()
 		delete(g.pending, u)
 		u.AttackTarget = nil

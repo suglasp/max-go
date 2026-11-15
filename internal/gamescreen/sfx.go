@@ -16,6 +16,7 @@ import (
 	"github.com/suglasp/max-go/internal/dbg"
 	"github.com/suglasp/max-go/internal/economy"
 	"github.com/suglasp/max-go/internal/game"
+	"github.com/suglasp/max-go/internal/platform"
 	"github.com/suglasp/max-go/internal/units"
 	"github.com/suglasp/max-go/internal/world"
 )
@@ -295,7 +296,35 @@ func (s *Screen) haltingTeam(team int) bool {
 	}
 }
 
-// tickMovementSfx advances the sim one frame and fires movement SFX: the drive sound when a
+// moveTickMS is the time between two order ticks of the sim: 43 ms, about 23 ticks a second.
+//
+// C++ ported : game_manager.cpp - GameManager_IsTickDue (TIMER_FPS_TO_MS(24))
+const moveTickMS = 43
+
+// moveTickDue reports whether a sim order tick is due now and stamps the time when it is.
+// One tick per pass, with no catch up for a late frame, as the reference does. A zero stamp
+// (the first call, or a freshly reset turn flow) always fires.
+//
+// C++ ported : game_manager.cpp - GameManager_IsTickDue, TickTimer_SetLastTimeStamp
+func (s *Screen) moveTickDue() bool {
+	var now uint64
+
+	if s.turnFlow.moveClock != nil {
+		now = s.turnFlow.moveClock()
+	} else {
+		now = platform.Ticks()
+	}
+
+	if s.turnFlow.moveTickStamp != 0 && now-s.turnFlow.moveTickStamp < moveTickMS {
+		return false
+	}
+
+	s.turnFlow.moveTickStamp = now
+
+	return true
+}
+
+// tickMovementSfx advances the sim one tick (when one is due) and fires movement SFX: the drive sound when a
 // unit starts moving, cut on arrival/stall, then the stop sound. The drive sound is held on a
 // per unit handle and stopped on arrival so a short hop does not play the full clip.
 // C++: UnitInfo::Move plays SFX_TYPE_DRIVE/STOP on state changes (per unit channel).
@@ -311,16 +340,20 @@ func (s *Screen) tickMovementSfx() {
 		nowDriving[o.Unit] = true
 	}
 
-	s.game.Tick()
+	// The sim runs one order tick per moveTickMS, as the reference does; the sfx, follow unit
+	// and auto land work below still runs on every frame.
+	if s.moveTickDue() {
+		s.game.Tick()
 
-	// Halt movement when an enemy is detected: a mover whose scan reveals an enemy that
-	// can attack it holds its route, before recomputing who is still driving (so the
-	// halted unit gets its stop sound). With the preference off the sightings are only
-	// dropped, so they never pile up. C++: the enemy_halt pref.
-	if s.enemyHalt {
-		s.haltMoversOnEnemy()
-	} else {
-		s.game.DrainSightings()
+		// Halt movement when an enemy is detected: a mover whose scan reveals an enemy that
+		// can attack it holds its route, before recomputing who is still driving (so the
+		// halted unit gets its stop sound). With the preference off the sightings are only
+		// dropped, so they never pile up. C++: the enemy_halt pref.
+		if s.enemyHalt {
+			s.haltMoversOnEnemy()
+		} else {
+			s.game.DrainSightings()
+		}
 	}
 
 	// Units still in an active move order after the tick.

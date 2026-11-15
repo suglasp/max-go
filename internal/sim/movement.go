@@ -8,6 +8,7 @@
 package sim
 
 import (
+	"github.com/suglasp/max-go/internal/access"
 	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/paths"
 	"github.com/suglasp/max-go/internal/units"
@@ -50,18 +51,61 @@ func (g *Game) orderMoveToAvoiding(u *game.UnitInfo, cx, cy int, penalty func(x,
 	if g.IsClearingRubble(u) {
 		return false // a bulldozer busy clearing rubble cannot move
 	}
+	/* // note: unused code in Go port (N20: a landed plane rose at once on a move order; the air move order now climbs for a few ticks before it flies, see units.NewAirMoveOrder)
 	if IsAirUnit(u) && !IsHovering(u) {
 		g.TakeOff(u) // a landed air unit rises on its own when ordered to move (auto take off)
 	}
+	*/
 	g.cancel(u)
 	delete(g.pending, u) // a fresh explicit order supersedes any queued route
 	g.ClearHeldRoute(u)  // and any route held by an enemy halt (Auto Survey, the AI, a Path build)
+	if IsAirUnit(u) {
+		return g.orderAirMove(u, cx, cy) // a plane flies a straight line, not the grid route
+	}
 	steps, cost, ok := g.findRouteAvoiding(u, cx, cy, penalty)
 	if !ok {
 		return false
 	}
 	g.orders = append(g.orders, units.NewMoveOrder(g.Units, u, steps, cost, g.Fast))
 	return true
+}
+
+// airDestinationFree reports whether a plane may take the destination cell: on the map, and not
+// held by another plane (the same class block the ground route search applies).
+func (g *Game) airDestinationFree(u *game.UnitInfo, destX, destY int) bool {
+	if destX < 0 || destY < 0 || destX >= g.W || destY >= g.H {
+		return false
+	}
+	cost := paths.GridCost(g.Grid, g.unitDesc(u), u.Team, access.SameClassBlocks)
+	return cost(destX, destY) != 0
+}
+
+// orderAirMove starts a plane on a straight flight to (destX, destY). The plane climbs first when
+// it is landed. A destination another plane holds, or the plane's own cell, is refused.
+//
+// C++ ported : paths.cpp - Paths_GetAirPath, unitinfo.cpp - UnitInfo::ExecuteMove (take off first)
+func (g *Game) orderAirMove(u *game.UnitInfo, destX, destY int) bool {
+	if !g.airDestinationFree(u, destX, destY) {
+		return false
+	}
+	o := units.NewAirMoveOrder(g.Units, u, destX, destY, g.Fast)
+	if o == nil {
+		return false
+	}
+	o.OnTakeOff = func(p *game.UnitInfo) { g.TakeOff(p) }
+	o.OnCellChange = func(*game.UnitInfo) { g.RefreshVisibility() }
+	g.orders = append(g.orders, o)
+	return true
+}
+
+// airRouteSteps is the one step route of a plane to (destX, destY), for a queued route. It
+// reports false when the destination is refused or is the plane's own cell.
+func (g *Game) airRouteSteps(u *game.UnitInfo, destX, destY int) ([]paths.Step, bool) {
+	if !g.airDestinationFree(u, destX, destY) || (u.GridX == destX && u.GridY == destY) {
+		return nil, false
+	}
+	dir := int(game.TargetAngle(destX-u.GridX, destY-u.GridY))
+	return []paths.Step{{To: game.Point{X: destX, Y: destY}, Dir: dir}}, true
 }
 
 // QueueMove plans a route for u to (cx, cy) and shelves it as a pending route WITHOUT
@@ -74,7 +118,13 @@ func (g *Game) QueueMove(u *game.UnitInfo, cx, cy int) bool {
 	if g.IsDisabled(u) || g.IsClearingRubble(u) {
 		return false
 	}
-	steps, _, ok := g.findRoute(u, cx, cy)
+	var steps []paths.Step
+	var ok bool
+	if IsAirUnit(u) {
+		steps, ok = g.airRouteSteps(u, cx, cy)
+	} else {
+		steps, _, ok = g.findRoute(u, cx, cy)
+	}
 	if !ok {
 		return false // unreachable: queue nothing so the caller can report no path
 	}
@@ -103,6 +153,7 @@ func (g *Game) cancel(u *game.UnitInfo) {
 			kept = append(kept, o)
 		} else {
 			o.ReleaseReservation()
+			u.Velocity = 0 // the cancelled move is over (UnitInfo::MoveFinished)
 		}
 	}
 	g.orders = kept
@@ -128,14 +179,85 @@ func (g *Game) HasOrder(u *game.UnitInfo) bool {
 	return false
 }
 
+// hiddenPassCap bounds the passes a hidden mover may take inside one Tick (one cell per
+// pass), and hiddenTickCap bounds the animation frames it may spend on one cell. Both only
+// guard against a runaway order; a real route ends far sooner.
+const (
+	hiddenPassCap = 100000
+	hiddenTickCap = 4096
+)
+
 // Tick advances every active move order one animation frame and drops the
 // finished/stalled ones. It returns the number of orders still active; the
-// in game screen calls this once per frame.
+// in game screen calls this once per order tick (about every 43 ms).
+//
+// A mover the player cannot see resolves at once instead of animating: it keeps going,
+// one cell per pass, until it stops or comes into view, so a computer turn out of sight
+// does not wait on animation nobody watches. Each pass settles its cell fully, so mines
+// and reaction fire still see every cell.
+//
+// C++ ported : unitinfo.cpp - UnitInfo::Move (the loop while the unit is not visible to the player team)
 func (g *Game) Tick() int {
+	g.tickOrders(false)
+	for pass := 0; pass < hiddenPassCap; pass++ {
+		if !g.tickOrders(true) {
+			break
+		}
+		g.detonateMines() // a mine on the cell just settled goes off before the next cell
+	}
+	g.updateExpansions()   // release a building to unfold once its builder has cleared it
+	g.sweepFactoryReady()  // free a factory once its parked output unit has driven off
+	g.detonateMines()      // explode a mine an enemy has just driven onto
+	g.advanceProjectiles() // fly missiles toward their target; resolve on arrival
+	return len(g.orders)
+}
+
+// hiddenFromPlayer reports whether the player cannot see u: a unit of the player's own team
+// is always seen. Without a game state or fog (a bare test game) nothing is hidden.
+func (g *Game) hiddenFromPlayer(u *game.UnitInfo) bool {
+	if g.Vis == nil || g.State == nil || u == nil {
+		return false
+	}
+	return !g.Vis.VisibleToTeam(u, g.State.PlayerTeam)
+}
+
+// tickToNextCell runs a hidden mover's order until it settles on a new cell, finishes or
+// stops. A turn costs no pause out of sight; a stand fast for a contested cell still takes
+// one order tick per wait, so the wait limit counts ticks as it does for a visible unit.
+func tickToNextCell(o *units.MoveOrder) units.MoveStatus {
+	u := o.Unit
+	startX, startY, startIndex := u.GridX, u.GridY, o.Index
+	for i := 0; i < hiddenTickCap; i++ {
+		status := o.Tick()
+		if status != units.MoveTurning && status != units.MoveDriving {
+			return status
+		}
+		if o.Index != startIndex || u.GridX != startX || u.GridY != startY {
+			return units.MoveDriving
+		}
+	}
+	return units.MoveDriving
+}
+
+// tickOrders advances the move orders one step (every order, or only the hidden movers
+// each one cell) and drops the finished/stalled ones. It reports whether a hidden mover
+// settled on a cell and is still moving, so the caller runs another hidden pass.
+func (g *Game) tickOrders(hiddenOnly bool) bool {
 	kept := g.orders[:0]
+	progressed := false
 	var settled []*game.UnitInfo // movers that reached a new cell this tick -> draw reaction fire
 	for _, o := range g.orders {
-		switch o.Tick() {
+		var status units.MoveStatus
+		switch {
+		case !hiddenOnly:
+			status = o.Tick()
+		case g.hiddenFromPlayer(o.Unit):
+			status = tickToNextCell(o)
+		default:
+			kept = append(kept, o) // in view: it moves one order tick at a time
+			continue
+		}
+		switch status {
 		case units.MoveDone:
 			delete(g.pending, o.Unit) // route finished; no queued remainder
 			if o.Unit.AttackTarget != nil {
@@ -165,6 +287,9 @@ func (g *Game) Tick() int {
 			settled = append(settled, o.Unit)
 		default:
 			kept = append(kept, o)
+			if hiddenOnly && status == units.MoveDriving {
+				progressed = true
+			}
 		}
 	}
 	g.orders = kept
@@ -181,11 +306,7 @@ func (g *Game) Tick() int {
 	for _, m := range settled {
 		g.resumePathBuildOnArrival(m)
 	}
-	g.updateExpansions()   // release a building to unfold once its builder has cleared it
-	g.sweepFactoryReady()  // free a factory once its parked output unit has driven off
-	g.detonateMines()      // explode a mine an enemy has just driven onto
-	g.advanceProjectiles() // fly missiles toward their target; resolve on arrival
-	return len(g.orders)
+	return progressed
 }
 
 // ResolveMovement fast forwards every active move order to completion (or to

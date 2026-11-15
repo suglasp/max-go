@@ -22,9 +22,16 @@ import (
 // C++ ported : unitinfo.cpp - UnitInfo::Attack (FIRES_MISSILES spawn) + airpath.cpp
 // Paths_DrawMissile / Paths_FinishMove.
 
-// projectileSpeed is the missile flight speed in pixels per Tick (faster than a
-// driving unit; the map tile is 64px).
-const projectileSpeed = 24
+// projectileSpeed is the missile flight speed in pixels per Tick: one map tile (64px)
+// per tick, as the reference missile path does. The gate in tickMovementSfx makes a
+// tick last about 43 ms, so this matches the reference pace.
+//
+// C++ ported : units_manager.cpp - UnitsManager_GetMissilePath
+const projectileSpeed = 64
+
+/* // note: unused code in Go port (N20: projectiles move 64 px per tick now, the reference pace once ticks are gated to 43 ms; 24 only matched 60 ticks per second)
+const projectileSpeedOld = 24
+*/
 
 // firesMissile reports whether a unit launches a travelling projectile on attack
 // (vs an instant tracer hit). The set mirrors the original's FIRES_MISSILES / MaxR's
