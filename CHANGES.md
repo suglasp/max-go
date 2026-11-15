@@ -13,6 +13,7 @@ Check the version file next to the game executables.
 - `max-go.json` no longer carries a `language` setting by default; the game reads its texts from `LANG.RES`. Add `"language": "en-us"` by hand to use a loose `lang-en-us.ini` again; `-language` now applies to one run only and is never saved.
 
 ### Fixes
+- The Upgrades screen's unit type buttons now stay pressed to show the filter, and keep it when you open the screen again.
 - A mission now plays with the play mode, turn timer, End Turn Time and opponent fixed in the mission itself.
 - A loaded save game keeps its own turn timer and End Turn Time.
 - In a custom game the computer no longer lands right next to your base; it picks its site after you, well away from it.

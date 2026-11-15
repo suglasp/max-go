@@ -37,6 +37,11 @@ type upgradeSnap struct {
 // C++: AbstractUpgradeMenu::button_*_rest_state.
 type upgradeFilter struct{ ground, air, sea, building, combat bool }
 
+// upgradeFilterState is the category filter that survives closing and reopening the menu (and is
+// meant to be shared with the Purchase Menu). Defaults: ground, air, sea, building on, combat off.
+// C++: AbstractUpgradeMenu::button_*_rest_state statics (abstractupgrademenu.cpp).
+var upgradeFilterState = upgradeFilter{ground: true, air: true, sea: true, building: true, combat: false}
+
 // Panel geometry: the unit selector list (a 32px icon + name row per unit, the
 // original UnitTypeSelector), the stats panel, the cost column, the gold slot,
 // and the stepper arrow strip. C++: ReportStats_DrawListItem rects.
@@ -63,10 +68,11 @@ type upgradeMenu struct {
 	startGold int
 	snaps     []upgradeSnap
 
-	filter  upgradeFilter
-	visible []*game.UpgradeUnit // filtered view of units
-	sel     int
-	scroll  int
+	filter     upgradeFilter
+	filterBtns map[int]upgradeFilterPlate // sticky plate per event value, to read ButtonChecked on a press
+	visible    []*game.UpgradeUnit        // filtered view of units
+	sel        int
+	scroll     int
 
 	win gnw.WinID
 	oy  int // window top edge, to map mouse clicks into list rows
@@ -131,7 +137,8 @@ func RunUpgrade(ctx *Context, units []*game.UpgradeUnit, gold *int, center gfx.R
 		gold:      gold,
 		startGold: startGold,
 		snaps:     snaps,
-		filter:    upgradeFilter{ground: true, air: true, sea: true, building: true, combat: false},
+		/* filter: upgradeFilter{ground: true, ...}: note: unused code in Go port, the filter now starts from the package level upgradeFilterState so it survives reopening */
+		filter:    upgradeFilterState,
 		win:       win,
 		oy:        oy,
 		pic:       pic,
@@ -243,23 +250,51 @@ func (m *upgradeMenu) buildWidgets() []gnw.ButtonID {
 	mkPlate(447, "BLDONE_U", "BLDONE_D", ctx.text("bd89", "Done"), 1000, "NDONE0")
 
 	// Category filter toggles (sticky) along y=411.
-	filts := []upgradeFilterButton{
-		{467, "SELGRD_U", "SELGRD_D", 1003, 1004, &m.filter.ground},
-		{500, "SELAIR_U", "SELAIR_D", 1005, 1006, &m.filter.air},
-		{533, "SELSEA_U", "SELSEA_D", 1007, 1008, &m.filter.sea},
-		{565, "SELBLD_U", "SELBLD_D", 1009, 1010, &m.filter.building},
-		{598, "SELCBT_U", "SELCBT_D", 1011, 1012, &m.filter.combat},
-	}
-	for _, fb := range filts {
-		// Plain (not sticky) buttons: toggling is handled in the loop so the
-		// visible list rebuilds; the rest face reflects the filter state.
-		if b, e := ctx.imageButton(win, fb.x, 411, fb.up, fb.down, "", 0, 0, false, fb.on); e == nil {
-			ctx.registerButtonSfx(b, "KCARG0")
-			buttons = append(buttons, b)
-		}
-	}
+	buttons = append(buttons, m.buildFilterPlates(win)...)
 
 	return buttons
+}
+
+// buildFilterPlates creates the five sticky category plates along y=411. Each rests in the state of
+// the filter, so its face shows whether the class is listed. The press value is the plate's event.
+// C++: AbstractUpgradeMenu button_*_rest_state + SetRestState (abstractupgrademenu.cpp).
+func (m *upgradeMenu) buildFilterPlates(win gnw.WinID) []gnw.ButtonID {
+	ctx := m.ctx
+	var buttons []gnw.ButtonID
+	m.filterBtns = map[int]upgradeFilterPlate{}
+	filts := []upgradeFilterButton{
+		{467, "SELGRD_U", "SELGRD_D", 1003, &m.filter.ground},
+		{500, "SELAIR_U", "SELAIR_D", 1005, &m.filter.air},
+		{533, "SELSEA_U", "SELSEA_D", 1007, &m.filter.sea},
+		{565, "SELBLD_U", "SELBLD_D", 1009, &m.filter.building},
+		{598, "SELCBT_U", "SELCBT_D", 1011, &m.filter.combat},
+	}
+	for _, fb := range filts {
+		/* old plate: ctx.imageButton(win, fb.x, 411, fb.up, fb.down, "", 0, 0, false, fb.on): note: unused code in Go port,
+		a momentary button never showed the filter; replaced by a sticky toggle that rests in the filter state */
+		b, e := ctx.imageButton(win, fb.x, 411, fb.up, fb.down, "", 0, 0, true, fb.on)
+		if e != nil {
+			continue
+		}
+		ctx.Sys.SetButtonToggle(b) // a second click releases it
+		ctx.Sys.SetRestState(b, *fb.state)
+		ctx.registerButtonSfx(b, "KCARG0")
+		buttons = append(buttons, b)
+		m.filterBtns[fb.on] = upgradeFilterPlate{bid: b, state: fb.state}
+	}
+	return buttons
+}
+
+// applyFilterToggle handles a press of a category plate: the plate's checked state becomes the filter
+// flag and the package level state is updated. It reports whether key was a plate event.
+func (m *upgradeMenu) applyFilterToggle(key int) bool {
+	p, ok := m.filterBtns[key]
+	if !ok {
+		return false
+	}
+	*p.state = m.ctx.Sys.ButtonChecked(p.bid)
+	upgradeFilterState = m.filter
+	return true
 }
 
 // handleKey runs one input event of the Upgrade screen. It reports done once the
@@ -294,6 +329,8 @@ func (m *upgradeMenu) handleKey(key int) (done, commit bool) {
 			m.scroll++
 			m.drawList()
 		}
+	/* case key == 1003..1012: note: unused code in Go port, the plates flipped the flag on every press and
+	never showed it; replaced by the sticky plates read through applyFilterToggle
 	case key == 1003, key == 1004:
 		m.filter.ground = !m.filter.ground
 		m.rebuild()
@@ -308,6 +345,9 @@ func (m *upgradeMenu) handleKey(key int) (done, commit bool) {
 		m.rebuild()
 	case key == 1011, key == 1012:
 		m.filter.combat = !m.filter.combat
+		m.rebuild()
+	*/
+	case m.applyFilterToggle(key):
 		m.rebuild()
 	case key >= 2000 && key < 2000+int(game.AttribCount): // left arrow: sell back a step
 		upgradeStep(m.visible, m.sel, key-2000, gold, -1, snaps)
@@ -529,8 +569,15 @@ func (m *upgradeMenu) rebuild() {
 type upgradeFilterButton struct {
 	x        int
 	up, down string
-	on, off  int
-	state    *bool
+	on       int // press value; the release value is unused (sticky plate)
+	/* off int: note: unused code in Go port, never read; the plate is a sticky toggle with one event value */
+	state *bool
+}
+
+// upgradeFilterPlate links a plate's button to the filter flag it drives.
+type upgradeFilterPlate struct {
+	bid   gnw.ButtonID
+	state *bool
 }
 
 // upgradeStepRow marks a stat panel row that takes the left/right stepper
