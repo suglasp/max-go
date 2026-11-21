@@ -62,7 +62,7 @@ func (s *Screen) tickCommandoEvents() {
 // C++ ported : units_manager.cpp - UnitsManager_UpdateSabotagedUnitSelection
 func (s *Screen) updateRaidedSelection(e sim.CommandoEvent, player int) {
 	victim := e.Victim
-	if victim == nil || (e.Kind != sim.CommandoCapture && e.Kind != sim.CommandoDisable) || false {
+	if victim == nil || (e.Kind != sim.CommandoCapture && e.Kind != sim.CommandoDisable) || !s.isSelectedUnit(victim) {
 		return
 	}
 

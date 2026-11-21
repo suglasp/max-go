@@ -89,6 +89,31 @@ func (s *Screen) armInfiltrate(u *game.UnitInfo, steal bool) {
 	}
 }
 
+// canInfiltrateAt reports whether the selected commando may steal or disable the unit under (cellX, cellY) by a player
+// pick: the sim allows it, the unit is visible to the player, and the picked cell itself is next to the commando.
+//
+// C++ ported : game_manager.cpp - GameManager_IsUnitNextToPosition (the picked cell test in GameManager_GetMilitaryCursor)
+func (s *Screen) canInfiltrateAt(cellX, cellY int, steal bool) bool {
+	c := s.selected
+	if c == nil {
+		return false
+	}
+
+	if iabsInt(cellX-c.GridX) > 1 || iabsInt(cellY-c.GridY) > 1 {
+		return false
+	}
+
+	if !s.canSeeTargetAt(c, cellX, cellY) {
+		return false
+	}
+
+	if steal {
+		return s.game.CanStealAt(c, cellX, cellY)
+	}
+
+	return s.game.CanDisableAt(c, cellX, cellY)
+}
+
 // cancelInfiltrate disarms a pending disable/steal target pick.
 func (s *Screen) cancelInfiltrate() {
 	if s.orderInput.infiltrateArmed {
@@ -379,12 +404,15 @@ func (s *Screen) handleInfiltratePick(mouse platform.MouseState) bool {
 
 		if mouse.Buttons&platform.MouseReleaseLeft != 0 {
 			cellX, cellY, ok := s.mapCell(mouse.X, mouse.Y)
+			/* // note: unused code in Go port - replaced by canInfiltrateAt, which adds the visibility and picked cell checks
 			valid := ok && s.selected != nil
 			if valid && s.orderInput.infiltrateSteal {
 				valid = s.game.CanStealAt(s.selected, cellX, cellY)
 			} else if valid {
 				valid = s.game.CanDisableAt(s.selected, cellX, cellY)
 			}
+			*/
+			valid := ok && s.canInfiltrateAt(cellX, cellY, s.orderInput.infiltrateSteal)
 
 			if valid {
 				s.infiltrate(cellX, cellY)

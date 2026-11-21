@@ -14,6 +14,8 @@ Check the version file next to the game executables.
 - `max-go.json` no longer carries a `language` setting by default; the game reads its texts from `LANG.RES`. Add `"language": "en-us"` by hand to use a loose `lang-en-us.ini` again; `-language` now applies to one run only and is never saved.
 
 ### Fixes
+- An infiltrator can no longer steal or disable a submarine or a wrecked unit, and its target cursor no longer shows on units you cannot see or on a cell out of its reach.
+- When an enemy infiltrator steals or disables your selected unit, the selection updates: a stolen unit is deselected, and with auto select on the next unit is picked.
 - The game over screen counts only lost vehicles, ships, aircraft and infantry as units lost (a lost building counts only as a building), and a scenario's starting units now count as built.
 - The game over screen shows the gold spent on upgrades as Credit or Credits.
 - The computer moves its own parked units out of its builders' way, instead of leaving them stuck or blowing up its storage.
