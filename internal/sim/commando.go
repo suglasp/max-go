@@ -75,11 +75,16 @@ func (g *Game) StealthChance(c, target *game.UnitInfo, steal bool) int {
 	return chance
 }
 
-// canInfiltrate checks shared disable and steal eligibility: an adjacent enemy electronic unit and a commando with a shot left.
-// Steal rejects buildings and loaded transports. Disable rejects an already disabled target.
+// canInfiltrate checks shared disable and steal eligibility. The target must be an enemy, electronic, with hits left, not an
+// airborne aircraft, not transforming, firing, exploding or being destroyed, one the commando may attack by type (a submarine
+// is not), and next to the commando (footprint widened by one). Steal also rejects stationary units and loaded transports.
+// Disable also rejects an already disabled target.
+// ORDER_IDLE is not tested: in the reference it only marks off map units (stored cargo, the building ready shell), which Go
+// already excludes (cell hash, HiddenUntilExpand), while Go marks unallocated research centres OrderIdle, so a literal port
+// would make them immune. The scaling order is not tested because Go has no OrderAwaitScaling.
 //
-// C++ ported : game_manager.cpp - GameManager_IsValidDisableTarget /
-// GameManager_IsValidStealTarget + the COMMANDO branch of GameManager_GetMilitaryCursor.
+// C++ ported : units_manager.cpp - UnitsManager_IsValidStealthTarget (+ game_manager.cpp
+// GameManager_IsValidDisableTarget / GameManager_IsValidStealTarget and the COMMANDO branch of GameManager_GetMilitaryCursor).
 func (g *Game) canInfiltrate(c, target *game.UnitInfo, steal bool) bool {
 	if !IsCommando(c) || target == nil || c.Shots <= 0 {
 		return false
@@ -90,11 +95,17 @@ func (g *Game) canInfiltrate(c, target *game.UnitInfo, steal bool) bool {
 	if !target.Flags.Has(game.FlagElectronicUnit) {
 		return false // organic units (infantry/commando) cannot be disabled/stolen
 	}
+	if target.Hits <= 0 {
+		return false // a wrecked unit is no target
+	}
 	if busyOrDying(target) {
 		return false
 	}
 	if targetInAir(target) {
 		return false
+	}
+	if !g.CanTargetUnit(c, target) {
+		return false // Access_IsValidAttackTarget: a commando cannot attack a submarine
 	}
 	if !commandoAdjacent(c, target) {
 		return false

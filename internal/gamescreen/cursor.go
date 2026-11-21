@@ -196,10 +196,11 @@ func (s *Screen) cursorForArmedOrder(cellX, cellY int) (id cursors.ID, armed boo
 	// GameManager_GetMilitaryCursor.
 	if s.orderInput.infiltrateArmed && s.selected != nil {
 		if s.orderInput.infiltrateSteal {
-			if s.game.CanStealAt(s.selected, cellX, cellY) {
+			// note: unused code in Go port - s.game.CanStealAt / CanDisableAt called directly, replaced by canInfiltrateAt
+			if s.canInfiltrateAt(cellX, cellY, true) {
 				return cursors.Steal, true
 			}
-		} else if s.game.CanDisableAt(s.selected, cellX, cellY) {
+		} else if s.canInfiltrateAt(cellX, cellY, false) {
 			return cursors.Disable, true
 		}
 

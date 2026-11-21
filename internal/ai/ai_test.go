@@ -3055,6 +3055,7 @@ func electronicBuilding(team, id int, ut assets.UnitType, large bool, gx, gy int
 	u := game.NewUnitInfo(ut, team, id, 0)
 	u.Flags = buildingFlags(large) | game.FlagElectronicUnit
 	u.Values = &game.UnitValues{}
+	u.Values.Set(game.AttribHits, 10) // a target with hits left (a 0 hits unit is no infiltration target)
 	u.InitState()
 	mgr.Deploy(u, gx, gy)
 	return u

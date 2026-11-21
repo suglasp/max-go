@@ -306,3 +306,33 @@ func TestCommandoDisableAndMissQueueEvents(t *testing.T) {
 		t.Errorf("victim team = %d, want 1 (the team that caught the infiltrator)", events[0].VictimTeam)
 	}
 }
+
+// TestInfiltrateTargetRules covers the reference stealth target rules added to the shared check: a submarine (which a
+// commando cannot attack) and a 0 hits unit are no target, an adjacent electronic tank still is.
+func TestInfiltrateTargetRules(t *testing.T) {
+	g := newGame(t, 12, 12)
+	c := addCommando(g, 0, 1, 1)
+
+	tank := addElectronicEnemy(g, 1, 2, 1, 8, 0)
+	if !g.CanDisable(c, tank) || !g.CanSteal(c, tank) {
+		t.Fatal("an adjacent electronic tank must stay disable and steal eligible")
+	}
+
+	sub := addElectronicEnemy(g, 1, 1, 2, 8, 0)
+	sub.Type = assets.Submarne
+	sub.Flags = game.FlagMobileSeaUnit | game.FlagSelectable | game.FlagElectronicUnit
+	if g.CanDisable(c, sub) {
+		t.Error("a submarine must not be disabled by a commando")
+	}
+	if g.CanSteal(c, sub) {
+		t.Error("a submarine must not be stolen by a commando")
+	}
+
+	tank.Hits = 0
+	if g.CanDisable(c, tank) {
+		t.Error("a 0 hits target must not be disabled")
+	}
+	if g.CanSteal(c, tank) {
+		t.Error("a 0 hits target must not be stolen")
+	}
+}
