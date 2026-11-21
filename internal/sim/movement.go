@@ -193,6 +193,7 @@ const (
 //
 // C++ ported : unitinfo.cpp - UnitInfo::Move (the loop while the unit is not visible to the player team)
 func (g *Game) Tick() int {
+	g.remindHaltedMovers() // a halted computer unit gets its answer before the orders step
 	g.tickOrders(false)
 	for pass := 0; pass < hiddenPassCap; pass++ {
 		if !g.tickOrders(true) {
@@ -204,7 +205,7 @@ func (g *Game) Tick() int {
 	g.sweepFactoryReady()  // free a factory once its parked output unit has driven off
 	g.detonateMines()      // explode a mine an enemy has just driven onto
 	g.advanceProjectiles() // fly missiles toward their target; resolve on arrival
-	return len(g.orders)
+	return len(g.orders) + len(g.haltReminders) // a waiting reminder keeps the turn open
 }
 
 // hiddenFromPlayer reports whether the player cannot see u: a unit of the player's own team
@@ -316,9 +317,9 @@ func (g *Game) ResolveMovement() {
 	g.FireRevealReactions() // a defender fires on an enemy this move just revealed in its range
 }
 
-// ActiveOrders reports how many move orders are still running.
+// ActiveOrders reports how many move orders are still running, plus halted computer units waiting for their AI answer.
 func (g *Game) ActiveOrders() int {
-	return len(g.orders)
+	return len(g.orders) + len(g.haltReminders)
 }
 
 // MoveOrders returns the active move orders for read only inspection (the

@@ -22,6 +22,8 @@ func (g *Game) HaltForEnemy(u *game.UnitInfo) {
 		return
 	}
 
+	g.queueHaltReminder(u) // a computer unit answers the halt this turn (C++ Task_RemindMoveFinished)
+
 	// Halfway into a cell: finish the crossing and stop on that cell, holding the steps
 	// after it. Cancelling here would leave the unit drawn between two cells.
 	if o := g.activeOrder(u); o != nil && o.MidCell() {
@@ -56,6 +58,72 @@ func (g *Game) HaltForEnemy(u *game.UnitInfo) {
 	if moving {
 		g.checkReactions(u)
 	}
+}
+
+// queueHaltReminder queues a halted computer unit so the AI gets to answer the halt in the same turn. A human unit is
+// never queued: it waits for Continue or the next turn start. A unit already queued is not queued twice.
+// C++ ported : task.cpp - Task_RemindMoveFinished (UnitInfo::MoveFinished -> the unit's task runs again at once)
+func (g *Game) queueHaltReminder(u *game.UnitInfo) {
+	// Only a computer team has a task to wake; no game state means no team type.
+	if g.State == nil || u.Team < 0 || u.Team >= game.TeamCount || g.State.Teams[u.Team].Type != game.TeamComputer {
+		return
+	}
+
+	for _, queued := range g.haltReminders {
+		if queued == u {
+			return // one reminder per halt, even for a second halt in the same crossing
+		}
+	}
+
+	g.haltReminders = append(g.haltReminders, u)
+}
+
+// remindHaltedMovers hands each queued halted unit to the AI once its halt has settled. A unit still crossing its cell
+// stays queued, a dead unit is dropped, and without an AI the reminder is simply dropped.
+// C++ ported : task.cpp - Task_RemindMoveFinished
+func (g *Game) remindHaltedMovers() {
+	if len(g.haltReminders) == 0 {
+		return
+	}
+
+	var ready []*game.UnitInfo
+
+	kept := g.haltReminders[:0]
+
+	for _, u := range g.haltReminders {
+		switch {
+		case g.HasOrder(u):
+			kept = append(kept, u) // still crossing its cell: the halt has not settled yet
+		case u.Hits <= 0:
+			// dead: nothing to remind
+		default:
+			ready = append(ready, u)
+		}
+	}
+
+	g.haltReminders = kept
+
+	// The AI issues orders, which edit g.orders and this queue, so it runs after the queue is rebuilt.
+	if g.AI == nil {
+		return
+	}
+
+	for _, u := range ready {
+		g.AI.MoveFinished(g, u)
+	}
+}
+
+// clearHaltReminders drops team's queued halt reminders at its turn start: a reminder never outlives its turn.
+func (g *Game) clearHaltReminders(team int) {
+	kept := g.haltReminders[:0]
+
+	for _, u := range g.haltReminders {
+		if u.Team != team {
+			kept = append(kept, u)
+		}
+	}
+
+	g.haltReminders = kept
 }
 
 // holdRoute stores steps as u's held route.

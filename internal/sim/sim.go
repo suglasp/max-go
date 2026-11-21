@@ -64,6 +64,8 @@ type Game struct {
 
 	arrivalShots map[*game.UnitInfo]*game.UnitInfo // shots queued to fire when a mover parks
 
+	haltReminders []*game.UnitInfo // halted computer units whose AI answers on the next Tick (never saved)
+
 	reachLabels map[uint8][]int32 // cached terrain components by movement mask
 
 	buildExits map[*game.UnitInfo][2]int // exit cells for computer builders
@@ -120,6 +122,10 @@ type TurnAI interface {
 	// BeginTurn lets the AI plan and issue the team's orders at turn start;
 	// they resolve at turn end like a human's. C++: AiPlayer::BeginTurn.
 	BeginTurn(g *Game, team int)
+
+	// MoveFinished lets the AI answer a unit that a halt stopped mid turn: fire or drive on.
+	// C++: task.cpp - Task_RemindMoveFinished.
+	MoveFinished(g *Game, u *game.UnitInfo)
 }
 
 // UnitFactory mints a fresh, unplaced, fully statted unit of a type for a team.
@@ -194,9 +200,10 @@ func (g *Game) BeginTeamTurn(team int) {
 	g.turnStalled = g.AdvanceBuilds(team)
 	g.issueBuildExits(team)
 	g.resumePending(team)
-	g.resumeHeld(team)        // a unit halted on spotting an enemy drives on now its moves are back
-	g.resumePursuit(team)     // continue any 2+-turn move to attack chase now budgets refilled
-	g.clearArrivalShots(team) // a shot queued last turn and never taken belongs to last turn
+	g.resumeHeld(team)         // a unit halted on spotting an enemy drives on now its moves are back
+	g.resumePursuit(team)      // continue any 2+-turn move to attack chase now budgets refilled
+	g.clearArrivalShots(team)  // a shot queued last turn and never taken belongs to last turn
+	g.clearHaltReminders(team) // a halt answer belongs to the turn it happened in
 	// Hand a computer team to the AI once its economy and construction have run,
 	// so it plans against current resources. Its orders resolve at turn end like
 	// a human's. nil AI (or a non computer team) just proceeds. C++: Ai_BeginTurn.

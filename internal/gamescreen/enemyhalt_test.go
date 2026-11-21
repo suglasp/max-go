@@ -229,3 +229,96 @@ func TestResumedUnitDrivesOnPastAKnownEnemy(t *testing.T) {
 		t.Errorf("the resumed mover ended at x=%d, want 24", mover.GridX)
 	}
 }
+
+// continueAI is a stand in computer player whose answer to a halt is to press on, as the real AI does when no
+// enemy is in range.
+type continueAI struct{ answered int }
+
+// BeginTurn does nothing: the test lays the orders itself.
+func (a *continueAI) BeginTurn(g *sim.Game, team int) {}
+
+// MoveFinished presses on along the held route.
+func (a *continueAI) MoveFinished(g *sim.Game, u *game.UnitInfo) {
+	a.answered++
+
+	g.ContinueHeldRoute(u)
+}
+
+// driveHaltedMover drives mover (ordered to (24,2)) until its orders end, then reports the x it first halted at (-1
+// if it never halted).
+func driveHaltedMover(s *Screen, g *sim.Game, mover *game.UnitInfo) int {
+	haltX := -1
+
+	for i := 0; i < 600 && g.ActiveOrders() > 0; i++ {
+		g.Tick()
+		s.haltMoversOnEnemy()
+
+		if haltX < 0 && len(g.HeldRoute(mover)) > 0 {
+			haltX = mover.GridX
+		}
+	}
+
+	return haltX
+}
+
+// TestComputerMoverDrivesOnAfterItsHaltInTheSameTurn is the crawl: a computer unit halted by a newly seen enemy is
+// answered by its AI in the same turn and drives on past the halt cell, while a player unit in the same situation
+// holds its route and waits.
+func TestComputerMoverDrivesOnAfterItsHaltInTheSameTurn(t *testing.T) {
+	s, g := newHaltScreen(t)
+	player := &continueAI{}
+	g.AI = player
+
+	mover := mkTank(g.Units, 1, 1, 2, 2, tankStats{angle: 2, speed: 40, scan: 4, hits: 30}) // the computer's tank
+	mkTank(g.Units, 0, 2, 14, 6, tankStats{angle: 2, speed: 0, scan: 4, hits: 30})          // the player's tank, beside the road
+	g.BeginTeamTurn(1)
+
+	if !g.OrderMove(mover, 24, 2) {
+		t.Fatal("the computer's move order was rejected")
+	}
+
+	haltX := driveHaltedMover(s, g, mover)
+
+	if haltX < 0 {
+		t.Fatal("the computer's tank never halted for the newly seen enemy")
+	}
+
+	if player.answered == 0 {
+		t.Error("the AI was never asked to answer the halt")
+	}
+
+	if mover.GridX <= haltX {
+		t.Errorf("the computer's tank ended at x=%d, halted at x=%d: it must drive on in the same turn", mover.GridX, haltX)
+	}
+}
+
+// TestPlayerMoverStillHoldsAfterItsHalt is the human side of the crawl fix: no AI answer, the unit stands on its halt
+// cell with its route held.
+func TestPlayerMoverStillHoldsAfterItsHalt(t *testing.T) {
+	s, g := newHaltScreen(t)
+	player := &continueAI{}
+	g.AI = player
+	g.State.ActiveTeam = 0
+
+	mover := mkTank(g.Units, 0, 1, 2, 2, tankStats{angle: 2, speed: 40, scan: 4, hits: 30}) // the player's tank
+	mkTank(g.Units, 1, 2, 14, 6, tankStats{angle: 2, speed: 0, scan: 4, hits: 30})          // the computer's tank, beside the road
+	g.BeginTeamTurn(0)
+
+	if !g.OrderMove(mover, 24, 2) {
+		t.Fatal("the player's move order was rejected")
+	}
+
+	haltX := driveHaltedMover(s, g, mover)
+
+	if haltX < 0 {
+		t.Fatal("the player's tank never halted for the newly seen enemy")
+	}
+
+	if player.answered != 0 {
+		t.Errorf("the AI answered %d halts of a player unit, want 0", player.answered)
+	}
+
+	if mover.GridX != haltX || len(g.HeldRoute(mover)) == 0 {
+		t.Errorf("the player's tank is at x=%d (halted at %d) with held route %v: it must stand and hold", mover.GridX, haltX, g.HeldRoute(mover) != nil)
+	}
+}

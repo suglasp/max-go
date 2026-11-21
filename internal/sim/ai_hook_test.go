@@ -11,10 +11,16 @@ import (
 	"github.com/suglasp/max-go/internal/game"
 )
 
-// countingAI records which teams BeginTeamTurn handed to the AI seam.
-type countingAI struct{ teams []int }
+// countingAI records which teams BeginTeamTurn handed to the AI seam and which units the halt reminder woke.
+type countingAI struct {
+	teams    []int
+	finished []*game.UnitInfo
+}
 
 func (a *countingAI) BeginTurn(g *Game, team int) { a.teams = append(a.teams, team) }
+
+// MoveFinished records the unit a halt reminder woke.
+func (a *countingAI) MoveFinished(g *Game, u *game.UnitInfo) { a.finished = append(a.finished, u) }
 
 // TestAITurnHookFiresForComputerTeamsOnly checks the Phase A AI seam: the sim
 // calls TurnAI.BeginTurn when a TeamComputer team's turn starts and never for a
