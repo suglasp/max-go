@@ -11,6 +11,7 @@ package gamescreen
 import (
 	"fmt"
 
+	"github.com/suglasp/max-go/internal/game"
 	"github.com/suglasp/max-go/internal/sim"
 )
 
@@ -19,6 +20,8 @@ func (s *Screen) tickCommandoEvents() {
 	player := s.game.State.PlayerTeam
 
 	for _, e := range s.game.DrainCommandoEvents() {
+		s.updateRaidedSelection(e, player)
+
 		if e.Victim == nil || e.VictimTeam != player {
 			continue
 		}
@@ -51,4 +54,44 @@ func (s *Screen) tickCommandoEvents() {
 			s.playVoice(vsInfiltrateDetected)
 		}
 	}
+}
+
+// updateRaidedSelection keeps the selection sane when a capture or disable lands on a selected unit: the popup closes, a unit
+// the player lost leaves the selection, and with Auto Select on the player's own turn the next unit is selected.
+//
+// C++ ported : units_manager.cpp - UnitsManager_UpdateSabotagedUnitSelection
+func (s *Screen) updateRaidedSelection(e sim.CommandoEvent, player int) {
+	victim := e.Victim
+	if victim == nil || (e.Kind != sim.CommandoCapture && e.Kind != sim.CommandoDisable) || false {
+		return
+	}
+
+	s.orderInput.popupOpen = false
+
+	ownLoss := e.VictimTeam == player && victim.Team != player
+	if ownLoss {
+		s.forgetSelectedUnit(victim)
+	}
+
+	canAct := s.game.State.ActiveTeam == player && !s.gameOver // a computer turn skips this, the next human turn clears the selection
+	disabledOwn := e.Kind == sim.CommandoDisable && e.VictimTeam == player && s.selected == victim
+
+	if s.autoSelect && canAct && ((ownLoss && s.selected == nil) || disabledOwn) {
+		s.selectNextWithMoves()
+	}
+}
+
+// isSelectedUnit reports whether u is the selected unit or a member of the selected group.
+func (s *Screen) isSelectedUnit(u *game.UnitInfo) bool {
+	if s.selected == u {
+		return true
+	}
+
+	for _, m := range s.selection {
+		if m == u {
+			return true
+		}
+	}
+
+	return false
 }
