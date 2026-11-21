@@ -240,6 +240,7 @@ func (g *Game) detonateMines() {
 		}
 		res := combat.Apply(m, victim, 0) // mine attack - victim armor (floor 1)
 		g.Units.Remove(m)                 // the mine is consumed by the blast
+		g.recordCasualty(m)               // the reference counts the consumed mine as a casualty (BuildClearing)
 		// Record the blast so the in game screen can show the explosion + sound on
 		// the victim's cell (the mine's cell); drained by DrainMineBlasts each frame.
 		g.mineBlasts = append(g.mineBlasts, MineBlast{Victim: victim, Destroyed: res.Destroyed})

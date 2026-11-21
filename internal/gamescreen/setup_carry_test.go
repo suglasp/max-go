@@ -145,3 +145,23 @@ func TestMissionStartAppliesClan(t *testing.T) {
 		t.Errorf("mission clan not applied: team 1 clan = %d, want 5", g.State.Teams[1].Clan)
 	}
 }
+
+// TestMissionStartRecountsBuiltStatistics checks that the units a mission file places come out
+// counted as built (the file carries no stats).
+func TestMissionStartRecountsBuiltStatistics(t *testing.T) {
+	s, g := newTestScreen(t, 16)
+
+	tank := game.NewUnitInfo(assets.Tank, 0, 1, 0)
+	tank.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+	tank.SetPosition(3, 3)
+	mine := game.NewUnitInfo(assets.MiningSt, 0, 2, 0)
+	mine.Flags = game.FlagBuilding | game.FlagStationary | game.FlagSelectable
+	mine.SetPosition(8, 8)
+
+	s.MissionStart([]*game.UnitInfo{tank, mine}, []game.TeamType{game.TeamPlayer, game.TeamComputer}, nil, MissionRules{}, 7)
+
+	ts := g.TeamStats[0]
+	if ts.UnitsBuilt != 1 || ts.MinesBuilt != 1 || ts.BuildingsBuilt != 1 {
+		t.Errorf("mission units counted: units %d mines %d buildings %d, want 1/1/1", ts.UnitsBuilt, ts.MinesBuilt, ts.BuildingsBuilt)
+	}
+}

@@ -70,9 +70,8 @@ func TestTeamStatsFactoryUnitBuilt(t *testing.T) {
 	}
 }
 
-// TestTeamStatsCasualties: DestroyUnit tallies losses. A building counts in BOTH
-// BuildingsLost and UnitsLost (it is BUILDING and SELECTABLE); a mobile unit
-// counts only in UnitsLost.
+// TestTeamStatsCasualties: DestroyUnit tallies losses. A building counts only in
+// BuildingsLost; a mobile unit counts only in UnitsLost.
 func TestTeamStatsCasualties(t *testing.T) {
 	g := newGame(t, 24, 24)
 
@@ -87,8 +86,124 @@ func TestTeamStatsCasualties(t *testing.T) {
 	if ts.BuildingsLost != 1 {
 		t.Errorf("BuildingsLost = %d, want 1", ts.BuildingsLost)
 	}
-	if ts.UnitsLost != 2 { // the building (selectable) + the tank
-		t.Errorf("UnitsLost = %d, want 2 (a destroyed building counts as a unit lost too)", ts.UnitsLost)
+	if ts.UnitsLost != 1 { // the tank only
+		t.Errorf("UnitsLost = %d, want 1 (a destroyed building is not a unit lost)", ts.UnitsLost)
+	}
+}
+
+// TestTeamStatsConnectorLossIsNoUnit: a destroyed non mobile selectable building
+// (a connector is not BUILDING, a power station is) never adds a unit lost.
+func TestTeamStatsConnectorLossIsNoUnit(t *testing.T) {
+	g := newGame(t, 24, 24)
+
+	conn := game.NewUnitInfo(assets.Cnct4W, 0, 1, 0)
+	conn.Flags = game.FlagStationary | game.FlagSelectable | game.FlagConnectorUnit
+	conn.Values = &game.UnitValues{}
+	g.Units.Deploy(conn, 3, 3)
+	g.recordCasualty(conn)
+
+	ts := g.TeamStats[0]
+	if ts.UnitsLost != 0 || ts.BuildingsLost != 0 {
+		t.Errorf("connector loss: units %d buildings %d, want 0/0", ts.UnitsLost, ts.BuildingsLost)
+	}
+	if ts.Casualties[assets.Cnct4W] != 1 {
+		t.Errorf("connector Casualties = %d, want 1", ts.Casualties[assets.Cnct4W])
+	}
+
+	g.recordCasualty(liveBuilding(assets.PowerStn, 0, 2))
+	ts = g.TeamStats[0]
+	if ts.UnitsLost != 0 || ts.BuildingsLost != 1 {
+		t.Errorf("building loss: units %d buildings %d, want 0/1", ts.UnitsLost, ts.BuildingsLost)
+	}
+}
+
+// TestTeamStatsCasualtyGate: a unit that is exploding or a missile is not tallied
+// at all; a non selectable unit (a laid mine) is.
+func TestTeamStatsCasualtyGate(t *testing.T) {
+	g := newGame(t, 24, 24)
+	for i, fl := range []game.Flags{
+		game.FlagMobileLandUnit | game.FlagSelectable | game.FlagExploding,
+		game.FlagMobileLandUnit | game.FlagSelectable | game.FlagMissileUnit,
+	} {
+		u := game.NewUnitInfo(assets.Tank, 0, 1+i, 0)
+		u.Flags = fl
+		g.recordCasualty(u)
+	}
+	if ts := g.TeamStats[0]; ts.UnitsLost != 0 || len(ts.Casualties) != 0 {
+		t.Errorf("gated units tallied: lost %d, casualties %v", ts.UnitsLost, ts.Casualties)
+	}
+
+	mine := game.NewUnitInfo(assets.LandMine, 0, 9, 0)
+	mine.Flags = game.FlagStationary
+	g.recordCasualty(mine)
+	if n := g.TeamStats[0].Casualties[assets.LandMine]; n != 1 {
+		t.Errorf("non selectable mine Casualties = %d, want 1", n)
+	}
+}
+
+// TestMineCasualtyTally: the live mine trigger consumes the mine and tallies it
+// once in Casualties; a Go mine is neither mobile nor BUILDING, so no unit or
+// building lost.
+func TestMineCasualtyTally(t *testing.T) {
+	g := newGame(t, 12, 12)
+	layer := addMineLayer(g, assets.MineLayr, 0, 5, 5, 3)
+	if !g.LayMine(layer) {
+		t.Fatal("LayMine returned false")
+	}
+	addTankTarget(g, 50, 5, 5, 1)
+	g.detonateMines()
+	if g.mineOnCell(assets.LandMine, 0, 5, 5) != nil {
+		t.Fatal("mine not consumed")
+	}
+	ts := g.TeamStats[0]
+	if n := ts.Casualties[assets.LandMine]; n != 1 {
+		t.Errorf("LandMine Casualties = %d, want 1", n)
+	}
+	if ts.UnitsLost != 0 || ts.BuildingsLost != 0 {
+		t.Errorf("mine loss: units %d buildings %d, want 0/0", ts.UnitsLost, ts.BuildingsLost)
+	}
+}
+
+// TestRecountBuiltStatistics: the four built tallies are rebuilt from the units in
+// play; upgrade gold, losses and casualties stay, ground cover and the alien team
+// are skipped, and held cargo counts as built.
+func TestRecountBuiltStatistics(t *testing.T) {
+	g := newGame(t, 32, 32)
+	g.Units.Deploy(liveBuilding(assets.LightPlt, 0, 1), 2, 2)
+	g.Units.Deploy(liveBuilding(assets.MiningSt, 0, 2), 6, 6)
+
+	conn := game.NewUnitInfo(assets.Cnct4W, 0, 3, 0)
+	conn.Flags = game.FlagStationary | game.FlagSelectable | game.FlagConnectorUnit
+	g.Units.Deploy(conn, 10, 10)
+
+	road := game.NewUnitInfo(assets.Road, 0, 4, 0)
+	road.Flags = game.FlagStationary | game.FlagBuilding | game.FlagGroundCover
+	g.Units.Deploy(road, 12, 12)
+
+	tank := addTank(g, 5, 6, 14, 14)
+	cargo := game.NewUnitInfo(assets.Scout, 0, 6, 0)
+	cargo.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+	tank.Carried = append(tank.Carried, cargo)
+
+	alien := game.NewUnitInfo(assets.Tank, game.AlienTeam, 7, 0)
+	alien.Flags = game.FlagMobileLandUnit | game.FlagSelectable
+	g.Units.Deploy(alien, 20, 20)
+
+	g.TeamStats[0] = TeamStats{FactoriesBuilt: 9, MinesBuilt: 9, BuildingsBuilt: 9, UnitsBuilt: 9,
+		UnitsLost: 4, BuildingsLost: 2, GoldOnUpgrades: 77, Casualties: map[assets.UnitType]int{assets.Tank: 3}}
+
+	g.RecountBuiltStatistics()
+
+	ts := g.TeamStats[0]
+	if ts.FactoriesBuilt != 1 || ts.MinesBuilt != 1 || ts.BuildingsBuilt != 2 || ts.UnitsBuilt != 2 {
+		t.Errorf("built: factories %d mines %d buildings %d units %d, want 1/1/2/2",
+			ts.FactoriesBuilt, ts.MinesBuilt, ts.BuildingsBuilt, ts.UnitsBuilt)
+	}
+	if ts.GoldOnUpgrades != 77 || ts.UnitsLost != 4 || ts.BuildingsLost != 2 || ts.Casualties[assets.Tank] != 3 {
+		t.Errorf("recount touched gold/losses/casualties: %+v", ts)
+	}
+	if other := g.TeamStats[1]; other.UnitsBuilt != 0 || other.BuildingsBuilt != 0 {
+		t.Errorf("team 1 counted something: %+v", other)
 	}
 }
 

@@ -14,6 +14,7 @@ Check the version file next to the game executables.
 - `max-go.json` no longer carries a `language` setting by default; the game reads its texts from `LANG.RES`. Add `"language": "en-us"` by hand to use a loose `lang-en-us.ini` again; `-language` now applies to one run only and is never saved.
 
 ### Fixes
+- The game over screen counts only lost vehicles, ships, aircraft and infantry as units lost (a lost building counts only as a building), and a scenario's starting units now count as built.
 - The computer moves its own parked units out of its builders' way, instead of leaving them stuck or blowing up its storage.
 - Units now move at the original speed: ground units no longer drive too fast, and aircraft take off with a short climb and fly a straight line.
 - The Upgrades screen's unit type buttons now stay pressed to show the filter, and keep it when you open the screen again.

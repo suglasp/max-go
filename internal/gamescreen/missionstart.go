@@ -109,6 +109,9 @@ func (s *Screen) MissionStart(units []*game.UnitInfo, teamTypes []game.TeamType,
 
 	s.restoreMissionProduction(units, rules)
 
+	// A mission file carries no stats: count what the file placed as built.
+	s.game.RecountBuiltStatistics()
+
 	if s.game.MiningDifficulty == 0 {
 		s.game.MiningDifficulty = 4 // normal mining scale (mirrors CustomStart)
 	}

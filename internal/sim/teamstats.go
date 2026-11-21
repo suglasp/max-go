@@ -23,7 +23,7 @@ type TeamStats struct {
 	BuildingsBuilt int // ++ when any BUILDING enters play
 	UnitsBuilt     int // ++ when a mobile unit is produced or landed
 	BuildingsLost  int // ++ when a BUILDING is destroyed
-	UnitsLost      int // ++ when a SELECTABLE unit is destroyed (a building counts here too)
+	UnitsLost      int // ++ when a mobile land, sea or air unit is destroyed (buildings count in BuildingsLost only)
 	GoldOnUpgrades int // += gold spent buying unit upgrades
 
 	// Casualties counts the losses PER UNIT TYPE, which is what the Reports screen's
@@ -86,23 +86,32 @@ func (g *Game) recordUnitBuilt(team int) {
 // recordCasualty tallies a destroyed unit into its owner's loss counters, then
 // recurses into any units it was carrying (a destroyed transport loses its
 // passengers too - they live off the unit registry and are never destroyed
-// individually). A BUILDING bumps BuildingsLost; a SELECTABLE unit bumps
-// UnitsLost (a building is both, so it lands in both sums - matching the score
-// screen's two casualty totals). Ground cover (slabs) is skipped.
+// individually). A unit that is EXPLODING or a missile is not tallied at all. The
+// reference gate also requires SELECTABLE; in Go every unit except a laid mine
+// carries it, and the reference's mines are selectable, so the port leaves that
+// part out. A BUILDING bumps BuildingsLost; a mobile land, sea or air
+// unit bumps UnitsLost, so a building is never a unit lost. Ground cover (slabs)
+// is skipped. The per type Casualties tally follows the same gate.
 //
-// C++ ported : units_manager.cpp - ++casualties[type] (incl. carried units);
-// menu.cpp - the BUILDING vs SELECTABLE casualty sums.
+// C++ ported : units_manager.cpp - UnitsManager_DestroyUnit ++casualties[type]
+// (incl. carried units); menu.cpp - the BUILDING vs MOBILE casualty sums.
 func (g *Game) recordCasualty(u *game.UnitInfo) {
 	if u == nil || u.Flags.Has(game.FlagGroundCover) {
 		return
 	}
-	if u.Team >= 0 && u.Team < game.TeamCount {
+	if !u.Flags.Has(game.FlagExploding) && !u.Flags.Has(game.FlagMissileUnit) &&
+		u.Team >= 0 && u.Team < game.TeamCount {
 		if u.Flags.Has(game.FlagBuilding) {
 			g.TeamStats[u.Team].BuildingsLost++
 		}
+		if u.Flags.Has(game.FlagMobileAirUnit) || u.Flags.Has(game.FlagMobileSeaUnit) || u.Flags.Has(game.FlagMobileLandUnit) {
+			g.TeamStats[u.Team].UnitsLost++
+		}
+		/* // note: unused code in Go port - units lost counts mobile units only, as the reference menu.cpp; buildings were counted twice
 		if u.Flags.Has(game.FlagSelectable) {
 			g.TeamStats[u.Team].UnitsLost++
 		}
+		*/
 
 		// The per type tally the Reports screen's Casualties tab reads.
 		if g.TeamStats[u.Team].Casualties == nil {
@@ -113,6 +122,51 @@ func (g *Game) recordCasualty(u *game.UnitInfo) {
 	}
 	for _, c := range u.Carried {
 		g.recordCasualty(c)
+	}
+}
+
+// RecountBuiltStatistics rebuilds the four built tallies of every team from the
+// units now in play (a mission file carries no stats). Only FactoriesBuilt,
+// MinesBuilt, BuildingsBuilt and UnitsBuilt are reset; losses, casualties and
+// upgrade gold stay. A factory and a mining station count by type, a BUILDING
+// that is not ground cover counts as a building, and every mobile unit, held
+// cargo included, counts as built. The alien team is skipped.
+//
+// C++: UnitsManager_RecountBuiltStatistics (units_manager.cpp)
+func (g *Game) RecountBuiltStatistics() {
+	for i := range g.TeamStats {
+		g.TeamStats[i].FactoriesBuilt = 0
+		g.TeamStats[i].MinesBuilt = 0
+		g.TeamStats[i].BuildingsBuilt = 0
+		g.TeamStats[i].UnitsBuilt = 0
+	}
+	for _, u := range g.Units.Units() {
+		g.recountBuilt(u)
+	}
+}
+
+// recountBuilt adds one unit, and the cargo it holds, to its team's built tallies.
+func (g *Game) recountBuilt(u *game.UnitInfo) {
+	if u == nil || u.Team < 0 || u.Team >= game.TeamCount {
+		return
+	}
+	stats := &g.TeamStats[u.Team]
+	if u.Flags.Has(game.FlagStationary) {
+		if isFactoryType(u.Type) {
+			stats.FactoriesBuilt++
+		}
+		if u.Type == assets.MiningSt {
+			stats.MinesBuilt++
+		}
+		if u.Flags.Has(game.FlagBuilding) && !u.Flags.Has(game.FlagGroundCover) {
+			stats.BuildingsBuilt++
+		}
+	}
+	if u.Flags.Has(game.FlagMobileAirUnit) || u.Flags.Has(game.FlagMobileSeaUnit) || u.Flags.Has(game.FlagMobileLandUnit) {
+		stats.UnitsBuilt++
+	}
+	for _, c := range u.Carried {
+		g.recountBuilt(c)
 	}
 }
 
