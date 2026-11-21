@@ -110,6 +110,26 @@ func (s *Screen) isMoving(u *game.UnitInfo) bool {
 	return false
 }
 
+// containerAlive reports whether c still has hits and is still registered in the game.
+// C++ ported : access.cpp - Access_CanReceiveUnits (hits > 0 part).
+func (s *Screen) containerAlive(c *game.UnitInfo) bool {
+	return c.Hits > 0 && s.game.Units.ByID.Get(c.ID) == c
+}
+
+// growBack scales a half shrunk unit back up on its own cell through the expand clock.
+// C++ ported : units_manager.cpp - UnitsManager_FinishUnitScaling (refused store: EXPAND).
+func (s *Screen) growBack(u *game.UnitInfo) {
+	if u.Unfold == 0 {
+		return
+	}
+
+	if s.effects.expanding == nil {
+		s.effects.expanding = make(map[*game.UnitInfo]bool)
+	}
+
+	s.effects.expanding[u] = true // tickBuildExpansions counts Unfold down to 0
+}
+
 // tickLoads advances building loads. Units at the building shrink on the expand clock, play the pack-up sound, and enter the bay.
 func (s *Screen) tickLoads() {
 	if len(s.effects.loading) == 0 {
@@ -124,8 +144,14 @@ func (s *Screen) tickLoads() {
 	}
 
 	for u, job := range s.effects.loading {
-		if u.Hits <= 0 || job.building.Hits <= 0 {
-			delete(s.effects.loading, u) // unit or building lost mid load
+		if u.Hits <= 0 {
+			delete(s.effects.loading, u) // unit lost mid load
+			continue
+		}
+
+		if !s.containerAlive(job.building) {
+			delete(s.effects.loading, u) // container destroyed or removed mid load
+			s.growBack(u)
 			continue
 		}
 
@@ -147,9 +173,16 @@ func (s *Screen) tickLoads() {
 			if u.Unfold < loadShrinkMax {
 				u.Unfold++
 			} else {
-				u.Unfold = 0
-				s.game.LoadUnit(job.building, u) // fully shrunk: into the bay
 				delete(s.effects.loading, u)
+
+				if s.game.LoadUnit(job.building, u) { // fully shrunk: into the bay
+					u.Unfold = 0
+				} else {
+					/* // note: unused code in Go port - a refused store snapped the unit back to full size; it now grows back (growBack) like the reference EXPAND
+					u.Unfold = 0
+					*/
+					s.growBack(u)
+				}
 			}
 		}
 	}

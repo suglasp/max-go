@@ -524,3 +524,107 @@ func TestT4LoadIntoPick(t *testing.T) {
 		}
 	})
 }
+
+// t4ShrinkHalfway starts a load of a passenger next to a carrier and shrinks it two steps.
+func t4ShrinkHalfway(t *testing.T) (*Screen, *sim.Game, *game.UnitInfo, *game.UnitInfo) {
+	t.Helper()
+
+	s, g := newTestScreen(t, 16)
+	apc := t4Carrier(g, assets.ClnTrans, 1, 5, 5, game.FlagMobileLandUnit|game.FlagSelectable, 2)
+	squad := t4Passenger(g, assets.Infantry, 2, 6, 5)
+	s.beginLoad(squad, apc)
+	s.tickLoads()
+
+	for step := 0; step < 2; step++ {
+		t4ForceShrinkStep(s)
+		s.tickLoads()
+	}
+
+	if squad.Unfold != 2 {
+		t.Fatalf("setup: Unfold = %d, want 2", squad.Unfold)
+	}
+
+	return s, g, apc, squad
+}
+
+// t4AssertGrowsBack ticks the expand clock until the passenger is full size and checks it is free on its cell.
+func t4AssertGrowsBack(t *testing.T, s *Screen, g *sim.Game, apc, squad *game.UnitInfo) {
+	t.Helper()
+
+	t4ForceShrinkStep(s)
+	s.tickLoads() // the dead or missing container drops the job
+
+	if len(s.effects.loading) != 0 {
+		t.Error("the load job must be dropped")
+	}
+
+	for i := 0; i < 8; i++ {
+		s.effects.expandStamp = 1 << 63
+		s.tickBuildExpansions()
+	}
+
+	if squad.Unfold != 0 {
+		t.Errorf("Unfold = %d, want the passenger grown back to 0", squad.Unfold)
+	}
+
+	if len(s.effects.expanding) != 0 {
+		t.Error("the grown passenger must leave the expanding set")
+	}
+
+	if g.Units.ByID.Get(squad.ID) != squad || squad.Parent != nil {
+		t.Error("the passenger must stay a free unit in the registry")
+	}
+
+	found := false
+	for _, u := range g.Units.Cells.At(6, 5) {
+		found = found || u == squad
+	}
+
+	if !found {
+		t.Error("the passenger must stay on its cell")
+	}
+
+	for _, c := range apc.Carried {
+		if c == squad {
+			t.Error("the container must not carry the passenger")
+		}
+	}
+
+	if s.pickFriendlyUnit(6, 5) != squad {
+		t.Error("the grown passenger must be pickable again")
+	}
+}
+
+// TestT4TickLoadsContainerDiesMidShrink pins that a passenger grows back when its container is destroyed mid shrink.
+func TestT4TickLoadsContainerDiesMidShrink(t *testing.T) {
+	s, g, apc, squad := t4ShrinkHalfway(t)
+	apc.Hits = 0
+	t4AssertGrowsBack(t, s, g, apc, squad)
+}
+
+// TestT4TickLoadsContainerRemovedMidShrink pins the same when the container leaves the registry with hits left.
+func TestT4TickLoadsContainerRemovedMidShrink(t *testing.T) {
+	s, g, apc, squad := t4ShrinkHalfway(t)
+	g.Units.Remove(apc)
+	t4AssertGrowsBack(t, s, g, apc, squad)
+}
+
+// TestT4TickLoadsRefusedStoreGrowsBack pins that a refused store at the end of the shrink grows the unit back.
+func TestT4TickLoadsRefusedStoreGrowsBack(t *testing.T) {
+	s, g, apc, squad := t4ShrinkHalfway(t)
+
+	for step := 0; step < 2; step++ {
+		t4ForceShrinkStep(s)
+		s.tickLoads()
+	}
+
+	apc.Values.Set(game.AttribStorage, 0) // the bay now refuses the store at the last step
+	t4ForceShrinkStep(s)
+	s.tickLoads()
+
+	if squad.Unfold == 0 {
+		t.Fatal("a refused store must not snap the unit to full size")
+	}
+
+	t4AssertGrowsBack(t, s, g, apc, squad)
+}
