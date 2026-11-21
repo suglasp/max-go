@@ -6,7 +6,7 @@ Check the version file next to the game executables.
 ## 1.0.1.2 (release candidate)
 
 ### Changes
-- Bumped built version for Ebitengine 2.10.6.
+- Bumped built version for Ebitengine v2.10.6.
 - The computer opponent explores with its scouts, fast boats and radar units only; its tanks and other combat units stay with the army. A scout that comes under fire fights back, or falls back to its base when it cannot fire or is badly damaged.
 - The computer opponent keeps its units on the job it gave them, and no longer builds more of a unit type while one of that type stands idle.
 - The `-difficulty` launch option now refuses a value outside 0 to 5 with an error, instead of quietly treating a higher value as 5 or ignoring a negative one (the tiers are 0 Clueless to 5 God).
