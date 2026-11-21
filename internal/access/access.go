@@ -105,40 +105,46 @@ func IsTerrainSpecial(t assets.UnitType) bool {
 }
 
 // LandTypeForUnit applies per-type overrides that movement flags alone cannot express.
-// The Surveyor carries MOBILE_LAND_UNIT but also crosses open water at normal cost. Shipyard, Dock, and Water Platform use a water land type.
+// The reference unit table gives each type its land type; the cases below cover the types whose table value differs from what the movement flags derive.
 // Callers that know the unit type should prefer it to LandTypeFor.
 //
 // C++ ported : access.cpp - Access_IsAccessible (unit_type != SURVEYOR branch) +
 // the per type land_type entries in the unit data (units.cpp - ParseLandType).
 func LandTypeForUnit(t assets.UnitType, flags game.Flags) uint8 {
 	switch {
-	case t == assets.Surveyor || t == assets.Constrct || t == assets.Engineer || t == assets.Scout:
-		// The Surveyor, the two land builders (Constructor, Engineer) and the Scout
-		// carry only MOBILE_LAND_UNIT, but their land_type includes water so they drive
-		// onto open water and cross bridges on top. They still pay the +8 amphibious cost
-		// below; only the Surveyor is exempt. Movement rule only: the Surveyor swaps to its
-		// water sprite on open water (units/sprite.go isAmphibious); the Engineer/Constructor
-		// water sprite swap is still TODO (build pose interleave).
+	case t == assets.Surveyor || t == assets.Constrct || t == assets.Engineer || t == assets.Scout || t == assets.ClnTrans:
+		// The reference unit table gives these land + water + coast although they carry
+		// only MOBILE_LAND_UNIT here, so they drive onto open water and cross bridges on
+		// top. They still pay the +8 amphibious cost below; only the Surveyor is exempt.
+		// The Personnel Carrier swims with its boat sprite (units/sprite.go isAmphibious)
+		// and pays that same water cost. The Surveyor swaps to its water sprite on open
+		// water; the Engineer/Constructor water sprite swap is still TODO (build pose interleave).
 		return world.SurfaceLand | world.SurfaceWater | world.SurfaceCoast
+
+	case t == assets.Infantry || t == assets.Commando:
+		// The reference unit table gives the foot soldiers land + coast, so they step onto the beach band but not open water.
+		return world.SurfaceLand | world.SurfaceCoast
+
+	case t == assets.SeaTrans || t == assets.CargoShp:
+		// The reference unit table gives the two ferries water + coast, so they sail into the beach band to load and unload from the shore.
+		return world.SurfaceWater | world.SurfaceCoast
 
 	case t == assets.Cnct4W:
 		// A connector can be laid on land, coast or open water: the engineer builds it
 		// to bridge a shore / water building (a Shipyard) into the base complex.
-		// C++: the CONNECTOR land_type spans land + coast + water.
+		// The reference unit table gives the connector land + coast + water.
 		return world.SurfaceLand | world.SurfaceWater | world.SurfaceCoast
 
-	case IsWaterBuilding(t):
-		// A naval building sits on open water only.
-		return world.SurfaceWater
-
-	case t == assets.Bridge:
-		// A bridge is laid across open water or the coast band (land units cross over it,
-		// sea units pass under a raised one), so it can start at the shoreline and span out
-		// to bridge land across to water platforms. A water platform stays water only
-		// (IsWaterBuilding above); a bridge spans both.
-		// C++: a bridge deploys on SURFACE_TYPE_WATER || SURFACE_TYPE_COAST
-		// (game_manager.cpp:4767, DeployConstructionSiteUtilities treats water+coast alike).
+	case t == assets.Bridge || t == assets.WtrPltfm:
+		// The reference unit table gives both water + coast. A bridge is laid across open
+		// water or the coast band (land units cross over it, sea units pass under a raised
+		// one), so it can start at the shoreline. A water platform may also stand on the
+		// coast band. This case must stay before IsWaterBuilding, which also names the platform.
 		return world.SurfaceWater | world.SurfaceCoast
+
+	case IsWaterBuilding(t):
+		// Shipyard and Dock sit on open water only (the platform is handled above).
+		return world.SurfaceWater
 
 	default:
 		return LandTypeFor(flags)

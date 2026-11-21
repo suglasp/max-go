@@ -14,6 +14,7 @@ Check the version file next to the game executables.
 - `max-go.json` no longer carries a `language` setting by default; the game reads its texts from `LANG.RES`. Add `"language": "en-us"` by hand to use a loose `lang-en-us.ini` again; `-language` now applies to one run only and is never saved.
 
 ### Fixes
+- The Sea Transport and Cargo Ship sail into the beach band, Infantry and Commandos step onto the beach, the Personnel Carrier swims and a Water Platform can be built on the coast, as in the original game.
 - Computer units no longer crawl into your base a cell or two a turn: after halting for a newly seen enemy they fire on it or drive on.
 - When a bridge, water platform or landing pad is destroyed, the units, mines and landed aircraft left on water or without their pad go down with it (mines sink without exploding), and a road, bridge, pad or platform under a destroyed unit is destroyed too.
 - A unit entering a building or transport that is destroyed meanwhile comes back out on its cell, instead of staying shrunk or disappearing.

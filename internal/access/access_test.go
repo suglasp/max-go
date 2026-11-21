@@ -251,6 +251,126 @@ func TestLandTypeForUnit(t *testing.T) {
 	}
 }
 
+// TestLandTypeForUnitMatchesTheReferenceTable checks every unit type against the land type
+// the reference unit table gives it. Flags come from game.ProducedFlags for factory units;
+// the other types use the flag set their runtime deployment carries.
+func TestLandTypeForUnitMatchesTheReferenceTable(t *testing.T) {
+	const (
+		l = world.SurfaceLand
+		w = world.SurfaceWater
+		c = world.SurfaceCoast
+		a = world.SurfaceAir
+	)
+
+	building := game.FlagStationary | game.FlagBuilding | game.FlagSelectable
+	small := game.FlagStationary | game.FlagSelectable
+
+	cases := []struct {
+		unit  assets.UnitType
+		flags game.Flags
+		want  uint8
+	}{
+		{assets.Master, game.FlagMobileLandUnit | game.FlagSelectable, l},
+		{assets.Constrct, game.ProducedFlags(assets.Constrct), l | w | c},
+		{assets.Scout, game.ProducedFlags(assets.Scout), l | w | c},
+		{assets.Tank, game.ProducedFlags(assets.Tank), l},
+		{assets.Artillry, game.ProducedFlags(assets.Artillry), l},
+		{assets.RocktLch, game.ProducedFlags(assets.RocktLch), l},
+		{assets.MisslLch, game.ProducedFlags(assets.MisslLch), l},
+		{assets.SpFlak, game.ProducedFlags(assets.SpFlak), l},
+		{assets.MineLayr, game.ProducedFlags(assets.MineLayr), l},
+		{assets.Surveyor, game.ProducedFlags(assets.Surveyor), l | w | c},
+		{assets.Scanner, game.ProducedFlags(assets.Scanner), l},
+		{assets.SplyTrck, game.ProducedFlags(assets.SplyTrck), l},
+		{assets.GoldTrck, game.ProducedFlags(assets.GoldTrck), l},
+		{assets.Engineer, game.ProducedFlags(assets.Engineer), l | w | c},
+		{assets.Bulldozr, game.ProducedFlags(assets.Bulldozr), l},
+		{assets.Repair, game.ProducedFlags(assets.Repair), l},
+		{assets.FuelTrck, game.ProducedFlags(assets.FuelTrck), l},
+		{assets.ClnTrans, game.ProducedFlags(assets.ClnTrans), l | w | c},
+		{assets.Commando, game.ProducedFlags(assets.Commando), l | c},
+		{assets.Infantry, game.ProducedFlags(assets.Infantry), l | c},
+		{assets.FastBoat, game.ProducedFlags(assets.FastBoat), w},
+		{assets.Corvette, game.ProducedFlags(assets.Corvette), w},
+		{assets.Battlshp, game.ProducedFlags(assets.Battlshp), w},
+		{assets.Submarne, game.ProducedFlags(assets.Submarne), w},
+		{assets.SeaTrans, game.ProducedFlags(assets.SeaTrans), w | c},
+		{assets.MsslBoat, game.ProducedFlags(assets.MsslBoat), w},
+		{assets.SeaMnLyr, game.ProducedFlags(assets.SeaMnLyr), w},
+		{assets.CargoShp, game.ProducedFlags(assets.CargoShp), w | c},
+		{assets.Fighter, game.ProducedFlags(assets.Fighter), l | w | c | a},
+		{assets.Bomber, game.ProducedFlags(assets.Bomber), l | w | c | a},
+		{assets.AirTrans, game.ProducedFlags(assets.AirTrans), l | w | c | a},
+		{assets.Awac, game.ProducedFlags(assets.Awac), l | w | c | a},
+		// The alien units are not factory built: the juggernaut sits on water (sea flag).
+		{assets.Juggrnt, game.FlagMobileSeaUnit | game.FlagSelectable, w},
+		{assets.AlnTank, game.FlagMobileLandUnit | game.FlagSelectable, l},
+		{assets.AlnAsGun, game.FlagMobileLandUnit | game.FlagSelectable, l},
+		{assets.AlnPlane, game.FlagMobileAirUnit | game.FlagHovering | game.FlagSelectable, l | w | c | a},
+		{assets.WtrPltfm, small, w | c},
+		{assets.Bridge, small, w | c},
+		{assets.Cnct4W, small, l | w | c},
+		{assets.Shipyard, building, w},
+		{assets.Dock, building, w},
+	}
+
+	for _, tc := range cases {
+		if got := LandTypeForUnit(tc.unit, tc.flags); got != tc.want {
+			t.Errorf("LandTypeForUnit(%v) = %#x, want %#x", tc.unit, got, tc.want)
+		}
+	}
+}
+
+// descFor builds a unit descriptor from the live land type of a unit type.
+func descFor(unit assets.UnitType, flags game.Flags) UnitDesc {
+	return UnitDesc{Type: unit, Flags: flags, LandType: LandTypeForUnit(unit, flags)}
+}
+
+// TestCoastAndWaterAccessPerUnitType checks the passability each reference land type gives on the coast and water bands.
+func TestCoastAndWaterAccessPerUnitType(t *testing.T) {
+	coast := gridWith(world.SurfaceCoast, nil, nil)
+	water := gridWith(world.SurfaceWater, nil, nil)
+	land := gridWith(world.SurfaceLand, nil, nil)
+
+	seaTrans := descFor(assets.SeaTrans, game.ProducedFlags(assets.SeaTrans))
+	corvette := descFor(assets.Corvette, game.ProducedFlags(assets.Corvette))
+	infantry := descFor(assets.Infantry, game.ProducedFlags(assets.Infantry))
+	carrier := descFor(assets.ClnTrans, game.ProducedFlags(assets.ClnTrans))
+	platform := descFor(assets.WtrPltfm, game.FlagStationary|game.FlagSelectable)
+
+	// The Sea Transport sails into the beach band; the Corvette stays out of it.
+	if got := coast.IsAccessible(seaTrans, 0, 1, 1, NoModifiers); got != Clear {
+		t.Errorf("Sea Transport on coast = %d, want Clear", got)
+	}
+
+	if got := coast.IsAccessible(corvette, 0, 1, 1, NoModifiers); got != Blocked {
+		t.Errorf("Corvette on coast = %d, want Blocked", got)
+	}
+
+	// Infantry steps onto the beach but cannot enter open water.
+	if got := coast.IsAccessible(infantry, 0, 1, 1, NoModifiers); got != Clear {
+		t.Errorf("Infantry on coast = %d, want Clear", got)
+	}
+
+	if got := water.IsAccessible(infantry, 0, 1, 1, NoModifiers); got != Blocked {
+		t.Errorf("Infantry on water = %d, want Blocked", got)
+	}
+
+	// The Personnel Carrier swims and pays the amphibious water cost.
+	if got := water.IsAccessible(carrier, 0, 1, 1, NoModifiers); got != Water {
+		t.Errorf("Personnel Carrier on water = %d, want Water", got)
+	}
+
+	// The Water Platform is placeable on the coast, not on land.
+	if got := coast.IsAccessible(platform, 0, 1, 1, NoModifiers); !got.Passable() {
+		t.Errorf("Water Platform on coast = %d, want passable", got)
+	}
+
+	if got := land.IsAccessible(platform, 0, 1, 1, NoModifiers); got != Blocked {
+		t.Errorf("Water Platform on land = %d, want Blocked", got)
+	}
+}
+
 // TestConnectorBuildableOnWater checks that an engineer can place a connector on
 // land, coast, or open water to join a naval building to a base. A Power Station
 // remains blocked on water.
@@ -303,6 +423,19 @@ func TestWaterBuildingLandType(t *testing.T) {
 		}
 		if got := landGrid.IsAccessible(d, 0, 1, 1, NoModifiers); got != Blocked {
 			t.Errorf("%v on land = %d, want Blocked (naval building)", t2, got)
+		}
+	}
+
+	// On the coast band only the Water Platform may stand (the reference unit table
+	// gives it water + coast); the Shipyard and Dock stay water only.
+	coastGrid := gridWith(world.SurfaceCoast, nil, nil)
+	for _, c := range []struct {
+		t    assets.UnitType
+		want bool
+	}{{assets.WtrPltfm, true}, {assets.Shipyard, false}, {assets.Dock, false}} {
+		d := UnitDesc{Type: c.t, Flags: buildingFlags, LandType: LandTypeForUnit(c.t, buildingFlags)}
+		if got := coastGrid.IsAccessible(d, 0, 1, 1, NoModifiers).Passable(); got != c.want {
+			t.Errorf("%v on coast passable = %v, want %v", c.t, got, c.want)
 		}
 	}
 
@@ -604,7 +737,7 @@ func TestBridgeCostByMoverClass(t *testing.T) {
 // TestBridgePlacement checks the buildable bridge: a Bridge is laid across open
 // water OR the coast/shore band, so its placement land_type is water+coast -
 // site valid on a bare water cell AND on a shore cell (so it can start at the
-// shoreline), blocked on plain land. A water platform stays water only. (Once laid,
+// shoreline), blocked on plain land. A water platform takes water and coast too. (Once laid,
 // land units cross it and sea units pass under it - TestBridgeCostByMoverClass.)
 // C++: a bridge deploys on SURFACE_TYPE_WATER || SURFACE_TYPE_COAST (game_manager.cpp:4767).
 func TestBridgePlacement(t *testing.T) {
@@ -632,11 +765,15 @@ func TestBridgePlacement(t *testing.T) {
 		t.Errorf("bridge on plain land = %d, want Blocked (a bridge spans water/coast)", got)
 	}
 
-	// A water platform must NOT be placeable on the coast - water only.
+	// A water platform may be placed on the coast like a bridge (the reference unit
+	// table gives it water + coast), but never on plain land.
 	platFlags := game.FlagStationary | game.FlagSelectable
 	plat := UnitDesc{Type: assets.WtrPltfm, Flags: platFlags, LandType: LandTypeForUnit(assets.WtrPltfm, platFlags)}
-	if got := coast.IsAccessible(plat, 0, 1, 1, SameClassBlocks); got != Blocked {
-		t.Errorf("water platform on the coast = %d, want Blocked (platforms are water-only)", got)
+	if got := coast.IsAccessible(plat, 0, 1, 1, SameClassBlocks); !got.Passable() {
+		t.Errorf("water platform on the coast = %d, want passable (water + coast)", got)
+	}
+	if got := land.IsAccessible(plat, 0, 1, 1, SameClassBlocks); got != Blocked {
+		t.Errorf("water platform on land = %d, want Blocked", got)
 	}
 }
 
