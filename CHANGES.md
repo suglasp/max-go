@@ -15,6 +15,7 @@ Check the version file next to the game executables.
 
 ### Fixes
 - The game over screen counts only lost vehicles, ships, aircraft and infantry as units lost (a lost building counts only as a building), and a scenario's starting units now count as built.
+- The game over screen shows the gold spent on upgrades as Credit or Credits.
 - The computer moves its own parked units out of its builders' way, instead of leaving them stuck or blowing up its storage.
 - Units now move at the original speed: ground units no longer drive too fast, and aircraft take off with a short climb and fly a straight line.
 - The Upgrades screen's unit type buttons now stay pressed to show the filter, and keep it when you open the screen again.

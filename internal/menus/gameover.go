@@ -211,8 +211,10 @@ func drawGameOverTeamColumns(ctx *Context, buf *gfx.Buffer, f *fonts.Font, data 
 		}
 
 		// Stat rows: live TeamStats totals tracked by the sim during play.
-		// Upgrades appends " Gold" (_(6249)) after the number, matching the original's layout.
+		// Upgrades appends " Credit" (_(bd00)) or " Credits" (_(7423)) after the number, as the reference game over screen does.
+		/* // note: unused code in Go port - the row reads Credit / Credits (bd00 / 7423) like the reference game over screen; it used Gold (6249) before.
 		goldSuffix := " " + ctx.text("6249", "Gold")
+		*/
 		statRows := [7]gameOverStatRow{
 			{166, team.FactoriesBuilt, ""},
 			{198, team.MinesBuilt, ""},
@@ -220,7 +222,7 @@ func drawGameOverTeamColumns(ctx *Context, buf *gfx.Buffer, f *fonts.Font, data 
 			{246, team.BuildingsLost, ""},
 			{278, team.UnitsBuilt, ""},
 			{294, team.UnitsLost, ""},
-			{326, team.GoldOnUpgrades, goldSuffix},
+			{326, team.GoldOnUpgrades, goldSpentSuffix(ctx, team.GoldOnUpgrades)},
 		}
 		for _, r := range statRows {
 			s := fmt.Sprintf("%d", r.value) + r.suffix
@@ -305,4 +307,12 @@ func drawGameOverChrome(ctx *Context, buf *gfx.Buffer) gnw.ButtonID {
 		ctx.text("5653", "OK"), platform.KeyEscape)
 	ctx.registerButtonSfx(bid, "MBUTT0") // the small menu button blip (mengens4.wav), like the menu bar
 	return bid
+}
+
+// goldSpentSuffix returns the unit word after the upgrades row number: Credit for exactly 1, else Credits.
+func goldSpentSuffix(ctx *Context, amount int) string {
+	if amount == 1 {
+		return " " + ctx.text("bd00", "Credit")
+	}
+	return " " + ctx.text("7423", "Credits")
 }
