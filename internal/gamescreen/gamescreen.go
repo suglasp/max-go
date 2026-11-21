@@ -502,6 +502,7 @@ func (s *Screen) tickFrameEvents() {
 	s.tickDamage()               // a unit that SURVIVED an instant attack: bloom, hit sound, under attack banner
 	s.tickReactions()            // reaction (opportunity) fire: the weapon report + banner
 	s.tickCommandoEvents()       // an enemy commando seized / shut down / was caught raiding a player unit
+	s.forgetVanished()           // a unit removed with no event (stranded on a dead bridge) is deselected
 	s.tickBenchBanner()          // -emulate benches: the stop banner returns once a turn start alert is gone
 }
 

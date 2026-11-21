@@ -120,6 +120,7 @@ func (g *Game) DestroyUnit(u *game.UnitInfo) {
 	g.recordCasualty(u)     // score screen tally (buildings / units lost, incl. any carried)
 	g.recordRubble(u, site) // leave debris where it stood (a Bulldozer can later clear it)
 	g.Units.Remove(u)
+	g.clearStranded(u) // its covers go and the units left on invalid terrain are cleared
 }
 
 // purgeUnit clears every sim reference to a unit that is leaving the game: orders,

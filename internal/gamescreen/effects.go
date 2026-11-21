@@ -155,6 +155,32 @@ func (s *Screen) forgetDestroyed(v *game.UnitInfo) {
 	// Keep portraitUnit until updatePortrait sees the selection change and tears down its FLC player. The stale pointer is compared but never dereferenced.
 }
 
+// forgetVanished drops units that left the registry without a death event (stranded on a
+// dead bridge, platform or pad) from the selection and the camera lock. Once per frame.
+func (s *Screen) forgetVanished() {
+	if s.game == nil || s.game.Units == nil {
+		return
+	}
+
+	gone := func(u *game.UnitInfo) bool {
+		return u != nil && s.game.Units.ByID.Get(u.ID) != u
+	}
+
+	if gone(s.selected) {
+		s.forgetDestroyed(s.selected)
+	}
+
+	for _, u := range append([]*game.UnitInfo(nil), s.selection...) {
+		if gone(u) {
+			s.forgetDestroyed(u)
+		}
+	}
+
+	if gone(s.camera.lockUnit) {
+		s.camera.lockUnit = nil
+	}
+}
+
 // tickMineBlasts presents sim mine detonations. Destroyed victims use the death blast and rubble; survivors receive a blast, sound, and damage notification.
 //
 // C++: the explosion sprite + SFX_TYPE_EXPLOAD spawned on a mine detonation
