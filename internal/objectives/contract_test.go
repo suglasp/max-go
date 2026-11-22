@@ -288,3 +288,26 @@ func TestCampaignTurnLimitOnRealGame(t *testing.T) {
 		t.Fatalf("lab destroyed = %v, want Lost", got)
 	}
 }
+
+// TestCampaign8LabLostOnRealGame checks campaign 8: losing a research centre of your own loses the mission.
+func TestCampaign8LabLostOnRealGame(t *testing.T) {
+	g := realGame(t)
+	g.VictoryType = winloss.VictoryDuration
+	g.VictoryLimit = 100
+	g.State.TurnCounter = 10
+
+	for i := 0; i < 2; i++ {
+		deploy(g, teamGreen, assets.AlnTank, 200+i, 4+i*2, 8, game.FlagMobileLandUnit|game.FlagSelectable)
+		deploy(g, teamGreen, assets.AlnPlane, 210+i, 4+i*2, 10, game.FlagMobileLandUnit|game.FlagSelectable)
+	}
+
+	if got := verdict(t, g, game.MissionCampaign, 8); got != winloss.StatusPending {
+		t.Fatalf("four aliens still the enemy's = %v, want Pending", got)
+	}
+
+	g.TeamStats[teamRed].Casualties = map[assets.UnitType]int{assets.Research: 1}
+
+	if got := verdict(t, g, game.MissionCampaign, 8); got != winloss.StatusLost {
+		t.Fatalf("lab destroyed = %v, want Lost", got)
+	}
+}

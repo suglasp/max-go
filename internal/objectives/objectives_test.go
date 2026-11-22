@@ -101,7 +101,7 @@ func (b *board) CountReadyUnits(team int, t assets.UnitType) int {
 }
 func (b *board) CountCasualties(team int, t assets.UnitType) int { return b.casualties[team][t] }
 func (b *board) StoredCargo(team int, c economy.CargoType) int   { return b.cargo[team][c] }
-func (b *board) RawMiningCapacity(team int) int                   { return b.capacity[team] }
+func (b *board) RawMiningCapacity(team int) int                  { return b.capacity[team] }
 func (b *board) TotalMining(team int, c economy.CargoType) int   { return b.mining[team][c] }
 func (b *board) TotalConsumption(team int, c economy.CargoType) int {
 	return b.consumption[team][c]
@@ -298,6 +298,42 @@ func TestCampaign8(t *testing.T) {
 
 	if got := campaign8(b, teamRed); got != winloss.StatusLost {
 		t.Fatalf("out of time with the aliens still out there = %v, want Lost", got)
+	}
+}
+
+// TestCampaign8LabLost checks that losing a research centre of your own loses Bright Hope in
+// every phase, while losing an enemy one changes nothing.
+func TestCampaign8LabLost(t *testing.T) {
+	pending := func() *board {
+		b := newBoard().alive(teamRed)
+		b.turn, b.turnLimit = 10, 100
+		b.give(teamGreen, assets.AlnTank, 2).give(teamGreen, assets.AlnPlane, 2)
+
+		return b
+	}
+	generic := func() *board {
+		b := newBoard().alive(teamRed)
+		b.turn, b.turnLimit = 10, 100
+		b.give(teamRed, assets.AlnTank, 2).give(teamRed, assets.AlnPlane, 2)
+
+		return b
+	}
+
+	tests := []struct {
+		name  string
+		board *board
+		want  winloss.TeamStatus
+	}{
+		{"own lab lost, aliens pending", pending().lost(teamRed, assets.Research, 1), winloss.StatusLost},
+		{"own lab lost, aliens captured", generic().lost(teamRed, assets.Research, 1), winloss.StatusLost},
+		{"enemy lab lost, aliens pending", pending().lost(teamGreen, assets.Research, 1), winloss.StatusPending},
+		{"enemy lab lost, aliens captured", generic().lost(teamGreen, assets.Research, 1), winloss.StatusGeneric},
+	}
+
+	for _, tc := range tests {
+		if got := campaign8(tc.board, teamRed); got != tc.want {
+			t.Errorf("%s = %v, want %v", tc.name, got, tc.want)
+		}
 	}
 }
 

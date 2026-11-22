@@ -118,6 +118,9 @@ func countAliens(q Query, team int) int {
 // campaign8 is Bright Hope: capture four alien units before the clock runs out. Destroy
 // too many of them and the mission is unwinnable at once (fewer than four left standing
 // anywhere), and letting the turn limit pass with fewer than four in hand loses it.
+// Losing a research centre of your own ends the mission at once. This follows the original
+// game's hard coded rule and the mission briefing ("All R&D Labs must also remain intact");
+// the SC_C0008 script has no such clause.
 //
 // Once the four are captured the mission goes GENERIC rather than WON: the objective is
 // satisfied, and the game is then decided on the generic rules like any other.
@@ -125,6 +128,10 @@ func countAliens(q Query, team int) int {
 // C++ ported : SC_C0008 - winloss_conditions
 func campaign8(q Query, team int) winloss.TeamStatus {
 	return scripted(q, team, func(q Query) winloss.TeamStatus {
+		if q.CountCasualties(teamRed, assets.Research) > 0 {
+			return winloss.StatusLost // a research centre of your own is gone
+		}
+
 		mine := countAliens(q, teamRed)
 
 		if mine+countAliens(q, teamGreen) < 4 {
