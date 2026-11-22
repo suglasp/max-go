@@ -109,6 +109,14 @@ func (t *taskObtainUnits) meet(g *sim.Game, need unitNeed) bool {
 		return true
 	}
 
+	// A unit parked in the team's storage comes out before another one is built.
+	if u := t.storedUnit(need); u != nil {
+		dbg.Logf(dbg.AI, "team %d obtained stored %s %d for task %d", t.team, need.unit.Tag(), u.ID, t.requesterID())
+
+		// The asking task may rule the unit out: it stays on the map and the next pass finds it.
+		return need.accept == nil || need.accept(u)
+	}
+
 	// Someone is building one already: wait for it.
 	if unitsInProduction(g, t.team, need.unit) > 0 {
 		return false
@@ -132,6 +140,30 @@ func (t *taskObtainUnits) meet(g *sim.Game, need unitNeed) bool {
 	}
 
 	return false
+}
+
+// storedUnit asks the team's zone clearing task, found among the manager's tasks, for a
+// stored unit of the wanted type and returns the unit it unloaded, or nil. A request more
+// urgent than the economy tier unloads at once, any other one takes a unit that has rested.
+func (t *taskObtainUnits) storedUnit(need unitNeed) *game.UnitInfo {
+	// A lone request has no manager and no clearing task to ask.
+	if t.mgr == nil {
+		return nil
+	}
+
+	for _, task := range t.mgr.tasks {
+		clearer, ok := task.(*taskClearZone)
+
+		if !ok || clearer.team != t.team {
+			continue
+		}
+
+		urgent := t.Priority() < taskPriorityManageBuildings
+
+		return clearer.unloadStored(func(u *game.UnitInfo) bool { return u.Type == need.unit }, urgent)
+	}
+
+	return nil
 }
 
 // requesterID returns the id of the task that asked, 0 for a request made by a lone

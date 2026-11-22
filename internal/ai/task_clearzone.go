@@ -8,6 +8,7 @@ package ai
 
 import (
 	"github.com/suglasp/max-go/internal/access"
+	"github.com/suglasp/max-go/internal/assets"
 	"github.com/suglasp/max-go/internal/dbg"
 	"github.com/suglasp/max-go/internal/game"
 )
@@ -35,18 +36,32 @@ type clearZone struct {
 // to the nearest free cell outside every zone, through the direct move order, instead of
 // stepping each unit in the chain through path requests; destination cells are not
 // checked for enemy threat, as they are in the original.
+//
+// Port additions, asked for by the user and not in the reference task: a way out ladder
+// for a trapped base (clearzone_ladder.go). An amphibious blocker goes onto open water
+// first. A blocker with no free cell (never a builder) is stored in an own Depot, Barracks
+// or Dock; with no Depot or Barracks room the task asks the building manager for one.
+// Stored units come out again, at once when a task asks for the unit or a spotted enemy
+// presses the storage (urgent), and one at a time after a rest once no zone is open
+// (routine).
 type taskClearZone struct {
 	TaskBase
-	ctx   *aiContext
-	zones []clearZone
+	ctx         *aiContext
+	zones       []clearZone
+	storing     map[*game.UnitInfo]*game.UnitInfo // units on their way to be stored, and the building each is bound for
+	storedAt    map[*game.UnitInfo]int            // the turn a unit was stored, for the rest before a routine unload
+	wantStorage map[assets.UnitType]bool          // the storage types with no room, recorded in this turn's pass
 }
 
 // newTaskClearZone builds the team's zone clearing task at the emergency tier.
 // C++: TaskClearZone::TaskClearZone (TASK_PRIORITY_EMERGENCY).
 func newTaskClearZone(team int, ctx *aiContext) *taskClearZone {
 	return &taskClearZone{
-		TaskBase: newTaskBase(team, nil, taskPriorityEmergency),
-		ctx:      ctx,
+		TaskBase:    newTaskBase(team, nil, taskPriorityEmergency),
+		ctx:         ctx,
+		storing:     map[*game.UnitInfo]*game.UnitInfo{},
+		storedAt:    map[*game.UnitInfo]int{},
+		wantStorage: map[assets.UnitType]bool{},
 	}
 }
 
@@ -66,15 +81,23 @@ func (t *taskClearZone) addZone(requester *game.UnitInfo, cells [][2]int) {
 	t.zones = append(t.zones, zone)
 }
 
-// BeginTurn examines each zone and moves a parked unit off it: a zone with no blocker
-// left is done, one with an enemy on it or past its turns is dropped. C++ reference:
-// taskclearzone.cpp, TaskClearZone::EndTurn, ExamineZones, and SearchMap.
+// BeginTurn finishes the pending stores, examines each zone and moves a parked unit off
+// it: a zone with no blocker left is done, one with an enemy on it or past its turns is
+// dropped. It then lets stored units out when the storage is pressed or the room is back.
+// C++ reference: taskclearzone.cpp, TaskClearZone::EndTurn, ExamineZones, and SearchMap.
 func (t *taskClearZone) BeginTurn() {
 	g := t.ctx.Game
 
 	if g == nil {
 		return
 	}
+
+	// The building manager runs before this task and has read last turn's wants already:
+	// this pass starts a fresh record, which the manager reads next turn.
+	t.wantStorage = map[assets.UnitType]bool{}
+
+	// Units sent to a storage building board once they stand next to it.
+	t.finishStores()
 
 	kept := t.zones[:0]
 
@@ -105,6 +128,12 @@ func (t *taskClearZone) BeginTurn() {
 	}
 
 	t.zones = kept
+
+	// A spotted enemy near a storage building sends its armed units out at once.
+	t.unloadForThreat()
+
+	// With no zone open the room is back: one rested unit comes out.
+	t.unloadRoutine()
 }
 
 // examineZone returns the team's own clearable units standing on the zone, and whether a
@@ -137,12 +166,20 @@ func (t *taskClearZone) examineZone(zone clearZone) ([]*game.UnitInfo, bool) {
 // moveAside finds the nearest free cell outside every zone that the blocker can reach,
 // walking through the team's other parked units, and moves the last parked unit on that
 // way into it: its way to the cell is open, and the next unit of the chain follows on
-// the next turn. C++ reference: taskclearzone.cpp, TaskClearZone::SearchMap and EvaluateSite.
+// the next turn. An amphibious blocker goes onto open water first, and a blocker with no
+// free cell to go to is stored. C++ reference: taskclearzone.cpp, TaskClearZone::SearchMap
+// and EvaluateSite.
 func (t *taskClearZone) moveAside(blocker *game.UnitInfo) {
 	g := t.ctx.Game
 	start := [2]int{blocker.GridX, blocker.GridY}
 	inZone := t.zoneCells()
 	desc := access.UnitDesc{Type: blocker.Type, Flags: blocker.Flags, LandType: access.LandTypeForUnit(blocker.Type, blocker.Flags)}
+
+	// An amphibious blocker goes onto open water first, which leaves the land to the rest.
+	if t.moveToWater(blocker, desc) {
+		return
+	}
+
 	parent := map[[2]int][2]int{start: start}
 	queue := [][2]int{start}
 
@@ -182,6 +219,9 @@ func (t *taskClearZone) moveAside(blocker *game.UnitInfo) {
 	}
 
 	dbg.Logf(dbg.AI, "team %d finds no free cell to move %s at (%d,%d) aside", t.team, blocker.Type.Tag(), blocker.GridX, blocker.GridY)
+
+	// The way out ladder: no free cell, so store the blocker or ask for storage.
+	t.storeBlocker(blocker)
 }
 
 // moveChainEnd walks the way back from the free cell dest and moves the parked unit

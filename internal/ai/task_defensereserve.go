@@ -130,21 +130,27 @@ func (t *taskDefenseReserve) guardSite(u *game.UnitInfo) (int, int) {
 // threatNear returns the spotted enemy nearest the guarded site whose believed cell
 // lies within guardEngageRadius of it, or nil when no enemy is pressing the site.
 func (t *taskDefenseReserve) threatNear(sx, sy int) *game.UnitInfo {
-	g := t.ctx.Game
+	return spottedEnemyNear(t.ctx.Game, t.team, sx, sy, guardEngageRadius)
+}
+
+// spottedEnemyNear returns the unit of another team that the team has spotted and whose
+// believed cell lies nearest (x, y) within radius, or nil when none does. The zone clearing
+// task asks it too, to see a storage building pressed.
+func spottedEnemyNear(g *sim.Game, team, x, y, radius int) *game.UnitInfo {
 	var best *game.UnitInfo
-	bestD := guardEngageRadius*guardEngageRadius + 1
+	bestD := radius*radius + 1
 
 	for _, e := range g.Units.Units() {
-		if e.Team == t.team || e.Team < 0 || e.Team >= game.TeamCount {
+		if e.Team == team || e.Team < 0 || e.Team >= game.TeamCount {
 			continue
 		}
 
-		if e.GridX < 0 || e.GridY < 0 || !g.SpottedByTeam(e, t.team) {
+		if e.GridX < 0 || e.GridY < 0 || !g.SpottedByTeam(e, team) {
 			continue
 		}
 
-		ex, ey := believedCell(g, t.team, e)
-		if d := sim.SquaredDist(sx, sy, ex, ey); d <= guardEngageRadius*guardEngageRadius && d < bestD {
+		ex, ey := believedCell(g, team, e)
+		if d := sim.SquaredDist(x, y, ex, ey); d <= radius*radius && d < bestD {
 			best, bestD = e, d
 		}
 	}

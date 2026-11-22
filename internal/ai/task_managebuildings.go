@@ -231,7 +231,17 @@ func (t *taskManageBuildings) tryBuildLarge(econ teamEconomy, builder *game.Unit
 		}
 	}
 
-	// 4. Strategic backbone - factories / research / depot, plus a shipyard for a
+	// 4. Storage for a trapped base - the zone task found no room to park a blocker.
+	//    The want is last turn's: this task runs before the zone task.
+	if t.clearer != nil {
+		if storageType, ok := t.clearer.wantedStorage(); ok && !t.handling(storageType) {
+			if t.startBuilding(builder, buildSpec{t: storageType, large: true}) {
+				return true
+			}
+		}
+	}
+
+	// 5. Strategic backbone - factories / research / depot, plus a shipyard for a
 	//    coastal team and Eco Spheres for a coloniser (all 2x2).
 	if spec, ok := nextBuilding(t.ctx.Game, t.team, strategicBuildOrders(t.strategy, t.goal, t.coastal)); ok {
 		return t.startBuilding(builder, spec)
